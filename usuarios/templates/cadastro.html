@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PonderSEC — Cadastro</title>
+
+    <!-- Fonte futurista -->
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "Space Grotesk", system-ui, sans-serif;
+            background: radial-gradient(circle at top, #051015 0, #02060b 45%, #000000 100%);
+            color: #e5fef6;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        /* Fundo hacker */
+        .background-grid {
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(90deg, rgba(0, 255, 160, 0.06) 1px, transparent 1px),
+                linear-gradient(180deg, rgba(0, 255, 160, 0.06) 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        .scanline {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(
+                to bottom,
+                rgba(0, 0, 0, 0.7),
+                rgba(0, 0, 0, 0.15),
+                rgba(0, 0, 0, 0.7)
+            );
+            background-size: 100% 4px;
+            opacity: 0.25;
+            pointer-events: none;
+        }
+
+        .glow-orb {
+            position: fixed;
+            width: 400px;
+            height: 400px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 255, 160, 0.3), transparent 65%);
+            top: 10%;
+            right: 10%;
+            filter: blur(18px);
+            opacity: 0.75;
+            pointer-events: none;
+        }
+
+        /* CARD */
+        .container {
+            position: relative;
+            width: 100%;
+            max-width: 440px;
+            background: radial-gradient(circle at top, #0b141d 0, #050a11 55%, #020509 100%);
+            border-radius: 18px;
+            padding: 32px 36px 40px;
+            box-shadow:
+                0 0 0 1px rgba(0, 255, 160, 0.25),
+                0 18px 60px rgba(0, 0, 0, 0.9),
+                0 0 40px rgba(0, 255, 160, 0.35);
+            z-index: 2;
+        }
+
+        /* LOGO */
+        .logo {
+            text-align: center;
+            margin-bottom: 14px;
+        }
+
+        .logo img {
+            width: 150px;
+            border-radius: 10px;
+            filter:
+                drop-shadow(0 0 10px rgba(0, 255, 160, 0.8))
+                drop-shadow(0 0 30px rgba(0, 255, 160, 0.5));
+        }
+
+        .product-name {
+            text-align: center;
+            color: #7df6c2;
+            text-transform: uppercase;
+            letter-spacing: 0.28em;
+            font-size: 13px;
+            margin-bottom: 6px;
+        }
+
+        .headline {
+            text-align: center;
+            color: #00ff9f;
+            font-size: 23px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 12px;
+            color: #8ba1b0;
+            margin-bottom: 16px;
+        }
+
+        .subtitle span {
+            color: #00ff9f;
+        }
+
+        .form {
+            margin-top: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            font-size: 13px;
+            display: block;
+            margin-bottom: 5px;
+            color: #a7bbc8;
+        }
+
+        input {
+            width: 100%;
+            padding: 11px;
+            border: 1px solid #1b2635;
+            background: #050a11;
+            color: #e5fef6;
+            border-radius: 9px;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        input:focus {
+            border-color: #00ff9f;
+            box-shadow: 0 0 12px rgba(0, 255, 160, 0.6);
+        }
+
+        /* BOTÃO */
+        .button-primary {
+            width: 100%;
+            padding: 12px;
+            margin-top: 6px;
+            background: linear-gradient(90deg, #00ff9f, #00ff57);
+            border: none;
+            border-radius: 999px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 700;
+            color: #020509;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            transition: all 0.2s;
+        }
+
+        .button-primary:hover {
+            transform: translateY(-1px);
+            box-shadow:
+                0 0 24px rgba(0, 255, 160, 1),
+                0 8px 30px rgba(0, 0, 0, 0.9);
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 18px;
+            font-size: 12px;
+            color: #6b7b8d;
+        }
+
+        .footer a {
+            color: #00ff9f;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="background-grid"></div>
+    <div class="scanline"></div>
+    <div class="glow-orb"></div>
+
+    <div class="container">
+
+        <!-- LOGO -->
+        <div class="logo">
+            <img src="pondersec_logo.jpeg" alt="PonderSEC Logo">
+        </div>
+
+        <div class="product-name">PONDERSEC</div>
+        <div class="headline">Criar Conta</div>
+
+        <p class="subtitle">
+            Registre-se para acessar a <span>LLM ofensiva</span> da PonderSEC.
+        </p>
+
+        <form class="form" action="{% url 'cadastro' %}" method="POST">{% csrf_token %}
+            <!-- Quando integrar ao Django:
+            action="{% url 'cadastro' %}"
+            e adicionar {% csrf_token %}
+            -->
+
+            <div class="form-group">
+                <label>Nome de Usuário</label>
+                <input type="text" name="username" placeholder="ex: root.pentest">
+            </div>
+
+            <div class="form-group">
+                <label>E-mail</label>
+                <input type="email" name="email" placeholder="voce@empresa.com">
+            </div>
+
+            <div class="form-group">
+                <label>Senha</label>
+                <input type="password" name="password" placeholder="••••••••">
+            </div>
+
+            <div class="form-group">
+                <label>Confirmar Senha</label>
+                <input type="password" name="password_confirm" placeholder="••••••••">
+            </div>
+
+            <button type="submit" class="button-primary">Cadastrar</button>
+        </form>
+
+        <div class="footer">
+            Já possui conta? <a href="{% url 'login' %}">Entrar</a>
+        </div>
+
+    </div>
+
+</body>
+</html>
