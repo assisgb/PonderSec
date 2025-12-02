@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>PonderSEC — LLM</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #0b0c10;
+            color: #c5c6c7;
+        }
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: #1f2833;
+            border-radius: 10px;
+        }
+        textarea {
+            width: 100%;
+            padding: 12px;
+            height: 140px;
+            background-color: #0b0c10;
+            color: #c5c6c7;
+            border: 1px solid #45a29e;
+            border-radius: 8px;
+        }
+        button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            background-color: #45a29e;
+            color: #0b0c10;
+        }
+        .resposta {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #0b0c10;
+            border: 1px solid #45a29e;
+            border-radius: 10px;
+        }
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>PonderSEC — Módulo de Análise LLM</h1>
+
+    <form method="POST">
+        {% csrf_token %}
+        <label>Prompt:</label>
+        <textarea name="prompt">{{ prompt }}</textarea>
+        <button type="submit">Executar</button>
+    </form>
+
+    {% if resposta_gemini %}
+        <div class="resposta">
+            <h2>Gemini</h2>
+            <pre>{{ resposta_gemini }}</pre>
+        </div>
+    {% endif %}
+
+    {% if resposta_groq %}
+        <div class="resposta">
+            <h2>Groq</h2>
+            <pre>{{ resposta_groq }}</pre>
+        </div>
+    {% endif %}
+</div>
+</body>
+</html>
