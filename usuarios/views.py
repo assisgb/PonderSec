@@ -41,7 +41,7 @@ def login(request):
         user = authenticate(username=username, password=senha)
 
         if user:
-            return HttpResponse("Login realizado com sucesso!");
+            return tela_inicial(request)
         else:
             return HttpResponse("Credenciais inválidas!");
 
