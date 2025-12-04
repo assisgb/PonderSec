@@ -1,15 +1,10 @@
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.contrib.auth.models import User
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate
 
 # Create your views here.
-
-
-
-def tela_inicial(request):
-    return render(request, 'tela_inicial.html')
-
 def cadastro(request):
     if request.method == "GET":
         return render(request, 'cadastro.html')
@@ -41,7 +36,8 @@ def login(request):
         user = authenticate(username=username, password=senha)
 
         if user:
-            return tela_inicial(request)
+            login(request, user)
+            return HttpResponse("Login realizado com sucesso!");
         else:
             return HttpResponse("Credenciais inválidas!");
 
