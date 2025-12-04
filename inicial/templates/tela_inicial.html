@@ -1,0 +1,171 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PonderSEC — Início</title>
+
+    <!-- Fonte futurista -->
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Space Grotesk", system-ui, sans-serif;
+            background: radial-gradient(circle at top, #051015 0, #02060b 45%, #000000 100%);
+            color: #e5fef6;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* Fundo estilo hacker */
+        .background-grid {
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(90deg, rgba(0, 255, 160, 0.06) 1px, transparent 1px),
+                linear-gradient(180deg, rgba(0, 255, 160, 0.06) 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        .scanline {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(
+                to bottom,
+                rgba(0, 0, 0, 0.7),
+                rgba(0, 0, 0, 0.15),
+                rgba(0, 0, 0, 0.7)
+            );
+            background-size: 100% 4px;
+            opacity: 0.25;
+            pointer-events: none;
+        }
+
+        .glow-orb {
+            position: fixed;
+            width: 400px;
+            height: 400px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 255, 160, 0.25), transparent 60%);
+            top: 12%;
+            right: 8%;
+            filter: blur(18px);
+            opacity: 0.75;
+            pointer-events: none;
+        }
+
+        /* CARD CENTRAL */
+        .container {
+            position: relative;
+            width: 100%;
+            max-width: 480px;
+            padding: 40px 40px 50px;
+            background: radial-gradient(circle at top, #0b141d 0, #050a11 55%, #020509 100%);
+            border-radius: 18px;
+            text-align: center;
+
+            box-shadow:
+                0 0 0 1px rgba(0, 255, 160, 0.25),
+                0 20px 60px rgba(0, 0, 0, 0.9),
+                0 0 40px rgba(0, 255, 160, 0.35);
+        }
+
+        /* Logo */
+        .logo img {
+            width: 150px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            filter:
+                drop-shadow(0 0 10px rgba(0, 255, 160, 0.9))
+                drop-shadow(0 0 25px rgba(0, 255, 160, 0.6));
+        }
+
+        .title {
+            color: #00ff9f;
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            margin-bottom: 20px;
+        }
+
+        /* Botões */
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin-top: 12px;
+        }
+
+        .option-btn {
+            padding: 14px;
+            width: 100%;
+            border: none;
+            border-radius: 999px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 700;
+            color: #020509;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+
+            background: linear-gradient(90deg, #00ff9f, #00ff57);
+            transition: all 0.2s;
+        }
+
+        .option-btn:hover {
+            transform: translateY(-2px);
+            box-shadow:
+                0 0 25px rgba(0, 255, 160, 0.9),
+                0 8px 30px rgba(0, 0, 0, 0.9);
+        }
+
+        .footer {
+            margin-top: 25px;
+            font-size: 12px;
+            color: #6b7b8d;
+        }
+
+        .footer a {
+            color: #00ff9f;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="background-grid"></div>
+    <div class="scanline"></div>
+    <div class="glow-orb"></div>
+
+    <div class="container">
+
+        <div class="logo">
+            <img src="{% static 'pondersec_logo.jpg' %}" alt="Logo">
+        </div>
+
+        <div class="title">Escolha uma Ação</div>
+
+        <div class="options">
+            <button class="option-btn" >Realizar Avaliação</button>
+            <button class="option-btn" >Ver Resultados</button>
+            <button class="option-btn" >Sair</button>
+        <footer class="footer">
+            PonderSEC © 2025 — Segurança Ofensiva
+        </footer>
+    </div>
+
+</body>
+</html>
