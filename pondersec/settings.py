@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'usuarios',
+    'responsegenerator',
 ]
 
 MIDDLEWARE = [
@@ -118,6 +119,9 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 LOGIN_URL = '/'
+LOGIN_REDIRECT_URL = '/perguntar/'
+LOGOUT_REDIRECT_URL = '/'
+
 
 
 # Default primary key field type
