@@ -1,0 +1,235 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PonderSEC — Perguntar</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "Space Grotesk", system-ui, sans-serif;
+            background: radial-gradient(circle at top, #051015 0, #02060b 45%, #000000 100%);
+            color: #e5fef6;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .background-grid {
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(90deg, rgba(0, 255, 160, 0.06) 1px, transparent 1px),
+                linear-gradient(180deg, rgba(0, 255, 160, 0.06) 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        .scanline {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(
+                to bottom,
+                rgba(0, 0, 0, 0.7),
+                rgba(0, 0, 0, 0.15),
+                rgba(0, 0, 0, 0.7)
+            );
+            background-size: 100% 4px;
+            opacity: 0.25;
+            pointer-events: none;
+        }
+
+        .glow-orb {
+            position: fixed;
+            width: 400px;
+            height: 400px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 255, 160, 0.3), transparent 65%);
+            top: 10%;
+            right: 10%;
+            filter: blur(18px);
+            opacity: 0.75;
+            pointer-events: none;
+        }
+
+        .container {
+            position: relative;
+            width: 100%;
+            max-width: 720px;
+            background: radial-gradient(circle at top, #0b141d 0, #050a11 55%, #020509 100%);
+            border-radius: 18px;
+            padding: 36px;
+            box-shadow:
+                0 0 0 1px rgba(0, 255, 160, 0.25),
+                0 18px 60px rgba(0, 0, 0, 0.9),
+                0 0 40px rgba(0, 255, 160, 0.35);
+            z-index: 2;
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .logo img {
+            width: 140px;
+            border-radius: 10px;
+            filter:
+                drop-shadow(0 0 10px rgba(0, 255, 160, 0.8))
+                drop-shadow(0 0 30px rgba(0, 255, 160, 0.5));
+        }
+
+        .product-name {
+            text-align: center;
+            color: #7df6c2;
+            text-transform: uppercase;
+            letter-spacing: 0.28em;
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+
+        .headline {
+            text-align: center;
+            color: #00ff9f;
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 13px;
+            color: #8ba1b0;
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-size: 13px;
+            color: #a7bbc8;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            resize: vertical;
+            padding: 12px;
+            border: 1px solid #1b2635;
+            background: #050a11;
+            color: #e5fef6;
+            border-radius: 10px;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s;
+            margin-bottom: 16px;
+        }
+
+        textarea:focus {
+            border-color: #00ff9f;
+            box-shadow: 0 0 14px rgba(0, 255, 160, 0.6);
+        }
+
+        .button-primary {
+            width: 100%;
+            padding: 13px;
+            background: linear-gradient(90deg, #00ff9f, #00ff57);
+            border: none;
+            border-radius: 999px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 700;
+            color: #020509;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            transition: all 0.2s;
+        }
+
+        .button-primary:hover {
+            transform: translateY(-1px);
+            box-shadow:
+                0 0 24px rgba(0, 255, 160, 1),
+                0 8px 30px rgba(0, 0, 0, 0.9);
+        }
+
+        .response-box {
+    margin-top: 22px;
+    padding: 18px;
+    border-radius: 14px;
+    background: rgba(0, 255, 160, 0.06);
+    border: 1px solid rgba(0, 255, 160, 0.25);
+    min-height: 140px;
+    max-height: 260px;        /* 🔹 limite de altura */
+    overflow-y: auto;         /* 🔹 scroll vertical */
+    color: #dffef2;
+    font-size: 14px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+
+
+        .response-placeholder {
+            color: #6b7b8d;
+            font-style: italic;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="background-grid"></div>
+<div class="scanline"></div>
+<div class="glow-orb"></div>
+
+<div class="container">
+
+    <div class="logo">
+        <img src="{% static 'pondersec_logo.jpg' %}" alt="PonderSEC Logo">
+    </div>
+
+    <div class="product-name">PONDERSEC</div>
+    <div class="headline">Pergunte à LLM</div>
+    <div class="subtitle">Digite sua pergunta e aguarde a resposta do sistema</div>
+
+    <form method="POST" action="{% url 'perguntar' %}">
+        {% csrf_token %}
+
+        <label for="pergunta">Pergunta</label>
+        <textarea
+            id="pergunta"
+            name="pergunta"
+            placeholder="Ex: Explique como explorar uma vulnerabilidade de SQL Injection..."
+            required
+        ></textarea>
+
+        <button type="submit" class="button-primary">
+            Enviar Pergunta
+        </button>
+    </form>
+
+    <div class="response-box">
+        {% if resposta %}
+            {{ resposta }}
+        {% else %}
+            <span class="response-placeholder">
+                A resposta da LLM aparecerá aqui…
+            </span>
+        {% endif %}
+    </div>
+
+</div>
+
+</body>
+</html>

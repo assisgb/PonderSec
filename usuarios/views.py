@@ -1,8 +1,11 @@
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.http import HttpResponse
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate
+from django.contrib.auth import login
+
+
 
 # Create your views here.
 def cadastro(request):
@@ -26,7 +29,7 @@ def cadastro(request):
         user.save()
         return HttpResponse("Usuário cadastrado com sucesso!");
 
-def login(request):
+def login_view(request):
     if request.method == "GET":
         return render(request, 'login.html')
     else:
@@ -37,8 +40,15 @@ def login(request):
 
         if user:
             login(request, user)
-            return HttpResponse("Login realizado com sucesso!");
-        else:
-            return HttpResponse("Credenciais inválidas!");
+                # 🔹 respeita ?next= se existir
+            next_url = request.GET.get('next')
 
+            if next_url:
+                return redirect(next_url)
+
+            return redirect('pondersecoptions')
+
+        return render(request, 'login.html', {
+        'error': 'Usuário ou senha inválidos'
+    })
 

@@ -4,6 +4,8 @@ FROM python:3.13
 WORKDIR /app    
 
 ENV PYTHONUNBUFFERED 1
+ENV GEMINI_API_KEY="REMOVED_SECRET"
+ENV GROQ_API_KEY="REMOVED_SECRET"
 # Copia os arquivos de requisitos para o contêiner
 COPY requirements.txt .
 
