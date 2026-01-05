@@ -76,6 +76,8 @@
                 0 18px 60px rgba(0, 0, 0, 0.9),
                 0 0 40px rgba(0, 255, 160, 0.35);
             z-index: 2;
+            max-height: 900px;        /* 🔹 limite de altura */
+            overflow-y: auto;         /* 🔹 scroll vertical */
         }
 
         .logo {
@@ -164,7 +166,22 @@
                 0 8px 30px rgba(0, 0, 0, 0.9);
         }
 
-        .response-box {
+        .response-box-gemini {
+    margin-top: 22px;
+    padding: 18px;
+    border-radius: 14px;
+    background: rgba(0, 255, 160, 0.06);
+    border: 1px solid rgba(0, 255, 160, 0.25);
+    min-height: 140px;
+    max-height: 260px;        /* 🔹 limite de altura */
+    overflow-y: auto;         /* 🔹 scroll vertical */
+    color: #dffef2;
+    font-size: 14px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+
+.response-box-groq {
     margin-top: 22px;
     padding: 18px;
     border-radius: 14px;
@@ -219,12 +236,22 @@
         </button>
     </form>
 
-    <div class="response-box">
-        {% if resposta %}
-            {{ resposta }}
+    <div class="response-box-gemini">
+        {% if resposta_gemini%}
+            {{ resposta_gemini }}
         {% else %}
             <span class="response-placeholder">
-                A resposta da LLM aparecerá aqui…
+                A resposta da LLM Gemini aparecerá aqui…
+            </span>
+        {% endif %}
+    </div>
+
+     <div class="response-box-groq">
+        {% if resposta_groq %}
+            {{ resposta_groq }}
+        {% else %}
+            <span class="response-placeholder">
+                A resposta da LLM Groq aparecerá aqui…
             </span>
         {% endif %}
     </div>
