@@ -1,1 +1,369 @@
-HISTORICO
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PonderSEC — Histórico</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "Space Grotesk", system-ui, sans-serif;
+            background: radial-gradient(circle at top, #051015 0, #02060b 45%, #000000 100%);
+            color: #e5fef6;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .background-grid {
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(90deg, rgba(0, 255, 160, 0.06) 1px, transparent 1px),
+                linear-gradient(180deg, rgba(0, 255, 160, 0.06) 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        .scanline {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.7));
+            background-size: 100% 4px;
+            opacity: 0.25;
+            pointer-events: none;
+        }
+
+        .glow-orb {
+            position: fixed;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 255, 160, 0.25), transparent 70%);
+            top: -10%;
+            right: -5%;
+            filter: blur(80px);
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .container {
+            position: relative;
+            max-width: 1200px;
+            margin: 0 auto;
+            z-index: 2;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            padding: 25px 30px;
+            background: radial-gradient(circle at top left, #0b141d 0, #050a11 100%);
+            border-radius: 16px;
+            border: 1px solid rgba(0, 255, 160, 0.25);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6), 0 0 20px rgba(0, 255, 160, 0.15);
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+
+        .logo-section img {
+            width: 70px;
+            height: 70px;
+            border-radius: 10px;
+            filter: drop-shadow(0 0 15px rgba(0, 255, 160, 0.8));
+        }
+
+        .header-title {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .product-name {
+            color: #7df6c2;
+            text-transform: uppercase;
+            letter-spacing: 0.25em;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .page-title {
+            color: #00ff9f;
+            font-size: 26px;
+            font-weight: 700;
+        }
+
+        .btn-back {
+            padding: 12px 28px;
+            background: linear-gradient(90deg, #00ff9f, #00ff57);
+            border: none;
+            border-radius: 999px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 700;
+            color: #020509;
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            transition: all 0.2s;
+            display: inline-block;
+        }
+
+        .btn-back:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 25px rgba(0, 255, 160, 1), 0 8px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .filter-section {
+            margin-bottom: 30px;
+            padding: 22px;
+            background: rgba(0, 255, 160, 0.05);
+            border: 1px solid rgba(0, 255, 160, 0.2);
+            border-radius: 14px;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 14px 18px;
+            background: #050a11;
+            border: 1px solid #1b2635;
+            border-radius: 10px;
+            color: #e5fef6;
+            font-size: 15px;
+            font-family: "Space Grotesk", system-ui, sans-serif;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .search-box::placeholder {
+            color: #6b7b8d;
+        }
+
+        .search-box:focus {
+            border-color: #00ff9f;
+            box-shadow: 0 0 16px rgba(0, 255, 160, 0.5);
+        }
+
+        .history-grid {
+            display: grid;
+            gap: 20px;
+        }
+
+        .history-card {
+            background: radial-gradient(circle at top left, #0b141d 0, #050a11 100%);
+            border: 1px solid rgba(0, 255, 160, 0.25);
+            border-radius: 14px;
+            padding: 24px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .history-card:hover {
+            border-color: #00ff9f;
+            box-shadow: 0 0 30px rgba(0, 255, 160, 0.35);
+            transform: translateY(-3px);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .card-date {
+            font-size: 11px;
+            color: #7df6c2;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            padding: 6px 14px;
+            background: rgba(0, 255, 160, 0.12);
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-icon {
+            background: rgba(0, 255, 160, 0.1);
+            border: 1px solid rgba(0, 255, 160, 0.3);
+            color: #7df6c2;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-size: 16px;
+        }
+
+        .btn-icon:hover {
+            background: rgba(0, 255, 160, 0.25);
+            border-color: #00ff9f;
+            color: #00ff9f;
+            transform: scale(1.05);
+        }
+
+        .card-question {
+            font-size: 17px;
+            font-weight: 600;
+            color: #e5fef6;
+            margin-bottom: 14px;
+            line-height: 1.5;
+        }
+
+        .card-preview {
+            font-size: 14px;
+            color: #8ba1b0;
+            line-height: 1.7;
+            margin-bottom: 16px;
+        }
+
+        .card-footer {
+            display: flex;
+            gap: 10px;
+            padding-top: 14px;
+            border-top: 1px solid rgba(0, 255, 160, 0.15);
+        }
+
+        .tag {
+            font-size: 10px;
+            color: #7df6c2;
+            background: rgba(0, 255, 160, 0.1);
+            padding: 5px 12px;
+            border-radius: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-weight: 600;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 80px 40px;
+            background: rgba(0, 255, 160, 0.04);
+            border: 2px dashed rgba(0, 255, 160, 0.25);
+            border-radius: 18px;
+            margin-top: 50px;
+        }
+
+        .empty-icon {
+            font-size: 72px;
+            margin-bottom: 24px;
+            opacity: 0.4;
+        }
+
+        .empty-text {
+            font-size: 20px;
+            color: #8ba1b0;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .empty-subtext {
+            font-size: 14px;
+            color: #6b7b8d;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+
+            .logo-section {
+                flex-direction: column;
+            }
+
+            body {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-grid"></div>
+    <div class="scanline"></div>
+    <div class="glow-orb"></div>
+
+    <div class="container">
+        <div class="header">
+            <div class="logo-section">
+                <img src="{% static 'pondersec_logo.jpg' %}" alt="PonderSEC Logo">
+                <div class="header-title">
+                    <div class="product-name">PONDERSEC</div>
+                    <div class="page-title">Histórico de Perguntas</div>
+                </div>
+            </div>
+            <a href="{% url 'pondersec_options' %}" class="btn-back">Voltar</a>
+        </div>
+
+        <div class="filter-section">
+            <input type="text" class="search-box" id="searchInput" placeholder="Buscar no histórico..." onkeyup="filterHistory()">
+        </div>
+
+        <div class="history-grid" id="historyGrid">
+            {% if historico %}
+                {% for item in historico %}
+                <div class="history-card" data-question="{{ item.pergunta|lower }}">
+                    <div class="card-header">
+                        <span class="card-date">{{ item.data|date:"d/m/Y H:i" }}</span>
+                        <div class="card-actions">
+                            <button class="btn-icon" title="Ver detalhes">👁</button>
+                            <button class="btn-icon" title="Deletar">🗑</button>
+                        </div>
+                    </div>
+                    <div class="card-question">{{ item.pergunta }}</div>
+                    <div class="card-preview">{{ item.resposta_gemini|truncatewords:30 }}</div>
+                    <div class="card-footer">
+                        <span class="tag">Gemini</span>
+                        <span class="tag">Groq</span>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">📋</div>
+                    <div class="empty-text">Nenhum histórico encontrado</div>
+                    <div class="empty-subtext">Suas perguntas anteriores aparecerão aqui</div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        function filterHistory() {
+            const input = document.getElementById('searchInput');
+            const filter = input.value.toLowerCase();
+            const cards = document.querySelectorAll('.history-card');
+            
+            cards.forEach(card => {
+                const question = card.getAttribute('data-question');
+                if (question.includes(filter)) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+    </script>
+</body>
+</html>

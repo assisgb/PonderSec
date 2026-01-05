@@ -4,8 +4,8 @@ FROM python:3.13
 WORKDIR /app    
 
 ENV PYTHONUNBUFFERED 1
-ENV GEMINI_API_KEY="API_KEY"
-ENV GROQ_API_KEY="API_KEY"
+ENV GEMINI_API_KEY="AIzaSyB7xddDQsOpU1j5yME2Svs-HXD3zJ0RTV8"
+ENV GROQ_API_KEY="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"
 # Copia os arquivos de requisitos para o contêiner
 COPY requirements.txt .
 
