@@ -71,4 +71,9 @@ def perguntar(request):
 
 @login_required
 def historico(request):
-    return render(request, 'historico.html')
+    # Busque as perguntas do banco de dados do usuário logado
+    historico = None
+
+    return render(request, 'historico.html', {
+        'historico': historico
+    })
