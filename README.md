@@ -5,11 +5,11 @@
 ### Gerar imagem docker:
 
 ```bash 
-docker build -t "pondersec" .
+sudo docker compose build
 ```
 
 ### Rodar contêiner a partir da imagem criada:
 
 ```bash 
-docker run -p 8000:8000 pondersec
+sudo docker compose up
 ```

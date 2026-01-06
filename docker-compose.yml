@@ -1,0 +1,38 @@
+services:
+  # Serviço do Banco de Dados (PostgreSQL)
+  db:
+    image: postgres:15-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=pondersec_db
+      - POSTGRES_USER=pondersec_user
+      - POSTGRES_PASSWORD=teste123
+    restart: always
+
+  # Serviço do seu Site (Django + OpenCHA)
+  web:
+    build: .
+    command: >
+      sh -c "python manage.py makemigrations &&
+             python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - .:/app  # Hot-reload: altera o código aqui, altera no container
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      - db
+    environment:
+      # Configurações para o Django conectar no Postgres
+      - DB_ENGINE=django.db.backends.postgresql
+      - DB_NAME=pondersec_db
+      - DB_USER=pondersec_user
+      - DB_PASSWORD=teste123
+      - DB_HOST=db
+      - DB_PORT=5432
+
+volumes:
+  postgres_data:
