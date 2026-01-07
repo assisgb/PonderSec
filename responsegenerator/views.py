@@ -50,55 +50,39 @@ def perguntar(request):
 
             # ---------- Gemini ----------
             try:
-                orchestrator = Orchestrator(
-                    planner_model="gemini-2.5-flash",
-                    planner_api_key=os.environ.get("GOOGLE_API_KEY"),
+               
+                client_gemini = genai.Client()
+                response_gemini = client_gemini.models.generate_content(
+                    model="gemini-2.5-flash",
+                    contents=pergunta,
                 )
-                resposta_gemini = orchestrator.run(query=pergunta)
-                txt_limpo = str(resposta_gemini)
 
-                salvar_no_historico(request.user, pergunta_usuario, txt_limpo)
+                resposta_gemini = (
+                    f"Pergunta:\n{pergunta_usuario}\n\n"
+                    f"Resposta Gemini:\n{response_gemini.text}"
+                )
 
-                resposta_gemini = txt_limpo
-
-                #client_gemini = genai.Client()
-                #response_gemini = client_gemini.models.generate_content(
-                #    model="gemini-2.5-flash",
-                #    contents=pergunta,
-                #)
-
-                #resposta_gemini = (
-                #    f"Pergunta:\n{pergunta_usuario}\n\n"
-                #    f"Resposta Gemini:\n{response_gemini.text}"
-                #)
+                salvar_no_historico(request.user, pergunta_usuario, resposta_gemini)
 
             except Exception as e:
-                resposta_gemini = f"Erro no OpenCHA: {str(e)}"
+                resposta_gemini = f"Erro: {str(e)}"
 
             # ---------- Groq ----------
             try:
-                orchestrator = Orchestrator(
-                    planner_model="llama-3.3-70b-versatile",
-                    planner_api_key=os.environ.get("GROQ_API_KEY"),
+
+                client_groq = Groq(api_key=os.environ.get("GROQ_API_KEY"))
+
+                chat_completion = client_groq.chat.completions.create(
+                   messages=[{"role": "user", "content": pergunta}],
+                    model="llama-3.3-70b-versatile",
                 )
-                resposta_groq = orchestrator.run(query=pergunta)
-                txt_limpo = str(resposta_groq)
 
-                salvar_no_historico(request.user, pergunta_usuario, txt_limpo)
-                resposta_groq = txt_limpo
-
-                #client_groq = Groq(api_key=os.environ.get("GROQ_API_KEY"))
-
-                #chat_completion = client_groq.chat.completions.create(
-                #    messages=[{"role": "user", "content": pergunta}],
-                #    model="llama-3.3-70b-versatile",
-                #)
-
-                #resposta_groq = (
-                #    f"Pergunta:\n{pergunta_usuario}\n\n"
-                #    f"Resposta Groq:\n{chat_completion.choices[0].message.content}"
-                #)
-
+                resposta_groq = (
+                    f"Pergunta:\n{pergunta_usuario}\n\n"
+                    f"Resposta Groq:\n{chat_completion.choices[0].message.content}"
+                )
+                salvar_no_historico(request.user, pergunta_usuario, resposta_groq)
+            
             except Exception as e:
                 resposta_groq = f"Erro no OpenCHA: {str(e)}"
             
