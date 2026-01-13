@@ -1,21 +1,21 @@
-from django.shortcuts import render
-from openCHA.orchestrator import Orchestrator
-from openCHA.tasks import BaseTask
+from django.shortcuts import render, redirect, get_object_or_404
+from django.utils import timezone
+from django.contrib.auth.decorators import login_required
+from django.core.cache import cache
+#from openCHA.orchestrator import Orchestrator
+#from openCHA.tasks import BaseTask
 from google import genai
 import os
 from groq import Groq
-from django.contrib.auth.decorators import login_required
+from datetime import timedelta
 from responsegenerator.models import Historico
 
 def salvar_no_historico(user, pergunta, resposta):
-    # 1. Pega o histórico do usuário ordenado por data (antigo -> novo)
     logs = Historico.objects.filter(usuario=user).order_by('data')
     
-    # 2. Se já tiver 20 ou mais, deleta o primeiro (o mais antigo)
     if logs.count() >= 20:
         logs.first().delete()
         
-    # 3. Salva o novo registro
     Historico.objects.create(
         usuario=user,
         pergunta=pergunta,
@@ -27,6 +27,30 @@ def salvar_no_historico(user, pergunta, resposta):
 def pondersecoptions(request):
     return render(request, 'pondersecoptions.html')
 
+@login_required
+def deletar_item_historico(request, id):
+    # Busca o item pelo ID, mas SÓ se ele pertencer ao usuário logado (Segurança máxima)
+    item = get_object_or_404(Historico, id=id, usuario=request.user)
+    
+    # Só deleta se for uma requisição POST (padrão de segurança para não deletar via link direto)
+    if request.method == 'POST':
+        item.delete()
+        
+    return redirect('historico')
+
+@login_required
+def ver_detalhes(request, id):
+    item = get_object_or_404(Historico, id=id, usuario=request.user)
+    
+    return render(request, 'detalhes_historico.html', {
+        'item': item
+    })
+
+@login_required
+def limpar_historico(request):
+    if request.method == 'POST':
+        Historico.objects.filter(usuario=request.user).delete()
+    return redirect('historico')
 
 @login_required
 def perguntar(request):
@@ -47,72 +71,92 @@ def perguntar(request):
 
         if pergunta_usuario:
             pergunta = contexto + pergunta_usuario
+            ultima_interacao = Historico.objects.filter(usuario=request.user).order_by('-data').first()
+
+            # 2. Se a última pergunta for IGUAL à nova, é uma duplicação (F5 ou clique duplo)
+            if ultima_interacao and ultima_interacao.pergunta == pergunta_usuario:
+                print("🚫 Duplicação detectada! Recuperando resposta do banco sem chamar IAs.")
+                
+                # Para o usuário não achar que falhou, mostramos a resposta que já estava salva
+                resposta_gemini_formatada = f"Pergunta:\n{pergunta_usuario}\n\nResposta (Recuperada):\n{ultima_interacao.resposta_gemini}"
+                resposta_groq_formatada = f"Pergunta:\n{pergunta_usuario}\n\nResposta (Recuperada):\n{ultima_interacao.resposta_groq}"
+                
+                # RETORNAMOS AQUI. Não chama IA, não salva nada novo.
+                return render(request, 'perguntar.html', {
+                    'resposta_gemini': resposta_gemini_formatada,
+                    'resposta_groq': resposta_groq_formatada
+                })
+                texto_gemini_limpo = ""
+                texto_groq_limpo = ""
+            prompt_final = contexto + pergunta_usuario
 
             # ---------- Gemini ----------
             try:
-                orchestrator = Orchestrator(
-                    planner_model="gemini-2.5-flash",
-                    planner_api_key=os.environ.get("GOOGLE_API_KEY"),
+                #orchestrator = Orchestrator(
+                #    planner_model="gemini-2.5-flash",
+                #    planner_api_key=os.environ.get("GOOGLE_API_KEY"),
+                #)
+                #resposta_gemini = orchestrator.run(query=pergunta)
+                #txt_limpo = str(resposta_gemini)
+
+                #salvar_no_historico(request.user, pergunta_usuario, txt_limpo)
+
+                #resposta_gemini = txt_limpo
+
+                client_gemini = genai.Client()
+                resp_gem = client_gemini.models.generate_content(
+                    model="gemini-2.5-flash", contents=prompt_final
                 )
-                resposta_gemini = orchestrator.run(query=pergunta)
-                txt_limpo = str(resposta_gemini)
-
-                salvar_no_historico(request.user, pergunta_usuario, txt_limpo)
-
-                resposta_gemini = txt_limpo
-
-                #client_gemini = genai.Client()
-                #response_gemini = client_gemini.models.generate_content(
-                #    model="gemini-2.5-flash",
-                #    contents=pergunta,
-                #)
-
-                #resposta_gemini = (
-                #    f"Pergunta:\n{pergunta_usuario}\n\n"
-                #    f"Resposta Gemini:\n{response_gemini.text}"
-                #)
-
+                texto_gemini_limpo = resp_gem.text
+                resposta_gemini_formatada = f"Pergunta:\n{pergunta_usuario}\n\nResposta Gemini:\n{texto_gemini_limpo}"
             except Exception as e:
-                resposta_gemini = f"Erro no OpenCHA: {str(e)}"
+                texto_gemini_limpo = f"Erro no Gemini: {str(e)}"
+                resposta_gemini_formatada = texto_gemini_limpo
+            #except Exception as e:
+            #    resposta_gemini = f"Erro no OpenCHA: {str(e)}"
 
             # ---------- Groq ----------
             try:
-                orchestrator = Orchestrator(
-                    planner_model="llama-3.3-70b-versatile",
-                    planner_api_key=os.environ.get("GROQ_API_KEY"),
+                #orchestrator = Orchestrator(
+                #    planner_model="llama-3.3-70b-versatile",
+                #    planner_api_key=os.environ.get("GROQ_API_KEY"),
+                #)
+                #resposta_groq = orchestrator.run(query=pergunta)
+                #txt_limpo = str(resposta_groq)
+
+                #salvar_no_historico(request.user, pergunta_usuario, txt_limpo)
+                #resposta_groq = txt_limpo
+
+                client_groq = Groq(api_key=os.environ.get("GROQ_API_KEY"))
+                chat_completion = client_groq.chat.completions.create(
+                    messages=[{"role": "user", "content": prompt_final}],
+                    model="llama-3.3-70b-versatile",
                 )
-                resposta_groq = orchestrator.run(query=pergunta)
-                txt_limpo = str(resposta_groq)
-
-                salvar_no_historico(request.user, pergunta_usuario, txt_limpo)
-                resposta_groq = txt_limpo
-
-                #client_groq = Groq(api_key=os.environ.get("GROQ_API_KEY"))
-
-                #chat_completion = client_groq.chat.completions.create(
-                #    messages=[{"role": "user", "content": pergunta}],
-                #    model="llama-3.3-70b-versatile",
-                #)
-
-                #resposta_groq = (
-                #    f"Pergunta:\n{pergunta_usuario}\n\n"
-                #    f"Resposta Groq:\n{chat_completion.choices[0].message.content}"
-                #)
-
+                texto_groq_limpo = chat_completion.choices[0].message.content
+                resposta_groq_formatada = f"Pergunta:\n{pergunta_usuario}\n\nResposta Groq:\n{texto_groq_limpo}"
             except Exception as e:
-                resposta_groq = f"Erro no OpenCHA: {str(e)}"
-            
-            registros_usuario = Historico.objects.filter(usuario=request.user, pergunta=pergunta_usuario)
+                texto_groq_limpo = f"Erro no Groq: {str(e)}"
+                resposta_groq_formatada = texto_groq_limpo
 
-            if registros_usuario.count() >= 20:
-                registros_usuario.first().delete()
+            #except Exception as e:
+            #    resposta_groq = f"Erro no OpenCHA: {str(e)}"
 
-            Historico.objects.create(
-                usuario=request.user,
-                pergunta=pergunta_usuario,
-                resposta_gemini=resposta_gemini,
-                resposta_groq=resposta_groq
-            )
+            try:
+                # Remove o mais antigo se tiver 20
+                historico_qs = Historico.objects.filter(usuario=request.user).order_by('data')
+                if historico_qs.count() >= 20:
+                    historico_qs.first().delete()
+
+                Historico.objects.create(
+                    usuario=request.user,
+                    pergunta=pergunta_usuario,
+                    resposta_gemini=texto_gemini_limpo,
+                    resposta_groq=texto_groq_limpo
+                )
+                print("✅ Nova pergunta salva com sucesso.")
+                
+            except Exception as e:
+                print(f"❌ Erro crítico ao salvar no banco: {e}")
 
     return render(request, 'perguntar.html', {
         'resposta_gemini': resposta_gemini,

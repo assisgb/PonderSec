@@ -1,0 +1,122 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhes — PonderSEC</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: "Space Grotesk", sans-serif;
+            background: radial-gradient(circle at top, #051015 0, #02060b 45%, #000000 100%);
+            color: #e5fef6;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        .container { max-width: 900px; margin: 0 auto; }
+        
+        .header-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(0,255,160,0.2);
+        }
+        
+        .btn-back {
+            color: #7df6c2;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .btn-back:hover { color: #00ff9f; transform: translateX(-5px); }
+
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .message-box {
+            padding: 25px;
+            border-radius: 16px;
+            line-height: 1.6;
+            position: relative;
+        }
+
+        .user-message {
+            background: rgba(0, 255, 160, 0.05);
+            border: 1px solid rgba(0, 255, 160, 0.3);
+            border-left: 4px solid #00ff9f;
+        }
+
+        .ai-message {
+            background: #0b141d;
+            border: 1px solid #1b2635;
+        }
+
+        .label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #6b7b8d;
+            margin-bottom: 10px;
+            display: block;
+            font-weight: 700;
+        }
+
+        .user-message .label { color: #00ff9f; }
+        .ai-message .label { color: #7df6c2; }
+
+        .content-text {
+            white-space: pre-wrap;
+            color: #d0dbe3;
+        }
+
+        .meta-info {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 12px;
+            color: #4a5a6a;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-nav">
+            <a href="{% url 'historico' %}" class="btn-back">← Voltar ao Histórico</a>
+            <div style="color: #00ff9f; font-weight: bold;">ID: #{{ item.id }}</div>
+        </div>
+
+        <div class="chat-container">
+            <div class="message-box user-message">
+                <span class="label">Você perguntou:</span>
+                <div class="content-text">{{ item.pergunta }}</div>
+            </div>
+
+            {% if item.resposta_gemini %}
+            <div class="message-box ai-message">
+                <span class="label">🤖 Resposta Gemini/OpenCHA:</span>
+                <div class="content-text">{{ item.resposta_gemini }}</div>
+            </div>
+            {% endif %}
+
+            {% if item.resposta_groq %}
+            <div class="message-box ai-message">
+                <span class="label">⚡ Resposta Groq:</span>
+                <div class="content-text">{{ item.resposta_groq }}</div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="meta-info">
+            Registrado em: {{ item.data|date:"d de F de Y às H:i" }}
+        </div>
+    </div>
+</body>
+</html>
