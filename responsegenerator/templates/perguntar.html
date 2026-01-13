@@ -7,6 +7,7 @@
     <title>PonderSEC — Perguntar</title>
 
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
 
     <style>
         * {
@@ -144,6 +145,27 @@
             box-shadow: 0 0 14px rgba(0, 255, 160, 0.6);
         }
 
+        .btn-back {
+            padding: 12px 28px;
+            background: linear-gradient(90deg, #00ff9f, #00ff57);
+            border: none;
+            border-radius: 999px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 700;
+            color: #020509;
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            transition: all 0.2s;
+            display: inline-block;
+        }
+
+        .btn-back:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 25px rgba(0,255,160,1), 0 8px 20px rgba(0,0,0,0.5);
+        }
+
         .button-primary {
             width: 100%;
             padding: 13px;
@@ -167,40 +189,49 @@
         }
 
         .response-box-gemini {
-    margin-top: 22px;
-    padding: 18px;
-    border-radius: 14px;
-    background: rgba(0, 255, 160, 0.06);
-    border: 1px solid rgba(0, 255, 160, 0.25);
-    min-height: 140px;
-    max-height: 260px;        /* 🔹 limite de altura */
-    overflow-y: auto;         /* 🔹 scroll vertical */
-    color: #dffef2;
-    font-size: 14px;
-    line-height: 1.6;
-    white-space: pre-wrap;
-}
+            margin-top: 22px;
+            padding: 18px;
+            border-radius: 14px;
+            background: rgba(0, 255, 160, 0.06);
+            border: 1px solid rgba(0, 255, 160, 0.25);
+            min-height: 140px;
+            max-height: 260px;        /* 🔹 limite de altura */
+            overflow-y: auto;         /* 🔹 scroll vertical */
+            color: #dffef2;
+            font-size: 14px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
 
-.response-box-groq {
-    margin-top: 22px;
-    padding: 18px;
-    border-radius: 14px;
-    background: rgba(0, 255, 160, 0.06);
-    border: 1px solid rgba(0, 255, 160, 0.25);
-    min-height: 140px;
-    max-height: 260px;        /* 🔹 limite de altura */
-    overflow-y: auto;         /* 🔹 scroll vertical */
-    color: #dffef2;
-    font-size: 14px;
-    line-height: 1.6;
-    white-space: pre-wrap;
-}
-
+        .response-box-groq {
+            margin-top: 22px;
+            padding: 18px;
+            border-radius: 14px;
+            background: rgba(0, 255, 160, 0.06);
+            border: 1px solid rgba(0, 255, 160, 0.25);
+            min-height: 140px;
+            max-height: 260px;        /* 🔹 limite de altura */
+            overflow-y: auto;         /* 🔹 scroll vertical */
+            color: #dffef2;
+            font-size: 14px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
 
         .response-placeholder {
             color: #6b7b8d;
             font-style: italic;
         }
+
+        .mermaid {
+            background: #0b141d;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .mermaid-source { display: none; }
     </style>
 </head>
 
@@ -211,11 +242,10 @@
 <div class="glow-orb"></div>
 
 <div class="container">
-
     <div class="logo">
         <img src="{% static 'pondersec_logo.jpg' %}" alt="PonderSEC Logo">
     </div>
-
+    <a href="{% url 'pondersecoptions' %}" class="btn-back">Voltar</a>
     <div class="product-name">PONDERSEC</div>
     <div class="headline">Pergunte à LLM</div>
     <div class="subtitle">Digite sua pergunta e aguarde a resposta do sistema</div>
@@ -230,10 +260,9 @@
             placeholder="Ex: Explique como explorar uma vulnerabilidade de SQL Injection..."
             required
         ></textarea>
-
-        <button type="submit" class="button-primary">
-            Enviar Pergunta
-        </button>
+        <form method="POST" onsubmit="this.querySelector('button[type=submit]').disabled = true; this.querySelector('button[type=submit]').innerText = 'Processando...';">
+            <button type="submit" class="button-primary">Enviar Pergunta</button>
+        </form>
     </form>
 
     <div class="response-box-gemini">
@@ -257,6 +286,48 @@
     </div>
 
 </div>
+
+<script>
+    function travarBotao() {
+        const btn = document.getElementById('btnEnviar');
+        const text = document.getElementById('pergunta');
+        if(text.value.trim() !== "") {
+            btn.disabled = true;
+            btn.innerText = 'Processando...';
+            btn.style.opacity = "0.7";
+        }
+    }
+
+    mermaid.initialize({ 
+        startOnLoad: true,
+        theme: 'dark',
+        securityLevel: 'loose',
+    });
+
+    function renderizarDiagramas(elementId) {
+        const container = document.getElementById(elementId);
+        if (!container) return;
+
+        let content = container.innerHTML;
+
+        const regex = /```mermaid([\s\S]*?)```/g;
+
+        const newContent = content.replace(regex, (match, code) => {
+            let cleanCode = code.replace(/&gt;/g, '>').replace(/&lt;/g, '<').trim();
+            return `<div class="mermaid">${cleanCode}</div>`;
+        });
+
+        if (content !== newContent) {
+            container.innerHTML = newContent;
+            mermaid.init(undefined, container.querySelectorAll('.mermaid'));
+        }
+    }
+
+    window.addEventListener('load', () => {
+        renderizarDiagramas('gemini-content');
+        renderizarDiagramas('groq-content');
+    });
+</script>
 
 </body>
 </html>

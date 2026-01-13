@@ -13,7 +13,7 @@ WORKDIR /app
 
 RUN pip install --upgrade pip
 
-RUN pip install git+https://github.com/assisgb/open-cha-cybersec-version.git
+#RUN pip install git+https://github.com/assisgb/open-cha-cybersec-version.git
 # Copia os arquivos de requisitos para o contêiner
 COPY requirements.txt .
 

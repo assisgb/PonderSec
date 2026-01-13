@@ -4,12 +4,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-{% load static %}
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PonderSEC — Histórico</title>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
@@ -24,294 +18,131 @@
         }
         
         .background-grid {
-            position: fixed;
-            inset: 0;
+            position: fixed; inset: 0;
             background-image: linear-gradient(90deg, rgba(0,255,160,0.06) 1px, transparent 1px), linear-gradient(180deg, rgba(0,255,160,0.06) 1px, transparent 1px);
-            background-size: 40px 40px;
-            opacity: 0.4;
-            pointer-events: none;
-            z-index: 0;
+            background-size: 40px 40px; opacity: 0.4; pointer-events: none; z-index: 0;
         }
         
         .scanline {
-            position: fixed;
-            inset: 0;
+            position: fixed; inset: 0;
             background: linear-gradient(to bottom, rgba(0,0,0,0.7), rgba(0,0,0,0.15), rgba(0,0,0,0.7));
-            background-size: 100% 4px;
-            opacity: 0.25;
-            pointer-events: none;
-            z-index: 0;
+            background-size: 100% 4px; opacity: 0.25; pointer-events: none; z-index: 0;
         }
         
-        .glow-orb {
-            position: fixed;
-            width: 500px;
-            height: 500px;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(0,255,160,0.25), transparent 70%);
-            top: -10%;
-            right: -5%;
-            filter: blur(80px);
-            opacity: 0.6;
-            pointer-events: none;
-            z-index: 0;
-        }
-        
-        .container {
-            position: relative;
-            max-width: 1200px;
-            margin: 0 auto;
-            z-index: 2;
-        }
+        .container { position: relative; max-width: 1200px; margin: 0 auto; z-index: 2; }
         
         .header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 30px;
-            padding: 25px 30px;
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 30px; padding: 25px 30px;
             background: radial-gradient(circle at top left, #0b141d 0, #050a11 100%);
-            border-radius: 16px;
-            border: 1px solid rgba(0,255,160,0.25);
+            border-radius: 16px; border: 1px solid rgba(0,255,160,0.25);
             box-shadow: 0 8px 30px rgba(0,0,0,0.6), 0 0 20px rgba(0,255,160,0.15);
         }
         
-        .logo-section {
-            display: flex;
-            align-items: center;
-            gap: 18px;
-        }
-        
+        .logo-section { display: flex; align-items: center; gap: 18px; }
         .logo-section img {
-            width: 70px;
-            height: 70px;
-            border-radius: 10px;
-            filter: drop-shadow(0 0 15px rgba(0,255,160,0.8)) drop-shadow(0 0 30px rgba(0,255,160,0.5));
-            object-fit: cover;
+            width: 70px; height: 70px; border-radius: 10px;
+            filter: drop-shadow(0 0 15px rgba(0,255,160,0.8)); object-fit: cover;
         }
         
-        .header-title {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-        
-        .product-name {
-            color: #7df6c2;
-            text-transform: uppercase;
-            letter-spacing: 0.25em;
-            font-size: 11px;
-            font-weight: 600;
-        }
-        
-        .page-title {
-            color: #00ff9f;
-            font-size: 26px;
-            font-weight: 700;
-            line-height: 1.2;
-        }
+        .header-title { display: flex; flex-direction: column; gap: 4px; }
+        .product-name { color: #7df6c2; text-transform: uppercase; letter-spacing: 0.25em; font-size: 11px; font-weight: 600; }
+        .page-title { color: #00ff9f; font-size: 26px; font-weight: 700; line-height: 1.2; }
         
         .btn-back {
             padding: 12px 28px;
             background: linear-gradient(90deg, #00ff9f, #00ff57);
-            border: none;
-            border-radius: 999px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 700;
-            color: #020509;
-            text-decoration: none;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            transition: all 0.2s;
-            display: inline-block;
+            border: none; border-radius: 999px; cursor: pointer;
+            font-size: 14px; font-weight: 700; color: #020509;
+            text-decoration: none; text-transform: uppercase; letter-spacing: 0.08em;
+            transition: all 0.2s; display: inline-block;
         }
-        
-        .btn-back:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 0 25px rgba(0,255,160,1), 0 8px 20px rgba(0,0,0,0.5);
-        }
-        
+        .btn-back:hover { transform: translateY(-2px); box-shadow: 0 0 25px rgba(0,255,160,1); }
+
         .filter-section {
-            margin-bottom: 30px;
-            padding: 22px;
+            margin-bottom: 30px; padding: 22px;
             background: rgba(0,255,160,0.05);
             border: 1px solid rgba(0,255,160,0.2);
             border-radius: 14px;
+            display: flex; flex-direction: column; gap: 15px;
         }
         
         .search-box {
-            width: 100%;
-            padding: 14px 18px;
-            background: #050a11;
-            border: 1px solid #1b2635;
-            border-radius: 10px;
-            color: #e5fef6;
-            font-size: 15px;
-            font-family: "Space Grotesk", system-ui, sans-serif;
-            outline: none;
-            transition: all 0.2s;
+            width: 100%; padding: 14px 18px;
+            background: #050a11; border: 1px solid #1b2635;
+            border-radius: 10px; color: #e5fef6; font-size: 15px; outline: none;
+            font-family: "Space Grotesk", sans-serif; transition: all 0.2s;
         }
-        
-        .search-box::placeholder {
-            color: #6b7b8d;
-        }
-        
-        .search-box:focus {
-            border-color: #00ff9f;
-            box-shadow: 0 0 16px rgba(0,255,160,0.5);
-        }
-        
-        .history-grid {
-            display: grid;
-            gap: 20px;
-        }
+        .search-box:focus { border-color: #00ff9f; box-shadow: 0 0 16px rgba(0,255,160,0.5); }
+
+        .history-grid { display: grid; gap: 20px; }
         
         .history-card {
             background: radial-gradient(circle at top left, #0b141d 0, #050a11 100%);
             border: 1px solid rgba(0,255,160,0.25);
-            border-radius: 14px;
-            padding: 24px;
-            transition: all 0.3s;
-            cursor: pointer;
+            border-radius: 14px; padding: 24px; transition: all 0.3s;
         }
+        .history-card:hover { border-color: #00ff9f; box-shadow: 0 0 30px rgba(0,255,160,0.35); transform: translateY(-3px); }
         
-        .history-card:hover {
-            border-color: #00ff9f;
-            box-shadow: 0 0 30px rgba(0,255,160,0.35);
-            transform: translateY(-3px);
-        }
-        
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-        }
-        
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
         .card-date {
-            font-size: 11px;
-            color: #7df6c2;
-            text-transform: uppercase;
-            letter-spacing: 0.12em;
-            padding: 6px 14px;
-            background: rgba(0,255,160,0.12);
-            border-radius: 20px;
-            font-weight: 600;
+            font-size: 11px; color: #7df6c2; text-transform: uppercase;
+            letter-spacing: 0.12em; padding: 6px 14px;
+            background: rgba(0,255,160,0.12); border-radius: 20px; font-weight: 600;
         }
         
-        .card-actions {
-            display: flex;
-            gap: 10px;
-        }
+        .card-actions { display: flex; gap: 10px; }
         
         .btn-icon {
-            background: rgba(0,255,160,0.1);
-            border: 1px solid rgba(0,255,160,0.3);
-            color: #7df6c2;
-            width: 36px;
-            height: 36px;
-            border-radius: 8px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-            font-size: 16px;
+            background: rgba(0,255,160,0.1); border: 1px solid rgba(0,255,160,0.3);
+            color: #7df6c2; width: 36px; height: 36px; border-radius: 8px;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s; font-size: 16px; text-decoration: none;
+        }
+        .btn-icon:hover { background: rgba(0,255,160,0.25); border-color: #00ff9f; color: #00ff9f; transform: scale(1.05); }
+
+        .card-question { font-size: 17px; font-weight: 600; color: #e5fef6; margin-bottom: 14px; line-height: 1.5; }
+        .card-preview { font-size: 14px; color: #8ba1b0; line-height: 1.7; margin-bottom: 16px; }
+        
+        .card-footer { display: flex; gap: 10px; padding-top: 14px; border-top: 1px solid rgba(0,255,160,0.15); }
+        .tag { font-size: 10px; color: #7df6c2; background: rgba(0,255,160,0.1); padding: 5px 12px; border-radius: 14px; text-transform: uppercase; font-weight: 600; }
+
+        
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(5px);
+            z-index: 99999; 
+            display: none;
+            justify-content: center; align-items: center; opacity: 0; transition: opacity 0.3s ease;
         }
         
-        .btn-icon:hover {
-            background: rgba(0,255,160,0.25);
-            border-color: #00ff9f;
-            color: #00ff9f;
-            transform: scale(1.05);
-        }
+        .modal-overlay.active { display: flex; opacity: 1; }
         
-        .card-question {
-            font-size: 17px;
-            font-weight: 600;
-            color: #e5fef6;
-            margin-bottom: 14px;
-            line-height: 1.5;
+        .modal-box {
+            background: #0b141d; border: 1px solid #00ff9f;
+            box-shadow: 0 0 25px rgba(0, 255, 160, 0.15); padding: 30px;
+            border-radius: 16px; width: 90%; max-width: 400px;
+            text-align: center; transform: scale(0.9); transition: transform 0.3s ease;
         }
+        .modal-overlay.active .modal-box { transform: scale(1); }
         
-        .card-preview {
-            font-size: 14px;
-            color: #8ba1b0;
-            line-height: 1.7;
-            margin-bottom: 16px;
-        }
+        .modal-title { color: #e5fef6; font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+        .modal-desc { color: #8ba1b0; font-size: 14px; margin-bottom: 25px; line-height: 1.5; }
         
-        .card-footer {
-            display: flex;
-            gap: 10px;
-            padding-top: 14px;
-            border-top: 1px solid rgba(0,255,160,0.15);
-        }
+        .modal-buttons { display: flex; gap: 15px; justify-content: center; }
         
-        .tag {
-            font-size: 10px;
-            color: #7df6c2;
-            background: rgba(0,255,160,0.1);
-            padding: 5px 12px;
-            border-radius: 14px;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            font-weight: 600;
-        }
+        .btn-modal { padding: 10px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; font-family: "Space Grotesk", sans-serif; transition: all 0.2s; }
         
-        .empty-state {
-            text-align: center;
-            padding: 80px 40px;
-            background: rgba(0,255,160,0.04);
-            border: 2px dashed rgba(0,255,160,0.25);
-            border-radius: 18px;
-            margin-top: 50px;
-        }
+        .btn-cancel { background: transparent; border: 1px solid #4a5a6a; color: #8ba1b0; }
+        .btn-cancel:hover { border-color: #e5fef6; color: #e5fef6; }
         
-        .empty-icon {
-            font-size: 72px;
-            margin-bottom: 24px;
-            opacity: 0.4;
-        }
-        
-        .empty-text {
-            font-size: 20px;
-            color: #8ba1b0;
-            margin-bottom: 12px;
-            font-weight: 600;
-        }
-        
-        .empty-subtext {
-            font-size: 14px;
-            color: #6b7b8d;
-        }
-        
-        @media (max-width: 768px) {
-            .header {
-                flex-direction: column;
-                gap: 20px;
-                text-align: center;
-            }
-            .logo-section {
-                flex-direction: column;
-            }
-            body {
-                padding: 15px;
-            }
-            .page-title {
-                font-size: 22px;
-            }
-            .btn-back {
-                width: 100%;
-            }
-        }
+        .btn-confirm { background: rgba(255, 77, 77, 0.15); border: 1px solid #ff4d4d; color: #ff4d4d; }
+        .btn-confirm:hover { background: #ff4d4d; color: #fff; box-shadow: 0 0 15px rgba(255, 77, 77, 0.4); }
     </style>
 </head>
 <body>
     <div class="background-grid"></div>
     <div class="scanline"></div>
-    <div class="glow-orb"></div>
 
     <div class="container">
         <div class="header">
@@ -327,6 +158,21 @@
 
         <div class="filter-section">
             <input type="text" class="search-box" id="searchInput" placeholder="Buscar no histórico..." onkeyup="filterHistory()">
+            
+            {% if historico %}
+            <div style="display: flex; justify-content: flex-end; width: 100%;">
+                <button type="button" 
+                        class="btn-back" 
+                        style="background: rgba(255, 0, 80, 0.15); color: #ff4d80; border: 1px solid #ff0050; padding: 10px 20px; font-size: 12px;" 
+                        data-action="{% url 'limpar_historico' %}"
+                        data-title="☢ LIMPAR TUDO?"
+                        data-desc="Você tem certeza? Todo o seu histórico será apagado para sempre."
+                        data-btn-text="Sim, limpar tudo"
+                        onclick="configurarModal(this)">
+                    ☢ LIMPAR HISTÓRICO COMPLETO
+                </button>
+            </div>
+            {% endif %}
         </div>
 
         <div class="history-grid" id="historyGrid">
@@ -336,29 +182,59 @@
                         <div class="card-header">
                             <span class="card-date">{{ item.data|date:"d/m/Y H:i" }}</span>
                             <div class="card-actions">
-                                <button class="btn-icon" title="Ver detalhes">👁</button>
-                                <button class="btn-icon" title="Deletar">🗑</button>
+                                <a href="{% url 'ver_detalhes' item.id %}" class="btn-icon" title="Ver detalhes">👁</a>
+                                
+                                <button type="button" 
+                                        class="btn-icon" 
+                                        title="Deletar" 
+                                        data-action="{% url 'deletar_item_historico' item.id %}"
+                                        data-title="Apagar Registro?"
+                                        data-desc="Esta ação removerá este item permanentemente."
+                                        data-btn-text="Sim, apagar"
+                                        onclick="configurarModal(this)">
+                                    🗑
+                                </button>
                             </div>
                         </div>
                         <div class="card-question">{{ item.pergunta }}</div>
-                        <div class="card-preview">{{ item.resposta_gemini|truncatewords:30 }}</div>
+                        <div class="card-preview">
+                            {% if item.resposta_gemini %}
+                                {{ item.resposta_gemini|truncatewords:20 }}
+                            {% else %}
+                                {{ item.resposta_groq|truncatewords:20 }}
+                            {% endif %}
+                        </div>
                         <div class="card-footer">
-                            <span class="tag">Gemini</span>
-                            <span class="tag">Groq</span>
+                            <span class="tag">AI Response</span>
                         </div>
                     </div>
                 {% endfor %}
             {% else %}
-                <div class="empty-state">
-                    <div class="empty-icon">📋</div>
-                    <div class="empty-text">Nenhum histórico encontrado</div>
-                    <div class="empty-subtext">Suas perguntas anteriores aparecerão aqui</div>
+                <div class="empty-state" style="text-align:center; color:#6b7b8d; padding:40px;">
+                    <h2>Nenhum histórico encontrado</h2>
                 </div>
             {% endif %}
         </div>
     </div>
 
+    <div class="modal-overlay" id="modalUniversal">
+        <div class="modal-box">
+            <div class="modal-title" id="modalTitle">Título</div>
+            <div class="modal-desc" id="modalDesc">Descrição</div>
+            
+            <div class="modal-buttons">
+                <button type="button" class="btn-modal btn-cancel" onclick="fecharModal()">Cancelar</button>
+                
+                <form id="modalForm" method="POST" action="">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-modal btn-confirm" id="modalConfirmBtn">Confirmar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script>
+        // Função de busca
         function filterHistory() {
             const input = document.getElementById('searchInput');
             const filter = input.value.toLowerCase();
@@ -373,6 +249,41 @@
                 }
             });
         }
+        
+        function configuringModal(btn) {
+            console.log("Botão clicado! Configurando modal...");
+
+            const modal = document.getElementById('modalUniversal');
+            const form = document.getElementById('modalForm');
+            const titulo = document.getElementById('modalTitle');
+            const desc = document.getElementById('modalDesc');
+            const confirmBtn = document.getElementById('modalConfirmBtn');
+
+            const actionUrl = btn.getAttribute('data-action');
+            const titleText = btn.getAttribute('data-title');
+            const descText = btn.getAttribute('data-desc');
+            const btnText = btn.getAttribute('data-btn-text');
+
+            console.log("URL de ação:", actionUrl);
+
+            form.action = actionUrl;
+            titulo.innerText = titleText;
+            desc.innerText = descText;
+            confirmBtn.innerText = btnText;
+
+            modal.classList.add('active');
+        }
+        
+        window.configurarModal = configuringModal;
+
+        function fecharModal() {
+            const modal = document.getElementById('modalUniversal');
+            modal.classList.remove('active');
+        }
+
+        document.getElementById('modalUniversal').addEventListener('click', function(e) {
+            if (e.target === this) fecharModal();
+        });
     </script>
 </body>
 </html>
