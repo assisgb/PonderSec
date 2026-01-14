@@ -201,24 +201,60 @@
         renderizarDiagramas(displayId);
     }
 
-    function renderizarDiagramas(elementId) {
+    
+    function renderizarDiagramas(elementId) { // => Função de Renderização Blindada contra HTML Entities
         const container = document.getElementById(elementId);
         if (!container) return;
 
-        let content = container.innerHTML;
-        const regex = /```mermaid([\s\S]*?)```/g;
+        const codeBlocks = container.querySelectorAll('code.language-mermaid');
+        
+        codeBlocks.forEach(block => {
+            // Pega o conteúdo bruto
+            let rawCode = block.textContent;
 
-        const newContent = content.replace(regex, (match, code) => {
-            let cleanCode = code.replace(/<br>/g, '\n').replace(/&gt;/g, '>').replace(/&lt;/g, '<').trim();
-            return `<div class="mermaid">${cleanCode}</div>`;
+            const txt = document.createElement("textarea");
+            txt.innerHTML = rawCode;
+            let cleanCode = txt.value;
+
+            // Limpezas extras que as IAs às vezes erram
+            cleanCode = cleanCode
+                .replace(/&gt;/g, '>')
+                .replace(/&lt;/g, '<')
+                .replace(/&amp;/g, '&')
+                .trim();
+
+            // Cria a div que o Mermaid gosta
+            const divMermaid = document.createElement('div');
+            divMermaid.className = 'mermaid';
+            divMermaid.textContent = cleanCode;
+
+            if (block.parentElement.tagName === 'PRE') {
+                block.parentElement.replaceWith(divMermaid);
+            } else {
+                block.replaceWith(divMermaid);
+            }
         });
 
-        if (content !== newContent) {
+        let content = container.innerHTML;
+        const regex = /```mermaid([\s\S]*?)```/g;
+        if (regex.test(content)) {
+            const newContent = content.replace(regex, (match, code) => {
+                let cleanCode = code
+                    .replace(/&gt;/g, '>')
+                    .replace(/&lt;/g, '<')
+                    .replace(/<br>/g, '\n')
+                    .trim();
+                return `<div class="mermaid">${cleanCode}</div>`;
+            });
             container.innerHTML = newContent;
+        }
+        
+        try {
             mermaid.init(undefined, container.querySelectorAll('.mermaid'));
+        } catch (e) {
+            console.error("Erro no Mermaid:", e);
         }
     }
-
     window.addEventListener('load', () => {
         digitarTexto('gemini-raw', 'gemini-display');
         digitarTexto('groq-raw', 'groq-display');
