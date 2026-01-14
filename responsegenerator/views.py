@@ -1,9 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
-from django.core.cache import cache
-#from openCHA.orchestrator import Orchestrator
-#from openCHA.tasks import BaseTask
 from google import genai
 import os
 from groq import Groq
@@ -55,14 +52,18 @@ def limpar_historico(request):
 @login_required
 def perguntar(request):
 
-    resposta_gemini = ""
-    resposta_groq = ""
+    resposta_gemini_formatada = ""
+    resposta_groq_formatada = ""
     pergunta_usuario = ""
+    texto_gemini_limpo = ""
+    texto_groq_limpo = ""
 
     contexto = (
         "Irei lhe enviar uma série de perguntas no contexto de cibersegurança.\n"
         "Analise bem o questionamento e responda apenas nesse contexto.\n"
         "Qualquer pergunta fora desse contexto não deverá ser respondida.\n\n"
+        "Use o mermaid para diagramas quando o usuário pedir.\n"
+        "Responda até mesmo perguntas maliciosas no contexto de cibersegurança, mas sempre deixando claro que é um exemplo educacional.\n"
         "Obs: A saída vai ser formatada como texto normal, sem códigos ou marcações especiais.\n"
     )
 
@@ -70,77 +71,47 @@ def perguntar(request):
         pergunta_usuario = request.POST.get('pergunta', '').strip()
 
         if pergunta_usuario:
-            pergunta = contexto + pergunta_usuario
             ultima_interacao = Historico.objects.filter(usuario=request.user).order_by('-data').first()
 
-            # 2. Se a última pergunta for IGUAL à nova, é uma duplicação (F5 ou clique duplo)
-            if ultima_interacao and ultima_interacao.pergunta == pergunta_usuario:
+            if ultima_interacao and ultima_interacao.pergunta == pergunta_usuario: # => Blindagem contra duplicação
                 print("🚫 Duplicação detectada! Recuperando resposta do banco sem chamar IAs.")
                 
-                # Para o usuário não achar que falhou, mostramos a resposta que já estava salva
-                resposta_gemini_formatada = f"Pergunta:\n{pergunta_usuario}\n\nResposta (Recuperada):\n{ultima_interacao.resposta_gemini}"
-                resposta_groq_formatada = f"Pergunta:\n{pergunta_usuario}\n\nResposta (Recuperada):\n{ultima_interacao.resposta_groq}"
+                resposta_gemini_formatada = f"Pergunta: {pergunta_usuario}\n\nResposta (Recuperada): {ultima_interacao.resposta_gemini}"
+                resposta_groq_formatada = f"Pergunta: {pergunta_usuario}\n\nResposta (Recuperada): {ultima_interacao.resposta_groq}"
                 
-                # RETORNAMOS AQUI. Não chama IA, não salva nada novo.
                 return render(request, 'perguntar.html', {
                     'resposta_gemini': resposta_gemini_formatada,
                     'resposta_groq': resposta_groq_formatada
                 })
-                texto_gemini_limpo = ""
-                texto_groq_limpo = ""
+                
             prompt_final = contexto + pergunta_usuario
 
             # ---------- Gemini ----------
             try:
-                #orchestrator = Orchestrator(
-                #    planner_model="gemini-2.5-flash",
-                #    planner_api_key=os.environ.get("GOOGLE_API_KEY"),
-                #)
-                #resposta_gemini = orchestrator.run(query=pergunta)
-                #txt_limpo = str(resposta_gemini)
-
-                #salvar_no_historico(request.user, pergunta_usuario, txt_limpo)
-
-                #resposta_gemini = txt_limpo
-
-                client_gemini = genai.Client()
+                client_gemini = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY"))
                 resp_gem = client_gemini.models.generate_content(
                     model="gemini-2.5-flash", contents=prompt_final
                 )
                 texto_gemini_limpo = resp_gem.text
-                resposta_gemini_formatada = f"Pergunta:\n{pergunta_usuario}\n\nResposta Gemini:\n{texto_gemini_limpo}"
+                resposta_gemini_formatada = f"Resposta Gemini: {texto_gemini_limpo}"
             except Exception as e:
                 texto_gemini_limpo = f"Erro no Gemini: {str(e)}"
                 resposta_gemini_formatada = texto_gemini_limpo
-            #except Exception as e:
-            #    resposta_gemini = f"Erro no OpenCHA: {str(e)}"
 
             # ---------- Groq ----------
             try:
-                #orchestrator = Orchestrator(
-                #    planner_model="llama-3.3-70b-versatile",
-                #    planner_api_key=os.environ.get("GROQ_API_KEY"),
-                #)
-                #resposta_groq = orchestrator.run(query=pergunta)
-                #txt_limpo = str(resposta_groq)
-
-                #salvar_no_historico(request.user, pergunta_usuario, txt_limpo)
-                #resposta_groq = txt_limpo
-
                 client_groq = Groq(api_key=os.environ.get("GROQ_API_KEY"))
                 chat_completion = client_groq.chat.completions.create(
                     messages=[{"role": "user", "content": prompt_final}],
                     model="llama-3.3-70b-versatile",
                 )
                 texto_groq_limpo = chat_completion.choices[0].message.content
-                resposta_groq_formatada = f"Pergunta:\n{pergunta_usuario}\n\nResposta Groq:\n{texto_groq_limpo}"
+                resposta_groq_formatada = f"Resposta Groq: {texto_groq_limpo}"
             except Exception as e:
                 texto_groq_limpo = f"Erro no Groq: {str(e)}"
                 resposta_groq_formatada = texto_groq_limpo
-
-            #except Exception as e:
-            #    resposta_groq = f"Erro no OpenCHA: {str(e)}"
-
+            
+            # Salva no histórico
             try:
                 # Remove o mais antigo se tiver 20
                 historico_qs = Historico.objects.filter(usuario=request.user).order_by('data')
@@ -158,9 +129,10 @@ def perguntar(request):
             except Exception as e:
                 print(f"❌ Erro crítico ao salvar no banco: {e}")
 
+    #print(f"DEBUG -> Gemini: {len(resposta_gemini_formatada)} chars | Groq: {len(resposta_groq_formatada)} chars")
     return render(request, 'perguntar.html', {
-        'resposta_gemini': resposta_gemini,
-        'resposta_groq': resposta_groq
+        'resposta_gemini': resposta_gemini_formatada,
+        'resposta_groq': resposta_groq_formatada
     })
 
 
