@@ -1,0 +1,250 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PonderSEC — Editar Questão</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "Space Grotesk", system-ui, sans-serif;
+            background: radial-gradient(circle at top, #051015 0, #02060b 45%, #000000 100%);
+            color: #e5fef6;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .background-grid,
+        .scanline,
+        .glow-orb {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+        }
+
+        .background-grid {
+            background-image:
+                linear-gradient(90deg, rgba(0,255,160,.06) 1px, transparent 1px),
+                linear-gradient(180deg, rgba(0,255,160,.06) 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: .4;
+        }
+
+        .scanline {
+            background: linear-gradient(
+                to bottom,
+                rgba(0,0,0,.7),
+                rgba(0,0,0,.15),
+                rgba(0,0,0,.7)
+            );
+            background-size: 100% 4px;
+            opacity: .25;
+        }
+
+        .glow-orb {
+            width: 400px;
+            height: 400px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0,255,160,.3), transparent 65%);
+            top: 10%;
+            right: 10%;
+            filter: blur(18px);
+            opacity: .75;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 520px;
+            background: radial-gradient(circle at top, #0b141d 0, #050a11 55%, #020509 100%);
+            border-radius: 18px;
+            padding: 36px;
+            box-shadow:
+                0 0 0 1px rgba(0,255,160,.25),
+                0 18px 60px rgba(0,0,0,.9),
+                0 0 40px rgba(0,255,160,.35);
+            z-index: 2;
+        }
+        .button-primary {
+            padding: 14px;
+            background: linear-gradient(90deg, #00ff9f, #00ff57);
+            border: none;
+            border-radius: 999px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 700;
+            color: #020509;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: block;
+        }
+
+        .button-primary:hover {
+            transform: translateY(-1px);
+            box-shadow:
+                0 0 24px rgba(0, 255, 160, 1),
+                0 8px 30px rgba(0, 0, 0, 0.9);
+        }
+
+        h1 {
+            color: #00ff9f;
+            font-size: 22px;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 13px;
+            color: #8ba1b0;
+            margin-bottom: 24px;
+        }
+
+        label {
+            font-size: 13px;
+            color: #7df6c2;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 90px;
+            background: #020509;
+            border: 1px solid rgba(0,255,160,.35);
+            border-radius: 10px;
+            padding: 12px;
+            color: #e5fef6;
+            font-family: inherit;
+            resize: vertical;
+            margin-bottom: 20px;
+        }
+
+        textarea:focus {
+            outline: none;
+            box-shadow: 0 0 12px rgba(0,255,160,.5);
+        }
+
+        .ai-options {
+            border: 1px solid rgba(0,255,160,.35);
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 20px;
+        }
+
+        .ai-options h3 {
+            font-size: 13px;
+            color: #7df6c2;
+            margin-bottom: 10px;
+        }
+
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .checkbox-grid label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #e5fef6;
+            cursor: pointer;
+        }
+
+        input[type="checkbox"] {
+            accent-color: #00ff9f;
+            cursor: pointer;
+        }
+
+        .group-select {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 26px;
+        }
+
+        select {
+            flex: 1;
+            background: #020509;
+            border: 1px solid rgba(0,255,160,.35);
+            border-radius: 999px;
+            padding: 10px 14px;
+            color: #e5fef6;
+            font-family: inherit;
+        }
+
+        .add-group {
+            width: 42px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(90deg, #00ff9f, #00ff57);
+            color: #020509;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .actions {
+            display: flex;
+            gap: 14px;
+        }
+
+        
+    </style>
+</head>
+
+<body>
+
+<div class="background-grid"></div>
+<div class="scanline"></div>
+<div class="glow-orb"></div>
+
+<div class="container">
+
+    <h1>Editar Questão</h1>
+    <p class="subtitle">Configure a pergunta e selecione as IAs responsáveis</p>
+
+    <label for="pergunta">Texto da pergunta</label>
+    <textarea id="pergunta" placeholder="Digite aqui a pergunta cadastrada..."></textarea>
+
+    <div class="ai-options">
+        <h3>IAs que responderão</h3>
+
+        <div class="checkbox-grid">
+            <label><input type="checkbox"> Groq</label>
+            <label><input type="checkbox"> Gemini</label>
+            <label><input type="checkbox"> Hack.Ai</label>
+            <label><input type="checkbox"> Deepseek</label>
+            <label><input type="checkbox"> ChatGPT</label>
+        </div>
+    </div>
+
+    <label>Grupo da questão</label>
+    <div class="group-select">
+        <select>
+            <option>Selecione um grupo</option>
+        </select>
+        <button class="add-group">+</button>
+    </div>
+
+    <div class="actions">
+        <button class="button-primary">Salvar</button>
+        <button class="button-secondary">Limpar</button>
+    </div>
+
+</div>
+
+</body>
+</html>
