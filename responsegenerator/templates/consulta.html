@@ -127,7 +127,7 @@
     <div class="headline">Pergunte à LLM</div>
     <div class="subtitle">Digite sua pergunta e aguarde a resposta do sistema</div>
 
-    <form method="POST" action="{% url 'perguntar' %}" onsubmit="travarBotao()">
+    <form method="POST" action="{% url 'consulta' %}" onsubmit="travarBotao()">
         {% csrf_token %}
         <label for="pergunta">Pergunta</label>
         <textarea id="pergunta" name="pergunta" placeholder="Ex: Explique como explorar uma vulnerabilidade de SQL Injection..." required></textarea>

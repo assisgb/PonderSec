@@ -23,6 +23,7 @@
             background-size: 40px 40px; opacity: 0.4; pointer-events: none; z-index: 0;
         }
         
+        
         .scanline {
             position: fixed; inset: 0;
             background: linear-gradient(to bottom, rgba(0,0,0,0.7), rgba(0,0,0,0.15), rgba(0,0,0,0.7));
@@ -58,13 +59,24 @@
             transition: all 0.2s; display: inline-block;
         }
         .btn-back:hover { transform: translateY(-2px); box-shadow: 0 0 25px rgba(0,255,160,1); }
+        .questoes-options {
+            display: inline-flex;      /* se ajusta ao conteúdo */
+            gap: 15px;
+            margin-top: 15px;
+
+            /* border: 1px solid #00ff9f; */
+            padding: 8px 12px;         /* espaço interno (margem do botão) */
+            border-radius: 6px;        /* opcional, só pra ficar bonito */
+            }
 
         .filter-section {
             margin-bottom: 30px; padding: 22px;
             background: rgba(0,255,160,0.05);
             border: 1px solid rgba(0,255,160,0.2);
             border-radius: 14px;
-            display: flex; flex-direction: column; gap: 15px;
+            display: flex; flex-direction: row; gap: 15px;
+
+            justify-content: space-between;
         }
         
         .search-box {
@@ -138,6 +150,33 @@
         
         .btn-confirm { background: rgba(255, 77, 77, 0.15); border: 1px solid #ff4d4d; color: #ff4d4d; }
         .btn-confirm:hover { background: #ff4d4d; color: #fff; box-shadow: 0 0 15px rgba(255, 77, 77, 0.4); }
+        .button-primary {
+            flex: 1;
+            padding: 14px;
+            background: linear-gradient(90deg, #00ff9f, #00ff57);
+            border: none;
+            border-radius: 999px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 700;
+            color: #020509;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+
+        .button-secondary {
+            flex: 1;
+            padding: 14px;
+            background: transparent;
+            border: 1px solid rgba(0,255,160,.4);
+            border-radius: 999px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 700;
+            color: #7df6c2;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
     </style>
 </head>
 <body>
@@ -150,14 +189,22 @@
                 <img src="{% static 'pondersec_logo.jpg' %}" alt="PonderSEC Logo">
                 <div class="header-title">
                     <div class="product-name">PONDERSEC</div>
-                    <div class="page-title">Histórico de Perguntas</div>
+                    <div class="page-title">Questões</div>
                 </div>
             </div>
             <a href="{% url 'pondersecoptions' %}" class="btn-back">Voltar</a>
         </div>
 
         <div class="filter-section">
-            <input type="text" class="search-box" id="searchInput" placeholder="Buscar no histórico..." onkeyup="filterHistory()">
+            <input type="text" class="search-box" id="searchInput" placeholder="Filtro de pesquisa..." onkeyup="filterHistory()">
+                <div class="questoes-options">
+                        <a href="{% url 'add_quest' %}" class="button-primary">
+                            Upload
+                        </a>
+                        <a href="{% url 'add_quest' %}" class="button-primary">
+                            Adicionar
+                        </a>
+                </div>
             
             {% if historico %}
             <div style="display: flex; justify-content: flex-end; width: 100%;">
@@ -211,7 +258,7 @@
                 {% endfor %}
             {% else %}
                 <div class="empty-state" style="text-align:center; color:#6b7b8d; padding:40px;">
-                    <h2>Nenhum histórico encontrado</h2>
+                    <h2>Nenhuma questão cadastrada</h2>
                 </div>
             {% endif %}
         </div>

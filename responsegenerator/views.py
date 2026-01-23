@@ -50,7 +50,7 @@ def limpar_historico(request):
     return redirect('historico')
 
 @login_required
-def perguntar(request):
+def consulta(request):
 
     resposta_gemini_formatada = ""
     resposta_groq_formatada = ""
@@ -72,7 +72,7 @@ def perguntar(request):
     )
 
     if request.method == 'POST':
-        pergunta_usuario = request.POST.get('pergunta', '').strip()
+        pergunta_usuario = request.POST.get('consulta', '').strip()
 
         if pergunta_usuario:
             ultima_interacao = Historico.objects.filter(usuario=request.user).order_by('-data').first()
@@ -83,7 +83,7 @@ def perguntar(request):
                 resposta_gemini_formatada = f"Pergunta: {pergunta_usuario}\n\nResposta (Recuperada): {ultima_interacao.resposta_gemini}"
                 resposta_groq_formatada = f"Pergunta: {pergunta_usuario}\n\nResposta (Recuperada): {ultima_interacao.resposta_groq}"
                 
-                return render(request, 'perguntar.html', {
+                return render(request, 'consulta.html', {
                     'resposta_gemini': resposta_gemini_formatada,
                     'resposta_groq': resposta_groq_formatada
                 })
@@ -134,7 +134,7 @@ def perguntar(request):
                 print(f"❌ Erro crítico ao salvar no banco: {e}")
 
     #print(f"DEBUG -> Gemini: {len(resposta_gemini_formatada)} chars | Groq: {len(resposta_groq_formatada)} chars")
-    return render(request, 'perguntar.html', {
+    return render(request, 'consulta.html', {
         'resposta_gemini': resposta_gemini_formatada,
         'resposta_groq': resposta_groq_formatada
     })
@@ -148,3 +148,6 @@ def historico(request):
     return render(request, 'historico.html', {
         'historico': historico
     })
+
+def add_questao_options(request):
+    return render(request, 'add_quest.html')

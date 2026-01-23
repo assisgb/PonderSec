@@ -113,7 +113,7 @@
         .actions {
             display: flex;
             flex-direction: column;
-            gap: 14px;
+            gap: 20px;
         }
 
         .button-primary {
@@ -167,12 +167,19 @@
         </p>
 
         <div class="actions">
-            <a href="{% url 'perguntar' %}" class="button-primary">
-                Perguntar
+            <a href="{% url 'historico' %}" class="button-primary">
+                Questões
             </a>
 
-            <a href="{% url 'historico' %}" class="button-primary">
-                Histórico de Perguntas
+            <a href="{% url 'consulta' %}" class="button-primary">
+                Consulta
+            </a>
+             <a  class="button-primary">
+                Setup
+            </a>
+
+            <a class="button-primary">
+                Avaliação
             </a>
         </div>
 
