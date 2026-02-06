@@ -1,0 +1,399 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PonderSEC — Avaliação</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "Space Grotesk", system-ui, sans-serif;
+            background: radial-gradient(circle at top, #051015 0, #02060b 45%, #000000 100%);
+            color: #e5fef6;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .background-grid {
+            position: fixed;
+            inset: 0;
+            background-image: 
+                linear-gradient(90deg, rgba(0, 255, 160, 0.06) 1px, transparent 1px),
+                linear-gradient(180deg, rgba(0, 255, 160, 0.06) 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        .scanline {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.7));
+            background-size: 100% 4px;
+            opacity: 0.25;
+            pointer-events: none;
+        }
+
+        .glow-orb {
+            position: fixed;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 255, 160, 0.25), transparent 70%);
+            top: -10%;
+            right: -5%;
+            filter: blur(80px);
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .container {
+            position: relative;
+            max-width: 1200px;
+            width: 100%;
+            z-index: 2;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 35px;
+            padding: 30px 35px;
+            background: rgba(11, 20, 29, 0.6);
+            border-radius: 16px;
+            border: 1px solid rgba(0, 255, 160, 0.15);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 22px;
+        }
+
+        .logo-section img {
+            width: 85px;
+            height: 85px;
+            border-radius: 12px;
+            filter: drop-shadow(0 0 8px rgba(0, 255, 160, 0.4));
+        }
+
+        .header-title {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .product-name {
+            color: #7df6c2;
+            text-transform: uppercase;
+            letter-spacing: 0.25em;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .page-title {
+            color: #00ff9f;
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .btn-back {
+            padding: 14px 32px;
+            background: rgba(0, 255, 160, 0.1);
+            border: 1px solid rgba(0, 255, 160, 0.3);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            color: #00ff9f;
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: all 0.2s;
+        }
+
+        .btn-back:hover {
+            background: rgba(0, 255, 160, 0.15);
+            border-color: #00ff9f;
+            transform: translateY(-1px);
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 18px;
+            margin-bottom: 30px;
+        }
+
+        .search-bar {
+            position: relative;
+            flex: 1;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 16px 20px 16px 50px;
+            background: #050a11;
+            border: 1px solid #1b2635;
+            border-radius: 10px;
+            color: #e5fef6;
+            font-size: 16px;
+            font-family: "Space Grotesk", system-ui, sans-serif;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .search-input::placeholder {
+            color: #6b7b8d;
+        }
+
+        .search-input:focus {
+            border-color: #00ff9f;
+            box-shadow: 0 0 8px rgba(0, 255, 160, 0.3);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #7df6c2;
+            font-size: 20px;
+        }
+
+        .btn-add {
+            padding: 16px 32px;
+            background: rgba(0, 255, 160, 0.1);
+            border: 1px solid rgba(0, 255, 160, 0.3);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            color: #00ff9f;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn-add:hover {
+            background: rgba(0, 255, 160, 0.15);
+            border-color: #00ff9f;
+            transform: translateY(-1px);
+        }
+
+        .questions-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .question-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 24px 30px;
+            background: rgba(11, 20, 29, 0.4);
+            border: 1px solid rgba(0, 255, 160, 0.15);
+            border-radius: 12px;
+            transition: all 0.2s;
+        }
+
+        .question-card:hover {
+            border-color: rgba(0, 255, 160, 0.3);
+            background: rgba(11, 20, 29, 0.6);
+            transform: translateX(4px);
+        }
+
+        .question-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .question-icon {
+            font-size: 36px;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        .question-text {
+            font-size: 18px;
+            font-weight: 500;
+            color: #e5fef6;
+            line-height: 1.5;
+        }
+
+        .btn-evaluate {
+            padding: 12px 28px;
+            background: rgba(0, 255, 160, 0.12);
+            border: 1px solid rgba(0, 255, 160, 0.3);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            color: #00ff9f;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: all 0.2s;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .btn-evaluate:hover {
+            background: rgba(0, 255, 160, 0.2);
+            border-color: #00ff9f;
+            box-shadow: 0 0 12px rgba(0, 255, 160, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+
+            .logo-section {
+                flex-direction: column;
+            }
+
+            .btn-back {
+                width: 100%;
+            }
+
+            .toolbar {
+                flex-direction: column;
+            }
+
+            .question-card {
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .question-content {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .btn-evaluate {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-grid"></div>
+    <div class="scanline"></div>
+    <div class="glow-orb"></div>
+
+    <div class="container">
+        <div class="header">
+            <div class="logo-section">
+                <img src="{% static 'pondersec_logo.jpg' %}" alt="PonderSEC Logo">
+                <div class="header-title">
+                    <div class="product-name">PONDERSEC</div>
+                    <div class="page-title">Avaliação de Respostas</div>
+                </div>
+            </div>
+            <a href="{% url 'setup' %}" class="btn-back">Voltar</a>
+        </div>
+
+        <div class="toolbar">
+            <div class="search-bar">
+                <span class="search-icon">🔎</span>
+                <input 
+                    type="text" 
+                    class="search-input" 
+                    id="searchInput"
+                    placeholder="Buscar pergunta..."
+                    onkeyup="filterQuestions()"
+                >
+            </div>
+            <button class="btn-add" onclick="addQuestion()">+ Adicionar Pergunta</button>
+        </div>
+
+        <div class="questions-list" id="questionsList">
+            <div class="question-card" data-text="qual é a diferença entre criptografia simétrica e assimétrica">
+                <div class="question-content">
+                    <div class="question-icon">🔐</div>
+                    <div class="question-text">Qual é a diferença entre criptografia simétrica e assimétrica?</div>
+                </div>
+                <a href="avaliacao_respostas.html?q=1" class="btn-evaluate">Avaliar</a>
+            </div>
+
+            <div class="question-card" data-text="como funciona um ataque de sql injection">
+                <div class="question-content">
+                    <div class="question-icon">💉</div>
+                    <div class="question-text">Como funciona um ataque de SQL Injection?</div>
+                </div>
+                <a href="avaliacao_respostas.html?q=2" class="btn-evaluate">Avaliar</a>
+            </div>
+
+            <div class="question-card" data-text="o que é um firewall e qual sua função">
+                <div class="question-content">
+                    <div class="question-icon">🛡️</div>
+                    <div class="question-text">O que é um firewall e qual sua função?</div>
+                </div>
+                <a href="avaliacao_respostas.html?q=3" class="btn-evaluate">Avaliar</a>
+            </div>
+
+            <div class="question-card" data-text="explique o conceito de autenticação multifator">
+                <div class="question-content">
+                    <div class="question-icon">🔑</div>
+                    <div class="question-text">Explique o conceito de autenticação multifator (MFA)</div>
+                </div>
+                <a href="avaliacao_respostas.html?q=4" class="btn-evaluate">Avaliar</a>
+            </div>
+
+            <div class="question-card" data-text="quais são os principais tipos de malware">
+                <div class="question-content">
+                    <div class="question-icon">🦠</div>
+                    <div class="question-text">Quais são os principais tipos de malware?</div>
+                </div>
+                <a href="avaliacao_respostas.html?q=5" class="btn-evaluate">Avaliar</a>
+            </div>
+
+            <div class="question-card" data-text="como implementar segurança em apis rest">
+                <div class="question-content">
+                    <div class="question-icon">🔌</div>
+                    <div class="question-text">Como implementar segurança em APIs REST?</div>
+                </div>
+                <a href="avaliacao_respostas.html?q=6" class="btn-evaluate">Avaliar</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function filterQuestions() {
+            const input = document.getElementById('searchInput');
+            const filter = input.value.toLowerCase();
+            const cards = document.querySelectorAll('.question-card');
+
+            cards.forEach(card => {
+                const text = card.getAttribute('data-text');
+                if (text.includes(filter)) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        function addQuestion() {
+            alert('Funcionalidade de adicionar pergunta');
+        }
+    </script>
+</body>
+</html>
