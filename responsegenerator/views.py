@@ -21,8 +21,8 @@ def salvar_no_historico(user, pergunta, resposta):
     )
 
 @login_required
-def pondersecoptions(request):
-    return render(request, 'pondersecoptions.html')
+def menu(request):
+    return render(request, 'menu.html')
 
 @login_required
 def deletar_item_historico(request, id):
@@ -149,5 +149,43 @@ def historico(request):
         'historico': historico
     })
 
-def add_questao_options(request):
-    return render(request, 'add_quest.html')
+@login_required
+def questoes(request):
+    return render(request, 'questoes.html')
+
+@login_required
+def add_questoes(request):
+    return render(request, 'add-questoes.html')
+
+#SETUP
+@login_required
+def setup(request):
+    return render(request, 'setup.html')
+
+@login_required
+def setup_llm(request):
+    return render(request, 'setup-llm.html')
+
+@login_required
+def setup_avaliacao(request):
+    return render(request, 'setup-avaliacao.html')
+
+
+#CONSULTA
+@login_required
+def menu_consulta(request):
+    return render(request, 'menu-consulta.html')
+
+@login_required
+def executar_consulta(request):
+    return render(request, 'executar-consulta.html')
+
+@login_required
+def consulta_comparacao(request):
+    return render(request, 'consulta-comparacao.html')
+
+#AVALIACAO
+@login_required
+def avaliacao(request):
+    return render(request, 'avaliacao_lista.html')
+

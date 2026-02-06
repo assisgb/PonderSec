@@ -1,0 +1,327 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PonderSEC — Editar Questão</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "Space Grotesk", system-ui, sans-serif;
+            background: radial-gradient(circle at top, #051015 0, #02060b 45%, #000000 100%);
+            color: #e5fef6;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .background-grid {
+            position: fixed;
+            inset: 0;
+            background-image: 
+                linear-gradient(90deg, rgba(0, 255, 160, 0.06) 1px, transparent 1px),
+                linear-gradient(180deg, rgba(0, 255, 160, 0.06) 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: 0.4;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .scanline {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.7));
+            background-size: 100% 4px;
+            opacity: 0.25;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .glow-orb {
+            position: fixed;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 255, 160, 0.25), transparent 70%);
+            top: -10%;
+            right: -5%;
+            filter: blur(80px);
+            opacity: 0.6;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            background: radial-gradient(circle at top left, #0b141d 0, #050a11 100%);
+            border-radius: 16px;
+            padding: 40px;
+            border: 1px solid rgba(0, 255, 160, 0.25);
+            box-shadow: 
+                0 8px 30px rgba(0, 0, 0, 0.6),
+                0 0 20px rgba(0, 255, 160, 0.15);
+            z-index: 2;
+        }
+
+        h1 {
+            color: #00ff9f;
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 14px;
+            color: #8ba1b0;
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+
+        label {
+            font-size: 13px;
+            color: #7df6c2;
+            margin-bottom: 8px;
+            display: block;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            background: #050a11;
+            border: 1px solid #1b2635;
+            border-radius: 10px;
+            padding: 14px 16px;
+            color: #e5fef6;
+            font-family: "Space Grotesk", system-ui, sans-serif;
+            font-size: 15px;
+            resize: vertical;
+            margin-bottom: 24px;
+            transition: all 0.2s;
+            line-height: 1.6;
+        }
+
+        textarea::placeholder {
+            color: #6b7b8d;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #00ff9f;
+            box-shadow: 0 0 16px rgba(0, 255, 160, 0.5);
+        }
+
+        .ai-options {
+            border: 1px solid rgba(0, 255, 160, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+            background: rgba(0, 255, 160, 0.03);
+        }
+
+        .ai-options h3 {
+            font-size: 13px;
+            color: #7df6c2;
+            margin-bottom: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .checkbox-grid label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            color: #e5fef6;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .checkbox-grid label:hover {
+            background: rgba(0, 255, 160, 0.05);
+        }
+
+        input[type="checkbox"] {
+            accent-color: #00ff9f;
+            cursor: pointer;
+            width: 18px;
+            height: 18px;
+        }
+
+        .group-select {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+
+        select {
+            flex: 1;
+            background: #050a11;
+            border: 1px solid #1b2635;
+            border-radius: 10px;
+            padding: 14px 16px;
+            color: #e5fef6;
+            font-family: "Space Grotesk", system-ui, sans-serif;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #00ff9f;
+            box-shadow: 0 0 16px rgba(0, 255, 160, 0.5);
+        }
+
+        .add-group {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 255, 160, 0.3);
+            background: rgba(0, 255, 160, 0.1);
+            color: #00ff9f;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+
+        .add-group:hover {
+            background: rgba(0, 255, 160, 0.2);
+            border-color: #00ff9f;
+            transform: scale(1.05);
+        }
+
+        .actions {
+            display: flex;
+            gap: 14px;
+        }
+
+        .button-primary {
+            flex: 1;
+            padding: 16px;
+            background: linear-gradient(90deg, #00ff9f, #00ff57);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 700;
+            color: #020509;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            transition: all 0.2s;
+            font-family: "Space Grotesk", system-ui, sans-serif;
+        }
+
+        .button-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 25px rgba(0, 255, 160, 1);
+        }
+
+        .button-secondary {
+            flex: 1;
+            padding: 16px;
+            background: transparent;
+            border: 1px solid rgba(0, 255, 160, 0.4);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 700;
+            color: #7df6c2;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            transition: all 0.2s;
+            font-family: "Space Grotesk", system-ui, sans-serif;
+        }
+
+        .button-secondary:hover {
+            background: rgba(0, 255, 160, 0.1);
+            border-color: #00ff9f;
+            color: #00ff9f;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 30px 24px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .checkbox-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="background-grid"></div>
+    <div class="scanline"></div>
+    <div class="glow-orb"></div>
+
+    <div class="container">
+        <h1>Editar Questão</h1>
+        <p class="subtitle">Configure a pergunta e selecione as IAs responsáveis</p>
+
+        <label for="pergunta">Texto da pergunta</label>
+        <textarea id="pergunta" placeholder="Digite aqui a pergunta cadastrada..."></textarea>
+
+        <div class="ai-options">
+            <h3>IAs que responderão</h3>
+            <div class="checkbox-grid">
+                <label><input type="checkbox"> Groq</label>
+                <label><input type="checkbox"> Gemini</label>
+                <label><input type="checkbox"> Hack.Ai</label>
+                <label><input type="checkbox"> Deepseek</label>
+                <label><input type="checkbox"> ChatGPT</label>
+            </div>
+        </div>
+
+        <label>Grupo da questão</label>
+        <div class="group-select">
+            <select>
+                <option>Selecione um grupo</option>
+            </select>
+            <button class="add-group">+</button>
+        </div>
+
+        <div class="actions">
+            <button class="button-primary">Salvar</button>
+            <button class="button-secondary">Limpar</button>
+        </div>
+    </div>
+</body>
+</html>

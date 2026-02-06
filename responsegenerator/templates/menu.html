@@ -1,0 +1,255 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PonderSEC — Menu</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "Space Grotesk", system-ui, sans-serif;
+            background: radial-gradient(circle at top, #051015 0, #02060b 45%, #000000 100%);
+            color: #e5fef6;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .background-grid {
+            position: fixed;
+            inset: 0;
+            background-image: 
+                linear-gradient(90deg, rgba(0, 255, 160, 0.06) 1px, transparent 1px),
+                linear-gradient(180deg, rgba(0, 255, 160, 0.06) 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        .scanline {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(
+                to bottom,
+                rgba(0, 0, 0, 0.7),
+                rgba(0, 0, 0, 0.15),
+                rgba(0, 0, 0, 0.7)
+            );
+            background-size: 100% 4px;
+            opacity: 0.25;
+            pointer-events: none;
+        }
+
+        .glow-orb {
+            position: fixed;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 255, 160, 0.3), transparent 65%);
+            top: 10%;
+            right: 10%;
+            filter: blur(80px);
+            opacity: 0.75;
+            pointer-events: none;
+        }
+
+        .container {
+            position: relative;
+            width: 100%;
+            max-width: 950px;
+            background: radial-gradient(circle at top, #0b141d 0, #050a11 55%, #020509 100%);
+            border-radius: 18px;
+            padding: 35px 40px;
+            box-shadow: 
+                0 0 0 1px rgba(0, 255, 160, 0.25),
+                0 18px 60px rgba(0, 0, 0, 0.9),
+                0 0 40px rgba(0, 255, 160, 0.35);
+            z-index: 2;
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 12px;
+        }
+
+        .logo img {
+            width: 120px;
+            border-radius: 10px;
+            filter: 
+                drop-shadow(0 0 10px rgba(0, 255, 160, 0.8))
+                drop-shadow(0 0 30px rgba(0, 255, 160, 0.5));
+        }
+
+        .product-name {
+            text-align: center;
+            color: #7df6c2;
+            text-transform: uppercase;
+            letter-spacing: 0.28em;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .headline {
+            text-align: center;
+            color: #00ff9f;
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 13px;
+            color: #8ba1b0;
+            margin-bottom: 28px;
+        }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 18px;
+            margin-bottom: 22px;
+        }
+
+        .menu-card {
+            background: radial-gradient(circle at top left, #0b141d 0, #050a11 100%);
+            border: 1px solid rgba(0, 255, 160, 0.25);
+            border-radius: 14px;
+            padding: 25px 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .menu-card:hover {
+            border-color: #00ff9f;
+            box-shadow: 0 0 30px rgba(0, 255, 160, 0.4);
+            transform: translateY(-5px);
+            background: radial-gradient(circle at top left, #0d1823 0, #060b12 100%);
+        }
+
+        .menu-icon {
+            font-size: 42px;
+            margin-bottom: 6px;
+            filter: drop-shadow(0 0 10px rgba(0, 255, 160, 0.5));
+        }
+
+        .menu-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #00ff9f;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 5px;
+        }
+
+        .menu-description {
+            font-size: 12px;
+            color: #8ba1b0;
+            line-height: 1.4;
+        }
+
+        .logout-section {
+            text-align: center;
+            padding-top: 18px;
+            border-top: 1px solid rgba(0, 255, 160, 0.15);
+        }
+
+        .btn-logout {
+            padding: 10px 28px;
+            background: rgba(255, 0, 0, 0.1);
+            border: 1px solid rgba(255, 0, 0, 0.3);
+            border-radius: 999px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            color: #ff6b6b;
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            transition: all 0.2s;
+            display: inline-block;
+        }
+
+        .btn-logout:hover {
+            background: rgba(255, 0, 0, 0.2);
+            border-color: #ff6b6b;
+            transform: translateY(-2px);
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .menu-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .headline {
+                font-size: 24px;
+            }
+
+            .container {
+                padding: 30px 25px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-grid"></div>
+    <div class="scanline"></div>
+    <div class="glow-orb"></div>
+
+    <div class="container">
+        <div class="logo">
+            <img src="{% static 'pondersec_logo.jpg' %}" alt="PonderSEC Logo">
+        </div>
+        <div class="product-name">PONDERSEC</div>
+        <div class="headline">Menu Principal</div>
+        <div class="subtitle">Escolha uma das opções abaixo para continuar</div>
+
+        <div class="menu-grid">
+            <a href="{% url 'questoes' %}" class="menu-card">
+                <div class="menu-icon">📝</div>
+                <div class="menu-title">Questões</div>
+                <div class="menu-description">Gerenciar e responder questões do sistema</div>
+            </a>
+
+            <a href="{% url 'setup' %}" class="menu-card">
+                <div class="menu-icon">⚙️</div>
+                <div class="menu-title">Setup</div>
+                <div class="menu-description">Configurações e personalização do sistema</div>
+            </a>
+
+            <a href="{% url 'menu-consulta' %}" class="menu-card">
+                <div class="menu-icon">🔍</div>
+                <div class="menu-title">Consulta</div>
+                <div class="menu-description">Buscar e consultar informações no banco de dados</div>
+            </a>
+
+            <a href="{% url 'avaliacao' %}" class="menu-card">
+                <div class="menu-icon">📊</div>
+                <div class="menu-title">Avaliação</div>
+                <div class="menu-description">Análise e avaliação de resultados</div>
+            </a>
+        </div>
+
+        <div class="logout-section">
+            <a class="btn-logout">Sair</a>
+        </div>
+    </div>
+</body>
+</html>

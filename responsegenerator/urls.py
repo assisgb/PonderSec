@@ -2,9 +2,16 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('pondersecoptions/', views.pondersecoptions, name="pondersecoptions"),
-    path('add_quest/', views.add_questao_options, name="add_quest"),
-    path('consulta/', views.consulta, name="consulta"),
+    path('menu/', views.menu, name="menu"),
+    path('questoes/', views.questoes, name="questoes"),
+    path('add_questoes/', views.add_questoes, name="add_questoes"),
+    path('menu_consulta/', views.menu_consulta, name="menu-consulta"),
+    path('consulta_comparacao/', views.consulta_comparacao, name="consulta_comparacao"),
+    path('executar_consulta', views.executar_consulta, name="executar_consulta"),
+    path('avaliacao/', views.avaliacao, name="avaliacao"),
+    path('setup/', views.setup, name="setup"),
+    path('setup_llm/', views.setup_llm, name="setup_llm"),
+    path('setup_avaliacao/', views.setup_avaliacao, name="setup_avaliacao"),
     path('historico/', views.historico, name="historico"),
     path('historico/deletar/<int:id>/', views.deletar_item_historico, name='deletar_item_historico'),
     path('historico/ver/<int:id>/', views.ver_detalhes, name='ver_detalhes'),
