@@ -37,10 +37,12 @@ body {
 .scanline {
     position: fixed;
     inset: 0;
-    background: linear-gradient(to bottom,
+    background: linear-gradient(
+        to bottom,
         rgba(0,0,0,0.7),
         rgba(0,0,0,0.15),
-        rgba(0,0,0,0.7));
+        rgba(0,0,0,0.7)
+    );
     background-size: 100% 4px;
     opacity: 0.25;
 }
@@ -125,13 +127,24 @@ input[type="file"] {
     text-align: center;
 }
 
+/* BOTÕES */
+
 .actions {
     margin-top: 25px;
+    display: flex;
+    gap: 12px;
+}
+
+.actions button,
+.actions a {
+    flex: 1;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .button-primary {
-    width: 100%;
-    padding: 14px;
     background: linear-gradient(90deg,#00ff9f,#00ff57);
     border: none;
     border-radius: 8px;
@@ -141,11 +154,32 @@ input[type="file"] {
     text-transform: uppercase;
     letter-spacing: 0.08em;
     transition: 0.2s;
+    font-family: inherit;
 }
 
 .button-primary:hover {
     transform: translateY(-2px);
     box-shadow: 0 0 25px rgba(0,255,160,1);
+}
+
+.btn-back {
+    background: rgba(0,255,160,0.1);
+    border: 1px solid rgba(0,255,160,0.4);
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 700;
+    color: #7df6c2;
+    text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    transition: 0.2s;
+}
+
+.btn-back:hover {
+    background: rgba(0,255,160,0.15);
+    border-color: #00ff9f;
+    color: #00ff9f;
+    transform: translateY(-2px);
 }
 </style>
 </head>
@@ -158,6 +192,7 @@ input[type="file"] {
 <div class="container">
 
     <h1>Upload de Arquivo</h1>
+
     <div class="subtitle">
         Envie um arquivo <b>.txt</b> ou <b>.json</b><br>
         Arraste ou clique para selecionar
@@ -175,6 +210,10 @@ input[type="file"] {
         <button class="button-primary" onclick="uploadFile()">
             Enviar Arquivo
         </button>
+
+        <a href="{% url 'questoes' %}" class="btn-back">
+            Voltar
+        </a>
     </div>
 
 </div>
@@ -232,8 +271,6 @@ function uploadFile() {
 
     const file = fileInput.files[0];
     alert("Arquivo pronto para envio: " + file.name);
-
-    // aqui você pode enviar com fetch ou formData
 }
 </script>
 
