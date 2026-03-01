@@ -149,6 +149,8 @@ def historico(request):
         'historico': historico
     })
 
+
+#QUESTOES
 @login_required
 def questoes(request):
     return render(request, 'questoes.html')
@@ -156,6 +158,11 @@ def questoes(request):
 @login_required
 def add_questoes(request):
     return render(request, 'add-questoes.html')
+
+@login_required
+def questoes_upload(request):
+    return render(request, 'questoes-upload.html')
+
 
 #SETUP
 @login_required
@@ -188,4 +195,8 @@ def consulta_comparacao(request):
 @login_required
 def avaliacao(request):
     return render(request, 'avaliacao_lista.html')
+
+@login_required
+def avaliacao_respostas(request):
+    return render(request, 'avaliacao_respostas.html')
 
