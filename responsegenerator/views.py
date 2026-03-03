@@ -164,6 +164,10 @@ def add_questoes(request):
 def questoes_upload(request):
     return render(request, 'questoes/questoes-upload.html')
 
+@login_required
+def questoes_cadastro_categoria(request):
+    return render(request, 'questoes/questoes_cadastro_categoria.html')
+
 
 #SETUP
 @login_required
@@ -189,6 +193,10 @@ def setup_adicionar_metrica(request):
 @login_required
 def setup_configurar_metrica(request):
     return render(request, 'setup/setup-configurar-metrica.html')
+
+@login_required
+def setup_adicionar_llm(request):
+    return render(request, 'setup/setup-adicionar-llm.html')
 
 
 #CONSULTA
