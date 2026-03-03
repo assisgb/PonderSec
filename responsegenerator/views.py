@@ -6,6 +6,7 @@ import os
 from groq import Groq
 from datetime import timedelta
 from responsegenerator.models import Historico
+from responsegenerator.models import Metrica
 
 def salvar_no_historico(user, pergunta, resposta):
     logs = Historico.objects.filter(usuario=user).order_by('data')
@@ -153,50 +154,64 @@ def historico(request):
 #QUESTOES
 @login_required
 def questoes(request):
-    return render(request, 'questoes.html')
+    return render(request, 'questoes/questoes.html')
 
 @login_required
 def add_questoes(request):
-    return render(request, 'add-questoes.html')
+    return render(request, 'questoes/add-questoes.html')
 
 @login_required
 def questoes_upload(request):
-    return render(request, 'questoes-upload.html')
+    return render(request, 'questoes/questoes-upload.html')
 
 
 #SETUP
 @login_required
 def setup(request):
-    return render(request, 'setup.html')
+    return render(request, 'setup/setup.html')
 
 @login_required
 def setup_llm(request):
-    return render(request, 'setup-llm.html')
+    return render(request, 'setup/setup-llm.html')
 
 @login_required
 def setup_avaliacao(request):
-    return render(request, 'setup-avaliacao.html')
+    return render(request, 'setup/setup-avaliacao.html')
+
+@login_required
+def setup_configurar_llm(request):
+    return render(request, 'setup/setup-configurar-llm.html')
+
+@login_required
+def setup_adicionar_metrica(request):
+    return render(request, 'setup/setup-adicionar-metrica.html')
+
+@login_required
+def setup_configurar_metrica(request):
+    return render(request, 'setup/setup-configurar-metrica.html')
 
 
 #CONSULTA
 @login_required
 def menu_consulta(request):
-    return render(request, 'menu-consulta.html')
+    return render(request, 'consulta/menu-consulta.html')
 
 @login_required
 def executar_consulta(request):
-    return render(request, 'executar-consulta.html')
+    return render(request, 'consulta/executar-consulta.html')
 
 @login_required
 def consulta_comparacao(request):
-    return render(request, 'consulta-comparacao.html')
+    return render(request, 'consulta/consulta-comparacao.html')
 
 #AVALIACAO
 @login_required
 def avaliacao(request):
-    return render(request, 'avaliacao_lista.html')
+    return render(request, 'avaliacao/avaliacao_lista.html')
 
 @login_required
 def avaliacao_respostas(request):
-    return render(request, 'avaliacao_respostas.html')
+    return render(request, 'avaliacao/avaliacao_respostas.html')
+
+
 

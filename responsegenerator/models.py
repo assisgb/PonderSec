@@ -13,3 +13,20 @@ class Historico(models.Model):
 
     def __str__(self):
         return f"{self.usuario.username} - {self.data}"
+    
+class Metrica(models.Model):
+
+    TIPO_CHOICES = [
+        ('quantitativa', 'Quantitativa'),
+        ('qualitativa', 'Qualitativa'),
+    ]
+
+    nome = models.CharField(max_length=100)
+    descricao = models.TextField()
+    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES)
+    pontuacao_maxima = models.IntegerField(null=True, blank=True)
+    criterio_texto = models.TextField(null=True, blank=True)
+    ativa = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.nome

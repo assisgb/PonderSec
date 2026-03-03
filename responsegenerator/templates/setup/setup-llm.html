@@ -310,6 +310,9 @@
                 flex-direction: column;
             }
         }
+        a{
+            text-decoration: none;
+        }
     </style>
 </head>
 <body>
@@ -353,7 +356,9 @@
                     </div>
                 </div>
                 <div class="llm-actions">
-                    <button class="btn-icon btn-edit" onclick="editLLM('ChatGPT')" title="Editar">✏️</button>
+                    <a href="{% url 'setup_configurar_llm' %}">
+                    <button class="btn-icon btn-edit" title="Editar">✏️</button>
+                    </a>
                     <button class="btn-icon btn-delete" onclick="deleteLLM('ChatGPT')" title="Deletar">🗑️</button>
                 </div>
             </div>
@@ -367,7 +372,9 @@
                     </div>
                 </div>
                 <div class="llm-actions">
-                    <button class="btn-icon btn-edit" onclick="editLLM('Groq')" title="Editar">✏️</button>
+                    <a href="{% url 'setup_configurar_llm' %}">
+                    <button class="btn-icon btn-edit" title="Editar">✏️</button>
+                    </a>
                     <button class="btn-icon btn-delete" onclick="deleteLLM('Groq')" title="Deletar">🗑️</button>
                 </div>
             </div>
@@ -381,7 +388,9 @@
                     </div>
                 </div>
                 <div class="llm-actions">
-                    <button class="btn-icon btn-edit" onclick="editLLM('Gemini')" title="Editar">✏️</button>
+                    <a href="{% url 'setup_configurar_llm' %}">
+                    <button class="btn-icon btn-edit" title="Editar">✏️</button>
+                    </a>
                     <button class="btn-icon btn-delete" onclick="deleteLLM('Gemini')" title="Deletar">🗑️</button>
                 </div>
             </div>
@@ -395,7 +404,9 @@
                     </div>
                 </div>
                 <div class="llm-actions">
-                    <button class="btn-icon btn-edit" onclick="editLLM('Claude')" title="Editar">✏️</button>
+                    <a href="{% url 'setup_configurar_llm' %}">
+                    <button class="btn-icon btn-edit" title="Editar">✏️</button>
+                    </a>
                     <button class="btn-icon btn-delete" onclick="deleteLLM('Claude')" title="Deletar">🗑️</button>
                 </div>
             </div>

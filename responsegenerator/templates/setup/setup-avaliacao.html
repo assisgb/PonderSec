@@ -316,6 +316,9 @@
                 flex-direction: column;
             }
         }
+        a{
+            text-decoration: none;
+        }
     </style>
 </head>
 <body>
@@ -346,7 +349,10 @@
                     onkeyup="filterMetrics()"
                 >
             </div>
-            <button class="btn-add" onclick="addMetric()">+ Adicionar</button>
+            <a href="{% url 'setup_adicionar_metrica' %}">
+                <button class="btn-add" >+ Adicionar</button>
+            </a>
+            
         </div>
 
         <div class="metrics-list" id="metricsList">
@@ -359,7 +365,11 @@
                     </div>
                 </div>
                 <div class="metric-actions">
+
+                    <a href="{% url 'setup_configurar_metrica' %}">
                     <button class="btn-icon btn-edit" onclick="editMetric('Acurácia')" title="Editar">✏️</button>
+                    </a>
+
                     <button class="btn-icon btn-delete" onclick="deleteMetric('Acurácia')" title="Deletar">🗑️</button>
                 </div>
             </div>
@@ -373,36 +383,60 @@
                     </div>
                 </div>
                 <div class="metric-actions">
+                    <a href="{% url 'setup_configurar_metrica' %}">
                     <button class="btn-icon btn-edit" onclick="editMetric('Completude')" title="Editar">✏️</button>
+                    </a>
                     <button class="btn-icon btn-delete" onclick="deleteMetric('Completude')" title="Deletar">🗑️</button>
                 </div>
             </div>
 
-            <div class="metric-card" data-name="relevancia">
+            <div class="metric-card" data-name="conformidade_e_seguranca">
                 <div class="metric-info">
+                    <a href="{% url 'setup_configurar_metrica' %}">
                     <div class="metric-icon">⭐</div>
+                    </a>
                     <div class="metric-details">
-                        <div class="metric-name">Relevância</div>
+                        <div class="metric-name">Conformidade e Segurança</div>
                         <div class="metric-description">Adequação ao contexto da pergunta</div>
                     </div>
                 </div>
                 <div class="metric-actions">
-                    <button class="btn-icon btn-edit" onclick="editMetric('Relevância')" title="Editar">✏️</button>
-                    <button class="btn-icon btn-delete" onclick="deleteMetric('Relevância')" title="Deletar">🗑️</button>
+                    <a href="{% url 'setup_configurar_metrica' %}">
+                    <button class="btn-icon btn-edit" onclick="editMetric('conformidade_e_seguranca')" title="Editar">✏️</button>
+                    </a>
+                    <button class="btn-icon btn-delete" onclick="deleteMetric('conformidade_e_seguranca')" title="Deletar">🗑️</button>
                 </div>
             </div>
 
-            <div class="metric-card" data-name="diretividade">
+            <div class="metric-card" data-name="clareza">
                 <div class="metric-info">
                     <div class="metric-icon">🧭</div>
                     <div class="metric-details">
-                        <div class="metric-name">Diretividade</div>
+                        <div class="metric-name">Clareza</div>
                         <div class="metric-description">Objetividade e clareza da resposta</div>
                     </div>
                 </div>
                 <div class="metric-actions">
-                    <button class="btn-icon btn-edit" onclick="editMetric('Diretividade')" title="Editar">✏️</button>
-                    <button class="btn-icon btn-delete" onclick="deleteMetric('Diretividade')" title="Deletar">🗑️</button>
+                    <a href="{% url 'setup_configurar_metrica' %}">
+                    <button class="btn-icon btn-edit" onclick="editMetric('clareza')" title="Editar">✏️</button>
+                    </a>
+                    <button class="btn-icon btn-delete" onclick="deleteMetric('clareza')" title="Deletar">🗑️</button>
+                </div>
+            </div>
+
+            <div class="metric-card" data-name="ausencia_de_alucinacao">
+                <div class="metric-info">
+                    <div class="metric-icon">💭</div>
+                    <div class="metric-details">
+                        <div class="metric-name">Ausência de Alucinação</div>
+                        <div class="metric-description">Objetividade e clareza da resposta</div>
+                    </div>
+                </div>
+                <div class="metric-actions">
+                    <a href="{% url 'setup_configurar_metrica' %}">
+                    <button class="btn-icon btn-edit" onclick="editMetric('ausencia_de_alucinacao')" title="Editar">✏️</button>
+                    </a>
+                    <button class="btn-icon btn-delete" onclick="deleteMetric('ausencia_de_alucinacao')" title="Deletar">🗑️</button>
                 </div>
             </div>
         </div>
