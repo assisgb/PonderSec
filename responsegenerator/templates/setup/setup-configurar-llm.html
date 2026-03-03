@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Configuração de LLM</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: "Space Grotesk", system-ui, sans-serif;
+    background: radial-gradient(circle at top, #051015 0, #02060b 45%, #000000 100%);
+    color: #e5fef6;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.background-grid {
+    position: fixed;
+    inset: 0;
+    background-image: 
+        linear-gradient(90deg, rgba(0, 255, 160, 0.06) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(0, 255, 160, 0.06) 1px, transparent 1px);
+    background-size: 40px 40px;
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+.scanline {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.7));
+    background-size: 100% 4px;
+    opacity: 0.25;
+    pointer-events: none;
+}
+
+.glow-orb {
+    position: fixed;
+    width: 500px;
+    height: 500px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0, 255, 160, 0.25), transparent 70%);
+    top: -10%;
+    right: -5%;
+    filter: blur(80px);
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.container {
+    position: relative;
+    max-width: 900px;
+    margin: 0 auto;
+    z-index: 2;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 30px;
+    padding: 25px 30px;
+    background: radial-gradient(circle at top left, #0b141d 0, #050a11 100%);
+    border-radius: 16px;
+    border: 1px solid rgba(0, 255, 160, 0.25);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+}
+
+.page-title {
+    color: #00ff9f;
+    font-size: 26px;
+    font-weight: 700;
+}
+
+.btn-back {
+    padding: 12px 28px;
+    background: linear-gradient(90deg, #00ff9f, #00ff57);
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 700;
+    color: #020509;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    transition: all 0.2s;
+}
+
+.btn-back:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 25px rgba(0, 255, 160, 1);
+}
+
+.config-card {
+    padding: 40px;
+    background: radial-gradient(circle at top left, #0b141d 0, #050a11 100%);
+    border-radius: 16px;
+    border: 1px solid rgba(0, 255, 160, 0.25);
+    box-shadow: 0 0 30px rgba(0, 255, 160, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+label {
+    font-size: 13px;
+    color: #7df6c2;
+    letter-spacing: 0.05em;
+}
+
+input, select {
+    padding: 14px;
+    background: #050a11;
+    border: 1px solid #1b2635;
+    border-radius: 10px;
+    color: #e5fef6;
+    font-size: 14px;
+    font-family: "Space Grotesk", system-ui, sans-serif;
+    outline: none;
+    transition: all 0.2s;
+}
+
+input:focus, select:focus {
+    border-color: #00ff9f;
+    box-shadow: 0 0 15px rgba(0, 255, 160, 0.5);
+}
+
+.api-wrapper {
+    position: relative;
+}
+
+.toggle-key {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-size: 13px;
+    color: #7df6c2;
+}
+
+.btn-save {
+    padding: 16px;
+    background: linear-gradient(90deg, #00ff9f, #00ff57);
+    border: none;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    color: #020509;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    transition: all 0.2s;
+}
+
+.btn-save:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 0 30px rgba(0, 255, 160, 1);
+}
+
+.status {
+    text-align: center;
+    font-size: 14px;
+    margin-top: 10px;
+    display: none;
+}
+
+.status.success {
+    color: #00ff9f;
+}
+
+.status.error {
+    color: #ff6b6b;
+}
+
+@media (max-width: 768px) {
+    .config-card {
+        padding: 25px;
+    }
+}
+</style>
+</head>
+<body>
+
+<div class="background-grid"></div>
+<div class="scanline"></div>
+<div class="glow-orb"></div>
+
+<div class="container">
+
+    <div class="header">
+        <div class="page-title">Configuração de LLM</div>
+        <a href="{% url 'setup_llm' %}">
+        <button class="btn-back">Voltar</button>
+        </a>
+    </div>
+
+    <div class="config-card">
+
+        <div class="form-group">
+            <label>Provedor</label>
+            <select id="provider">
+                <option value="">Selecione</option>
+                <option>OpenAI</option>
+                <option>Anthropic</option>
+                <option>Groq</option>
+                <option>Local</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Modelo</label>
+            <input type="text" id="model" placeholder="Ex: gpt-4o-mini">
+        </div>
+
+        <div class="form-group">
+            <label>API Key</label>
+            <div class="api-wrapper">
+                <input type="password" id="apiKey" placeholder="Insira sua API Key">
+                <span class="toggle-key" onclick="toggleKey()">Mostrar</span>
+            </div>
+        </div>
+
+        <button class="btn-save" onclick="saveConfig()">Salvar Configuração</button>
+
+        <div id="status" class="status"></div>
+
+    </div>
+
+</div>
+
+<script>
+function toggleKey() {
+    const input = document.getElementById("apiKey");
+    const toggle = document.querySelector(".toggle-key");
+
+    if (input.type === "password") {
+        input.type = "text";
+        toggle.innerText = "Ocultar";
+    } else {
+        input.type = "password";
+        toggle.innerText = "Mostrar";
+    }
+}
+
+function saveConfig() {
+    const provider = document.getElementById("provider").value;
+    const model = document.getElementById("model").value;
+    const apiKey = document.getElementById("apiKey").value;
+    const status = document.getElementById("status");
+
+    if (!provider || !model || !apiKey) {
+        status.className = "status error";
+        status.innerText = "Preencha todos os campos.";
+        status.style.display = "block";
+        return;
+    }
+
+    console.log({ provider, model, apiKey });
+
+    status.className = "status success";
+    status.innerText = "Configuração salva com sucesso!";
+    status.style.display = "block";
+}
+</script>
+
+</body>
+</html>
