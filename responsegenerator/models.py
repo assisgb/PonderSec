@@ -1,26 +1,26 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-class Historico(models.Model):
-    usuario = models.ForeignKey(User, on_delete=models.CASCADE) # => Vincula o histórico ao usuário logado
+
+class HistoricoAntigo(models.Model):
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
     pergunta = models.TextField()
     resposta_gemini = models.TextField(blank=True, null=True)
     resposta_groq = models.TextField(blank=True, null=True)
     data = models.DateTimeField(auto_now_add=True)
 
-    class Meta:  
-        ordering = ['-data'] # => Aqui ordena do mais recente para o mais antigo
+    class Meta:
+        ordering = ['-data']
 
     def __str__(self):
         return f"{self.usuario.username} - {self.data}"
-    
-class Metrica(models.Model):
 
+
+class Metrica(models.Model):
     TIPO_CHOICES = [
         ('quantitativa', 'Quantitativa'),
         ('qualitativa', 'Qualitativa'),
     ]
-
     nome = models.CharField(max_length=100)
     descricao = models.TextField()
     tipo = models.CharField(max_length=20, choices=TIPO_CHOICES)
@@ -30,3 +30,61 @@ class Metrica(models.Model):
 
     def __str__(self):
         return self.nome
+
+
+class LLM(models.Model):
+    nome = models.CharField(max_length=100)
+    descricao = models.TextField(blank=True, null=True)
+    api_key = models.CharField(max_length=255)
+    ativo = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.nome
+
+
+class Categoria(models.Model):
+    nome_categoria = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.nome_categoria
+
+
+class Questao(models.Model):
+    conteudo = models.TextField()
+    llm = models.ForeignKey(LLM, on_delete=models.SET_NULL, null=True)
+    categoria = models.ForeignKey(Categoria, on_delete=models.SET_NULL, null=True)
+
+    def __str__(self):
+        return self.conteudo[:50]
+
+
+class Resposta(models.Model):
+    questao = models.ForeignKey(Questao, on_delete=models.CASCADE)
+    llm = models.ForeignKey(LLM, on_delete=models.CASCADE)
+    conteudo_resposta = models.TextField()
+
+    def __str__(self):
+        return f"{self.questao} - {self.llm}"
+
+
+class Avaliacao(models.Model):
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
+    resposta = models.ForeignKey(Resposta, on_delete=models.CASCADE)
+    metrica = models.ForeignKey(Metrica, on_delete=models.SET_NULL, null=True)
+    avaliacao_quali = models.TextField(blank=True, null=True)
+    avaliacao_quanti = models.IntegerField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.usuario} - {self.resposta}"
+
+
+class Historico(models.Model):
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
+    questao = models.ForeignKey(Questao, on_delete=models.SET_NULL, null=True, blank=True)
+    data = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-data']
+
+    def __str__(self):
+        return f"{self.usuario.username} - {self.data}"
