@@ -88,3 +88,11 @@ class Historico(models.Model):
 
     def __str__(self):
         return f"{self.usuario.username} - {self.data}"
+
+class Formulario(models.Model):
+    nome = models.CharField(max_length=200)
+    questoes = models.ManyToManyField(Questao, blank=True)
+    criado_por = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.nome
