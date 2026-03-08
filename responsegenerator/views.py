@@ -195,3 +195,15 @@ def avaliacao(request):
 @login_required
 def avaliacao_respostas(request):
     return render(request, 'avaliacao/avaliacao_respostas.html')
+
+@login_required
+def avaliacao_adicionar_formulario(request):
+    return render(request, 'avaliacao/avaliacao_adicionar_formulario.html')
+
+@login_required
+def avaliacao_editar_formulario(request, id):
+    return render(request, 'avaliacao/avaliacao_editar_formulario.html')
+
+@login_required
+def avaliacao_deletar_formulario(request, id):
+    return redirect('avaliacao')

@@ -1,0 +1,220 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PonderSEC — Editar Formulário</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: "Space Grotesk", system-ui, sans-serif;
+            background: radial-gradient(circle at top, #051015 0, #02060b 45%, #000000 100%);
+            color: #e5fef6; min-height: 100vh;
+            display: flex; align-items: center; justify-content: center; padding: 20px;
+        }
+        .background-grid {
+            position: fixed; inset: 0;
+            background-image:
+                linear-gradient(90deg, rgba(0, 255, 160, 0.06) 1px, transparent 1px),
+                linear-gradient(180deg, rgba(0, 255, 160, 0.06) 1px, transparent 1px);
+            background-size: 40px 40px; opacity: 0.4; pointer-events: none;
+        }
+        .scanline {
+            position: fixed; inset: 0;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.7), rgba(0,0,0,0.15), rgba(0,0,0,0.7));
+            background-size: 100% 4px; opacity: 0.25; pointer-events: none;
+        }
+        .glow-orb {
+            position: fixed; width: 500px; height: 500px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 255, 160, 0.25), transparent 70%);
+            top: -10%; right: -5%; filter: blur(80px); opacity: 0.6; pointer-events: none;
+        }
+        .container { position: relative; max-width: 900px; width: 100%; z-index: 2; }
+        .header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 35px; padding: 30px 35px;
+            background: rgba(11, 20, 29, 0.6); border-radius: 16px;
+            border: 1px solid rgba(0, 255, 160, 0.15);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        .logo-section { display: flex; align-items: center; gap: 22px; }
+        .logo-section img {
+            width: 85px; height: 85px; border-radius: 12px;
+            filter: drop-shadow(0 0 8px rgba(0, 255, 160, 0.4));
+        }
+        .header-title { display: flex; flex-direction: column; gap: 6px; }
+        .product-name {
+            color: #7df6c2; text-transform: uppercase;
+            letter-spacing: 0.25em; font-size: 12px; font-weight: 600;
+        }
+        .page-title { color: #00ff9f; font-size: 28px; font-weight: 600; }
+        .btn-back {
+            padding: 14px 32px; background: rgba(0, 255, 160, 0.1);
+            border: 1px solid rgba(0, 255, 160, 0.3); border-radius: 8px;
+            cursor: pointer; font-size: 15px; font-weight: 600; color: #00ff9f;
+            text-decoration: none; text-transform: uppercase; letter-spacing: 0.05em;
+            transition: all 0.2s;
+        }
+        .btn-back:hover {
+            background: rgba(0, 255, 160, 0.15); border-color: #00ff9f; transform: translateY(-1px);
+        }
+        .form-section {
+            background: rgba(11, 20, 29, 0.5); border: 1px solid rgba(0, 255, 160, 0.15);
+            border-radius: 12px; padding: 35px;
+        }
+        .field-label {
+            color: #7df6c2; text-transform: uppercase;
+            letter-spacing: 0.15em; font-size: 13px; font-weight: 600;
+            margin-bottom: 12px; display: block;
+        }
+        .field-input {
+            width: 100%; padding: 16px 20px;
+            background: #050a11; border: 1px solid #1b2635;
+            border-radius: 10px; color: #e5fef6; font-size: 16px;
+            font-family: "Space Grotesk", system-ui, sans-serif;
+            outline: none; transition: all 0.2s; margin-bottom: 30px;
+        }
+        .field-input:focus {
+            border-color: #00ff9f; box-shadow: 0 0 8px rgba(0, 255, 160, 0.3);
+        }
+        .field-input::placeholder { color: #6b7b8d; }
+        .questions-label {
+            color: #7df6c2; text-transform: uppercase;
+            letter-spacing: 0.15em; font-size: 13px; font-weight: 600;
+            margin-bottom: 16px; display: block;
+        }
+        .questions-select {
+            display: flex; flex-direction: column; gap: 12px;
+            max-height: 400px; overflow-y: auto;
+            padding-right: 8px; margin-bottom: 30px;
+        }
+        .questions-select::-webkit-scrollbar { width: 6px; }
+        .questions-select::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 3px; }
+        .questions-select::-webkit-scrollbar-thumb { background: rgba(0,255,160,0.3); border-radius: 3px; }
+        .question-option {
+            display: flex; align-items: center; gap: 16px;
+            padding: 16px 20px;
+            background: rgba(11, 20, 29, 0.4);
+            border: 1px solid rgba(0, 255, 160, 0.1);
+            border-radius: 10px; cursor: pointer; transition: all 0.2s;
+        }
+        .question-option:hover {
+            border-color: rgba(0, 255, 160, 0.3);
+            background: rgba(11, 20, 29, 0.7);
+        }
+        .question-option.selected {
+            border-color: rgba(0, 255, 160, 0.5);
+            background: rgba(0, 255, 160, 0.07);
+        }
+        .custom-checkbox {
+            width: 22px; height: 22px; border-radius: 6px;
+            border: 2px solid rgba(0, 255, 160, 0.3);
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0; transition: all 0.2s;
+        }
+        .question-option.selected .custom-checkbox {
+            background: rgba(0, 255, 160, 0.2); border-color: #00ff9f;
+        }
+        .checkmark { color: #00ff9f; font-size: 14px; display: none; }
+        .question-option.selected .checkmark { display: block; }
+        .question-option-text { font-size: 15px; color: #e5fef6; line-height: 1.4; }
+        .question-option-meta { font-size: 12px; color: #6b7b8d; margin-top: 3px; }
+        .submit-row { display: flex; justify-content: flex-end; gap: 14px; }
+        .btn-cancel {
+            padding: 14px 32px; background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.15); border-radius: 8px;
+            cursor: pointer; font-size: 15px; font-weight: 600; color: #c5d9e3;
+            text-decoration: none; text-transform: uppercase; letter-spacing: 0.05em;
+            transition: all 0.2s;
+        }
+        .btn-cancel:hover { background: rgba(255,255,255,0.1); }
+        .btn-save {
+            padding: 14px 36px; background: rgba(0, 255, 160, 0.15);
+            border: 1px solid rgba(0, 255, 160, 0.4); border-radius: 8px;
+            cursor: pointer; font-size: 15px; font-weight: 600; color: #00ff9f;
+            text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.2s;
+            font-family: "Space Grotesk", system-ui, sans-serif;
+        }
+        .btn-save:hover {
+            background: rgba(0, 255, 160, 0.25); border-color: #00ff9f;
+            box-shadow: 0 0 16px rgba(0, 255, 160, 0.35); transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="background-grid"></div>
+    <div class="scanline"></div>
+    <div class="glow-orb"></div>
+    <div class="container">
+        <div class="header">
+            <div class="logo-section">
+                <img src="{% static 'pondersec_logo.jpg' %}" alt="PonderSEC Logo">
+                <div class="header-title">
+                    <div class="product-name">PONDERSEC</div>
+                    <div class="page-title">Editar Formulário</div>
+                </div>
+            </div>
+            <a href="{% url 'avaliacao' %}" class="btn-back">Voltar</a>
+        </div>
+        <div class="form-section">
+            {{ formulario.questoes.values_list|json_script:"selectedIds" }}
+            <label class="field-label">Nome do Formulário</label>
+            <input type="text" class="field-input" id="nomeFormulario"
+                value="{{ formulario.nome }}" placeholder="Nome do formulário">
+            <span class="questions-label">Selecionar Perguntas para o Formulário</span>
+            <div class="questions-select" id="questoesList">
+                {% for questao in questoes %}
+                <div class="question-option {% if questao in formulario.questoes.all %}selected{% endif %}"
+                    onclick="toggleQuestion(this, {{ questao.id }})">
+                    <div class="custom-checkbox">
+                        <span class="checkmark">✓</span>
+                    </div>
+                    <div>
+                        <div class="question-option-text">{{ questao.conteudo }}</div>
+                        <div class="question-option-meta">{{ questao.categoria.nome_categoria }}</div>
+                    </div>
+                </div>
+                {% empty %}
+                <div style="color: #6b7b8d; font-size: 15px; padding: 20px 0;">
+                    Nenhuma pergunta cadastrada ainda.
+                </div>
+                {% endfor %}
+            </div>
+            <div class="submit-row">
+                <a href="{% url 'avaliacao' %}" class="btn-cancel">Cancelar</a>
+                <button class="btn-save" onclick="salvarFormulario()">Salvar Formulário</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        const selectedIds = new Set(
+            JSON.parse(document.getElementById('selectedIds').textContent).map(item => item[0])
+        );
+
+        function toggleQuestion(el, id) {
+            el.classList.toggle('selected');
+            if (selectedIds.has(id)) {
+                selectedIds.delete(id);
+            } else {
+                selectedIds.add(id);
+            }
+        }
+
+        function salvarFormulario() {
+            const nome = document.getElementById('nomeFormulario').value.trim();
+            if (!nome) {
+                alert('Por favor, informe o nome do formulário.');
+                return;
+            }
+            if (selectedIds.size === 0) {
+                alert('Selecione pelo menos uma pergunta.');
+                return;
+            }
+            console.log('Nome:', nome, 'Questões:', [...selectedIds]);
+            alert('Formulário atualizado!');
+        }
+    </script>
+</body>
+</html>

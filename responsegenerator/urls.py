@@ -23,5 +23,8 @@ urlpatterns = [
     path('historico/deletar/<int:id>/', views.deletar_item_historico, name='deletar_item_historico'),
     path('historico/ver/<int:id>/', views.ver_detalhes, name='ver_detalhes'),
     path('historico/limpar/', views.limpar_historico, name='limpar_historico'),
+    path('avaliacao/adicionar/', views.avaliacao_adicionar_formulario, name="avaliacao_adicionar_formulario"),
+    path('avaliacao/editar/<int:id>/', views.avaliacao_editar_formulario, name="avaliacao_editar_formulario"),
+    path('avaliacao/deletar/<int:id>/', views.avaliacao_deletar_formulario, name="avaliacao_deletar_formulario"),
     
 ]
