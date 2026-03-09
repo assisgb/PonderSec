@@ -97,10 +97,4 @@ Instituição: **Universidade Federal do Amazonas (UFAM)**
 
 ---
 
-# 👨‍💻 Contato
 
-GitHub:
-https://github.com/miguelmoraesx
-
-LinkedIn:
-https://www.linkedin.com/in/miguel-moraes-7a2535309/
