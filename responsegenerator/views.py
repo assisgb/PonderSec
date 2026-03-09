@@ -164,11 +164,36 @@ def setup_configurar_llm(request):
 
 @login_required
 def setup_adicionar_metrica(request):
+    if request.method == 'POST':
+        nome = request.POST.get('nome')
+        descricao = request.POST.get('descricao')
+        tipo = request.POST.get('tipo')
+        pontuacao_maxima = request.POST.get('pontuacao_maxima')
+        criterio_texto = request.POST.get('criterio_texto')
+
+        Metrica.objects.create(
+            nome=nome,
+            descricao=descricao,
+            tipo=tipo,
+            pontuacao_maxima=pontuacao_maxima if pontuacao_maxima else None,
+            criterio_texto=criterio_texto,
+            ativa=True
+        )
+        return redirect('setup_configurar_metrica')
+
     return render(request, 'setup/setup-adicionar-metrica.html')
 
 @login_required
 def setup_configurar_metrica(request):
-    return render(request, 'setup/setup-configurar-metrica.html')
+    metricas = Metrica.objects.filter(ativa=True)
+    return render(request, 'setup/setup-configurar-metrica.html', {'metricas': metricas})
+
+@login_required
+def setup_deletar_metrica(request, id):
+    metrica = get_object_or_404(Metrica, id=id)
+    if request.method == 'POST':
+        metrica.delete()
+    return redirect('setup_configurar_metrica')
 
 @login_required
 def setup_adicionar_llm(request):
