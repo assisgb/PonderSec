@@ -248,7 +248,10 @@
         </div>
 
         <div class="logout-section">
-            <a class="btn-logout">Sair</a>
+            <form action="{% url 'logout' %}" method="POST" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn-logout">Sair</button>
+            </form>
         </div>
     </div>
     
