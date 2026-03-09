@@ -216,51 +216,44 @@ body {
     </div>
 
     <div id="metricsContainer">
-
+        {% for metrica in metricas %}
         <div class="metric-item">
-                <label>Nome da Métrica</label>
-                <input type="text">
+            <label>Nome da Métrica</label>
+            <input type="text" value="{{ metrica.nome }}" disabled>
 
-                <label>Descrição</label>
-                <input type="text">
+            <label>Descrição</label>
+            <input type="text" value="{{ metrica.descricao }}" disabled>
 
-                <label>Tipo de Métrica</label>
-                <div class="radio-group">
-                    <label>
-                        <input type="radio"  name="name" value="quantitativa">
-                        Quantitativa
-                    </label>
-                    <label>
-                        <input type="radio" name="name" value="qualitativa">
-                        Qualitativa
-                    </label>
-                </div>
+            <label>Tipo</label>
+            <input type="text" value="{{ metrica.tipo }}" disabled>
 
-                 <label>Pontuação Máxima</label>
-                    <input type="number" min="1" >
-                    <label>Critério de Avaliação (Texto)</label>
-                    <textarea rows="3">
-                    </textarea>
-               
-            </div>
+            {% if metrica.pontuacao_maxima %}
+            <label>Pontuação Máxima</label>
+            <input type="number" value="{{ metrica.pontuacao_maxima }}" disabled>
+            {% endif %}
 
+            {% if metrica.criterio_texto %}
+            <label>Critério de Avaliação</label>
+            <textarea rows="3" disabled>{{ metrica.criterio_texto }}</textarea>
+            {% endif %}
 
-
-
+            <form method="POST" action="{% url 'setup_deletar_metrica' metrica.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn-delete">Deletar</button>
+            </form>
+        </div>
+        {% empty %}
+        <p style="color: #8ba1b0; text-align: center;">Nenhuma métrica cadastrada ainda.</p>
+        {% endfor %}
     </div>
-
-    
 
     <div class="submit-section">
-        <button class="btn-add">Salvar Métrica</button>
+        <a href="{% url 'setup_adicionar_metrica' %}" class="btn-add" style="text-decoration:none;">Adicionar Métrica</a>
     </div>
-</div>
 
 </div>
-
+</div>
 <script>
-
 </script>
-
 </body>
 </html>

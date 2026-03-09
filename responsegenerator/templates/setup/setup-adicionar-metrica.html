@@ -214,53 +214,34 @@ body {
         Defina se a métrica será <strong>Quantitativa</strong> (com pontuação máxima)
         ou <strong>Qualitativa</strong> (avaliação textual).
     </div>
-
-    <div id="metricsContainer">
-
+    <form method="POST" action="{% url 'setup_adicionar_metrica' %}">
+    {% csrf_token %}
         <div class="metric-item">
-                <label>Nome da Métrica</label>
-                <input type="text">
-
-                <label>Descrição</label>
-                <input type="text">
-
-                <label>Tipo de Métrica</label>
-                <div class="radio-group">
-                    <label>
-                        <input type="radio"  name="name" value="quantitativa">
-                        Quantitativa
-                    </label>
-                    <label>
-                        <input type="radio" name="name" value="qualitativa">
-                        Qualitativa
-                    </label>
-                </div>
-
-                 <label>Pontuação Máxima</label>
-                    <input type="number" min="1" >
-                    <label>Critério de Avaliação (Texto)</label>
-                    <textarea rows="3">
-                    </textarea>
-               
+            <label>Nome da Métrica</label>
+            <input type="text" name="nome">
+            <label>Descrição</label>
+            <input type="text" name="descricao">
+            <label>Tipo de Métrica</label>
+            <div class="radio-group">
+                <label>
+                    <input type="radio" name="tipo" value="quantitativa">
+                    Quantitativa
+                </label>
+                <label>
+                    <input type="radio" name="tipo" value="qualitativa">
+                    Qualitativa
+                </label>
             </div>
-
-
-
-
-    </div>
-
-    
-
-    <div class="submit-section">
-        <button class="btn-add">Adicionar Métrica</button>
-    </div>
+            <label>Pontuação Máxima</label>
+            <input type="number" name="pontuacao_maxima" min="1">
+            <label>Critério de Avaliação (Texto)</label>
+            <textarea name="criterio_texto" rows="3"></textarea>
+        </div>
+        <div class="submit-section">
+            <button type="submit" class="btn-add">Adicionar Métrica</button>
+        </div>
+    </form>
 </div>
-
 </div>
-
-<script>
-
-</script>
-
 </body>
 </html>
