@@ -335,6 +335,9 @@
 
         display: none;
     }
+    a{
+        text-decoration: none;
+    }
     </style>
 </head>
 
@@ -365,6 +368,10 @@
         <div class="group-select">
             <select>
                 <option>Selecione uma Categoria</option>
+                {% for categoria in categorias %}
+                <option>{{categoria.nome_categoria}}</option>
+                {% endfor %}
+
             </select>
             
             <a href="{% url 'questoes_cadastro_categoria' %}">

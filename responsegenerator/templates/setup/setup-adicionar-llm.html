@@ -210,9 +210,11 @@ input:focus, select:focus {
 
     <div class="config-card">
 
-        <div class="form-group">
+        <form method="POST">
+            {% csrf_token %}
+            <div class="form-group">
             <label>Provedor</label>
-            <select id="provider">
+            <select name="provider">
                 <option value="">Selecione</option>
                 <option>OpenAI</option>
                 <option>Anthropic</option>
@@ -220,26 +222,22 @@ input:focus, select:focus {
                 <option>Local</option>
             </select>
         </div>
-
-        <div class="form-group">
+            <div class="form-group">
             <label>Modelo</label>
-            <input type="text" id="model" placeholder="Ex: gpt-4o-mini">
-        </div>
-
-        <div class="form-group">
+            <input type="text" name="model" placeholder="Ex: gpt-4o-mini">
+            <div class="form-group">
             <label>API Key</label>
             <div class="api-wrapper">
-                <input type="password" id="apiKey" placeholder="Insira sua API Key">
+                <input type="password" name="apiKey" placeholder="Insira sua API Key">
                 <span class="toggle-key" onclick="toggleKey()">Mostrar</span>
+                <button class="btn-save" type="submit">Adicionar Modelo</button>
             </div>
         </div>
 
-        <button class="btn-save" onclick="saveConfig()">Adicionar Modelo</button>
 
-        <div id="status" class="status"></div>
+        </div>
 
-    </div>
-
+        </form>
 </div>
 
 <script>
@@ -256,25 +254,6 @@ function toggleKey() {
     }
 }
 
-function saveConfig() {
-    const provider = document.getElementById("provider").value;
-    const model = document.getElementById("model").value;
-    const apiKey = document.getElementById("apiKey").value;
-    const status = document.getElementById("status");
-
-    if (!provider || !model || !apiKey) {
-        status.className = "status error";
-        status.innerText = "Preencha todos os campos.";
-        status.style.display = "block";
-        return;
-    }
-
-    console.log({ provider, model, apiKey });
-
-    status.className = "status success";
-    status.innerText = "Configuração salva com sucesso!";
-    status.style.display = "block";
-}
 </script>
 
 </body>

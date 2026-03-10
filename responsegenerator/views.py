@@ -6,7 +6,8 @@ import os
 from groq import Groq
 from datetime import timedelta
 from responsegenerator.models import HistoricoAntigo
-from responsegenerator.models import Metrica
+from responsegenerator.models import Categoria
+from responsegenerator.models import LLM
 
 def salvar_no_historico(user, pergunta, resposta):
     logs = HistoricoAntigo.objects.filter(usuario=user).order_by('data')
@@ -135,7 +136,11 @@ def questoes(request):
 
 @login_required
 def add_questoes(request):
-    return render(request, 'questoes/add-questoes.html')
+
+    categorias = Categoria.objects.all()
+    return render(request, 'questoes/add-questoes.html',{
+     "categorias": categorias
+    })
 
 @login_required
 def questoes_upload(request):
@@ -143,6 +148,20 @@ def questoes_upload(request):
 
 @login_required
 def questoes_cadastro_categoria(request):
+    if (request.method == "POST"):
+        nome_categoria = request.POST.get("nome")
+        descricao_categoria = request.POST.get("descricao")
+
+
+        Categoria.objects.create(
+            nome_categoria = nome_categoria,
+            descricao_categoria = descricao_categoria
+
+
+        )
+        
+
+
     return render(request, 'questoes/questoes_cadastro_categoria.html')
 
 # SETUP
@@ -160,44 +179,31 @@ def setup_avaliacao(request):
 
 @login_required
 def setup_configurar_llm(request):
+
     return render(request, 'setup/setup-configurar-llm.html')
 
 @login_required
 def setup_adicionar_metrica(request):
-    if request.method == 'POST':
-        nome = request.POST.get('nome')
-        descricao = request.POST.get('descricao')
-        tipo = request.POST.get('tipo')
-        pontuacao_maxima = request.POST.get('pontuacao_maxima')
-        criterio_texto = request.POST.get('criterio_texto')
-
-        Metrica.objects.create(
-            nome=nome,
-            descricao=descricao,
-            tipo=tipo,
-            pontuacao_maxima=pontuacao_maxima if pontuacao_maxima else None,
-            criterio_texto=criterio_texto,
-            ativa=True
-        )
-        return redirect('setup_configurar_metrica')
-
     return render(request, 'setup/setup-adicionar-metrica.html')
 
 @login_required
 def setup_configurar_metrica(request):
-    metricas = Metrica.objects.filter(ativa=True)
-    return render(request, 'setup/setup-configurar-metrica.html', {'metricas': metricas})
-
-@login_required
-def setup_deletar_metrica(request, id):
-    metrica = get_object_or_404(Metrica, id=id)
-    if request.method == 'POST':
-        metrica.delete()
-    return redirect('setup_configurar_metrica')
+    return render(request, 'setup/setup-configurar-metrica.html')
 
 @login_required
 def setup_adicionar_llm(request):
-    return render(request, 'setup/setup-adicionar-llm.html')
+     if request.method == "POST":
+        nome = request.POST.get("model")
+        provedor = request.POST.get("provider")
+        api_key = request.POST.get("apiKey")
+
+        LLM.objects.create(
+            nome = nome,
+            descricao = provedor,
+            api_key = api_key
+        )
+
+     return render(request, 'setup/setup-adicionar-llm.html')
 
 # CONSULTA
 @login_required

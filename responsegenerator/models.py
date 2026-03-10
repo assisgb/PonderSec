@@ -44,6 +44,7 @@ class LLM(models.Model):
 
 class Categoria(models.Model):
     nome_categoria = models.CharField(max_length=100)
+    descricao_categoria = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return self.nome_categoria
