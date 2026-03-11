@@ -6,7 +6,7 @@ urlpatterns = [
     path('questoes/', views.questoes, name="questoes"),
     path('add_questoes/', views.add_questoes, name="add_questoes"),
     path('questoes-upload/', views.questoes_upload, name="questoes_upload"),
-     path('questoes-cadastro-categoria/', views.questoes_cadastro_categoria, name="questoes_cadastro_categoria"),
+    path('questoes-cadastro-categoria/', views.questoes_cadastro_categoria, name="questoes_cadastro_categoria"),
     path('menu_consulta/', views.menu_consulta, name="menu-consulta"),
     path('consulta_comparacao/', views.consulta_comparacao, name="consulta_comparacao"),
     path('executar_consulta', views.executar_consulta, name="executar_consulta"),
@@ -26,6 +26,6 @@ urlpatterns = [
     path('avaliacao/adicionar/', views.avaliacao_adicionar_formulario, name="avaliacao_adicionar_formulario"),
     path('avaliacao/editar/<int:id>/', views.avaliacao_editar_formulario, name="avaliacao_editar_formulario"),
     path('avaliacao/deletar/<int:id>/', views.avaliacao_deletar_formulario, name="avaliacao_deletar_formulario"),
-    path("upload-perguntas/", views.upload_perguntas ,name="upload_perguntas"),
+    path('upload-perguntas/', views.upload_perguntas ,name='upload_perguntas'),
     #path('setup-deletar-metrica/<int:id>/', views.setup_deletar_metrica, name='setup_deletar_metrica'),
 ]
