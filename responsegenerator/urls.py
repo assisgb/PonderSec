@@ -26,5 +26,6 @@ urlpatterns = [
     path('avaliacao/adicionar/', views.avaliacao_adicionar_formulario, name="avaliacao_adicionar_formulario"),
     path('avaliacao/editar/<int:id>/', views.avaliacao_editar_formulario, name="avaliacao_editar_formulario"),
     path('avaliacao/deletar/<int:id>/', views.avaliacao_deletar_formulario, name="avaliacao_deletar_formulario"),
+    path("upload-perguntas/", views.upload_perguntas ,name="upload_perguntas"),
     #path('setup-deletar-metrica/<int:id>/', views.setup_deletar_metrica, name='setup_deletar_metrica'),
 ]

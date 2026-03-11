@@ -270,7 +270,21 @@ function uploadFile() {
     }
 
     const file = fileInput.files[0];
-    alert("Arquivo pronto para envio: " + file.name);
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    fetch("/upload-perguntas/", {
+        method: "POST",
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log(data);
+    })
+    .catch(error => {
+        console.error("Erro:", error);
+    });
 }
 </script>
 

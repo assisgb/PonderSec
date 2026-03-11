@@ -8,6 +8,8 @@ from datetime import timedelta
 from responsegenerator.models import HistoricoAntigo
 from responsegenerator.models import Categoria
 from responsegenerator.models import LLM
+import re
+from django.http import JsonResponse
 
 def salvar_no_historico(user, pergunta, resposta):
     logs = HistoricoAntigo.objects.filter(usuario=user).order_by('data')
@@ -145,6 +147,23 @@ def add_questoes(request):
 @login_required
 def questoes_upload(request):
     return render(request, 'questoes/questoes-upload.html')
+
+def upload_perguntas(request):
+    if request.method == "POST":
+        arquivo = request.FILES["file"]
+
+        perguntas = []
+
+        for linha in arquivo.read().decode("utf-8").split("\n"):
+            match = re.search(r'PERGUNTA:\s*"(.*?)"', linha)
+            if match:
+                perguntas.append(match.group(1))
+
+                
+
+        
+
+    
 
 @login_required
 def questoes_cadastro_categoria(request):
