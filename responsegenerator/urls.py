@@ -13,7 +13,7 @@ urlpatterns = [
     path('avaliacao/', views.avaliacao, name="avaliacao"),
     path('avaliacao_respostas/', views.avaliacao_respostas, name="avaliacao_respostas"),
     path('setup-adicionar-metrica/', views.setup_adicionar_metrica, name='setup_adicionar_metrica'),
-    path('setup-adicionar-llm/', views.setup_adicionar_llm, name='setup_adicionar_llm'),
+    #path('setup-adicionar-llm/', views.setup_adicionar_llm, name='setup_adicionar_llm'),
     path('setup-configurar-metrica/', views.setup_configurar_metrica, name='setup_configurar_metrica'),
     path('setup/', views.setup, name="setup"),
     path('setup_llm/', views.setup_llm, name="setup_llm"),
@@ -27,5 +27,7 @@ urlpatterns = [
     path('avaliacao/editar/<int:id>/', views.avaliacao_editar_formulario, name="avaliacao_editar_formulario"),
     path('avaliacao/deletar/<int:id>/', views.avaliacao_deletar_formulario, name="avaliacao_deletar_formulario"),
     path('upload-perguntas/', views.upload_perguntas ,name='upload_perguntas'),
+     path("api/llm/<int:id>/delete/", views.deletar_llm, name="delete_llm"),
+     path("api/llm/<int:id>/edit/", views.edit_llm_api)
     #path('setup-deletar-metrica/<int:id>/', views.setup_deletar_metrica, name='setup_deletar_metrica'),
 ]

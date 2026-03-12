@@ -490,54 +490,11 @@
                 </div>
             </div>
             
-            {% if historico %}
-            <div style="display: flex; justify-content: flex-end; width: 100%;">
-                <button type="button" 
-                        class="btn-clear-all"
-                        data-action="{% url 'limpar_historico' %}"
-                        data-title="☢ LIMPAR TUDO?"
-                        data-desc="Você tem certeza? Todo o seu histórico será apagado para sempre."
-                        data-btn-text="Sim, limpar tudo"
-                        onclick="configurarModal(this)">
-                    ☢ Limpar Histórico Completo
-                </button>
-            </div>
-            {% endif %}
-        </div>
 
         <div class="history-grid" id="historyGrid">
-            {% if historico %}
-                {% for item in historico %}
-                    <div class="history-card" data-question="{{ item.pergunta|lower }}">
-                        <div class="card-header">
-                            <span class="card-date">{{ item.data|date:"d/m/Y H:i" }}</span>
-                            <div class="card-actions">
-                                <a href="{% url 'ver_detalhes' item.id %}" class="btn-icon" title="Ver detalhes">👁</a>
-                                
-                                <button type="button" 
-                                        class="btn-icon" 
-                                        title="Deletar" 
-                                        data-action="{% url 'deletar_item_historico' item.id %}"
-                                        data-title="Apagar Registro?"
-                                        data-desc="Esta ação removerá este item permanentemente."
-                                        data-btn-text="Sim, apagar"
-                                        onclick="configurarModal(this)">
-                                    🗑
-                                </button>
-                            </div>
-                        </div>
-                        <div class="card-question">{{ item.pergunta }}</div>
-                        <div class="card-preview">
-                            {% if item.resposta_gemini %}
-                                {{ item.resposta_gemini|truncatewords:20 }}
-                            {% else %}
-                                {{ item.resposta_groq|truncatewords:20 }}
-                            {% endif %}
-                        </div>
-                        <div class="card-footer">
-                            <span class="tag">AI Response</span>
-                        </div>
-                    </div>
+            {% if questoes %}
+                {% for questao in questoes %}
+                    <div class="history-card">{{questao.conteudo}}</div>
                 {% endfor %}
             {% else %}
                 <div class="empty-state">

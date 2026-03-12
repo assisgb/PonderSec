@@ -12,6 +12,7 @@ from responsegenerator.models import Questao
 import re
 from django.http import JsonResponse
 from django.http import HttpResponse
+import json
 
 def salvar_no_historico(user, pergunta, resposta):
     logs = HistoricoAntigo.objects.filter(usuario=user).order_by('data')
@@ -136,7 +137,10 @@ def historico(request):
 # QUESTOES
 @login_required
 def questoes(request):
-    return render(request, 'questoes/questoes.html')
+    questoes = Questao.objects.all()
+    return render(request, 'questoes/questoes.html',{
+        "questoes": questoes
+    })
 
 @login_required
 def add_questoes(request):
@@ -195,7 +199,22 @@ def setup(request):
 
 @login_required
 def setup_llm(request):
-    return render(request, 'setup/setup-llm.html')
+    if request.method == "POST":
+        nome = request.POST.get("model")
+        provedor = request.POST.get("provider")
+        api_key = request.POST.get("apiKey")
+
+        LLM.objects.create(
+            nome = nome,
+            descricao = provedor,
+            api_key = api_key
+        )
+
+    llms_cadastradas = LLM.objects.all()
+
+
+
+    return render(request, 'setup/setup-llm.html',{"llms_cadastradas": llms_cadastradas})
 
 @login_required
 def setup_avaliacao(request):
@@ -215,19 +234,40 @@ def setup_configurar_metrica(request):
     return render(request, 'setup/setup-configurar-metrica.html')
 
 @login_required
-def setup_adicionar_llm(request):
-     if request.method == "POST":
-        nome = request.POST.get("model")
-        provedor = request.POST.get("provider")
-        api_key = request.POST.get("apiKey")
+def deletar_llm(request, id):
+    if request.method == "DELETE":
 
-        LLM.objects.create(
-            nome = nome,
-            descricao = provedor,
-            api_key = api_key
-        )
+        LLM.objects.filter(id=id).delete()
 
-     return render(request, 'setup/setup-adicionar-llm.html')
+        return JsonResponse({
+            "status": "success",
+            "id": id
+        })
+
+    return JsonResponse({"status": "error"})
+
+
+def edit_llm_api(request, id):
+
+    if request.method == "PUT":
+
+        data = json.loads(request.body)
+
+        nome = data.get("nome")
+        api_key = data.get("api_key")
+
+        llm = LLM.objects.get(id=id)
+        llm.nome = nome
+        llm.api_key = api_key
+        llm.save()
+
+        return JsonResponse({
+            "status": "success"
+        })
+
+    return JsonResponse({"status": "error"})
+
+
 
 # CONSULTA
 @login_required
