@@ -1,6 +1,7 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -24,7 +25,7 @@
         .background-grid {
             position: fixed;
             inset: 0;
-            background-image: 
+            background-image:
                 linear-gradient(90deg, rgba(0, 255, 160, 0.06) 1px, transparent 1px),
                 linear-gradient(180deg, rgba(0, 255, 160, 0.06) 1px, transparent 1px);
             background-size: 40px 40px;
@@ -153,28 +154,13 @@
         .checkbox {
             width: 20px;
             height: 20px;
-            border: 2px solid rgba(0, 255, 160, 0.5);
+
+            border: 2px solid #00ff9f;
             border-radius: 4px;
-            cursor: pointer;
-            transition: all 0.2s;
-            flex-shrink: 0;
-            position: relative;
         }
 
-        .checkbox.checked {
+        .question-item.selected .checkbox {
             background: #00ff9f;
-            border-color: #00ff9f;
-        }
-
-        .checkbox.checked::after {
-            content: '✓';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: #020509;
-            font-size: 14px;
-            font-weight: bold;
         }
 
         .question-text {
@@ -242,7 +228,9 @@
         }
 
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         .loading-text {
@@ -287,23 +275,155 @@
                 justify-content: center;
             }
         }
+
+        .btn-show-answer {
+
+            padding: 8px 16px;
+
+            background: rgba(0, 255, 160, 0.1);
+            border: 1px solid rgba(0, 255, 160, 0.4);
+
+            border-radius: 6px;
+
+            color: #00ff9f;
+            font-size: 13px;
+            font-weight: 600;
+
+            cursor: pointer;
+
+            transition: all 0.2s;
+        }
+
+        .btn-show-answer:hover {
+            background: rgba(0, 255, 160, 0.2);
+            border-color: #00ff9f;
+        }
+
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+
+            background: rgba(0, 0, 0, 0.85);
+
+            display: none;
+            align-items: center;
+            justify-content: center;
+
+            z-index: 1000;
+        }
+
+        .modal-container {
+
+            width: 900px;
+            max-width: 95%;
+
+            background: rgba(11, 20, 29, 0.95);
+
+            border: 1px solid rgba(0, 255, 160, 0.3);
+            border-radius: 16px;
+
+            padding: 30px;
+
+            box-shadow: 0 0 40px rgba(0, 255, 160, 0.15);
+        }
+
+        .modal-header {
+
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            color: #00ff9f;
+        }
+
+        .btn-close {
+
+            background: transparent;
+            border: none;
+
+            color: #00ff9f;
+            font-size: 20px;
+
+            cursor: pointer;
+        }
+
+        .modal-question {
+
+            padding: 15px 20px;
+
+            background: rgba(0, 255, 160, 0.05);
+
+            border: 1px solid rgba(0, 255, 160, 0.2);
+            border-radius: 10px;
+
+            margin-bottom: 25px;
+
+            font-size: 15px;
+        }
+
+        .answers-grid {
+
+            display: grid;
+
+            grid-template-columns: repeat(3, 1fr);
+
+            gap: 20px;
+        }
+
+        .answer-card {
+
+            background: rgba(11, 20, 29, 0.5);
+
+            border: 1px solid rgba(0, 255, 160, 0.15);
+
+            border-radius: 10px;
+
+            padding: 18px;
+
+            transition: 0.2s;
+        }
+
+        .answer-card:hover {
+            border-color: rgba(0, 255, 160, 0.35);
+        }
+
+        .ai-name {
+
+            font-size: 14px;
+            font-weight: 700;
+
+            color: #00ff9f;
+
+            margin-bottom: 10px;
+        }
+
+        .ai-response {
+
+            font-size: 14px;
+
+            color: #cfe9df;
+
+            line-height: 1.5;
+        }
     </style>
 </head>
+
 <body>
     <div class="background-grid"></div>
 
     <div class="container">
         <div class="header">
             <a href="{% url 'menu-consulta' %}" class="btn-back-header">← Consulta</a>
-            
+
             <div class="search-container">
-                <input 
-                    type="text" 
-                    class="search-input" 
-                    id="filterInput"
-                    placeholder="Filtro de pesquisa..."
-                    oninput="filterQuestions()"
-                >
+                <input type="text" class="search-input" id="filterInput" placeholder="Filtro de pesquisa..."
+                    oninput="filterQuestions()">
             </div>
 
             <button class="btn-run" id="btnRun" onclick="executeQuestions()">
@@ -316,13 +436,41 @@
 
         <div class="questions-list" id="questionsList">
             <!-- Perguntas serão carregadas aqui -->
+            {% if questoes %}
+            {% for questao in questoes %}
+            {% if questoes.respostas %}
+            <div class="question-item" data-id="{{questao.id}}">
+
+                <div class="question-text">
+                    <!--  aqui vai a pergunta do banco {{questao.conteudo}}-->
+                    {{questao.conteudo}}
+                </div>
+
+                <button class="btn-show-answer" onclick="showAnswer()">
+                    Mostrar respostas
+                </button>
+            </div>
         </div>
 
-        <div class="empty-state" id="emptyState" style="display: none;">
+        {% else %}
+        <div class="question-item " data-id="{{questao.id}}" onclick="toggleQuestion(this)">
+            <div class="checkbox"></div>
+            <div class="question-text">{{questao.conteudo}}</div>
+        </div>
+        {% endif %}
+        {% endfor %}
+
+        {% else %}
+        <div class="empty-state" id="emptyState" style="display: flex;">
             <div class="empty-icon">📋</div>
             <div class="empty-text">Nenhuma pergunta encontrada</div>
             <div class="empty-subtext">Adicione perguntas para executar consultas</div>
         </div>
+        {%endif%}
+
+
+
+
     </div>
 
     <div class="loading-overlay" id="loadingOverlay">
@@ -332,115 +480,87 @@
         </div>
     </div>
 
-    <script>
-        // Dados de exemplo - substituir por dados do Django
-        const questions = [
-            { id: 1, text: "Como se proteger de phishing?" },
-            { id: 2, text: "O que é SQL Injection?" },
-            { id: 3, text: "Explique Cross-Site Scripting (XSS)" },
-            { id: 4, text: "Como funciona autenticação de dois fatores?" },
-            { id: 5, text: "O que são ataques de força bruta?" },
-            { id: 6, text: "Como configurar firewall para segurança?" }
-        ];
 
-        let selectedQuestions = new Set();
 
-        function renderQuestions(questionsToRender = questions) {
-            const container = document.getElementById('questionsList');
-            const emptyState = document.getElementById('emptyState');
+    <div class="modal-overlay" id="modal-overlay">
 
-            if (questionsToRender.length === 0) {
-                container.style.display = 'none';
-                emptyState.style.display = 'block';
-                return;
-            }
+        <div class="modal-container">
 
-            container.style.display = 'flex';
-            emptyState.style.display = 'none';
+            <div class="modal-header">
+                <h2 class="modal-title">Pergunta</h2>
+                <button class="btn-close" onclick="closeAnswer()">✕</button>
+            </div>
 
-            container.innerHTML = questionsToRender.map(q => `
-                <div class="question-item ${selectedQuestions.has(q.id) ? 'selected' : ''}" 
-                     onclick="toggleQuestion(${q.id})"
-                     data-id="${q.id}">
-                    <div class="checkbox ${selectedQuestions.has(q.id) ? 'checked' : ''}"></div>
-                    <div class="question-text">${q.text}</div>
+            <div class="modal-question">
+                {{ questao.conteudo_resposta }}
+            </div>
+
+            <div class="answers-grid">
+
+                <div class="answer-card">
+                    <div class="ai-name">ChatGPT</div>
+                    <div class="ai-response">
+                        Resposta gerada pela IA ChatGPT aparecerá aqui.
+                    </div>
                 </div>
-            `).join('');
-        }
 
-        function toggleQuestion(id) {
+                <div class="answer-card">
+                    <div class="ai-name">GROQ</div>
+                    <div class="ai-response">
+                        Resposta gerada pela IA GROQ aparecerá aqui.
+                    </div>
+                </div>
+
+                <div class="answer-card">
+                    <div class="ai-name">Gemini</div>
+                    <div class="ai-response">
+                        Resposta gerada pela IA Gemini aparecerá aqui.
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+
+
+
+
+
+
+    <script>
+        const selectedQuestions = new Set();
+
+        function toggleQuestion(element) {
+
+            const id = element.dataset.id;
+
             if (selectedQuestions.has(id)) {
                 selectedQuestions.delete(id);
-            } else {
+                element.classList.remove("selected");
+            }
+            else {
                 selectedQuestions.add(id);
-            }
-            renderQuestions(getFilteredQuestions());
-        }
-
-        function getFilteredQuestions() {
-            const filter = document.getElementById('filterInput').value.toLowerCase();
-            if (!filter) return questions;
-            
-            return questions.filter(q => 
-                q.text.toLowerCase().includes(filter)
-            );
-        }
-
-        function filterQuestions() {
-            const filtered = getFilteredQuestions();
-            renderQuestions(filtered);
-
-            if (filtered.length === 0 && document.getElementById('filterInput').value) {
-                document.getElementById('emptyState').querySelector('.empty-text').textContent = 
-                    'Sem resultados para o filtro';
-            } else {
-                document.getElementById('emptyState').querySelector('.empty-text').textContent = 
-                    'Nenhuma pergunta encontrada';
-            }
-        }
-
-        function showAlert(message, type = 'warning') {
-            const container = document.getElementById('alertContainer');
-            container.innerHTML = `
-                <div class="alert alert-${type} show">
-                    ${message}
-                </div>
-            `;
-
-            setTimeout(() => {
-                container.innerHTML = '';
-            }, 3000);
-        }
-
-        function executeQuestions() {
-            if (selectedQuestions.size === 0) {
-                showAlert('⚠️ Selecione pelo menos uma pergunta para executar a consulta');
-                return;
+                element.classList.add("selected");
             }
 
-            const btnRun = document.getElementById('btnRun');
-            const loadingOverlay = document.getElementById('loadingOverlay');
-
-            // Desabilita botão
-            btnRun.disabled = true;
-
-            // Mostra loading
-            loadingOverlay.classList.add('active');
-
-            // Simula execução (substituir por chamada real)
-            setTimeout(() => {
-                loadingOverlay.classList.remove('active');
-                btnRun.disabled = false;
-
-                // Redirecionar para resultados
-                // Colocar o resultado_consultas aqui
-                
-                alert(`Consulta executada com sucesso! ${selectedQuestions.size} pergunta(s) processada(s).`);
-            }, 2000);
+            console.log("Selecionadas:", [...selectedQuestions]);
         }
 
-        // Renderizar ao carregar
-        renderQuestions();
+
+        function showAnswer() {
+            document.getElementById("modal-overlay").style.display = "flex"
+
+        }
+        function closeAnswer() {
+            document.getElementById("modal-overlay").style.display = "none"
+        }
+
     </script>
 </body>
+
 </html>

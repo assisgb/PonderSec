@@ -276,7 +276,8 @@ def menu_consulta(request):
 
 @login_required
 def executar_consulta(request):
-    return render(request, 'consulta/executar-consulta.html')
+    questoes = Questao.objects.all()
+    return render(request, 'consulta/executar-consulta.html', {"questoes":  questoes})
 
 @login_required
 def consulta_comparacao(request):

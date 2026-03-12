@@ -493,9 +493,11 @@
 
         <div class="history-grid" id="historyGrid">
             {% if questoes %}
+
                 {% for questao in questoes %}
                     <div class="history-card">{{questao.conteudo}}</div>
                 {% endfor %}
+                
             {% else %}
                 <div class="empty-state">
                     <h2>Nenhuma questão cadastrada</h2>
