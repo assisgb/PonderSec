@@ -182,6 +182,9 @@ transition:.2s;
 transform:translateY(-2px);
 box-shadow:0 0 25px rgba(0,255,160,1);
 }
+a{
+    text-decoration: none;
+}
 
 /* ---------- MODAL ---------- */
 
@@ -416,6 +419,8 @@ transform:translateY(0) scale(1);
 <input type="text" id="edit-apikey">
 
 <button class="btn-add" onclick="salvarEdicao()">Salvar</button>
+<button class="btn-back" onclick="sairEdicao()">Sair</button>
+
 
 </div>
 </div>
@@ -464,7 +469,7 @@ transform:translateY(0) scale(1);
 <input type="password" name="apiKey">
 </div>
 
-<button class="btn-save" type="submit">Adicionar Modelo</button>
+<button class="btn-save" type="submit">ADICIONAR MODELO</button>
 
 <button type="button" class="btn-back" onclick="fecharModal()">Cancelar</button>
 
@@ -480,6 +485,9 @@ transform:translateY(0) scale(1);
 
 
 <script>
+
+
+
 function editarLLM(id, nome, api_key){
     document.getElementById("edit-id").value = id
     document.getElementById("edit-nome").value = nome
@@ -529,7 +537,9 @@ function salvarEdicao(){
 }
 
 
-
+function sairEdicao(){
+document.getElementById("modal-editar").style.display="none"
+}
 
 
 function deletarLLM(id)
