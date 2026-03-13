@@ -264,6 +264,25 @@ def setup(request):
     return render(request, 'setup/setup.html')
 
 @login_required
+def get_respostas(request, questao_id):
+
+    questao = Questao.objects.prefetch_related("respostas__llm").get(id=questao_id)
+    respostas = Resposta.objects.filter(questao_id=questao_id)
+    lista_respostas = []
+
+    for r in respostas.all():
+        lista_respostas.append({
+            "llm": r.llm.nome,
+            "conteudo": r.conteudo_resposta
+        })
+
+    return JsonResponse({
+        "questao": questao.conteudo,
+        "respostas": lista_respostas
+    })
+
+
+@login_required
 def setup_llm(request):
     if request.method == "POST":
         nome = request.POST.get("model")

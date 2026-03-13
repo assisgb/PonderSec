@@ -36,20 +36,34 @@ class Categoria(models.Model):
         return self.nome_categoria
 
 
+class Questao(models.Model):
+    conteudo = models.TextField()
+    categoria = models.ForeignKey(Categoria, on_delete=models.SET_NULL, null=True)
+
+    def __str__(self):
+        return self.conteudo[:50]
+
+
 class Resposta(models.Model):
+    questao = models.ForeignKey(
+        Questao,
+        on_delete=models.CASCADE,
+        related_name="respostas",
+        null=True,
+        blank=True
+    )
+
+    llm = models.ForeignKey(
+        LLM,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True
+    )
+
     conteudo_resposta = models.TextField()
 
     def __str__(self):
         return f"{self.questao} - {self.llm}"
-
-
-class Questao(models.Model):
-    conteudo = models.TextField()
-    llm = models.ForeignKey(LLM, on_delete=models.SET_NULL, null=True)
-    categoria = models.ForeignKey(Categoria, on_delete=models.SET_NULL, null=True)
-    respostas = models.ForeignKey(Resposta, on_delete=models.SET_NULL, null=True)
-    def __str__(self):
-        return self.conteudo[:50]
 
 
 class Avaliacao(models.Model):
