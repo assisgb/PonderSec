@@ -2,20 +2,6 @@ from django.db import models
 from django.contrib.auth.models import User
 
 
-class HistoricoAntigo(models.Model):
-    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
-    pergunta = models.TextField()
-    resposta_gemini = models.TextField(blank=True, null=True)
-    resposta_groq = models.TextField(blank=True, null=True)
-    data = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = ['-data']
-
-    def __str__(self):
-        return f"{self.usuario.username} - {self.data}"
-
-
 class Metrica(models.Model):
     TIPO_CHOICES = [
         ('quantitativa', 'Quantitativa'),
@@ -50,14 +36,11 @@ class Categoria(models.Model):
         return self.nome_categoria
 
 
-
-
 class Resposta(models.Model):
     conteudo_resposta = models.TextField()
 
     def __str__(self):
         return f"{self.questao} - {self.llm}"
-
 
 
 class Questao(models.Model):
@@ -67,13 +50,6 @@ class Questao(models.Model):
     respostas = models.ForeignKey(Resposta, on_delete=models.SET_NULL, null=True)
     def __str__(self):
         return self.conteudo[:50]
-
-
-
-
-
-
-
 
 
 class Avaliacao(models.Model):

@@ -64,6 +64,7 @@
             z-index: 2;
         }
         
+        /* HEADER E FILTROS (Mantidos iguais) */
         .header {
             display: flex;
             align-items: center;
@@ -76,38 +77,11 @@
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
         }
         
-        .logo-section {
-            display: flex;
-            align-items: center;
-            gap: 22px;
-        }
-
-        .logo-section img {
-            width: 85px;
-            height: 85px;
-            border-radius: 12px;
-            filter: drop-shadow(0 0 8px rgba(0, 255, 160, 0.4));
-        }
-        
-        .header-title {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .product-name {
-            color: #7df6c2;
-            text-transform: uppercase;
-            letter-spacing: 0.25em;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .page-title {
-            color: #00ff9f;
-            font-size: 28px;
-            font-weight: 600;
-        }
+        .logo-section { display: flex; align-items: center; gap: 22px; }
+        .logo-section img { width: 85px; height: 85px; border-radius: 12px; filter: drop-shadow(0 0 8px rgba(0, 255, 160, 0.4)); }
+        .header-title { display: flex; flex-direction: column; gap: 6px; }
+        .product-name { color: #7df6c2; text-transform: uppercase; letter-spacing: 0.25em; font-size: 12px; font-weight: 600; }
+        .page-title { color: #00ff9f; font-size: 28px; font-weight: 600; }
         
         .btn-back {
             padding: 14px 32px;
@@ -124,11 +98,7 @@
             transition: all 0.2s;
         }
 
-        .btn-back:hover {
-            background: rgba(0, 255, 160, 0.15);
-            border-color: #00ff9f;
-            transform: translateY(-1px);
-        }
+        .btn-back:hover { background: rgba(0, 255, 160, 0.15); border-color: #00ff9f; transform: translateY(-1px); }
 
         .filter-section {
             margin-bottom: 30px;
@@ -141,11 +111,7 @@
             gap: 16px;
         }
 
-        .filter-top {
-            display: flex;
-            gap: 16px;
-            align-items: center;
-        }
+        .filter-top { display: flex; gap: 16px; align-items: center; }
         
         .search-box {
             flex: 1;
@@ -160,19 +126,8 @@
             transition: all 0.2s;
         }
 
-        .search-box::placeholder {
-            color: #6b7b8d;
-        }
-
-        .search-box:focus {
-            border-color: #00ff9f;
-            box-shadow: 0 0 8px rgba(0, 255, 160, 0.3);
-        }
-
-        .questoes-options {
-            display: flex;
-            gap: 12px;
-        }
+        .search-box:focus { border-color: #00ff9f; box-shadow: 0 0 8px rgba(0, 255, 160, 0.3); }
+        .questoes-options { display: flex; gap: 12px; }
 
         .button-primary {
             padding: 14px 28px;
@@ -208,19 +163,12 @@
             text-transform: uppercase;
             letter-spacing: 0.05em;
             transition: all 0.2s;
-            white-space: nowrap;
         }
 
-        .btn-clear-all:hover {
-            background: rgba(255, 0, 80, 0.15);
-            border-color: #ff0050;
-            transform: translateY(-1px);
-        }
+        .btn-clear-all:hover { background: rgba(255, 0, 80, 0.15); border-color: #ff0050; }
 
-        .history-grid {
-            display: grid;
-            gap: 18px;
-        }
+        /* LISTA DE QUESTÕES (Mantida igual) */
+        .history-grid { display: grid; gap: 18px; }
         
         .history-card {
             background: rgba(11, 20, 29, 0.4);
@@ -230,34 +178,10 @@
             transition: all 0.2s;
         }
 
-        .history-card:hover {
-            border-color: rgba(0, 255, 160, 0.3);
-            background: rgba(11, 20, 29, 0.6);
-            transform: translateX(4px);
-        }
-        
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-        }
-
-        .card-date {
-            font-size: 11px;
-            color: #7df6c2;
-            text-transform: uppercase;
-            letter-spacing: 0.12em;
-            padding: 6px 14px;
-            background: rgba(0, 255, 160, 0.12);
-            border-radius: 20px;
-            font-weight: 600;
-        }
-        
-        .card-actions {
-            display: flex;
-            gap: 10px;
-        }
+        .history-card:hover { border-color: rgba(0, 255, 160, 0.3); background: rgba(11, 20, 29, 0.6); transform: translateX(4px); }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .card-date { font-size: 11px; color: #7df6c2; text-transform: uppercase; letter-spacing: 0.12em; padding: 6px 14px; background: rgba(0, 255, 160, 0.12); border-radius: 20px; font-weight: 600; }
+        .card-actions { display: flex; gap: 10px; }
         
         .btn-icon {
             background: rgba(0, 255, 160, 0.08);
@@ -275,66 +199,17 @@
             text-decoration: none;
         }
 
-        .btn-icon:hover {
-            background: rgba(0, 255, 160, 0.15);
-            border-color: rgba(0, 255, 160, 0.4);
-            color: #00ff9f;
-            transform: scale(1.05);
-        }
+        .btn-icon:hover { background: rgba(0, 255, 160, 0.15); border-color: rgba(0, 255, 160, 0.4); color: #00ff9f; transform: scale(1.05); }
+        .card-question { font-size: 18px; font-weight: 600; color: #e5fef6; margin-bottom: 12px; line-height: 1.5; }
+        .card-preview { font-size: 14px; color: #8ba1b0; line-height: 1.7; margin-bottom: 16px; }
+        .card-footer { display: flex; gap: 10px; padding-top: 14px; border-top: 1px solid rgba(0, 255, 160, 0.12); }
+        .tag { font-size: 10px; color: #7df6c2; background: rgba(0, 255, 160, 0.1); padding: 5px 12px; border-radius: 14px; text-transform: uppercase; font-weight: 600; }
+        .empty-state { text-align: center; color: #6b7b8d; padding: 60px 20px; background: rgba(11, 20, 29, 0.3); border: 1px dashed rgba(0, 255, 160, 0.2); border-radius: 12px; }
 
-        .card-question {
-            font-size: 18px;
-            font-weight: 600;
-            color: #e5fef6;
-            margin-bottom: 12px;
-            line-height: 1.5;
-        }
 
-        .card-preview {
-            font-size: 14px;
-            color: #8ba1b0;
-            line-height: 1.7;
-            margin-bottom: 16px;
-        }
-        
-        .card-footer {
-            display: flex;
-            gap: 10px;
-            padding-top: 14px;
-            border-top: 1px solid rgba(0, 255, 160, 0.12);
-        }
-
-        .tag {
-            font-size: 10px;
-            color: #7df6c2;
-            background: rgba(0, 255, 160, 0.1);
-            padding: 5px 12px;
-            border-radius: 14px;
-            text-transform: uppercase;
-            font-weight: 600;
-        }
-
-        .empty-state {
-            text-align: center;
-            color: #6b7b8d;
-            padding: 60px 20px;
-            background: rgba(11, 20, 29, 0.3);
-            border: 1px dashed rgba(0, 255, 160, 0.2);
-            border-radius: 12px;
-        }
-
-        .empty-state h2 {
-            font-size: 20px;
-            margin-bottom: 8px;
-        }
-
-        /* Modal Styles */
         .modal-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.85);
             backdrop-filter: blur(5px);
             z-index: 99999;
@@ -345,10 +220,7 @@
             transition: opacity 0.3s ease;
         }
         
-        .modal-overlay.active {
-            display: flex;
-            opacity: 1;
-        }
+        .modal-overlay.active { display: flex; opacity: 1; }
         
         .modal-box {
             background: radial-gradient(circle at top left, #0b141d 0, #050a11 100%);
@@ -361,105 +233,68 @@
             text-align: center;
             transform: scale(0.9);
             transition: transform 0.3s ease;
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
-        .modal-overlay.active .modal-box {
-            transform: scale(1);
-        }
-        
-        .modal-title {
-            color: #00ff9f;
-            font-size: 22px;
-            font-weight: 700;
-            margin-bottom: 12px;
-        }
-
-        .modal-desc {
-            color: #8ba1b0;
-            font-size: 15px;
-            margin-bottom: 28px;
-            line-height: 1.6;
-        }
-        
-        .modal-buttons {
-            display: flex;
-            gap: 14px;
-            justify-content: center;
-        }
+        .modal-overlay.active .modal-box { transform: scale(1); }
+        .modal-title { color: #00ff9f; font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+        .modal-desc { color: #8ba1b0; font-size: 14px; margin-bottom: 24px; line-height: 1.6; }
+        .modal-buttons { display: flex; gap: 14px; justify-content: center; margin-top: 24px;}
         
         .btn-modal {
-            padding: 14px 32px;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            border: none;
-            font-family: "Space Grotesk", sans-serif;
-            transition: all 0.2s;
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+            padding: 14px 32px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; font-family: "Space Grotesk", sans-serif;
+            transition: all 0.2s; font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; flex: 1;
         }
         
-        .btn-cancel {
-            background: transparent;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: #8ba1b0;
-        }
-
-        .btn-cancel:hover {
-            border-color: rgba(255, 255, 255, 0.4);
-            color: #e5fef6;
-            background: rgba(255, 255, 255, 0.05);
-        }
+        .btn-cancel { background: transparent; border: 1px solid rgba(255, 255, 255, 0.2); color: #8ba1b0; }
+        .btn-cancel:hover { border-color: rgba(255, 255, 255, 0.4); color: #e5fef6; background: rgba(255, 255, 255, 0.05); }
+        .btn-confirm { background: rgba(255, 77, 77, 0.15); border: 1px solid #ff4d4d; color: #ff4d4d; }
+        .btn-confirm:hover { background: #ff4d4d; color: #fff; box-shadow: 0 0 20px rgba(255, 77, 77, 0.5); }
         
-        .btn-confirm {
-            background: rgba(255, 77, 77, 0.15);
-            border: 1px solid #ff4d4d;
-            color: #ff4d4d;
-        }
+        .btn-solid-primary { background: linear-gradient(90deg,#00ff9f,#00ff57); border: none; color: #020509; }
+        .btn-solid-primary:hover { box-shadow: 0 0 20px rgba(0,255,160,0.6); transform: translateY(-1px); }
 
-        .btn-confirm:hover {
-            background: #ff4d4d;
-            color: #fff;
-            box-shadow: 0 0 20px rgba(255, 77, 77, 0.5);
+        /* Upload Específico */
+        .drop-zone { border: 2px dashed rgba(0,255,160,0.4); border-radius: 12px; padding: 40px 20px; text-align: center; cursor: pointer; transition: all 0.25s; background: rgba(0,255,160,0.03); margin-bottom: 15px; }
+        .drop-zone:hover, .drop-zone.dragover { background: rgba(0,255,160,0.08); border-color: #00ff9f; box-shadow: 0 0 20px rgba(0,255,160,0.3); }
+        .drop-zone p { color: #7df6c2; font-size: 15px; }
+        .drop-zone span { display: block; margin-top: 8px; color: #6b7b8d; font-size: 13px; }
+        .file-name { font-size: 14px; color: #00ff9f; text-align: center; min-height: 20px;}
+
+        .form-label { font-size: 13px; color: #7df6c2; margin-bottom: 8px; display: block; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; text-align: left; }
+        
+        textarea {
+            width: 100%; min-height: 120px; background: #050a11; border: 1px solid #1b2635; border-radius: 10px;
+            padding: 14px 16px; color: #e5fef6; font-family: "Space Grotesk", system-ui, sans-serif; font-size: 15px;
+            resize: vertical; margin-bottom: 24px; transition: all 0.2s; line-height: 1.6;
         }
+        textarea:focus { outline: none; border-color: #00ff9f; box-shadow: 0 0 16px rgba(0, 255, 160, 0.5); }
+        
+        .ai-options { border: 1px solid rgba(0, 255, 160, 0.2); border-radius: 12px; padding: 20px; margin-bottom: 24px; background: rgba(0, 255, 160, 0.03); text-align: left; }
+        .ai-options h3 { font-size: 13px; color: #7df6c2; margin-bottom: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+        
+        .checkbox-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .checkbox-grid label { display: flex; align-items: center; gap: 10px; font-size: 14px; color: #e5fef6; cursor: pointer; padding: 8px; border-radius: 8px; transition: all 0.2s; }
+        .checkbox-grid label:hover { background: rgba(0, 255, 160, 0.05); }
+        input[type="checkbox"] { accent-color: #00ff9f; cursor: pointer; width: 18px; height: 18px; }
+
+        .group-select { display: flex; gap: 12px; margin-bottom: 10px; }
+        select { flex: 1; background: #050a11; border: 1px solid #1b2635; border-radius: 10px; padding: 14px 16px; color: #e5fef6; font-family: "Space Grotesk", system-ui, sans-serif; font-size: 15px; cursor: pointer; transition: all 0.2s; }
+        select:focus { outline: none; border-color: #00ff9f; box-shadow: 0 0 16px rgba(0, 255, 160, 0.5); }
+        
+        .add-group {
+            width: 48px; height: 48px; border-radius: 8px; border: 1px solid rgba(0, 255, 160, 0.3); background: rgba(0, 255, 160, 0.1);
+            color: #00ff9f; font-size: 24px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; font-weight: 600; text-decoration: none;
+        }
+        .add-group:hover { background: rgba(0, 255, 160, 0.2); border-color: #00ff9f; transform: scale(1.05); }
 
         @media (max-width: 768px) {
-            .header {
-                flex-direction: column;
-                gap: 15px;
-                text-align: center;
-            }
-
-            .logo-section {
-                flex-direction: column;
-            }
-
-            .btn-back {
-                width: 100%;
-            }
-
-            .filter-top {
-                flex-direction: column;
-            }
-
-            .questoes-options {
-                width: 100%;
-                flex-direction: column;
-            }
-
-            .button-primary,
-            .btn-clear-all {
-                width: 100%;
-            }
-
-            .modal-buttons {
-                flex-direction: column;
-            }
-
-            .btn-modal {
-                width: 100%;
-            }
+            .header { flex-direction: column; gap: 15px; text-align: center; }
+            .logo-section { flex-direction: column; }
+            .btn-back, .button-primary, .btn-clear-all { width: 100%; }
+            .filter-top, .questoes-options, .modal-buttons { flex-direction: column; }
+            .checkbox-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -485,19 +320,38 @@
                 <input type="text" class="search-box" id="searchInput" placeholder="Filtro de pesquisa..." onkeyup="filterHistory()">
                 
                 <div class="questoes-options">
-                    <a href="{% url 'questoes_upload'%}" class="button-primary">Upload</a>
-                    <a href="{% url 'add_questoes' %}" class="button-primary">Adicionar</a>
+                    <button type="button" class="button-primary" onclick="abrirModalUpload()">Upload</button>
+                    <button type="button" class="button-primary" onclick="abrirModalFormQuestao()">Adicionar</button>
                 </div>
             </div>
             
+            {% if historico %}
+            <div style="display: flex; justify-content: flex-end; width: 100%;">
+                <button type="button" class="btn-clear-all" data-action="{% url 'limpar_historico' %}" data-title="☢ LIMPAR TUDO?" data-desc="Você tem certeza? Todas as questões serão apagadas para sempre." data-btn-text="Sim, limpar tudo" onclick="configurarModal(this)">
+                    ☢ Apagar Todas as Questões
+                </button>
+            </div>
+            {% endif %}
+        </div>
 
         <div class="history-grid" id="historyGrid">
-            {% if questoes %}
-
-                {% for questao in questoes %}
-                    <div class="history-card">{{questao.conteudo}}</div>
+            {% if historico %}
+                {% for item in historico %}
+                    <div class="history-card" data-question="{{ item.questao|lower }}">
+                        <div class="card-header">
+                            <span class="card-date">{{ item.data|date:"d/m/Y H:i" }}</span>
+                            <div class="card-actions">
+                                <button type="button" class="btn-icon" title="Ver detalhes" data-url="{% url 'ver_detalhes' item.id %}" onclick="abrirModalDetalhes(this)">👁</button>
+                                <button type="button" class="btn-icon" title="Deletar" data-action="{% url 'deletar_item_historico' item.id %}" data-title="Apagar Registro?" data-desc="Esta ação removerá esta questão permanentemente." data-btn-text="Sim, apagar" onclick="configurarModal(this)">🗑</button>
+                            </div>
+                        </div>
+                        <div class="card-question">{{ item.conteudo }}</div>
+                        <div class="card-preview">
+                            {% if item.resposta %}{{ item.respostas|truncatewords:20 }}{% else %}{{ item.resposta_groq|truncatewords:20 }}{% endif %}
+                        </div>
+                        <div class="card-footer"><span class="tag">AI Response</span></div>
+                    </div>
                 {% endfor %}
-                
             {% else %}
                 <div class="empty-state">
                     <h2>Nenhuma questão cadastrada</h2>
@@ -511,14 +365,118 @@
         <div class="modal-box">
             <div class="modal-title" id="modalTitle">Título</div>
             <div class="modal-desc" id="modalDesc">Descrição</div>
-            
             <div class="modal-buttons">
                 <button type="button" class="btn-modal btn-cancel" onclick="fecharModal()">Cancelar</button>
-                
-                <form id="modalForm" method="POST" action="" style="display: inline;">
+                <form id="modalForm" method="POST" action="" style="display: flex; flex: 1;">
                     {% csrf_token %}
-                    <button type="submit" class="btn-modal btn-confirm" id="modalConfirmBtn">Confirmar</button>
+                    <button type="submit" class="btn-modal btn-confirm" id="modalConfirmBtn" style="width: 100%;">Confirmar</button>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="uploadModal">
+        <div class="modal-box" style="max-width: 500px;">
+            <div class="modal-title">Upload de Arquivo</div>
+            <div class="modal-desc">Envie um arquivo <b>.txt</b> ou <b>.json</b><br>Arraste ou clique para selecionar</div>
+            <form id="uploadForm" method="POST" action="{% url 'upload_perguntas' %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="drop-zone" id="dropZone">
+                    <p>Arraste o arquivo aqui</p>
+                    <span>ou clique para procurar</span>
+                    <input type="file" id="fileInput" name="arquivo_upload" accept=".txt,.json" style="display: none;">
+                </div>
+                <div class="file-name" id="fileName"></div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn-modal btn-cancel" onclick="fecharModalUpload()">Cancelar</button>
+                    <button type="button" class="btn-modal btn-solid-primary" onclick="submitUpload()">Enviar Arquivo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="formQuestaoModal">
+        <div class="modal-box" style="max-width: 600px;">
+            <div class="modal-title">Adicionar Questão</div>
+            <div class="modal-desc">Configure a pergunta e selecione as IAs responsáveis</div>
+
+            <form method="POST" action="{% url 'add_questoes' %}">
+                {% csrf_token %}
+                
+                <label class="form-label" for="pergunta">Texto da pergunta</label>
+                <textarea name="pergunta" id="pergunta" placeholder="Digite aqui a pergunta..."></textarea>
+
+                <div class="ai-options">
+                    <h3>IAs que responderão</h3>
+                    <div class="checkbox-grid">
+                        <label><input type="checkbox" name="ia_groq"> Groq</label>
+                        <label><input type="checkbox" name="ia_gemini"> Gemini</label>
+                        <label><input type="checkbox" name="ia_hackai"> Hack.Ai</label>
+                        <label><input type="checkbox" name="ia_deepseek"> Deepseek</label>
+                        <label><input type="checkbox" name="ia_chatgpt"> ChatGPT</label>
+                    </div>
+                </div>
+
+                <label class="form-label">Categoria da questão</label>
+                <div class="group-select">
+                    <select name="categoria" required>
+                        <option value="">Selecione uma Categoria</option>
+                        {% for categoria in categorias %}
+                        <option value="{{ categoria.id }}">{{ categoria.nome_categoria }}</option>
+                        {% endfor %}
+                    </select>
+                    
+                    <button type="button" class="add-group" onclick="abrirModalCategoria()" title="Adicionar nova categoria">+</button>
+                </div>
+
+                <div class="modal-buttons">
+                    <button type="button" class="btn-modal btn-cancel" onclick="fecharModalFormQuestao()">Cancelar</button>
+                    <button type="reset" class="btn-modal btn-cancel" style="flex: 0.5;">Limpar</button>
+                    <button type="submit" class="btn-modal btn-solid-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="categoriaModal">
+        <div class="modal-box" style="max-width: 400px;">
+            <div class="modal-title">Nova Categoria</div>
+            <div class="modal-desc">Crie um novo grupo para suas questões</div>
+
+            <form method="POST" action="{% url 'questoes_cadastro_categoria' %}">
+                {% csrf_token %}
+
+                <label class="form-label">Nome da Categoria</label>
+                <input type="text" name="nome" class="search-box" style="width: 100%; margin-bottom: 16px; box-sizing: border-box;" placeholder="Ex: Redes, Banco de Dados..." required>
+
+                <label class="form-label">Descrição (Opcional)</label>
+                <textarea name="descricao" placeholder="Breve descrição..." style="min-height: 80px;"></textarea>
+
+                <div class="modal-buttons">
+                    <button type="button" class="btn-modal btn-cancel" onclick="fecharModalCategoria()">Cancelar</button>
+                    <button type="submit" class="btn-modal btn-solid-primary" onclick="fecharModalCategoria()">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="detalhesModal">
+        <div class="modal-box" style="max-width: 800px; text-align: left;">
+            <div class="modal-title" style="text-align: center;">Detalhes da Interação</div>
+            <div class="modal-desc" id="detalhesData" style="text-align: center;"></div>
+
+            <div style="margin-bottom: 24px;">
+                <label class="form-label">Pergunta Realizada</label>
+                <div id="detalhesPergunta" style="background: #050a11; padding: 16px; border-radius: 10px; border: 1px solid #1b2635; color: #e5fef6; font-size: 16px; line-height: 1.6; max-height: 150px; overflow-y: auto;">
+                    Carregando...
+                </div>
+            </div>
+
+            <div id="respostasContainer" style="display: flex; gap: 20px; flex-wrap: wrap;">
+                </div>
+
+            <div class="modal-buttons" style="margin-top: 30px;">
+                <button type="button" class="btn-modal btn-cancel" onclick="fecharModalDetalhes()" style="max-width: 200px;">Fechar</button>
             </div>
         </div>
     </div>
@@ -528,51 +486,152 @@
             const input = document.getElementById('searchInput');
             const filter = input.value.toLowerCase();
             const cards = document.querySelectorAll('.history-card');
-            
             cards.forEach(card => {
                 const question = card.getAttribute('data-question');
-                if (question && question.includes(filter)) {
-                    card.style.display = '';
-                } else {
-                    card.style.display = 'none';
-                }
+                if (question && question.includes(filter)) card.style.display = '';
+                else card.style.display = 'none';
             });
         }
         
+        // ----------------------------------------
+        // MODAL 1: Confirmação Universal
+        // ----------------------------------------
         function configurarModal(btn) {
-            console.log("Botão clicado! Configurando modal...");
-
             const modal = document.getElementById('modalUniversal');
-            const form = document.getElementById('modalForm');
-            const titulo = document.getElementById('modalTitle');
-            const desc = document.getElementById('modalDesc');
-            const confirmBtn = document.getElementById('modalConfirmBtn');
-
-            const actionUrl = btn.getAttribute('data-action');
-            const titleText = btn.getAttribute('data-title');
-            const descText = btn.getAttribute('data-desc');
-            const btnText = btn.getAttribute('data-btn-text');
-
-            console.log("URL de ação:", actionUrl);
-
-            form.action = actionUrl;
-            titulo.innerText = titleText;
-            desc.innerText = descText;
-            confirmBtn.innerText = btnText;
-
+            document.getElementById('modalForm').action = btn.getAttribute('data-action');
+            document.getElementById('modalTitle').innerText = btn.getAttribute('data-title');
+            document.getElementById('modalDesc').innerText = btn.getAttribute('data-desc');
+            document.getElementById('modalConfirmBtn').innerText = btn.getAttribute('data-btn-text');
             modal.classList.add('active');
         }
-        
         window.configurarModal = configurarModal;
+        function fecharModal() { document.getElementById('modalUniversal').classList.remove('active'); }
+        document.getElementById('modalUniversal').addEventListener('click', function(e) { if (e.target === this) fecharModal(); });
 
-        function fecharModal() {
-            const modal = document.getElementById('modalUniversal');
-            modal.classList.remove('active');
+        // ----------------------------------------
+        // MODAL 2: Upload de Arquivos
+        // ----------------------------------------
+        const uploadModal = document.getElementById('uploadModal');
+        const fileInput = document.getElementById("fileInput");
+        const fileName = document.getElementById("fileName");
+        const dropZone = document.getElementById("dropZone");
+
+        function abrirModalUpload() { uploadModal.classList.add('active'); }
+        function fecharModalUpload() { uploadModal.classList.remove('active'); fileInput.value = ""; fileName.textContent = ""; }
+        uploadModal.addEventListener('click', function(e) { if (e.target === this) fecharModalUpload(); });
+
+        dropZone.addEventListener("click", () => fileInput.click());
+        fileInput.addEventListener("change", () => showFile(fileInput.files[0]));
+        dropZone.addEventListener("dragover", e => { e.preventDefault(); dropZone.classList.add("dragover"); });
+        dropZone.addEventListener("dragleave", () => dropZone.classList.remove("dragover"));
+        dropZone.addEventListener("drop", e => {
+            e.preventDefault(); dropZone.classList.remove("dragover");
+            fileInput.files = e.dataTransfer.files; showFile(e.dataTransfer.files[0]);
+        });
+
+        function showFile(file) {
+            if (!file) return;
+            if (!(file.name.endsWith(".txt") || file.name.endsWith(".json"))) {
+                fileName.textContent = "Formato inválido. Use .txt ou .json"; fileName.style.color = "#ff4d4d"; fileInput.value = ""; return;
+            }
+            fileName.textContent = "Selecionado: " + file.name; fileName.style.color = "#00ff9f";
+        }
+        function submitUpload() {
+            if (!fileInput.files.length) { fileName.textContent = "Selecione um arquivo."; fileName.style.color = "#ff4d4d"; return; }
+            document.getElementById("uploadForm").submit();
         }
 
-        document.getElementById('modalUniversal').addEventListener('click', function(e) {
-            if (e.target === this) fecharModal();
+        // ----------------------------------------
+        // MODAL 3: Adicionar / Editar Questão
+        // ----------------------------------------
+        const formQuestaoModal = document.getElementById('formQuestaoModal');
+        
+        function abrirModalFormQuestao() { formQuestaoModal.classList.add('active'); }
+        function fecharModalFormQuestao() { formQuestaoModal.classList.remove('active'); }
+        formQuestaoModal.addEventListener('click', function(e) { if (e.target === this) fecharModalFormQuestao(); });
+
+        // ----------------------------------------
+        // MODAL 4: Cadastrar Categoria
+        // ----------------------------------------
+        const categoriaModal = document.getElementById('categoriaModal');
+        
+        function abrirModalCategoria() { 
+            // Fecha o modal de questão para abrir o de categoria (evita sobreposição confusa)
+            fecharModalFormQuestao(); 
+            categoriaModal.classList.add('active'); 
+        }
+        
+        function fecharModalCategoria() { 
+            categoriaModal.classList.remove('active');
+            abrirModalFormQuestao(); // Reabre o modal de questão para continuar o fluxo 
+        }
+        
+        categoriaModal.addEventListener('click', function(e) { 
+            if (e.target === this) fecharModalCategoria(); 
         });
+
+        // ----------------------------------------
+        // MODAL 5: Ver Detalhes (AJAX Dinâmico)
+        // ----------------------------------------
+        const detalhesModal = document.getElementById('detalhesModal');
+        
+        function abrirModalDetalhes(btn) {
+            const url = btn.getAttribute('data-url');
+            const respostasContainer = document.getElementById('respostasContainer');
+            
+            detalhesModal.classList.add('active');
+            document.getElementById('detalhesPergunta').innerText = "Carregando detalhes do servidor...";
+            
+            // Limpa as respostas anteriores e exibe "Carregando"
+            respostasContainer.innerHTML = '<p style="color: #8ba1b0; text-align: center; width: 100%;">Buscando respostas...</p>';
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('detalhesData').innerText = data.data;
+                    document.getElementById('detalhesPergunta').innerText = data.pergunta;
+                    
+                    respostasContainer.innerHTML = '';
+
+                    // Se não tiver nenhuma resposta salva
+                    if (data.respostas.length === 0) {
+                        respostasContainer.innerHTML = '<p style="color: #ff4d4d; width: 100%; text-align: center; padding: 20px;">Nenhuma IA respondeu a esta pergunta.</p>';
+                        return;
+                    }
+
+                    // Loop para criar as caixas apenas das IAs que responderam
+                    data.respostas.forEach(resp => {
+                        const div = document.createElement('div');
+                        div.style.flex = "1";
+                        div.style.minWidth = "300px";
+                        
+                        // Desenha a caixa com a cor específica da IA (usando HEX e opacidade)
+                        div.innerHTML = `
+                            <label class="form-label" style="color: ${resp.cor}; text-shadow: 0 0 8px ${resp.cor}66;">
+                                ✦ Resposta ${resp.ia}
+                            </label>
+                            <div style="background: ${resp.cor}0D; padding: 16px; border-radius: 10px; border: 1px solid ${resp.cor}4D; color: #e5fef6; font-size: 14px; line-height: 1.6; max-height: 350px; overflow-y: auto; white-space: pre-wrap;">
+                                ${resp.texto}
+                            </div>
+                        `;
+                        respostasContainer.appendChild(div);
+                    });
+                })
+                .catch(error => {
+                    console.error("Erro na requisição:", error);
+                    document.getElementById('detalhesPergunta').innerText = "Houve um erro ao carregar os dados.";
+                    respostasContainer.innerHTML = '';
+                });
+        }
+
+        function fecharModalDetalhes() {
+            detalhesModal.classList.remove('active');
+        }
+
+        detalhesModal.addEventListener('click', function(e) {
+            if (e.target === this) fecharModalDetalhes();
+        });
+
     </script>
 </body>
 </html>

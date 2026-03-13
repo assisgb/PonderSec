@@ -1,30 +1,23 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
+from django.contrib import messages as django_messages
 from django.contrib.auth.decorators import login_required
 from google import genai
 import os
 from groq import Groq
 from datetime import timedelta
-from responsegenerator.models import HistoricoAntigo
-from responsegenerator.models import Categoria
-from responsegenerator.models import LLM
-from responsegenerator.models import Questao
 import re
-from django.http import JsonResponse
-from django.http import HttpResponse
+from django.http import JsonResponse, HttpResponse
 import json
+from responsegenerator.models import Historico, Categoria, LLM, Questao, Resposta
 
 def salvar_no_historico(user, pergunta, resposta):
-    logs = HistoricoAntigo.objects.filter(usuario=user).order_by('data')
+    resp_obj = Resposta.objects.create(conteudo_resposta=resposta)
+    q_obj = Questao.objects.create(conteudo=pergunta, respostas=resp_obj)
     
-    if logs.count() >= 20:
-        logs.first().delete()
-        
-    HistoricoAntigo.objects.create(
+    Historico.objects.create(
         usuario=user,
-        pergunta=pergunta,
-        resposta_gemini=resposta,
-        resposta_groq=resposta  
+        questao=q_obj
     )
 
 @login_required
@@ -33,20 +26,61 @@ def menu(request):
 
 @login_required
 def deletar_item_historico(request, id):
-    item = get_object_or_404(HistoricoAntigo, id=id, usuario=request.user)
+    item = get_object_or_404(Historico, id=id, usuario=request.user)
     if request.method == 'POST':
         item.delete()
     return redirect('historico')
 
 @login_required
 def ver_detalhes(request, id):
-    item = get_object_or_404(HistoricoAntigo, id=id, usuario=request.user)
-    return render(request, 'detalhes_historico.html', {'item': item})
+    item = get_object_or_404(Historico, id=id, usuario=request.user)
+    data_formatada = item.data.strftime('%d/%m/%Y %H:%M') if getattr(item, 'data', None) else ''
+
+    respostas_encontradas = []
+    pergunta_texto = "Conteúdo da questão não encontrado."
+
+    if item.questao:
+        pergunta_texto = item.questao.conteudo
+
+        if getattr(item.questao, 'respostas', None) and item.questao.respostas.conteudo_resposta:
+            conteudo_resp = item.questao.respostas.conteudo_resposta
+            
+            if item.questao.llm:
+                nome_ia = item.questao.llm.nome
+                nome_ia_lower = nome_ia.lower()
+                
+                if 'gemini' in nome_ia_lower: cor = '#4285F4'
+                elif 'groq' in nome_ia_lower or 'llama' in nome_ia_lower: cor = '#f55036'
+                elif 'chatgpt' in nome_ia_lower or 'gpt' in nome_ia_lower: cor = '#10a37f'
+                else: cor = '#00ff9f'
+
+                respostas_encontradas.append({
+                    'ia': nome_ia, 
+                    'texto': conteudo_resp, 
+                    'cor': cor
+                })
+            
+            else:
+                if "[Gemini]" in conteudo_resp and "[Groq]" in conteudo_resp:
+                    partes = conteudo_resp.split("[Groq]")
+                    texto_gemini = partes[0].replace("[Gemini]", "").strip()
+                    texto_groq = partes[1].strip()
+                    
+                    respostas_encontradas.append({'ia': 'Gemini', 'texto': texto_gemini, 'cor': '#4285F4'})
+                    respostas_encontradas.append({'ia': 'Groq', 'texto': texto_groq, 'cor': '#f55036'})
+                else:
+                    respostas_encontradas.append({'ia': 'Geral', 'texto': conteudo_resp, 'cor': '#8ba1b0'})
+
+    return JsonResponse({
+        'pergunta': pergunta_texto,
+        'data': data_formatada,
+        'respostas': respostas_encontradas
+    })
 
 @login_required
 def limpar_historico(request):
     if request.method == 'POST':
-        HistoricoAntigo.objects.filter(usuario=request.user).delete()
+        Historico.objects.filter(usuario=request.user).delete()
     return redirect('historico')
 
 @login_required
@@ -72,11 +106,24 @@ def consulta(request):
     if request.method == 'POST':
         pergunta_usuario = request.POST.get('consulta', '').strip()
         if pergunta_usuario:
-            ultima_interacao = HistoricoAntigo.objects.filter(usuario=request.user).order_by('-data').first()
-            if ultima_interacao and ultima_interacao.pergunta == pergunta_usuario:
+            
+            ultima_interacao = Historico.objects.filter(usuario=request.user).select_related('questao').order_by('-data').first()
+            
+            if ultima_interacao and ultima_interacao.questao and ultima_interacao.questao.conteudo == pergunta_usuario:
                 print("🚫 Duplicação detectada! Recuperando resposta do banco sem chamar IAs.")
-                resposta_gemini_formatada = f"Pergunta: {pergunta_usuario}\n\nResposta (Recuperada): {ultima_interacao.resposta_gemini}"
-                resposta_groq_formatada = f"Pergunta: {pergunta_usuario}\n\nResposta (Recuperada): {ultima_interacao.resposta_groq}"
+                texto_salvo = ultima_interacao.questao.respostas.conteudo_resposta if ultima_interacao.questao.respostas else ""
+                
+                if "[Gemini]" in texto_salvo and "[Groq]" in texto_salvo:
+                    partes = texto_salvo.split("[Groq]")
+                    gemini_salvo = partes[0].replace("[Gemini]", "").strip()
+                    groq_salvo = partes[1].strip()
+                else:
+                    gemini_salvo = texto_salvo
+                    groq_salvo = texto_salvo
+
+                resposta_gemini_formatada = f"Pergunta: {pergunta_usuario}\n\nResposta (Recuperada): {gemini_salvo}"
+                resposta_groq_formatada = f"Pergunta: {pergunta_usuario}\n\nResposta (Recuperada): {groq_salvo}"
+                
                 return render(request, 'consulta.html', {
                     'resposta_gemini': resposta_gemini_formatada,
                     'resposta_groq': resposta_groq_formatada
@@ -109,16 +156,20 @@ def consulta(request):
                 texto_groq_limpo = f"Erro no Groq: {str(e)}"
                 resposta_groq_formatada = texto_groq_limpo
 
-            # Salva no histórico
+            # Salva no histórico empacotando as duas respostas
             try:
-                historico_qs = HistoricoAntigo.objects.filter(usuario=request.user).order_by('data')
+                historico_qs = Historico.objects.filter(usuario=request.user).order_by('data')
                 if historico_qs.count() >= 20:
                     historico_qs.first().delete()
-                HistoricoAntigo.objects.create(
+                
+                # Empacota em uma string estruturada
+                conteudo_unificado = f"[Gemini]\n{texto_gemini_limpo}\n\n[Groq]\n{texto_groq_limpo}"
+                resp_obj = Resposta.objects.create(conteudo_resposta=conteudo_unificado)
+                q_obj = Questao.objects.create(conteudo=pergunta_usuario, respostas=resp_obj)
+                
+                Historico.objects.create(
                     usuario=request.user,
-                    pergunta=pergunta_usuario,
-                    resposta_gemini=texto_gemini_limpo,
-                    resposta_groq=texto_groq_limpo
+                    questao=q_obj
                 )
                 print("✅ Nova pergunta salva com sucesso.")
             except Exception as e:
@@ -131,68 +182,83 @@ def consulta(request):
 
 @login_required(login_url='/login/')
 def historico(request):
-    historico = HistoricoAntigo.objects.filter(usuario=request.user).order_by('-data')
+    historico = Historico.objects.filter(usuario=request.user).order_by('-data')
     return render(request, 'historico.html', {'historico': historico})
 
-# QUESTOES
 @login_required
 def questoes(request):
-    questoes = Questao.objects.all()
-    return render(request, 'questoes/questoes.html',{
-        "questoes": questoes
+    lista_questoes = Questao.objects.all().order_by('-id')
+    lista_categorias = Categoria.objects.all()
+    
+    return render(request, 'questoes/questoes.html', {
+        "historico": lista_questoes,
+        "categorias": lista_categorias
     })
 
 @login_required
 def add_questoes(request):
-
-    categorias = Categoria.objects.all()
-    return render(request, 'questoes/add-questoes.html',{
-     "categorias": categorias
-    })
-
-@login_required
-def questoes_upload(request):
-    return render(request, 'questoes/questoes-upload.html')
-
-def upload_perguntas(request):
-    print(request.method)
     if request.method == "POST":
+        pergunta_texto = request.POST.get('pergunta')
+        categoria_id = request.POST.get('categoria')
         
-        arquivo = request.FILES["file"]
-
-        perguntas = []
-
-        for linha in arquivo.read().decode("utf-8").split("\n"):
-            match = re.search(r'PERGUNTA\s*:\s*"?(.+?)"?$', linha, re.IGNORECASE)
+        if pergunta_texto:
+            nova_questao = Questao(conteudo=pergunta_texto)
             
-            if match:
-                perguntas.append(match.group(1))
-                Questao.objects.create(
-                    conteudo = match.group(1),
-                )
-    return HttpResponse("Perguntas Importadas com sucesso")
+            if categoria_id and str(categoria_id).strip(): 
+                try:
+                    categoria = Categoria.objects.get(id=int(categoria_id))
+                    nova_questao.categoria = categoria
+                except (Categoria.DoesNotExist, ValueError):
+                    pass
+                    
+            nova_questao.save()
+            django_messages.success(request, "Questão adicionada com sucesso!")
+        
+    return redirect('questoes')
+    
+@login_required
+def upload_perguntas(request):
+    if request.method == "POST":
+        arquivo = request.FILES.get("arquivo_upload")
 
-                 
+        if arquivo:
+            perguntas = []
+            conteudo_texto = arquivo.read().decode("utf-8")
+            
+            for linha in conteudo_texto.split("\n"):
+                match = re.search(r'PERGUNTA\s*:\s*"?(.+?)"?$', linha, re.IGNORECASE)
+                
+                if match:
+                    texto_pergunta = match.group(1).strip()
+                    perguntas.append(texto_pergunta)
+                    Questao.objects.create(conteudo=texto_pergunta)
+            
+            if perguntas:
+                django_messages.success(request, f"{len(perguntas)} perguntas importadas com sucesso!")
+            else:
+                django_messages.error(request, "Nenhuma pergunta encontrada no arquivo.")
+        else:
+            django_messages.error(request, "Nenhum arquivo foi enviado.")
+            
+    return redirect('questoes') 
 
 @login_required
 def questoes_cadastro_categoria(request):
-    if (request.method == "POST"):
+    if request.method == "POST":
         nome_categoria = request.POST.get("nome")
         descricao_categoria = request.POST.get("descricao")
 
+        if nome_categoria:
+            Categoria.objects.create(
+                nome_categoria=nome_categoria,
+                descricao_categoria=descricao_categoria
+            )
+            django_messages.success(request, f"Categoria '{nome_categoria}' criada!")
+        else:
+            django_messages.error(request, "O nome da categoria é obrigatório.")
 
-        Categoria.objects.create(
-            nome_categoria = nome_categoria,
-            descricao_categoria = descricao_categoria
+    return redirect('questoes')
 
-
-        )
-        
-
-
-    return render(request, 'questoes/questoes_cadastro_categoria.html')
-
-# SETUP
 @login_required
 def setup(request):
     return render(request, 'setup/setup.html')
@@ -211,9 +277,6 @@ def setup_llm(request):
         )
 
     llms_cadastradas = LLM.objects.all()
-
-
-
     return render(request, 'setup/setup-llm.html',{"llms_cadastradas": llms_cadastradas})
 
 @login_required
@@ -222,7 +285,6 @@ def setup_avaliacao(request):
 
 @login_required
 def setup_configurar_llm(request):
-
     return render(request, 'setup/setup-configurar-llm.html')
 
 @login_required
@@ -236,23 +298,13 @@ def setup_configurar_metrica(request):
 @login_required
 def deletar_llm(request, id):
     if request.method == "DELETE":
-
         LLM.objects.filter(id=id).delete()
-
-        return JsonResponse({
-            "status": "success",
-            "id": id
-        })
-
+        return JsonResponse({"status": "success", "id": id})
     return JsonResponse({"status": "error"})
 
-
 def edit_llm_api(request, id):
-
     if request.method == "PUT":
-
         data = json.loads(request.body)
-
         nome = data.get("nome")
         api_key = data.get("api_key")
 
@@ -260,16 +312,9 @@ def edit_llm_api(request, id):
         llm.nome = nome
         llm.api_key = api_key
         llm.save()
-
-        return JsonResponse({
-            "status": "success"
-        })
-
+        return JsonResponse({"status": "success"})
     return JsonResponse({"status": "error"})
 
-
-
-# CONSULTA
 @login_required
 def menu_consulta(request):
     return render(request, 'consulta/menu-consulta.html')
@@ -283,7 +328,6 @@ def executar_consulta(request):
 def consulta_comparacao(request):
     return render(request, 'consulta/consulta-comparacao.html')
 
-# AVALIACAO
 @login_required
 def avaliacao(request):
     return render(request, 'avaliacao/avaliacao_lista.html')
