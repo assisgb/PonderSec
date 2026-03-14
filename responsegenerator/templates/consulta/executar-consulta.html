@@ -315,8 +315,9 @@
 
         .modal-container {
 
-            width: 900px;
-            max-width: 95%;
+            width: 1000px;
+            max-width: 100%;
+            height: 600px;
 
             background: rgba(11, 20, 29, 0.95);
 
@@ -324,6 +325,8 @@
             border-radius: 16px;
 
             padding: 30px;
+
+            overflow: auto;
 
             box-shadow: 0 0 40px rgba(0, 255, 160, 0.15);
         }
@@ -382,11 +385,23 @@
 
             border: 1px solid rgba(0, 255, 160, 0.15);
 
+            width: 300px;
+
+            height: 250px;
+
             border-radius: 10px;
 
             padding: 18px;
 
             transition: 0.2s;
+
+            overflow: auto;
+
+            word-wrap: break-word;
+
+            
+
+            hyphens: auto;
         }
 
         .answer-card:hover {
@@ -408,6 +423,8 @@
             font-size: 14px;
 
             color: #cfe9df;
+
+
 
             line-height: 1.5;
         }
@@ -543,9 +560,6 @@
             document.getElementById("modal-questao-conteudo").innerHTML = data.questao
             document.getElementById("modal-overlay").style.display = "flex";
             const grid = document.getElementById("answers-card")
-            
-            alert(data.questao)
-            alert(data.respostas[0].llm)
             grid.innerHTML=""
 
             for(const r of data.respostas){
