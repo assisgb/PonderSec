@@ -405,15 +405,17 @@
                 
                 <label class="form-label" for="pergunta">Texto da pergunta</label>
                 <textarea name="pergunta" id="pergunta" placeholder="Digite aqui a pergunta..."></textarea>
-
+                
+                
                 <div class="ai-options">
                     <h3>IAs que responderão</h3>
                     <div class="checkbox-grid">
-                        <label><input type="checkbox" name="ia_groq"> Groq</label>
-                        <label><input type="checkbox" name="ia_gemini"> Gemini</label>
-                        <label><input type="checkbox" name="ia_hackai"> Hack.Ai</label>
-                        <label><input type="checkbox" name="ia_deepseek"> Deepseek</label>
-                        <label><input type="checkbox" name="ia_chatgpt"> ChatGPT</label>
+                        {% if llms %}
+                        {% for llm in llms %}
+                        <label><input type="checkbox">{{llm.nome}}</label>
+                        {% endfor %}
+                        {% endif %}
+               
                     </div>
                 </div>
 

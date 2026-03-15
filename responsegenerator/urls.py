@@ -30,5 +30,6 @@ urlpatterns = [
     path("api/llm/<int:id>/delete/", views.deletar_llm, name="delete_llm"),
     path("api/llm/<int:id>/edit/", views.edit_llm_api),
     path("respostas/<int:questao_id>/", views.get_respostas, name="get_respostas"),
+    path("gerar_resposta/<int:questao_id>",views.gerar_respostas)
     #path('setup-deletar-metrica/<int:id>/', views.setup_deletar_metrica, name='setup_deletar_metrica'),
 ]
