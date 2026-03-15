@@ -189,10 +189,12 @@ def historico(request):
 def questoes(request):
     lista_questoes = Questao.objects.all().order_by('-id')
     lista_categorias = Categoria.objects.all()
+    llms = LLM.objects.all()
     
     return render(request, 'questoes/questoes.html', {
         "historico": lista_questoes,
-        "categorias": lista_categorias
+        "categorias": lista_categorias,
+        "llms": llms
     })
 
 @login_required
@@ -280,6 +282,26 @@ def get_respostas(request, questao_id):
         "questao": questao.conteudo,
         "respostas": lista_respostas
     })
+
+@login_required
+def gerar_respostas(request, questao_id):
+    questao = Questao.objects.get(id=questao_id)
+    llms = LLM.objects.all()
+    llms_to_response = []
+
+    for l in llms:
+       Resposta.objects.create(
+           questao_id=questao_id,
+           llm = LLM.objects.get(id=l.id),
+           conteudo_resposta = "Respostinha teste"
+
+
+       )
+       return 
+    
+
+    
+
 
 
 @login_required
