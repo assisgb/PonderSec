@@ -9,7 +9,7 @@ from datetime import timedelta
 import re
 from django.http import JsonResponse, HttpResponse
 import json
-from responsegenerator.models import Historico, Categoria, LLM, Questao, Resposta
+from responsegenerator.models import Historico, Categoria, LLM, Questao, Resposta, Avaliacao, Metrica, Formulario
 
 def salvar_no_historico(user, pergunta, resposta):
     resp_obj = Resposta.objects.create(conteudo_resposta=resposta)
@@ -375,16 +375,68 @@ def avaliacao(request):
 
 @login_required
 def avaliacao_respostas(request):
-    return render(request, 'avaliacao/avaliacao_respostas.html')
 
+    formulario = get_object_or_404(Formulario, id=formulario_id)
+    questao = get_object_or_404(Questao, id=questao_id)
+    respostas = Resposta.objects.filter(questao=questao)
+    metricas = Metrica.objects.filter(ativa=True)
+
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        for item in data:
+            Avaliacao.objects.create(
+                usuario=request.user,
+                resposta_id=item['resposta_id'],
+                metrica_id=item['metrica_id'],
+                avaliacao_quanti=item.get('quanti'),
+                avaliacao_quali=item.get('quali'),
+            )
+        return JsonResponse({'status': 'ok'})
+
+    return render(request, 'avaliacao/avaliacao_respostas.html', {
+        'questao': questao,
+        'respostas': respostas,
+        'metricas': metricas,
+        'formulario': formulario,
+    })
 @login_required
 def avaliacao_adicionar_formulario(request):
-    return render(request, 'avaliacao/avaliacao_adicionar_formulario.html')
+    if request.method == 'POST':
+        nome = request.POST.get('nome')
+        questoes_ids = request.POST.getlist('questoes')
+        formulario = Formulario.objects.create(
+            nome=nome,
+            criado_por=request.user
+        )
+        formulario.questoes.set(questoes_ids)
+        formulario.save()
+        return redirect('avaliacao')
+
+    questoes = Questao.objects.all()
+    return render(request, 'avaliacao/avaliacao_adicionar_formulario.html', {'questoes': questoes})
+
 
 @login_required
 def avaliacao_editar_formulario(request, id):
-    return render(request, 'avaliacao/avaliacao_editar_formulario.html')
+    formulario = get_object_or_404(Formulario, id=id, criado_por=request.user)
+
+    if request.method == 'POST':
+        nome = request.POST.get('nome')
+        questoes_ids = request.POST.getlist('questoes')
+        formulario.nome = nome
+        formulario.questoes.set(questoes_ids)
+        formulario.save()
+        return redirect('avaliacao')
+
+    questoes = Questao.objects.all()
+    return render(request, 'avaliacao/avaliacao_editar_formulario.html', {
+        'formulario': formulario,
+        'questoes': questoes
+    })
 
 @login_required
 def avaliacao_deletar_formulario(request, id):
+    formulario = get_object_or_404(Formulario, id=id, criado_por=request.user)
+    if request.method == 'POST':
+        formulario.delete()
     return redirect('avaliacao')
