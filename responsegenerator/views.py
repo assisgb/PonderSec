@@ -13,8 +13,10 @@ from responsegenerator.models import Historico, Categoria, LLM, Questao, Respost
 
 def salvar_no_historico(user, pergunta, resposta):
     resp_obj = Resposta.objects.create(conteudo_resposta=resposta)
-    q_obj = Questao.objects.create(conteudo=pergunta, respostas=resp_obj)
-    
+    q_obj = Questao.objects.create(conteudo=pergunta)  # removido respostas=resp_obj
+    resp_obj.questao = q_obj  # associa pelo ForeignKey correto
+    resp_obj.save()
+
     Historico.objects.create(
         usuario=user,
         questao=q_obj
@@ -42,34 +44,37 @@ def ver_detalhes(request, id):
     if item.questao:
         pergunta_texto = item.questao.conteudo
 
-        if getattr(item.questao, 'respostas', None) and item.questao.respostas.conteudo_resposta:
-            conteudo_resp = item.questao.respostas.conteudo_resposta
-            
-            if item.questao.llm:
-                nome_ia = item.questao.llm.nome
-                nome_ia_lower = nome_ia.lower()
-                
-                if 'gemini' in nome_ia_lower: cor = '#4285F4'
-                elif 'groq' in nome_ia_lower or 'llama' in nome_ia_lower: cor = '#f55036'
-                elif 'chatgpt' in nome_ia_lower or 'gpt' in nome_ia_lower: cor = '#10a37f'
-                else: cor = '#00ff9f'
+        # Busca respostas via related_name correto
+        respostas_qs = item.questao.respostas.select_related('llm').all()
 
-                respostas_encontradas.append({
-                    'ia': nome_ia, 
-                    'texto': conteudo_resp, 
-                    'cor': cor
-                })
-            
-            else:
-                if "[Gemini]" in conteudo_resp and "[Groq]" in conteudo_resp:
-                    partes = conteudo_resp.split("[Groq]")
-                    texto_gemini = partes[0].replace("[Gemini]", "").strip()
-                    texto_groq = partes[1].strip()
-                    
-                    respostas_encontradas.append({'ia': 'Gemini', 'texto': texto_gemini, 'cor': '#4285F4'})
-                    respostas_encontradas.append({'ia': 'Groq', 'texto': texto_groq, 'cor': '#f55036'})
+        if respostas_qs.exists():
+            for r in respostas_qs:
+                if r.llm:
+                    nome_ia = r.llm.nome
+                    nome_ia_lower = nome_ia.lower()
+
+                    if 'gemini' in nome_ia_lower: cor = '#4285F4'
+                    elif 'groq' in nome_ia_lower or 'llama' in nome_ia_lower: cor = '#f55036'
+                    elif 'chatgpt' in nome_ia_lower or 'gpt' in nome_ia_lower: cor = '#10a37f'
+                    else: cor = '#00ff9f'
+
+                    respostas_encontradas.append({
+                        'ia': nome_ia,
+                        'texto': r.conteudo_resposta,
+                        'cor': cor
+                    })
                 else:
-                    respostas_encontradas.append({'ia': 'Geral', 'texto': conteudo_resp, 'cor': '#8ba1b0'})
+                    respostas_encontradas.append({
+                        'ia': 'Geral',
+                        'texto': r.conteudo_resposta,
+                        'cor': '#8ba1b0'
+                    })
+        else:
+            respostas_encontradas.append({
+                'ia': 'Sem resposta',
+                'texto': 'Nenhuma resposta encontrada.',
+                'cor': '#8ba1b0'
+            })
 
     return JsonResponse({
         'pergunta': pergunta_texto,
@@ -287,23 +292,15 @@ def get_respostas(request, questao_id):
 def gerar_respostas(request, questao_id):
     questao = Questao.objects.get(id=questao_id)
     llms = LLM.objects.all()
-    llms_to_response = []
 
     for l in llms:
-       Resposta.objects.create(
-           questao_id=questao_id,
-           llm = LLM.objects.get(id=l.id),
-           conteudo_resposta = "Respostinha teste"
-
-
-       )
-       return 
+        Resposta.objects.create(
+            questao_id=questao_id,
+            llm=l,
+            conteudo_resposta="Respostinha teste"
+        )
+    return JsonResponse({'status': 'ok'})
     
-
-    
-
-
-
 @login_required
 def setup_llm(request):
     if request.method == "POST":
@@ -371,11 +368,15 @@ def consulta_comparacao(request):
 
 @login_required
 def avaliacao(request):
-    return render(request, 'avaliacao/avaliacao_lista.html')
+    formularios = Formulario.objects.filter(criado_por=request.user)
+    questoes = Questao.objects.all()
+    return render(request, 'avaliacao/avaliacao_lista.html', {
+        'formularios': formularios,
+        'questoes': questoes
+    })
 
 @login_required
-def avaliacao_respostas(request):
-
+def avaliacao_respostas(request, formulario_id, questao_id):
     formulario = get_object_or_404(Formulario, id=formulario_id)
     questao = get_object_or_404(Questao, id=questao_id)
     respostas = Resposta.objects.filter(questao=questao)
@@ -399,6 +400,7 @@ def avaliacao_respostas(request):
         'metricas': metricas,
         'formulario': formulario,
     })
+
 @login_required
 def avaliacao_adicionar_formulario(request):
     if request.method == 'POST':
