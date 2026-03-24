@@ -255,9 +255,12 @@
         }
 
         .ai-response {
-            font-size: 14px;
-            color: #cfe9df;
-            line-height: 1.5;
+            padding: 14px 16px;
+            font-size: 13px;
+            color: #b8d8cc;
+            line-height: 1.65;
+            max-height: 320px;
+            overflow-y: auto;
         }
     </style>
 </head>
@@ -276,9 +279,11 @@
                 <input type="text" class="search-input" id="filterInput" placeholder="Filtro de pesquisa...">
             </div>
 
+            <button class="btn-limpar" onclick="limparRespostas()">⟳ Limpar</button>
+
             <button class="btn-run" onclick="executeQuestions()">
                 <span>▶</span>
-                <span>Play RUN</span>
+                <span>Executar</span>
             </button>
 
         </div>
@@ -385,7 +390,7 @@
                 grid.innerHTML += `
                     <div class="answer-card">
                         <div class="ai-name">${r.llm}</div>
-                        <div class="ai-response">${r.conteudo.replace(/\n/g, '<br>')}</div>
+                        <div class="ai-response">${r.conteudo}</div>
                     </div>
                 `
             }
@@ -423,6 +428,18 @@
                 btnRun.innerHTML = originalText;
                 btnRun.disabled = false;
             }
+        }
+
+        async function limparRespostas() {
+            if (!confirm("Apagar todas as respostas do banco?")) return;
+
+            const res = await fetch("/limpar_respostas", {
+                method: "POST",
+                headers: { "X-CSRFToken": getCookie("csrftoken") }
+            });
+            const data = await res.json();
+
+            if (data.ok) location.reload();
         }
     </script>
 

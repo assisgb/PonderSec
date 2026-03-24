@@ -378,24 +378,21 @@ transform:translateY(0) scale(1);
 </div>
 
 <div class="history-grid">
-{% if llms_cadastradas %}
-    {% for llm in llms_cadastradas %}
-    <div class="history-card" id="llm-{{ llm.id }}">
-    <div class="llm-name" id="llm-nome-{{ llm.id }}">{{ llm.nome }}</div>
-    <div>
-    <button class="btn-icon btn-save" onclick="deletarLLM({{llm.id}})">
-        🗑️
-    </button>
-    <button class="btn-save" onclick="editarLLM({{ llm.id }}, '{{ llm.nome|escapejs }}', '{{ llm.api_key|escapejs }}')">
-       ✏️
-    </button>
-    </div>
-    </div>
+    {% if llms_cadastradas %}
+        {% for llm in llms_cadastradas %}
+        <div class="history-card" id="llm-{{ llm.id }}">
+            <div class="llm-name" id="llm-nome-{{ llm.id }}">{{ llm.nome }}</div>
+            <div>
+                <button class="btn-icon btn-save" onclick="deletarLLM({{llm.id}})">
+                    🗑️
+                </button>
+                <button class="btn-save" onclick="editarLLM({{ llm.id }}, '{{ llm.nome|escapejs }}', '{{ llm.api_key|escapejs }}')">
+                    ✏️
+                </button>
+            </div>
+        </div>
 
-    {%endfor%}
-
-
-
+        {%endfor%}
 </div>
     
 {% endif %}
@@ -404,32 +401,31 @@ transform:translateY(0) scale(1);
 </div>
 
 <div class="modal-editar" id="modal-editar">
+    <div class="modal-editar-content">
+        <div class="page-title">Editar LLM</div>
 
-<div class="modal-editar-content">
+        <input type="hidden" id="edit-id">
 
-<div class="page-title">Editar LLM</div>
+        <label>Provedor</label>
+        <select id="edit-provider" onchange="atualizarModelosEdicao()">
+            <option value="">Selecione</option>
+            <option value="OpenAI">OpenAI</option>
+            <option value="Anthropic">Anthropic</option>
+            <option value="Groq">Groq</option>
+            <option value="Gemini">Gemini</option>
+            <option value="Local">Local</option>
+        </select>
 
-<input type="hidden" id="edit-id">
+        <label>Modelo</label>
+        <select id="edit-nome">
+            <option value="">Selecione um provedor primeiro</option>
+        </select>
 
-<label>Modelo</label>
-<input type="text" id="edit-nome">
-
-
-<label>Chave de API</label>
-<input type="text" id="edit-apikey">
-
-<button class="btn-add" onclick="salvarEdicao()">Salvar</button>
-<button class="btn-back" onclick="sairEdicao()">Sair</button>
-
-
+        <label>Chave de API</label>
+        <input type="password" id="edit-apikey"> <button class="btn-add" onclick="salvarEdicao()">Salvar</button>
+        <button class="btn-back" onclick="sairEdicao()">Sair</button>
+    </div>
 </div>
-</div>
-
-
-
-
-
-
 
 
 
@@ -449,6 +445,7 @@ transform:translateY(0) scale(1);
 <div class="config-card">
 
 <div class="form-group">
+<<<<<<< HEAD
 <label>Provedor</label>
 <select name="provider">
 <option value="">Selecione</option>
@@ -458,11 +455,24 @@ transform:translateY(0) scale(1);
 <option>Local</option>
 <option>Gemini</option>
 </select>
+=======
+    <label>Provedor</label>
+    <select name="provider" id="providerSelect" onchange="atualizarModelos()">
+        <option value="">Selecione</option>
+        <option value="OpenAI">OpenAI</option>
+        <option value="Anthropic">Anthropic</option>
+        <option value="Groq">Groq</option>
+        <option value="Gemini">Gemini</option> 
+        <option value="Local">Local</option>
+    </select>
+>>>>>>> 284a2a9 (oiii)
 </div>
 
 <div class="form-group">
-<label>Modelo</label>
-<input type="text" name="model" placeholder="Ex: gpt-4o-mini">
+    <label>Modelo</label>
+    <select name="model" id="modelSelect">
+        <option value="">Selecione um provedor primeiro</option>
+    </select>
 </div>
 
 <div class="form-group">
@@ -485,113 +495,155 @@ transform:translateY(0) scale(1);
 
 
 
-<script>
+    <script>
+        const modelosPorProvedor = {
+            "OpenAI": [
+                { value: "gpt-4o-mini", label: "GPT-4o Mini" },
+                { value: "gpt-4o", label: "GPT-4o" }
+            ],
+            "Anthropic": [
+                { value: "claude-3-5-sonnet-20240620", label: "Claude 3.5 Sonnet" },
+                { value: "claude-3-haiku-20240307", label: "Claude 3 Haiku" }
+            ],
+            "Groq": [
+                { value: "llama-3.3-70b-versatile", label: "Llama 3.3 70B (Versatile)" },
+                { value: "mixtral-8x7b-32768", label: "Mixtral 8x7B" }
+            ],
+            "Gemini": [
+                { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash" },
+                { value: "gemini-1.5-pro", label: "Gemini 1.5 Pro" }
+            ],
+            "Local": [
+                { value: "llama3", label: "Ollama (Llama 3)" }
+            ]
+        };
 
+        function atualizarModelos() {
+            const providerSelect = document.getElementById("providerSelect");
+            const modelSelect = document.getElementById("modelSelect");
+            const provedorSelecionado = providerSelect.value;
 
+            modelSelect.innerHTML = "";
 
-function editarLLM(id, nome, api_key){
-    document.getElementById("edit-id").value = id
-    document.getElementById("edit-nome").value = nome
-    document.getElementById("modal-editar").style.display = "flex"
-    document.getElementById("edit-apikey").value = api_key
-
-}
-
-function salvarEdicao(){
-
-    const id = document.getElementById("edit-id").value
-    const nome = document.getElementById("edit-nome").value
-    const api_key = document.getElementById("edit-apikey").value
-
-    fetch(`/api/llm/${id}/edit/`, {
-
-        method: "PUT",
-
-        headers:{
-            "Content-Type":"application/json",
-            "X-CSRFToken": getCSRFToken()
-        },
-
-        body: JSON.stringify({
-            nome: nome,
-            api_key: api_key
-        })
-
-    })
-    .then(res => res.json())
-    .then(data => {
-
-        if(data.status === "success"){
-
-            const elemento = document.getElementById(`llm-nome-${id}`)
-
-            if(elemento){
-                elemento.innerText = nome
+            if (provedorSelecionado && modelosPorProvedor[provedorSelecionado]) {
+                modelosPorProvedor[provedorSelecionado].forEach(modelo => {
+                    const option = document.createElement("option");
+                    option.value = modelo.value; // O valor exato que a API exige
+                    option.textContent = modelo.label; // O nome bonito que aparece na tela pro usuário
+                    modelSelect.appendChild(option);
+                });
+            } else {
+                const option = document.createElement("option");
+                option.value = "";
+                option.textContent = "Selecione um provedor primeiro";
+                modelSelect.appendChild(option);
             }
+        }
 
-            document.getElementById("modal-editar").style.display = "none"
+
+        function editarLLM(id, nome, api_key){
+            document.getElementById("edit-id").value = id
+            document.getElementById("edit-nome").value = nome
+            document.getElementById("modal-editar").style.display = "flex"
+            document.getElementById("edit-apikey").value = api_key
 
         }
 
-    })
+        function salvarEdicao(){
 
-}
+            const id = document.getElementById("edit-id").value
+            const nome = document.getElementById("edit-nome").value
+            const api_key = document.getElementById("edit-apikey").value
 
+            fetch(`/api/llm/${id}/edit/`, {
 
-function sairEdicao(){
-document.getElementById("modal-editar").style.display="none"
-}
+                method: "PUT",
 
+                headers:{
+                    "Content-Type":"application/json",
+                    "X-CSRFToken": getCSRFToken()
+                },
 
-function deletarLLM(id)
-{
-    fetch(`/api/llm/${id}/delete/`, {
+                body: JSON.stringify({
+                    nome: nome,
+                    api_key: api_key
+                })
 
-        method: "DELETE",
-        headers: {
-            "X-CSRFToken": getCSRFToken()
+            })
+            .then(res => res.json())
+            .then(data => {
+
+                if(data.status === "success"){
+
+                    const elemento = document.getElementById(`llm-nome-${id}`)
+
+                    if(elemento){
+                        elemento.innerText = nome
+                    }
+
+                    document.getElementById("modal-editar").style.display = "none"
+
+                }
+
+            })
+
         }
-    })
-    .then(response => response.json())
-    .then(data => {
 
-        if(data.status === "success"){
 
-            const card = document.getElementById(`llm-${id}`)
+        function sairEdicao(){
+        document.getElementById("modal-editar").style.display="none"
+        }
 
-            if(card){
-                card.remove()
-            }
+
+        function deletarLLM(id)
+        {
+            fetch(`/api/llm/${id}/delete/`, {
+
+                method: "DELETE",
+                headers: {
+                    "X-CSRFToken": getCSRFToken()
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+
+                if(data.status === "success"){
+
+                    const card = document.getElementById(`llm-${id}`)
+
+                    if(card){
+                        card.remove()
+                    }
+
+                }
+
+            })
+
+
+
+        }
+        function getCSRFToken(){
+
+            return document.querySelector('[name=csrfmiddlewaretoken]').value
 
         }
 
-    })
+        function abrirModal(){
+        document.getElementById("modal").style.display="flex"
+        }
 
+        function fecharModal(){
+        document.getElementById("modal").style.display="none"
+        }
 
+        window.onclick=function(event){
+        const modal=document.getElementById("modal")
+        if(event.target==modal){
+        modal.style.display="none"
+        }
+        }
 
-}
-function getCSRFToken(){
-
-    return document.querySelector('[name=csrfmiddlewaretoken]').value
-
-}
-
-function abrirModal(){
-document.getElementById("modal").style.display="flex"
-}
-
-function fecharModal(){
-document.getElementById("modal").style.display="none"
-}
-
-window.onclick=function(event){
-const modal=document.getElementById("modal")
-if(event.target==modal){
-modal.style.display="none"
-}
-}
-
-</script>
+    </script>
 
 </body>
 </html>
