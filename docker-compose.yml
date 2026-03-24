@@ -16,7 +16,8 @@ services:
   web:
     build: .
     command: >
-      sh -c "python manage.py makemigrations &&
+      sh -c "pip install google-generativeai groq &&
+             python manage.py makemigrations &&
              python manage.py migrate &&
              python manage.py runserver 0.0.0.0:8000"
     volumes:
@@ -34,6 +35,7 @@ services:
       - DB_PASSWORD=${POSTGRES_PASSWORD}
       - DB_HOST=${DB_HOST}
       - DB_PORT=${POSTGRES_PORT}
+
 
   pgadmin:
     image: dpage/pgadmin4
