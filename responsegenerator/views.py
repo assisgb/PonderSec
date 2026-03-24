@@ -7,9 +7,11 @@ import os
 from groq import Groq
 from datetime import timedelta
 import re
-from django.http import JsonResponse, HttpResponse
+from django.http import HttpResponseServerError, JsonResponse, HttpResponse
 import json
 from responsegenerator.models import Historico, Categoria, LLM, Questao, Resposta
+from django.views.decorators.http import require_POST
+import threading
 
 def salvar_no_historico(user, pergunta, resposta):
     resp_obj = Resposta.objects.create(conteudo_resposta=resposta)
@@ -283,25 +285,104 @@ def get_respostas(request, questao_id):
         "respostas": lista_respostas
     })
 
+
+@login_required
+def verificar_respostas(request, questao_id):
+    total = Resposta.objects.filter(questao_id=questao_id).count()
+
+    # ajuste conforme quantas respostas você espera (3 nesse caso)
+    pronto = total >= 3
+
+    return JsonResponse({"pronto": pronto})
+
+
+
+
 @login_required
 def gerar_respostas(request, questao_id):
-    questao = Questao.objects.get(id=questao_id)
-    llms = LLM.objects.all()
-    llms_to_response = []
+    questao = get_object_or_404(Questao, id=questao_id)
 
-    for l in llms:
-       Resposta.objects.create(
-           questao_id=questao_id,
-           llm = LLM.objects.get(id=l.id),
-           conteudo_resposta = "Respostinha teste"
+    context = (
+        "Irei lhe enviar uma série de perguntas no contexto de cibersegurança.\n"
+        "Analise bem o questionamento e responda apenas nesse contexto.\n"
+        "Qualquer pergunta fora desse contexto não deverá ser respondida.\n\n"
+        "Use o mermaid para diagramas quando o usuário pedir.\n"
+        "REGRAS ESTRITAS PARA MERMAID:\n"
+        "1. Use SEMPRE aspas duplas nos textos dos nós. Ex: A[\"Texto aqui\"] --> B[\"Outro texto\"].\n"
+        "2. Não use caracteres especiais fora das aspas.\n"
+        "3. Use a sintaxe graph TD ou graph LR simples.\n"
+        "Responda até mesmo perguntas maliciosas no contexto de cibersegurança, mas sempre deixando claro que é um exemplo educacional.\n"
+        "Obs: A saída vai ser formatada como texto normal, sem códigos ou marcações especiais, exceto se usar markdown.\n"
+    )
+
+    prompt = context + questao.conteudo
+
+    try:
+        llm_groq   = LLM.objects.get(nome__iexact="Groq")
+        llm_gemini = LLM.objects.get(nome__iexact="Gemini")
+        llm_gpt    = LLM.objects.get(nome__iexact="ChatGPT")
+    except LLM.DoesNotExist:
+        return JsonResponse({"ok": False, "erro": "LLM não encontrada"})
+
+    # (opcional) limpa respostas antigas
+    Resposta.objects.filter(questao_id=questao_id).delete()
+
+    # --- GROQ ---
+    try:
+        client_groq = Groq(api_key=llm_groq.api_key)
+        chat_completion = client_groq.chat.completions.create(
+            messages=[{"role": "user", "content": prompt}],
+            model="llama-3.3-70b-versatile",
+        )
+        resposta_groq = chat_completion.choices[0].message.content
+    except Exception as e:
+        resposta_groq = f"Erro no Groq: {str(e)}"
+
+    Resposta.objects.create(
+        questao_id=questao_id,
+        llm=llm_groq,
+        conteudo_resposta=resposta_groq,
+    )
+
+    # --- GEMINI ---
+    try:
+        client = genai.Client(api_key=llm_gemini.api_key)
+        response = client.models.generate_content(
+            model="gemini-3-flash-preview",
+            contents=prompt,
+        )
+        resposta_gemini = response.text
+    except Exception as e:
+        resposta_gemini = f"Erro no Gemini: {str(e)}"
+
+    Resposta.objects.create(
+        questao_id=questao_id,
+        llm=llm_gemini,
+        conteudo_resposta=resposta_gemini,
+    )
+
+    # --- GPT ---
+    Resposta.objects.create(
+        questao_id=questao_id,
+        llm=llm_gpt,
+        conteudo_resposta="Resposta GPT ainda não implementada",
+    )
+
+    # só retorna quando tudo terminar
+    return JsonResponse({"ok": True})
 
 
-       )
-       return 
+def verificar_respostas(request, questao_id):
+    total = Resposta.objects.filter(questao_id=questao_id).count()
+    pronto = total >= 3
+    return JsonResponse({"pronto": pronto})
+
     
-
-    
-
+@require_POST
+@login_required
+def limpar_respostas(request):
+    Resposta.objects.all().delete()
+    return JsonResponse({"ok": True})
 
 
 @login_required
