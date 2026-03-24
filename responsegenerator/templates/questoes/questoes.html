@@ -341,7 +341,7 @@
                         <div class="card-header">
                             <span class="card-date">{{ item.data|date:"d/m/Y H:i" }}</span>
                             <div class="card-actions">
-                                <button type="button" class="btn-icon" title="Ver detalhes" data-url="{% url 'ver_detalhes' item.id %}" onclick="abrirModalDetalhes(this)">👁</button>
+                                <button type="button" class="btn-icon" title="Ver detalhes" data-url="{% url 'ver_detalhes_questao' item.id %}" onclick="abrirModalDetalhes(this)">👁</button>
                                 <button type="button" class="btn-icon" title="Deletar" data-action="{% url 'deletar_item_historico' item.id %}" data-title="Apagar Registro?" data-desc="Esta ação removerá esta questão permanentemente." data-btn-text="Sim, apagar" onclick="configurarModal(this)">🗑</button>
                             </div>
                         </div>

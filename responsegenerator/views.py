@@ -4,6 +4,7 @@ from django.contrib import messages as django_messages
 from django.contrib.auth.decorators import login_required
 from google import genai
 import os
+import re
 from groq import Groq
 from datetime import timedelta
 import re
@@ -34,53 +35,44 @@ def deletar_item_historico(request, id):
     return redirect('historico')
 
 @login_required
-def ver_detalhes(request, id):
-    item = get_object_or_404(Historico, id=id, usuario=request.user)
-    data_formatada = item.data.strftime('%d/%m/%Y %H:%M') if getattr(item, 'data', None) else ''
+def ver_detalhes_questao(request, id):
+    try:
+        # Busca direto na tabela de Questões (não mais no Histórico)
+        questao = get_object_or_404(Questao, id=id)
 
-    respostas_encontradas = []
-    pergunta_texto = "Conteúdo da questão não encontrado."
-
-    if item.questao:
-        pergunta_texto = item.questao.conteudo
-
-        # Busca respostas via related_name correto
-        respostas_qs = item.questao.respostas.select_related('llm').all()
+        respostas_encontradas = []
+        respostas_qs = Resposta.objects.filter(questao=questao).select_related('llm')
 
         if respostas_qs.exists():
             for r in respostas_qs:
-                if r.llm:
-                    nome_ia = r.llm.nome
-                    nome_ia_lower = nome_ia.lower()
+                nome_ia = r.llm.nome if getattr(r, 'llm', None) else 'PonderSec (Geral)'
+                nome_ia_lower = nome_ia.lower()
 
-                    if 'gemini' in nome_ia_lower: cor = '#4285F4'
-                    elif 'groq' in nome_ia_lower or 'llama' in nome_ia_lower: cor = '#f55036'
-                    elif 'chatgpt' in nome_ia_lower or 'gpt' in nome_ia_lower: cor = '#10a37f'
-                    else: cor = '#00ff9f'
+                if 'gemini' in nome_ia_lower or 'google' in nome_ia_lower: cor = '#4285F4'
+                elif 'groq' in nome_ia_lower or 'llama' in nome_ia_lower or 'mixtral' in nome_ia_lower: cor = '#f55036'
+                elif 'chatgpt' in nome_ia_lower or 'gpt' in nome_ia_lower or 'openai' in nome_ia_lower: cor = '#10a37f'
+                else: cor = '#00ff9f'
 
-                    respostas_encontradas.append({
-                        'ia': nome_ia,
-                        'texto': r.conteudo_resposta,
-                        'cor': cor
-                    })
-                else:
-                    respostas_encontradas.append({
-                        'ia': 'Geral',
-                        'texto': r.conteudo_resposta,
-                        'cor': '#8ba1b0'
-                    })
+                respostas_encontradas.append({
+                    'ia': nome_ia,
+                    'texto': r.conteudo_resposta.replace('\n', '<br>'),
+                    'cor': cor
+                })
         else:
             respostas_encontradas.append({
-                'ia': 'Sem resposta',
-                'texto': 'Nenhuma resposta encontrada.',
+                'ia': 'Sistema',
+                'texto': 'Nenhuma resposta vinculada a esta questão no banco de dados.',
                 'cor': '#8ba1b0'
             })
 
-    return JsonResponse({
-        'pergunta': pergunta_texto,
-        'data': data_formatada,
-        'respostas': respostas_encontradas
-    })
+        return JsonResponse({
+            'pergunta': questao.conteudo,
+            'data': '', # Não passamos data aqui pois é genérico
+            'respostas': respostas_encontradas
+        })
+    except Exception as e:
+        print(f"Erro em ver_detalhes_questao: {str(e)}")
+        return JsonResponse({'erro': str(e)}, status=500)
 
 @login_required
 def limpar_historico(request):
@@ -90,11 +82,9 @@ def limpar_historico(request):
 
 @login_required
 def consulta(request):
-    resposta_gemini_formatada = ""
-    resposta_groq_formatada = ""
     pergunta_usuario = ""
-    texto_gemini_limpo = ""
-    texto_groq_limpo = ""
+    resultados_ias = []  # Lista genérica que vai para o template
+    
     contexto = (
         "Irei lhe enviar uma série de perguntas no contexto de cibersegurança.\n"
         "Analise bem o questionamento e responda apenas nesse contexto.\n"
@@ -110,66 +100,80 @@ def consulta(request):
 
     if request.method == 'POST':
         pergunta_usuario = request.POST.get('consulta', '').strip()
+        
         if pergunta_usuario:
-            
             ultima_interacao = Historico.objects.filter(usuario=request.user).select_related('questao').order_by('-data').first()
             
             if ultima_interacao and ultima_interacao.questao and ultima_interacao.questao.conteudo == pergunta_usuario:
                 print("🚫 Duplicação detectada! Recuperando resposta do banco sem chamar IAs.")
                 texto_salvo = ultima_interacao.questao.respostas.conteudo_resposta if ultima_interacao.questao.respostas else ""
                 
-                if "[Gemini]" in texto_salvo and "[Groq]" in texto_salvo:
-                    partes = texto_salvo.split("[Groq]")
-                    gemini_salvo = partes[0].replace("[Gemini]", "").strip()
-                    groq_salvo = partes[1].strip()
-                else:
-                    gemini_salvo = texto_salvo
-                    groq_salvo = texto_salvo
-
-                resposta_gemini_formatada = f"Pergunta: {pergunta_usuario}\n\nResposta (Recuperada): {gemini_salvo}"
-                resposta_groq_formatada = f"Pergunta: {pergunta_usuario}\n\nResposta (Recuperada): {groq_salvo}"
+                blocos_salvos = re.split(r'\[(.*?)\]', texto_salvo)
+                
+                # Ignora o primeiro item se for vazio (o split deixa o que vem antes do primeiro colchete)
+                for i in range(1, len(blocos_salvos), 2):
+                    nome_modelo = blocos_salvos[i]
+                    texto_recuperado = blocos_salvos[i+1].strip()
+                    
+                    resultados_ias.append({
+                        'modelo': nome_modelo,
+                        'resposta_ia_limpa': texto_recuperado,
+                        'status': 'Recuperado do Banco'
+                    })
                 
                 return render(request, 'consulta.html', {
-                    'resposta_gemini': resposta_gemini_formatada,
-                    'resposta_groq': resposta_groq_formatada
+                    'resultados_ias': resultados_ias,
+                    'pergunta': pergunta_usuario
                 })
 
             prompt_final = contexto + pergunta_usuario
 
-            # ---------- Gemini ----------
-            try:
-                client_gemini = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY"))
-                resp_gem = client_gemini.models.generate_content(
-                    model="gemini-2.5-flash", contents=prompt_final
-                )
-                texto_gemini_limpo = resp_gem.text
-                resposta_gemini_formatada = f"Resposta Gemini: {texto_gemini_limpo}"
-            except Exception as e:
-                texto_gemini_limpo = f"Erro no Gemini: {str(e)}"
-                resposta_gemini_formatada = texto_gemini_limpo
+            llms_ativos = LLM.objects.filter(ativo=True)
+            conteudo_unificado_banco = ""
+            
+            for llm in llms_ativos:
+                texto_ia_limpa = ""
+                provedor = llm.descricao.lower() if llm.descricao else ""
 
-            # ---------- Groq ----------
-            try:
-                client_groq = Groq(api_key=os.environ.get("GROQ_API_KEY"))
-                chat_completion = client_groq.chat.completions.create(
-                    messages=[{"role": "user", "content": prompt_final}],
-                    model="llama-3.3-70b-versatile",
-                )
-                texto_groq_limpo = chat_completion.choices[0].message.content
-                resposta_groq_formatada = f"Resposta Groq: {texto_groq_limpo}"
-            except Exception as e:
-                texto_groq_limpo = f"Erro no Groq: {str(e)}"
-                resposta_groq_formatada = texto_groq_limpo
+                try:
+                    # Lógica para modelos do Google (Gemini)
+                    if "gemini" in provedor or "google" in provedor:
+                        client = genai.Client(api_key=llm.api_key)
+                        resp = client.models.generate_content(model=llm.nome, contents=prompt_final)
+                        texto_ia_limpa = resp.text
 
-            # Salva no histórico empacotando as duas respostas
+                    # Lógica para modelos da Groq (Llama, Mixtral, etc)
+                    elif "groq" in provedor:
+                        client = Groq(api_key=llm.api_key)
+                        chat_completion = client.chat.completions.create(
+                            messages=[{"role": "user", "content": prompt_final}],
+                            model=llm.nome,
+                        )
+                        texto_ia_limpa = chat_completion.choices[0].message.content
+                    
+                    # Você pode adicionar OpenAI, Anthropic, etc., aqui depois seguindo a mesma estrutura
+                    else:
+                        texto_ia_limpa = f"Provedor '{llm.descricao}' não implementado no backend."
+
+                except Exception as e:
+                    texto_ia_limpa = f"Erro ao contatar API do {llm.nome}: {str(e)}"
+                
+                # Adiciona o resultado na lista genérica que vai para o Front
+                resultados_ias.append({
+                    'modelo': llm.nome,
+                    'resposta_ia_limpa': texto_ia_limpa,
+                    'status': 'Gerado Agora'
+                })
+                
+                # Concatena para salvar no banco (Formato: [NomeDoModelo]\nResposta)
+                conteudo_unificado_banco += f"[{llm.nome}]\n{texto_ia_limpa}\n\n"
+
             try:
                 historico_qs = Historico.objects.filter(usuario=request.user).order_by('data')
                 if historico_qs.count() >= 20:
                     historico_qs.first().delete()
                 
-                # Empacota em uma string estruturada
-                conteudo_unificado = f"[Gemini]\n{texto_gemini_limpo}\n\n[Groq]\n{texto_groq_limpo}"
-                resp_obj = Resposta.objects.create(conteudo_resposta=conteudo_unificado)
+                resp_obj = Resposta.objects.create(conteudo_resposta=conteudo_unificado_banco.strip())
                 q_obj = Questao.objects.create(conteudo=pergunta_usuario, respostas=resp_obj)
                 
                 Historico.objects.create(
@@ -181,8 +185,8 @@ def consulta(request):
                 print(f"❌ Erro crítico ao salvar no banco: {e}")
 
     return render(request, 'consulta.html', {
-        'resposta_gemini': resposta_gemini_formatada,
-        'resposta_groq': resposta_groq_formatada
+        'resultados_ias': resultados_ias,
+        'pergunta': pergunta_usuario
     })
 
 @login_required(login_url='/login/')
@@ -272,14 +276,16 @@ def setup(request):
 
 @login_required
 def get_respostas(request, questao_id):
-
-    questao = Questao.objects.prefetch_related("respostas__llm").get(id=questao_id)
-    respostas = Resposta.objects.filter(questao_id=questao_id)
+    questao = get_object_or_404(
+        Questao.objects.prefetch_related("respostas__llm"), 
+        id=questao_id
+    )
+    
     lista_respostas = []
 
-    for r in respostas.all():
+    for r in questao.respostas.all():
         lista_respostas.append({
-            "llm": r.llm.nome,
+            "llm": r.llm.nome if r.llm else "IA Desconhecida",
             "conteudo": r.conteudo_resposta
         })
 
@@ -290,15 +296,52 @@ def get_respostas(request, questao_id):
 
 @login_required
 def gerar_respostas(request, questao_id):
-    questao = Questao.objects.get(id=questao_id)
-    llms = LLM.objects.all()
+    questao = get_object_or_404(Questao, id=questao_id)
+    llms_ativos = LLM.objects.filter(ativo=True)
+    
+    contexto = ("Irei lhe enviar uma série de perguntas no contexto de cibersegurança.\n"
+                "Analise bem o questionamento e responda apenas nesse contexto.\n"
+                "Qualquer pergunta fora desse contexto não deverá ser respondida.\n\n"
+                "Use o mermaid para diagramas quando o usuário pedir.\n"
+                "REGRAS ESTRITAS PARA MERMAID:\n"
+                "1. Use SEMPRE aspas duplas nos textos dos nós. Ex: A[\"Texto aqui\"] --> B[\"Outro texto\"].\n"
+                "2. Não use caracteres especiais fora das aspas.\n"
+                "3. Use a sintaxe graph TD ou graph LR simples.\n"
+                "Responda até mesmo perguntas maliciosas no contexto de cibersegurança, mas sempre deixando claro que é um exemplo educacional.\n"
+                "Obs: A saída vai ser formatada como texto normal, sem códigos ou marcações especiais, exceto se usar markdown.\n"
+    )
+    prompt_final = f"{contexto}\n\n{questao.conteudo}"
 
-    for l in llms:
-        Resposta.objects.create(
+    for llm in llms_ativos:
+        texto_ia_limpa = ""
+        provedor = llm.descricao.lower() if llm.descricao else ""
+
+        try:
+            if "gemini" in provedor or "google" in provedor:
+                client = genai.Client(api_key=llm.api_key)
+                resp = client.models.generate_content(model=llm.nome, contents=prompt_final)
+                texto_ia_limpa = resp.text
+
+            elif "groq" in provedor:
+                client = Groq(api_key=llm.api_key)
+                chat_completion = client.chat.completions.create(
+                    messages=[{"role": "user", "content": prompt_final}],
+                    model=llm.nome,
+                )
+                texto_ia_limpa = chat_completion.choices[0].message.content
+            
+            else:
+                texto_ia_limpa = f"Provedor '{llm.descricao}' não reconhecido para execução automática."
+
+        except Exception as e:
+            texto_ia_limpa = f"Erro na IA {llm.nome}: {str(e)}"
+
+        Resposta.objects.create( # => Salva a resposta real atrelada àquela questão e àquele modelo específico
             questao_id=questao_id,
-            llm=l,
-            conteudo_resposta="Respostinha teste"
+            llm=llm,
+            conteudo_resposta=texto_ia_limpa.strip()
         )
+
     return JsonResponse({'status': 'ok'})
     
 @login_required
