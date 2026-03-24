@@ -16,7 +16,7 @@ services:
   web:
     build: .
     command: >
-      sh -c "pip install google-generativeai groq &&
+      sh -c "pip install google-generativeai groq openai &&
              python manage.py makemigrations &&
              python manage.py migrate &&
              python manage.py runserver 0.0.0.0:8000"
