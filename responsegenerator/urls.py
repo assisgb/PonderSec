@@ -24,7 +24,7 @@ urlpatterns = [
     #path('setup-deletar-metrica/<int:id>/', views.setup_deletar_metrica, name='setup_deletar_metrica'),
     path('historico/', views.historico, name="historico"),
     path('historico/deletar/<int:id>/', views.deletar_item_historico, name='deletar_item_historico'),
-    path('historico/ver/<int:id>/', views.ver_detalhes, name='ver_detalhes'),
+    path('questoes/ver/<int:id>/', views.ver_detalhes_questao, name='ver_detalhes_questao'),
     path('historico/limpar/', views.limpar_historico, name='limpar_historico'),
     path("api/llm/<int:id>/delete/", views.deletar_llm, name="delete_llm"),
     path("api/llm/<int:id>/edit/", views.edit_llm_api),

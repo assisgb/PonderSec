@@ -384,103 +384,82 @@
         <div class="question-block">
             <div class="question-label">Pergunta Selecionada</div>
             <div class="question-text" id="questionText">
-                Como se proteger de ataques de phishing?
+                {{ pergunta|default:"Nenhuma pergunta selecionada no momento." }}
             </div>
         </div>
 
         <div class="responses-grid">
-            <!-- ChatGPT -->
-            <div class="llm-card">
-                <div class="llm-header">
-                    <div class="llm-icon">🤖</div>
-                    <div class="llm-name">ChatGPT</div>
+            {% if resultados_ias %}
+                {% for resultado in resultados_ias %}
+                <div class="llm-card">
+                    <div class="llm-header">
+                        <div class="llm-icon">
+                            {% if 'gpt' in resultado.modelo|lower or 'openai' in resultado.modelo|lower %}🤖
+                            {% elif 'groq' in resultado.modelo|lower or 'llama' in resultado.modelo|lower or 'mixtral' in resultado.modelo|lower %}⚡
+                            {% elif 'gemini' in resultado.modelo|lower or 'google' in resultado.modelo|lower %}💎
+                            {% elif 'claude' in resultado.modelo|lower or 'anthropic' in resultado.modelo|lower %}🧠
+                            {% else %}⚙️{% endif %}
+                        </div>
+                        <div class="llm-name">{{ resultado.modelo }}</div>
+                    </div>
+                    
+                    {% if "Erro" in resultado.resposta_ia_limpa or "não cadastrada" in resultado.resposta_ia_limpa %}
+                        <div class="no-response">
+                            <div class="no-response-icon">⚠️</div>
+                            <div class="no-response-text">{{ resultado.resposta_ia_limpa }}</div>
+                        </div>
+                    {% else %}
+                        <div class="llm-response collapsed" id="response-{{ forloop.counter }}">
+                            {{ resultado.resposta_ia_limpa|linebreaksbr }}
+                        </div>
+                        <div class="llm-actions">
+                            <button class="btn-action" onclick="copyResponse('response-{{ forloop.counter }}')">📋 Copiar</button>
+                            <button class="btn-action" onclick="expandResponse('{{ resultado.modelo|escapejs }}', 'response-{{ forloop.counter }}')">👁️ Ver Completo</button>
+                        </div>
+                    {% endif %}
                 </div>
-                <div class="llm-response collapsed" id="response-chatgpt">
-                    Phishing é um tipo de ataque cibernético onde criminosos tentam enganar pessoas para revelar informações sensíveis. Para se proteger: 1) Verifique sempre o remetente dos emails; 2) Não clique em links suspeitos; 3) Use autenticação de dois fatores; 4) Mantenha seu software atualizado; 5) Eduque-se sobre os sinais de phishing, como erros gramaticais e URLs estranhas.
+                {% endfor %}
+            {% else %}
+                <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #8ba1b0;">
+                    Faça uma consulta para ver as respostas das IAs comparadas aqui.
                 </div>
-                <div class="llm-actions">
-                    <button class="btn-action" onclick="copyResponse('chatgpt')">📋 Copiar</button>
-                    <button class="btn-action" onclick="expandResponse('chatgpt')">👁️ Ver Completo</button>
-                </div>
-            </div>
-
-            <!-- GROQ -->
-            <div class="llm-card">
-                <div class="llm-header">
-                    <div class="llm-icon">⚡</div>
-                    <div class="llm-name">GROQ</div>
-                </div>
-                <div class="llm-response collapsed" id="response-groq">
-                    A proteção contra phishing envolve várias camadas de segurança. Primeiro, sempre valide a autenticidade dos emails verificando o domínio do remetente. Segundo, nunca forneça informações pessoais via email ou mensagens não solicitadas. Terceiro, utilize ferramentas de segurança como antivírus e filtros anti-spam. Quarto, mantenha-se atualizado sobre as últimas táticas de phishing.
-                </div>
-                <div class="llm-actions">
-                    <button class="btn-action" onclick="copyResponse('groq')">📋 Copiar</button>
-                    <button class="btn-action" onclick="expandResponse('groq')">👁️ Ver Completo</button>
-                </div>
-            </div>
-
-            <!-- Gemini -->
-            <div class="llm-card">
-                <div class="llm-header">
-                    <div class="llm-icon">💎</div>
-                    <div class="llm-name">Gemini</div>
-                </div>
-                <div class="loading-card">
-                    <div class="spinner"></div>
-                    <div class="loading-text">Gerando resposta...</div>
-                </div>
-            </div>
-
-            <!-- Claude -->
-            <div class="llm-card">
-                <div class="llm-header">
-                    <div class="llm-icon">🧠</div>
-                    <div class="llm-name">Claude</div>
-                </div>
-                <div class="no-response">
-                    <div class="no-response-icon">⚠️</div>
-                    <div class="no-response-text">Falha ao gerar resposta</div>
-                    <button class="btn-retry" onclick="retryLLM('claude')">🔄 Reexecutar</button>
-                </div>
-            </div>
+            {% endif %}
         </div>
     </div>
 
     <div class="modal" id="responseModal">
         <div class="modal-content">
             <div class="modal-header">
-                <div class="modal-title" id="modalTitle">ChatGPT - Resposta Completa</div>
+                <div class="modal-title" id="modalTitle">Resposta Completa</div>
                 <button class="btn-close" onclick="closeModal()">×</button>
             </div>
             <div class="modal-body" id="modalBody">
-                <!-- Conteúdo será inserido aqui -->
-            </div>
+                </div>
         </div>
     </div>
 
     <script>
-        const responses = {
-            chatgpt: "Phishing é um tipo de ataque cibernético onde criminosos tentam enganar pessoas para revelar informações sensíveis. Para se proteger: 1) Verifique sempre o remetente dos emails; 2) Não clique em links suspeitos; 3) Use autenticação de dois fatores; 4) Mantenha seu software atualizado; 5) Eduque-se sobre os sinais de phishing, como erros gramaticais e URLs estranhas.",
-            groq: "A proteção contra phishing envolve várias camadas de segurança. Primeiro, sempre valide a autenticidade dos emails verificando o domínio do remetente. Segundo, nunca forneça informações pessoais via email ou mensagens não solicitadas. Terceiro, utilize ferramentas de segurança como antivírus e filtros anti-spam. Quarto, mantenha-se atualizado sobre as últimas táticas de phishing."
-        };
-
-        function copyResponse(llm) {
-            const text = responses[llm];
+        // Função para copiar o texto direto do elemento HTML
+        function copyResponse(elementId) {
+            const textElement = document.getElementById(elementId);
+            // Usamos innerText para pegar o texto limpo, sem as tags HTML (como <br>)
+            const text = textElement.innerText; 
+            
             navigator.clipboard.writeText(text).then(() => {
-                alert('Resposta copiada!');
+                alert('Resposta copiada para a área de transferência!');
+            }).catch(err => {
+                console.error('Erro ao copiar: ', err);
             });
         }
 
-        function expandResponse(llm) {
-            const llmNames = {
-                chatgpt: 'ChatGPT',
-                groq: 'GROQ',
-                gemini: 'Gemini',
-                claude: 'Claude'
-            };
-
-            document.getElementById('modalTitle').textContent = `${llmNames[llm]} - Resposta Completa`;
-            document.getElementById('modalBody').textContent = responses[llm];
+        // Função para expandir o modal dinamicamente
+        function expandResponse(llmName, elementId) {
+            const textElement = document.getElementById(elementId);
+            // Pegamos o innerHTML para manter as quebras de linha (<br>) no modal
+            const htmlContent = textElement.innerHTML; 
+            
+            document.getElementById('modalTitle').textContent = `${llmName} - Resposta Completa`;
+            document.getElementById('modalBody').innerHTML = htmlContent;
             document.getElementById('responseModal').classList.add('active');
         }
 
@@ -488,11 +467,7 @@
             document.getElementById('responseModal').classList.remove('active');
         }
 
-        function retryLLM(llm) {
-            alert(`Reexecutando ${llm.toUpperCase()}...`);
-        }
-
-        // Fechar modal ao clicar fora
+        // Fechar modal ao clicar fora dele
         document.getElementById('responseModal').addEventListener('click', function(e) {
             if (e.target === this) {
                 closeModal();
