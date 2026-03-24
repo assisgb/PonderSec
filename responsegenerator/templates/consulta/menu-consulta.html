@@ -5,7 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PonderSEC — Consulta</title>
+
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+
     <style>
         * {
             box-sizing: border-box;
@@ -27,7 +29,7 @@
         .background-grid {
             position: fixed;
             inset: 0;
-            background-image: 
+            background-image:
                 linear-gradient(90deg, rgba(0, 255, 160, 0.06) 1px, transparent 1px),
                 linear-gradient(180deg, rgba(0, 255, 160, 0.06) 1px, transparent 1px);
             background-size: 40px 40px;
@@ -38,7 +40,12 @@
         .scanline {
             position: fixed;
             inset: 0;
-            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.7));
+            background: linear-gradient(
+                to bottom,
+                rgba(0, 0, 0, 0.7),
+                rgba(0, 0, 0, 0.15),
+                rgba(0, 0, 0, 0.7)
+            );
             background-size: 100% 4px;
             opacity: 0.25;
             pointer-events: none;
@@ -64,7 +71,7 @@
             background: radial-gradient(circle at top, #0b141d 0, #050a11 55%, #020509 100%);
             border-radius: 18px;
             padding: 40px;
-            box-shadow: 
+            box-shadow:
                 0 0 0 1px rgba(0, 255, 160, 0.25),
                 0 18px 60px rgba(0, 0, 0, 0.9),
                 0 0 40px rgba(0, 255, 160, 0.35);
@@ -108,8 +115,8 @@
 
         .buttons-container {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 25px;
+            grid-template-columns: 1fr;
+            justify-items: center;
         }
 
         .cta-button {
@@ -126,6 +133,8 @@
             transition: all 0.3s;
             text-decoration: none;
             color: inherit;
+            max-width: 350px;
+             width: 100%;
         }
 
         .cta-button:hover {
@@ -145,14 +154,12 @@
             font-weight: 700;
             color: #00ff9f;
             text-align: center;
-            line-height: 1.3;
         }
 
         .cta-description {
             font-size: 13px;
             color: #8ba1b0;
             text-align: center;
-            line-height: 1.5;
         }
 
         .btn-back {
@@ -177,7 +184,6 @@
         .btn-back:hover {
             background: rgba(0, 255, 160, 0.15);
             border-color: #00ff9f;
-            transform: translateY(-1px);
         }
 
         @media (max-width: 768px) {
@@ -196,17 +202,10 @@
             .cta-button {
                 padding: 35px 25px;
             }
-
-            .cta-icon {
-                font-size: 50px;
-            }
-
-            .cta-title {
-                font-size: 18px;
-            }
         }
     </style>
 </head>
+
 <body>
     <div class="background-grid"></div>
     <div class="scanline"></div>
@@ -216,25 +215,26 @@
         <div class="logo">
             <img src="{% static 'pondersec_logo.jpg' %}" alt="PonderSEC Logo">
         </div>
+
         <div class="product-name">PONDERSEC</div>
         <div class="headline">Consulta</div>
-        <div class="subtitle">Escolha uma opção para consultar informações do sistema</div>
+        <div class="subtitle">
+            Escolha uma opção para consultar informações do sistema
+        </div>
 
         <div class="buttons-container">
             <a href="{% url 'executar_consulta' %}" class="cta-button">
                 <div class="cta-icon">🔍</div>
                 <div class="cta-title">Executar Consulta</div>
-                <div class="cta-description">Visualizar e executar perguntas cadastradas no sistema</div>
-            </a>
-
-            <a href="{% url 'consulta_comparacao' %}" class="cta-button">
-                <div class="cta-icon">📊</div>
-                <div class="cta-title">Respostas da LLM</div>
-                <div class="cta-description">Comparar respostas geradas por diferentes modelos</div>
+                <div class="cta-description">
+                    Visualizar e executar perguntas cadastradas no sistema
+                </div>
             </a>
         </div>
 
-        <a class="btn-back" href="{% url 'menu' %}">Voltar ao Menu</a>
+        <a class="btn-back" href="{% url 'menu' %}">
+            Voltar ao Menu
+        </a>
     </div>
 </body>
 </html>
