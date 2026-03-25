@@ -430,10 +430,26 @@
             }
         }
 
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    // Verifica se o cookie começa com o nome que queremos ("csrftoken")
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
         async function limparRespostas() {
             if (!confirm("Apagar todas as respostas do banco?")) return;
 
-            const res = await fetch("/limpar_respostas", {
+            const res = await fetch("/limpar_respostas/", {
                 method: "POST",
                 headers: { "X-CSRFToken": getCookie("csrftoken") }
             });
@@ -441,6 +457,7 @@
 
             if (data.ok) location.reload();
         }
+
     </script>
 
 </body>

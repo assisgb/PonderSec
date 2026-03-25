@@ -106,42 +106,6 @@
             margin-bottom: 28px;
         }
 
-        .search-bar {
-            position: relative;
-            margin-bottom: 28px;
-        }
-
-        .search-input {
-            width: 100%;
-            padding: 14px 18px 14px 45px;
-            background: #050a11;
-            border: 1px solid #1b2635;
-            border-radius: 10px;
-            color: #e5fef6;
-            font-size: 15px;
-            font-family: "Space Grotesk", system-ui, sans-serif;
-            outline: none;
-            transition: all 0.2s;
-        }
-
-        .search-input::placeholder {
-            color: #6b7b8d;
-        }
-
-        .search-input:focus {
-            border-color: #00ff9f;
-            box-shadow: 0 0 16px rgba(0, 255, 160, 0.5);
-        }
-
-        .search-icon {
-            position: absolute;
-            left: 16px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #7df6c2;
-            font-size: 18px;
-        }
-
         .filter-label {
             font-size: 13px;
             color: #a7bbc8;
@@ -159,7 +123,7 @@
         }
 
         .filter-btn {
-            padding: 18px 25px;
+            padding: 100px 50px;
             background: radial-gradient(circle at top left, #0b141d 0, #050a11 100%);
             border: 1px solid rgba(0, 255, 160, 0.25);
             border-radius: 12px;
@@ -233,8 +197,10 @@
                 grid-template-columns: 1fr;
             }
         }
+        
     </style>
 </head>
+
 <body>
     <div class="background-grid"></div>
     <div class="scanline"></div>
@@ -244,27 +210,10 @@
         <div class="logo">
             <img src="{% static 'pondersec_logo.jpg' %}" alt="PonderSEC Logo">
         </div>
+
         <div class="product-name">PONDERSEC</div>
         <div class="headline">Setup</div>
         <div class="subtitle">Configure os parâmetros do sistema</div>
-
-        <div class="search-bar">
-            <span class="search-icon">🔎</span>
-            <input 
-                type="text" 
-                class="search-input" 
-                placeholder="Buscar configurações..."
-            >
-        </div>
-
-        <div class="filter-label">Padrão</div>
-        <select class="dropdown-select" style="margin-bottom: 28px;">
-            <option value="">Selecione um padrão</option>
-            <option value="padrao1">Padrão 1</option>
-            <option value="padrao2">Padrão 2</option>
-            <option value="padrao3">Padrão 3</option>
-            <option value="personalizado">Personalizado</option>
-        </select>
 
         <div class="filter-label">Configurações</div>
         <div class="filter-options">
