@@ -1,331 +1,292 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PonderSEC — LLM</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
 
-<title>PonderSEC — LLM</title>
+    <style>
+        *{
+            box-sizing:border-box;
+            margin:0;
+            padding:0;
+        }
 
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+        body{
+            font-family:"Space Grotesk",system-ui,sans-serif;
+            background:radial-gradient(circle at top,#051015 0,#02060b 45%,#000000 100%);
+            color:#e5fef6;
+            min-height:100vh;
+            padding:20px;
+        }
 
-<style>
+        .background-grid{
+            position:fixed;
+            inset:0;
+            background-image:
+            linear-gradient(90deg,rgba(0,255,160,0.06) 1px,transparent 1px),
+            linear-gradient(180deg,rgba(0,255,160,0.06) 1px,transparent 1px);
+            background-size:40px 40px;
+            opacity:.4;
+            pointer-events:none;
+        }
 
-*{
-box-sizing:border-box;
-margin:0;
-padding:0;
-}
+        .scanline{
+            position:fixed;
+            inset:0;
+            background:linear-gradient(to bottom,rgba(0,0,0,.7),rgba(0,0,0,.15),rgba(0,0,0,.7));
+            background-size:100% 4px;
+            opacity:.25;
+            pointer-events:none;
+        }
 
-body{
-font-family:"Space Grotesk",system-ui,sans-serif;
-background:radial-gradient(circle at top,#051015 0,#02060b 45%,#000000 100%);
-color:#e5fef6;
-min-height:100vh;
-padding:20px;
-}
+        .glow-orb{
+            position:fixed;
+            width:500px;
+            height:500px;
+            border-radius:50%;
+            background:radial-gradient(circle,rgba(0,255,160,.25),transparent 70%);
+            top:-10%;
+            right:-5%;
+            filter:blur(80px);
+            opacity:.6;
+            pointer-events:none;
+        }
 
-.background-grid{
-position:fixed;
-inset:0;
-background-image:
-linear-gradient(90deg,rgba(0,255,160,0.06) 1px,transparent 1px),
-linear-gradient(180deg,rgba(0,255,160,0.06) 1px,transparent 1px);
-background-size:40px 40px;
-opacity:.4;
-pointer-events:none;
-}
+        .container{
+            position:relative;
+            max-width:1000px;
+            margin:auto;
+            z-index:2;
+        }
 
-.scanline{
-position:fixed;
-inset:0;
-background:linear-gradient(to bottom,rgba(0,0,0,.7),rgba(0,0,0,.15),rgba(0,0,0,.7));
-background-size:100% 4px;
-opacity:.25;
-pointer-events:none;
-}
+        .header{
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            margin-bottom:20px;
+            padding:25px 30px;
+            background:radial-gradient(circle at top left,#0b141d 0,#050a11 100%);
+            border-radius:16px;
+            border:1px solid rgba(0,255,160,.25);
+            box-shadow:0 8px 30px rgba(0,0,0,.6);
+        }
 
-.glow-orb{
-position:fixed;
-width:500px;
-height:500px;
-border-radius:50%;
-background:radial-gradient(circle,rgba(0,255,160,.25),transparent 70%);
-top:-10%;
-right:-5%;
-filter:blur(80px);
-opacity:.6;
-pointer-events:none;
-}
+        .logo-section{
+            display:flex;
+            align-items:center;
+            gap:18px;
+        }
 
-.container{
-position:relative;
-max-width:1000px;
-margin:auto;
-z-index:2;
-}
+        .logo-section img{
+            width:70px;
+            height:70px;
+            border-radius:10px;
+            filter:drop-shadow(0 0 15px rgba(0,255,160,.8));
+        }
 
-.header{
-display:flex;
-align-items:center;
-justify-content:space-between;
-margin-bottom:30px;
-padding:25px 30px;
-background:radial-gradient(circle at top left,#0b141d 0,#050a11 100%);
-border-radius:16px;
-border:1px solid rgba(0,255,160,.25);
-box-shadow:0 8px 30px rgba(0,0,0,.6);
-}
+        .header-title{
+            display:flex;
+            flex-direction:column;
+            gap:4px;
+        }
 
-.logo-section{
-display:flex;
-align-items:center;
-gap:18px;
-}
+        .product-name{
+            color:#7df6c2;
+            text-transform:uppercase;
+            letter-spacing:.25em;
+            font-size:11px;
+            font-weight:600;
+        }
 
-.logo-section img{
-width:70px;
-height:70px;
-border-radius:10px;
-filter:drop-shadow(0 0 15px rgba(0,255,160,.8));
-}
+        .page-title{
+            color:#00ff9f;
+            font-size:26px;
+            font-weight:700;
+        }
 
-.header-title{
-display:flex;
-flex-direction:column;
-gap:4px;
-}
+        .btn-back{
+            padding:15px 28px;
+            background:linear-gradient(90deg,#00ff9f,#00ff57);
+            border:none;
+            border-radius:15px;
+            cursor:pointer;
+            font-size:15px;
+            font-weight:700;
+            color:#020509;
+            letter-spacing:.08em;
+            transition:.2s;
+        }
 
-.product-name{
-color:#7df6c2;
-text-transform:uppercase;
-letter-spacing:.25em;
-font-size:11px;
-font-weight:600;
-}
+        .btn-back:hover{
+            transform:translateY(-2px);
+            box-shadow:0 0 25px rgba(0,255,160,1);
+        }
 
-.page-title{
-color:#00ff9f;
-font-size:26px;
-font-weight:700;
-}
+        .btn-add{
+            padding:15px 28px;
+            background:linear-gradient(90deg,#00ff9f,#00ff57);
+            border:none;
+            border-radius:15px;
+            cursor:pointer;
+            font-size:15px;
+            font-weight:700;
+            color:#020509;
+            letter-spacing:.08em;
+            transition:.2s;
+            margin-bottom: 15px;
+        }
 
-.btn-back{
-padding:12px 28px;
-background:linear-gradient(90deg,#00ff9f,#00ff57);
-border:none;
-border-radius:999px;
-cursor:pointer;
-font-size:14px;
-font-weight:700;
-color:#020509;
-text-transform:uppercase;
-letter-spacing:.08em;
-transition:.2s;
-}
+        .btn-add:hover{
+            transform:translateY(-2px);
+            box-shadow:0 0 25px rgba(0,255,160,1);
+        }
 
-.btn-back:hover{
-transform:translateY(-2px);
-box-shadow:0 0 25px rgba(0,255,160,1);
-}
+        a{text-decoration: none;}
 
-.toolbar{
-display:flex;
-gap:15px;
-margin-bottom:25px;
-}
+    /* ---------- MODAL ---------- */
 
-.search-bar{
-position:relative;
-flex:1;
-}
+        .modal{
+            display:none;
+            position:fixed;
+            inset:0;
+            background:rgba(0,0,0,.75);
+            backdrop-filter:blur(6px);
+            z-index:1000;
 
-.search-input{
-width:100%;
-padding:14px 18px 14px 45px;
-background:#050a11;
-border:1px solid #1b2635;
-border-radius:10px;
-color:#e5fef6;
-font-size:15px;
-outline:none;
-}
+            justify-content:center;
+            align-items:center;
+        }
 
-.search-input:focus{
-border-color:#00ff9f;
-box-shadow:0 0 16px rgba(0,255,160,.5);
-}
+        .modal-content{
+            width:100%;
+            max-width:600px;
 
-.search-icon{
-position:absolute;
-left:16px;
-top:50%;
-transform:translateY(-50%);
-color:#7df6c2;
-font-size:18px;
-}
+            background:radial-gradient(circle at top left,#0b141d 0,#050a11 100%);
+            border:1px solid rgba(0,255,160,.25);
+            border-radius:16px;
 
-.btn-add{
-padding:14px 28px;
-background:linear-gradient(90deg,#00ff9f,#00ff57);
-border:none;
-border-radius:10px;
-cursor:pointer;
-font-size:15px;
-font-weight:700;
-color:#020509;
-letter-spacing:.08em;
-transition:.2s;
-}
+            box-shadow:
+            0 0 40px rgba(0,255,160,.15),
+            0 8px 30px rgba(0,0,0,.8);
 
-.btn-add:hover{
-transform:translateY(-2px);
-box-shadow:0 0 25px rgba(0,255,160,1);
-}
-a{
-    text-decoration: none;
-}
+            padding:35px;
+            display:flex;
+            flex-direction:column;
+            gap:25px;
 
-/* ---------- MODAL ---------- */
+            animation:modalFade .25s ease;
+        }
 
-.modal{
-display:none;
-position:fixed;
-inset:0;
-background:rgba(0,0,0,.75);
-backdrop-filter:blur(6px);
-z-index:1000;
+        .modal-editar{
+            display:none;
+            position:fixed;
+            inset:0;
+            background:rgba(0,0,0,.75);
+            backdrop-filter:blur(6px);
+            z-index:1000;
 
-justify-content:center;
-align-items:center;
-}
+            justify-content:center;
+            align-items:center;
+        }
 
-.modal-content{
-width:100%;
-max-width:600px;
+        .modal-editar-content{
+            width:100%;
+            max-width:600px;
 
-background:radial-gradient(circle at top left,#0b141d 0,#050a11 100%);
-border:1px solid rgba(0,255,160,.25);
-border-radius:16px;
+            background:radial-gradient(circle at top left,#0b141d 0,#050a11 100%);
+            border:1px solid rgba(0,255,160,.25);
+            border-radius:16px;
 
-box-shadow:
-0 0 40px rgba(0,255,160,.15),
-0 8px 30px rgba(0,0,0,.8);
+            box-shadow:
+            0 0 40px rgba(0,255,160,.15),
+            0 8px 30px rgba(0,0,0,.8);
 
-padding:35px;
-display:flex;
-flex-direction:column;
-gap:25px;
+            padding:35px;
+            display:flex;
+            flex-direction:column;
+            gap:25px;
 
-animation:modalFade .25s ease;
-}
+            animation:modalFade .25s ease;
+        }
 
-.modal-editar{
-display:none;
-position:fixed;
-inset:0;
-background:rgba(0,0,0,.75);
-backdrop-filter:blur(6px);
-z-index:1000;
+        .config-card{
+            display:flex;
+            flex-direction:column;
+            gap:20px;
+        }
 
-justify-content:center;
-align-items:center;
-}
+        .form-group{
+            display:flex;
+            flex-direction:column;
+            gap:6px;
+        }
 
-.modal-editar-content{
-width:100%;
-max-width:600px;
+        label{
+            font-size:13px;
+            color:#7df6c2;
+        }
 
-background:radial-gradient(circle at top left,#0b141d 0,#050a11 100%);
-border:1px solid rgba(0,255,160,.25);
-border-radius:16px;
+        input,select{
+            padding:14px;
+            background:#050a11;
+            border:1px solid #1b2635;
+            border-radius:10px;
+            color:#e5fef6;
+            font-size:14px;
+        }
 
-box-shadow:
-0 0 40px rgba(0,255,160,.15),
-0 8px 30px rgba(0,0,0,.8);
+        input:focus,select:focus{
+            border-color:#00ff9f;
+            box-shadow:0 0 15px rgba(0,255,160,.5);
+        }
 
-padding:35px;
-display:flex;
-flex-direction:column;
-gap:25px;
+        .btn-save{
+            padding:16px;
+            background:linear-gradient(90deg,#00ff9f,#00ff57);
+            border:none;
+            border-radius:12px;
+            font-weight:700;
+            cursor:pointer;
+            color:#020509;
+            letter-spacing:.1em;
+        }
 
-animation:modalFade .25s ease;
-}
+        .btn-save:hover{
+            transform:translateY(-2px);
+            box-shadow:0 0 25px rgba(0,255,160,1);
+        }
 
-.config-card{
-display:flex;
-flex-direction:column;
-gap:20px;
-}
+        @keyframes modalFade{
+            from{
+                opacity:0;
+                transform:translateY(-15px) scale(.97);
+            }
+            to{
+                opacity:1;
+                transform:translateY(0) scale(1);
+            }
+        }
 
-.form-group{
-display:flex;
-flex-direction:column;
-gap:6px;
-}
-
-label{
-font-size:13px;
-color:#7df6c2;
-}
-
-input,select{
-padding:14px;
-background:#050a11;
-border:1px solid #1b2635;
-border-radius:10px;
-color:#e5fef6;
-font-size:14px;
-}
-
-input:focus,select:focus{
-border-color:#00ff9f;
-box-shadow:0 0 15px rgba(0,255,160,.5);
-}
-
-.btn-save{
-padding:16px;
-background:linear-gradient(90deg,#00ff9f,#00ff57);
-border:none;
-border-radius:12px;
-font-weight:700;
-cursor:pointer;
-color:#020509;
-letter-spacing:.1em;
-}
-
-.btn-save:hover{
-transform:translateY(-2px);
-box-shadow:0 0 25px rgba(0,255,160,1);
-}
-
-@keyframes modalFade{
-from{
-opacity:0;
-transform:translateY(-15px) scale(.97);
-}
-to{
-opacity:1;
-transform:translateY(0) scale(1);
-}
-}
-.history-grid {
+        .history-grid {
             display: grid;
             gap: 18px;
-        
         }
-        
+                
         .history-card {
-    background: rgba(11, 20, 29, 0.4);
-    border: 1px solid rgba(0, 255, 160, 0.15);
-    border-radius: 12px;
-    padding: 24px 28px;
-    transition: all 0.2s;
+            background: rgba(11, 20, 29, 0.4);
+            border: 1px solid rgba(0, 255, 160, 0.15);
+            border-radius: 12px;
+            padding: 24px 28px;
+            transition: all 0.2s;
 
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
 
         .history-card:hover {
             border-color: rgba(0, 255, 160, 0.3);
@@ -340,159 +301,167 @@ transform:translateY(0) scale(1);
             margin-bottom: 16px;
         }
 
-</style>
+        .password-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .password-container input {
+            width: 100%;
+            padding-right: 45px; /* Abre espaço no canto direito para o olho não ficar por cima do texto */
+        }
+
+        .btn-toggle-password {
+            position: absolute;
+            right: 12px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            color: #7df6c2;
+            opacity: 0.6;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 5px;
+        }
+
+        .btn-toggle-password:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+    </style>
 </head>
 
 <body>
 
-<div class="background-grid"></div>
-<div class="scanline"></div>
-<div class="glow-orb"></div>
+    <div class="background-grid"></div>
+    <div class="scanline"></div>
+    <div class="glow-orb"></div>
 
-<div class="container">
+    <div class="container">
 
-<div class="header">
+        <div class="header">
 
-<div class="logo-section">
-<img src="{% static 'pondersec_logo.jpg' %}">
-<div class="header-title">
-<div class="product-name">PONDERSEC</div>
-<div class="page-title">Gerenciar LLMs</div>
-</div>
-</div>
-
-<a href="{% url 'setup' %}" class="btn-back">Voltar</a>
-
-</div>
-
-
-<div class="toolbar">
-
-<div class="search-bar">
-<span class="search-icon">🔎</span>
-<input class="search-input" placeholder="Buscar LLM...">
-</div>
-
-<button class="btn-add" onclick="abrirModal()">+ Adicionar</button>
-
-</div>
-
-<div class="history-grid">
-    {% if llms_cadastradas %}
-        {% for llm in llms_cadastradas %}
-        <div class="history-card" id="llm-{{ llm.id }}">
-            <div class="llm-name" id="llm-nome-{{ llm.id }}">{{ llm.nome }}</div>
-            <div>
-                <button class="btn-icon btn-save" onclick="deletarLLM({{llm.id}})">
-                    🗑️
-                </button>
-                <button class="btn-save" onclick="editarLLM({{ llm.id }}, '{{ llm.nome|escapejs }}', '{{ llm.api_key|escapejs }}')">
-                    ✏️
-                </button>
+            <div class="logo-section">
+                <img src="{% static 'pondersec_logo.jpg' %}">
+                <div class="header-title">
+                    <div class="product-name">PONDERSEC</div>
+                    <div class="page-title">Gerenciar LLMs</div>
+                </div>
             </div>
+
+            <a href="{% url 'setup' %}" class="btn-back">Voltar</a>
+
         </div>
 
-        {%endfor%}
-</div>
-    
-{% endif %}
-</div>
+        <button class="btn-add" onclick="abrirModal()">+ Adicionar</button>
 
-</div>
-
-<div class="modal-editar" id="modal-editar">
-    <div class="modal-editar-content">
-        <div class="page-title">Editar LLM</div>
-
-        <input type="hidden" id="edit-id">
-
-        <label>Provedor</label>
-        <select id="edit-provider" onchange="atualizarModelosEdicao()">
-            <option value="">Selecione</option>
-            <option value="OpenAI">OpenAI</option>
-            <option value="Anthropic">Anthropic</option>
-            <option value="Groq">Groq</option>
-            <option value="Gemini">Gemini</option>
-            <option value="Local">Local</option>
-        </select>
-
-        <label>Modelo</label>
-        <select id="edit-nome">
-            <option value="">Selecione um provedor primeiro</option>
-        </select>
-
-        <label>Chave de API</label>
-        <input type="password" id="edit-apikey"> <button class="btn-add" onclick="salvarEdicao()">Salvar</button>
-        <button class="btn-back" onclick="sairEdicao()">Sair</button>
+        <div class="history-grid">
+            {% if llms_cadastradas %}
+                {% for llm in llms_cadastradas %}
+                <div class="history-card" id="llm-{{ llm.id }}">
+                    <div class="llm-name" id="llm-nome-{{ llm.id }}">{{ llm.nome }}</div>
+                    <div>
+                        <button class="btn-icon btn-save" onclick="deletarLLM({{llm.id}})">
+                            🗑️
+                        </button>
+                        <button class="btn-save" onclick="editarLLM({{ llm.id }}, '{{ llm.nome|escapejs }}', '{{ llm.api_key|escapejs }}')">
+                            ✏️
+                        </button>
+                    </div>
+                </div>
+                {%endfor%}
+            {% endif %}
+        </div>
+        
     </div>
-</div>
 
+    <!-- MODAL -->
 
+    <div class="modal" id="modal">
 
+        <div class="modal-content">
+            <div class="page-title">Adicionar LLM</div>
 
-<!-- MODAL -->
+            <form method="POST">
+                {% csrf_token %}
+                <div class="config-card">
 
-<div class="modal" id="modal">
+                    <div class="form-group">
+                        <label>Provedor</label>
+                        <select name="provider" id="providerSelect" onchange="atualizarModelos()">
+                            <option value="">Selecione</option>
+                            <option value="OpenAI">OpenAI</option>
+                            <option value="Anthropic">Anthropic</option>
+                            <option value="Groq">Groq</option>
+                            <option value="Gemini">Gemini</option> 
+                            <option value="Local">Local</option>
+                        </select>
+                    </div>
 
-<div class="modal-content">
+                    <div class="form-group">
+                        <label>Modelo</label>
+                        <select name="model" id="modelSelect">
+                            <option value="">Selecione um provedor primeiro</option>
+                        </select>
+                    </div>
 
-<div class="page-title">Adicionar LLM</div>
+                    <div class="form-group">
+                        <label>API Key</label>
+                        <div class="password-container">
+                            <input type="password" name="apiKey" id="apiKeyInput" placeholder="Cole sua chave aqui...">
+                            
+                            <button type="button" class="btn-toggle-password" onclick="togglePassword('apiKeyInput', this)">
+                                👁️
+                            </button>
+                        </div>
+                    </div>
 
-<form method="POST">
+                    <button class="btn-save" type="submit">Adicionar Modelo</button>
+                    <button type="button" class="btn-back" onclick="fecharModal()">Cancelar</button>
+                </div>
+            </form>
+        </div>
 
-{% csrf_token %}
+    </div>
 
-<div class="config-card">
+    <div class="modal-editar" id="modal-editar">
+        <div class="modal-editar-content">
+            <div class="page-title">Editar LLM</div>
 
-<div class="form-group">
-<<<<<<< HEAD
-<label>Provedor</label>
-<select name="provider">
-<option value="">Selecione</option>
-<option>OpenAI</option>
-<option>Anthropic</option>
-<option>Groq</option>
-<option>Local</option>
-<option>Gemini</option>
-</select>
-=======
-    <label>Provedor</label>
-    <select name="provider" id="providerSelect" onchange="atualizarModelos()">
-        <option value="">Selecione</option>
-        <option value="OpenAI">OpenAI</option>
-        <option value="Anthropic">Anthropic</option>
-        <option value="Groq">Groq</option>
-        <option value="Gemini">Gemini</option> 
-        <option value="Local">Local</option>
-    </select>
->>>>>>> 284a2a9 (oiii)
-</div>
+            <input type="hidden" id="edit-id">
 
-<div class="form-group">
-    <label>Modelo</label>
-    <select name="model" id="modelSelect">
-        <option value="">Selecione um provedor primeiro</option>
-    </select>
-</div>
+            <label>Provedor</label>
+            <select id="edit-provider" onchange="atualizarModelosEdicao()">
+                <option value="Selecione">Selecione</option>
+                <option value="OpenAI">OpenAI</option>
+                <option value="Anthropic">Anthropic</option>
+                <option value="Groq">Groq</option>
+                <option value="Gemini">Gemini</option>
+                <option value="Local">Local</option>
+            </select>
 
-<div class="form-group">
-<label>API Key</label>
-<input type="password" name="apiKey">
-</div>
+            <label>Modelo</label>
+            <select id="edit-model">
+                <option value="">Selecione um provedor primeiro</option>
+            </select>
 
-<button class="btn-save" type="submit">ADICIONAR MODELO</button>
-
-<button type="button" class="btn-back" onclick="fecharModal()">Cancelar</button>
-
-</div>
-
-</form>
-
-</div>
-
-</div>
-
-
+            <label>API Key</label>
+            <div class="password-container">
+                <input type="password" id="edit-apikey">
+                <button type="button" class="btn-toggle-password" onclick="togglePassword('edit-apikey', this)">
+                    👁️
+                </button>
+            </div>
+            
+            <button class="btn-add" onclick="salvarEdicao()">Salvar</button>
+            <button class="btn-back" onclick="sairEdicao()">Sair</button>
+        </div>
+    </div>
 
 
     <script>
@@ -518,6 +487,20 @@ transform:translateY(0) scale(1);
             ]
         };
 
+        function togglePassword(inputId, btnElement) {
+            const input = document.getElementById(inputId);
+            
+            if (input.type === "password") {
+                input.type = "text";
+                btnElement.innerHTML = "🙈"; // Troca para o macaquinho fechando o olho (ou outro emoji que preferir)
+                btnElement.style.opacity = "1";
+            } else {
+                input.type = "password";
+                btnElement.innerHTML = "👁️"; // Volta para o olho normal
+                btnElement.style.opacity = "0.6";
+            }
+        }
+
         function atualizarModelos() {
             const providerSelect = document.getElementById("providerSelect");
             const modelSelect = document.getElementById("modelSelect");
@@ -540,63 +523,88 @@ transform:translateY(0) scale(1);
             }
         }
 
+        function atualizarModelosEdicao() {
+            const providerSelect = document.getElementById("edit-provider");
+            const modelSelect = document.getElementById("edit-model");
+            const provedorSelecionado = providerSelect.value;
+
+            modelSelect.innerHTML = "";
+
+            if (provedorSelecionado && modelosPorProvedor[provedorSelecionado]) {
+                modelosPorProvedor[provedorSelecionado].forEach(modelo => {
+                    const option = document.createElement("option");
+                    option.value = modelo.value; // O valor exato que a API exige
+                    option.textContent = modelo.label; // O nome bonito que aparece na tela pro usuário
+                    modelSelect.appendChild(option);
+                });
+            } else {
+                const option = document.createElement("option");
+                option.value = "";
+                option.textContent = "Selecione um provedor primeiro";
+                modelSelect.appendChild(option);
+            }
+        }
+
+        function descobrirProvedorPorModelo(modeloValor) {
+            for (const [provedor, modelos] of Object.entries(modelosPorProvedor)) {
+                if (modelos.some(m => m.value === modeloValor)) {
+                    return provedor;
+                }
+            }
+            return "Selecione"; // Fallback se não achar
+        }
+
 
         function editarLLM(id, nome, api_key){
-            document.getElementById("edit-id").value = id
-            document.getElementById("edit-nome").value = nome
-            document.getElementById("modal-editar").style.display = "flex"
-            document.getElementById("edit-apikey").value = api_key
+            document.getElementById("edit-id").value = id;
+            document.getElementById("edit-apikey").value = api_key;
+            const provedor = descobrirProvedorPorModelo(nome);
+            document.getElementById("edit-provider").value = provedor;
 
+            atualizarModelosEdicao();
+
+            document.getElementById("edit-model").value = nome;
+
+            document.getElementById("modal-editar").style.display = "flex";
         }
 
         function salvarEdicao(){
-
-            const id = document.getElementById("edit-id").value
-            const nome = document.getElementById("edit-nome").value
-            const api_key = document.getElementById("edit-apikey").value
+            const id = document.getElementById("edit-id").value;
+            const nome = document.getElementById("edit-model").value; 
+            const api_key = document.getElementById("edit-apikey").value;
 
             fetch(`/api/llm/${id}/edit/`, {
-
                 method: "PUT",
-
                 headers:{
                     "Content-Type":"application/json",
                     "X-CSRFToken": getCSRFToken()
                 },
-
                 body: JSON.stringify({
                     nome: nome,
                     api_key: api_key
                 })
-
             })
             .then(res => res.json())
             .then(data => {
-
                 if(data.status === "success"){
-
-                    const elemento = document.getElementById(`llm-nome-${id}`)
-
+                    const elemento = document.getElementById(`llm-nome-${id}`);
                     if(elemento){
-                        elemento.innerText = nome
+                        elemento.innerText = nome;
                     }
-
-                    document.getElementById("modal-editar").style.display = "none"
-
+                    document.getElementById("modal-editar").style.display = "none";
+                } else {
+                    alert("Erro ao salvar: " + data.message);
                 }
-
             })
-
+            .catch(error => {
+                console.error("Erro na requisição:", error);
+                alert("Erro ao comunicar com o servidor.");
+            });
         }
 
+        function sairEdicao(){ document.getElementById("modal-editar").style.display="none" }
 
-        function sairEdicao(){
-        document.getElementById("modal-editar").style.display="none"
-        }
-
-
-        function deletarLLM(id)
-        {
+        function deletarLLM(id) {
             fetch(`/api/llm/${id}/delete/`, {
 
                 method: "DELETE",
@@ -608,39 +616,24 @@ transform:translateY(0) scale(1);
             .then(data => {
 
                 if(data.status === "success"){
-
                     const card = document.getElementById(`llm-${id}`)
-
                     if(card){
                         card.remove()
                     }
-
                 }
 
             })
-
-
-
-        }
-        function getCSRFToken(){
-
-            return document.querySelector('[name=csrfmiddlewaretoken]').value
-
         }
 
-        function abrirModal(){
-        document.getElementById("modal").style.display="flex"
-        }
-
-        function fecharModal(){
-        document.getElementById("modal").style.display="none"
-        }
-
+        function getCSRFToken(){ return document.querySelector('[name=csrfmiddlewaretoken]').value }
+        function abrirModal(){ document.getElementById("modal").style.display="flex" }
+        function fecharModal(){ document.getElementById("modal").style.display="none" }
+        
         window.onclick=function(event){
-        const modal=document.getElementById("modal")
-        if(event.target==modal){
-        modal.style.display="none"
-        }
+            const modal=document.getElementById("modal")
+            if(event.target==modal){
+                modal.style.display="none"
+            }
         }
 
     </script>

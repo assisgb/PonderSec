@@ -28,11 +28,11 @@ def menu(request):
     return render(request, 'menu.html')
 
 @login_required
-def deletar_item_historico(request, id):
-    item = get_object_or_404(Historico, id=id, usuario=request.user)
+def deletar_questao_historico(request, id):
+    item = get_object_or_404(Questao, id=id)
     if request.method == 'POST':
         item.delete()
-    return redirect('historico')
+    return redirect('questoes')
 
 @login_required
 def ver_detalhes_questao(request, id):
@@ -67,7 +67,7 @@ def ver_detalhes_questao(request, id):
 
         return JsonResponse({
             'pergunta': questao.conteudo,
-            'data': '', # Não passamos data aqui pois é genérico
+            'data': '', 
             'respostas': respostas_encontradas
         })
     except Exception as e:
@@ -75,10 +75,10 @@ def ver_detalhes_questao(request, id):
         return JsonResponse({'erro': str(e)}, status=500)
 
 @login_required
-def limpar_historico(request):
+def limpar_questoes(request):
     if request.method == 'POST':
-        Historico.objects.filter(usuario=request.user).delete()
-    return redirect('historico')
+        Questao.objects.all().delete()
+    return redirect('questoes')
 
 @login_required
 def consulta(request):
@@ -343,6 +343,16 @@ def gerar_respostas(request, questao_id):
         )
 
     return JsonResponse({'status': 'ok'})
+
+def limpar_respostas(request):
+    if request.method == "POST":
+        try:
+            Resposta.objects.all().delete()
+            return JsonResponse({"ok": True})
+        except Exception as e:
+            return JsonResponse({"ok": False, "erro": str(e)}, status=500)
+            
+    return JsonResponse({"ok": False, "erro": "Método não permitido"}, status=405)
     
 @login_required
 def setup_llm(request):
@@ -356,6 +366,7 @@ def setup_llm(request):
             descricao = provedor,
             api_key = api_key
         )
+        redirect('setup_llm')
 
     llms_cadastradas = LLM.objects.all()
     return render(request, 'setup/setup-llm.html',{"llms_cadastradas": llms_cadastradas})

@@ -63,6 +63,30 @@
             margin: 0 auto;
             z-index: 2;
         }
+        .status-badge {
+            font-size: 11px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-answered {
+            background: rgba(0, 255, 160, 0.1);
+            color: #00ff9f;
+            border: 1px solid rgba(0, 255, 160, 0.3);
+            box-shadow: 0 0 10px rgba(0, 255, 160, 0.1);
+        }
+
+        .status-pending {
+            background: rgba(255, 170, 0, 0.1);
+            color: #ffaa00;
+            border: 1px solid rgba(255, 170, 0, 0.3);
+        }
         
         /* HEADER E FILTROS (Mantidos iguais) */
         .header {
@@ -111,8 +135,27 @@
             gap: 16px;
         }
 
-        .filter-top { display: flex; gap: 16px; align-items: center; }
+        filter-top { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
         
+        .filter-select {
+            padding: 14px 16px;
+            background: #050a11;
+            border: 1px solid #1b2635;
+            border-radius: 10px;
+            color: #e5fef6;
+            font-size: 14px;
+            outline: none;
+            cursor: pointer;
+            font-family: "Space Grotesk", sans-serif;
+            min-width: 160px;
+            transition: all 0.2s;
+        }
+        
+        .filter-select:focus { 
+            border-color: #00ff9f; 
+            box-shadow: 0 0 8px rgba(0, 255, 160, 0.3); 
+        }
+
         .search-box {
             flex: 1;
             padding: 16px 20px;
@@ -319,39 +362,110 @@
             <div class="filter-top">
                 <input type="text" class="search-box" id="searchInput" placeholder="Filtro de pesquisa..." onkeyup="filterHistory()">
                 
+                <select id="statusFilter" class="filter-select" onchange="filterHistory()">
+                    <option value="all">Todos os Status</option>
+                    <option value="answered">Respondidas</option>
+                    <option value="pending">Pendentes</option>
+                </select>
+
+                <select id="aiFilter" class="filter-select" onchange="filterHistory()">
+                    <option value="all">Todas as IAs</option>
+                    {% if llms %}
+                        {% for llm in llms %}
+                            <option value="{{ llm.nome|lower }}">{{ llm.nome }}</option>
+                        {% endfor %}
+                    {% endif %}
+                </select>
+                
                 <div class="questoes-options">
                     <button type="button" class="button-primary" onclick="abrirModalUpload()">Upload</button>
                     <button type="button" class="button-primary" onclick="abrirModalFormQuestao()">Adicionar</button>
                 </div>
             </div>
-            
-            {% if historico %}
-            <div style="display: flex; justify-content: flex-end; width: 100%;">
-                <button type="button" class="btn-clear-all" data-action="{% url 'limpar_historico' %}" data-title="☢ LIMPAR TUDO?" data-desc="Você tem certeza? Todas as questões serão apagadas para sempre." data-btn-text="Sim, limpar tudo" onclick="configurarModal(this)">
-                    ☢ Apagar Todas as Questões
-                </button>
-            </div>
-            {% endif %}
         </div>
 
         <div class="history-grid" id="historyGrid">
             {% if historico %}
+                
                 {% for item in historico %}
-                    <div class="history-card" data-question="{{ item.questao|lower }}">
-                        <div class="card-header">
-                            <span class="card-date">{{ item.data|date:"d/m/Y H:i" }}</span>
-                            <div class="card-actions">
-                                <button type="button" class="btn-icon" title="Ver detalhes" data-url="{% url 'ver_detalhes_questao' item.id %}" onclick="abrirModalDetalhes(this)">👁</button>
-                                <button type="button" class="btn-icon" title="Deletar" data-action="{% url 'deletar_item_historico' item.id %}" data-title="Apagar Registro?" data-desc="Esta ação removerá esta questão permanentemente." data-btn-text="Sim, apagar" onclick="configurarModal(this)">🗑</button>
+                    {% if item.respostas.exists %}
+                        <div class="history-card" 
+                             data-question="{{ item.conteudo|lower }}"
+                             data-status="answered"
+                             data-ias="{% for resp in item.respostas.all %}{{ resp.llm.nome|lower }} {% endfor %}">
+                             
+                            <div class="card-header">
+                                <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                                    <span class="status-badge status-answered">✓ Respondida</span>
+                                    
+                                    {% for form in item.formulario_set.all %}
+                                        <span class="status-badge" style="background: rgba(187, 134, 252, 0.1); color: #bb86fc; border: 1px solid rgba(187, 134, 252, 0.3);">
+                                            📄 {{ form.nome }}
+                                        </span>
+                                    {% endfor %}
+                                </div>
+                                
+                                <div class="card-actions">
+                                    <button type="button" class="btn-icon" title="Ver detalhes" data-url="{% url 'ver_detalhes_questao' item.id %}" onclick="abrirModalDetalhes(this)">👁</button>
+                                    <button type="button" class="btn-icon" title="Deletar" data-action="{% url 'deletar_questao_historico' item.id %}" data-title="Apagar Registro?" data-desc="Esta ação removerá esta questão permanentemente." data-btn-text="Sim, apagar" onclick="configurarModal(this)">🗑</button>
+                                </div>
+                            </div>
+                            
+                            <div class="card-question">{{ item.conteudo }}</div>
+                            <div class="card-preview" style="color: #c5d9e2;">
+                                {{ item.respostas.first.conteudo_resposta|truncatewords:15|default:"Resposta detalhada gerada." }}...
+                            </div>
+                            
+                            <div class="card-footer" style="display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px solid rgba(0, 255, 160, 0.12); padding-top: 14px;">
+                                {% for resp in item.respostas.all %}
+                                    <span class="tag" style="display: flex; align-items: center; gap: 4px;">
+                                        {% if 'gpt' in resp.llm.nome|lower or 'openai' in resp.llm.nome|lower %}🤖
+                                        {% elif 'groq' in resp.llm.nome|lower or 'llama' in resp.llm.nome|lower %}⚡
+                                        {% elif 'gemini' in resp.llm.nome|lower %}💎
+                                        {% elif 'claude' in resp.llm.nome|lower %}🧠
+                                        {% else %}⚙️{% endif %}
+                                        
+                                        {{ resp.llm.nome|default:"IA Geral" }}
+                                    </span>
+                                {% endfor %}
                             </div>
                         </div>
-                        <div class="card-question">{{ item.conteudo }}</div>
-                        <div class="card-preview">
-                            {% if item.resposta %}{{ item.respostas|truncatewords:20 }}{% else %}{{ item.resposta_groq|truncatewords:20 }}{% endif %}
-                        </div>
-                        <div class="card-footer"><span class="tag">AI Response</span></div>
-                    </div>
+                    {% endif %}
                 {% endfor %}
+
+                {% for item in historico %}
+                    {% if not item.respostas.exists %}
+                        <div class="history-card" 
+                             data-question="{{ item.conteudo|lower }}"
+                             data-status="pending"
+                             data-ias=""
+                             style="opacity: 0.8;">
+                             
+                            <div class="card-header">
+                                <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                                    <span class="status-badge status-pending">⏳ Pendente</span>
+                                    
+                                    {% for form in item.formularios.all %}
+                                        <span class="status-badge" style="background: rgba(187, 134, 252, 0.1); color: #bb86fc; border: 1px solid rgba(187, 134, 252, 0.3);">
+                                            📄 {{ form.nome }}
+                                        </span>
+                                    {% endfor %}
+                                </div>
+                                
+                                <div class="card-actions">
+                                    <button type="button" class="btn-icon" title="Ver detalhes" data-url="{% url 'ver_detalhes_questao' item.id %}" onclick="abrirModalDetalhes(this)">👁</button>
+                                    <button type="button" class="btn-icon" title="Deletar" data-action="{% url 'deletar_questao_historico' item.id %}" data-title="Apagar Registro?" data-desc="Esta ação removerá esta questão permanentemente." data-btn-text="Sim, apagar" onclick="configurarModal(this)">🗑</button>
+                                </div>
+                            </div>
+                            
+                            <div class="card-question">{{ item.conteudo }}</div>
+                            <div class="card-preview">
+                                Aguardando execução de IAs no painel de consultas...
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+
             {% else %}
                 <div class="empty-state">
                     <h2>Nenhuma questão cadastrada</h2>
@@ -359,7 +473,6 @@
                 </div>
             {% endif %}
         </div>
-    </div>
 
     <div class="modal-overlay" id="modalUniversal">
         <div class="modal-box">
@@ -485,13 +598,27 @@
 
     <script>
         function filterHistory() {
-            const input = document.getElementById('searchInput');
-            const filter = input.value.toLowerCase();
+            // Pega o valor dos 3 campos
+            const searchText = document.getElementById('searchInput').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
+            const aiFilter = document.getElementById('aiFilter').value.toLowerCase();
+            
             const cards = document.querySelectorAll('.history-card');
+
             cards.forEach(card => {
-                const question = card.getAttribute('data-question');
-                if (question && question.includes(filter)) card.style.display = '';
-                else card.style.display = 'none';
+                const question = card.getAttribute('data-question') || "";
+                const status = card.getAttribute('data-status') || "";
+                const ias = card.getAttribute('data-ias') || "";
+
+                const matchSearch = question.includes(searchText);
+                const matchStatus = (statusFilter === 'all') || (status === statusFilter);
+                const matchAI = (aiFilter === 'all') || ias.includes(aiFilter);
+
+                if (matchSearch && matchStatus && matchAI) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
             });
         }
         

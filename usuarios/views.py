@@ -18,16 +18,16 @@ def cadastro(request):
         senha_confirm = request.POST.get('password_confirm')
 
         if senha != senha_confirm:
-            return HttpResponse("As senhas não coincidem!");
+            return HttpResponse("As senhas não coincidem!")
     
         user = User.objects.filter(username=username).first()
 
         if user:
-            return HttpResponse("Usuário já existe");
+            return HttpResponse("Usuário já existe")
 
         user = User.objects.create_user(username=username, email=email, password=senha)
         user.save()
-        return redirect('login');
+        return redirect('login')
 
 def login_view(request):
     if request.method == "GET":

@@ -90,7 +90,7 @@ class Historico(models.Model):
 
 class Formulario(models.Model):
     nome = models.CharField(max_length=200)
-    questoes = models.ManyToManyField(Questao, blank=True)
+    questoes = models.ManyToManyField(Questao, blank=True, related_name='formularios')
     criado_por = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
