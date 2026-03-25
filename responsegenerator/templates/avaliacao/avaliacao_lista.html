@@ -409,16 +409,7 @@
             abrirModal('modalDeletar');
         }
 
-        function submitForm(formId) {
-            const form = document.getElementById(formId);
-            const nome = form.querySelector('input[name="nome"]').value.trim();
-            const selecionadas = form.querySelectorAll('input[name="questoes"]:checked');
-
-            if (!nome) { alert('Por favor, informe o nome do formulário.'); return; }
-            if (selecionadas.length === 0) { alert('Selecione pelo menos uma pergunta.'); return; }
-
-            form.submit();
-        }
+        
 
         // Fechar clicando fora do modal
         document.querySelectorAll('.modal-overlay').forEach(overlay => {
@@ -427,12 +418,6 @@
             });
         });
 
-        function filterForms() {
-            const filter = document.getElementById('searchInput').value.toLowerCase();
-            document.querySelectorAll('.form-card').forEach(card => {
-                card.style.display = card.getAttribute('data-text').includes(filter) ? '' : 'none';
-            });
-        }
     </script>
 </body>
 </html>

@@ -248,15 +248,6 @@
         <div class="headline">Setup</div>
         <div class="subtitle">Configure os parâmetros do sistema</div>
 
-        <div class="search-bar">
-            <span class="search-icon">🔎</span>
-            <input 
-                type="text" 
-                class="search-input" 
-                placeholder="Buscar configurações..."
-            >
-        </div>
-
         <div class="filter-label">Padrão</div>
         <select class="dropdown-select" style="margin-bottom: 28px;">
             <option value="">Selecione um padrão</option>
@@ -269,7 +260,7 @@
         <div class="filter-label">Configurações</div>
         <div class="filter-options">
             <a href="{% url 'setup_llm' %}" class="filter-btn">LLM</a>
-            <a href="{% url 'setup_avaliacao' %}" class="filter-btn">Tipo de Avaliação</a>
+            <a href="{% url 'setup_avaliacao' %}" class="filter-btn">Métricas</a>
         </div>
 
         <a href="{% url 'menu' %}" class="btn-back">Voltar ao Menu</a>
