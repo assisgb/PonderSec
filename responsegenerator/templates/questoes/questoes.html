@@ -327,7 +327,7 @@
             
             {% if historico %}
             <div style="display: flex; justify-content: flex-end; width: 100%;">
-                <button type="button" class="btn-clear-all" data-action="{% url 'limpar_historico' %}" data-title="☢ LIMPAR TUDO?" data-desc="Você tem certeza? Todas as questões serão apagadas para sempre." data-btn-text="Sim, limpar tudo" onclick="configurarModal(this)">
+                <button type="button" class="btn-clear-all" data-action="" data-title="☢ LIMPAR TUDO?" data-desc="Você tem certeza? Todas as questões serão apagadas para sempre." data-btn-text="Sim, limpar tudo" >
                     ☢ Apagar Todas as Questões
                 </button>
             </div>
@@ -505,6 +505,7 @@
             document.getElementById('modalDesc').innerText = btn.getAttribute('data-desc');
             document.getElementById('modalConfirmBtn').innerText = btn.getAttribute('data-btn-text');
             modal.classList.add('active');
+            
         }
         window.configurarModal = configurarModal;
         function fecharModal() { document.getElementById('modalUniversal').classList.remove('active'); }

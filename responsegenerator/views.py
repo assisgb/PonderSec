@@ -264,6 +264,7 @@ def questoes_cadastro_categoria(request):
 
     return redirect('questoes')
 
+
 @login_required
 def setup(request):
     return render(request, 'setup/setup.html')

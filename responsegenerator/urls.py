@@ -34,5 +34,6 @@ urlpatterns = [
     path("respostas/<int:questao_id>/", views.get_respostas, name="get_respostas"),
     path("gerar_resposta/<int:questao_id>",views.gerar_respostas),
     path("limpar_respostas",views.limpar_respostas, name="limpar-respostas"),
+   
     
 ]
