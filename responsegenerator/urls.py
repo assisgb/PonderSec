@@ -10,6 +10,9 @@ urlpatterns = [
     path('menu_consulta/', views.menu_consulta, name="menu-consulta"),
     path('consulta_comparacao/', views.consulta_comparacao, name="consulta_comparacao"),
     path('executar_consulta/', views.executar_consulta, name="executar_consulta"),
+    path("respostas/<int:questao_id>/", views.get_respostas, name="get_respostas"),
+    path("gerar_resposta/<int:questao_id>/", views.gerar_respostas, name="gerar_respostas"),
+    path("limpar_respostas/", views.limpar_respostas, name="limpar_respostas"),
     path('avaliacao/', views.avaliacao, name="avaliacao"),
     path('avaliacao/adicionar/', views.avaliacao_adicionar_formulario, name="avaliacao_adicionar_formulario"),
     path('avaliacao/editar/<int:id>/', views.avaliacao_editar_formulario, name="avaliacao_editar_formulario"),
@@ -28,7 +31,4 @@ urlpatterns = [
     path('questoes/limpar/', views.limpar_questoes, name='limpar_questoes'),
     path("api/llm/<int:id>/delete/", views.deletar_llm, name="delete_llm"),
     path("api/llm/<int:id>/edit/", views.edit_llm_api),
-    path("respostas/<int:questao_id>/", views.get_respostas, name="get_respostas"),
-    path("gerar_resposta/<int:questao_id>/", views.gerar_respostas, name="gerar_respostas"),
-    path("limpar_respostas/", views.limpar_respostas, name="limpar_respostas"),
 ]

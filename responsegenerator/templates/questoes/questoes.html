@@ -135,7 +135,15 @@
             gap: 16px;
         }
 
-        filter-top { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+        .filter-top { 
+            display: flex; 
+            flex-direction: row;
+            flex-wrap: nowrap;
+            gap: 16px; 
+            align-items: center; 
+            width: 100%; 
+
+        }
         
         .filter-select {
             padding: 14px 16px;
@@ -143,11 +151,11 @@
             border: 1px solid #1b2635;
             border-radius: 10px;
             color: #e5fef6;
-            font-size: 14px;
+            font-size: 16px;
             outline: none;
             cursor: pointer;
             font-family: "Space Grotesk", sans-serif;
-            min-width: 160px;
+            min-width: 150px;
             transition: all 0.2s;
         }
         
@@ -156,8 +164,21 @@
             box-shadow: 0 0 8px rgba(0, 255, 160, 0.3); 
         }
 
-        .search-box {
+        .filter-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+
+        .search-wrapper {
             flex: 1;
+            display: flex;
+        }
+
+        .search-box {
+            width: 100%;
             padding: 16px 20px;
             background: #050a11;
             border: 1px solid #1b2635;
@@ -167,6 +188,7 @@
             outline: none;
             font-family: "Space Grotesk", sans-serif;
             transition: all 0.2s;
+            min-width: 200px;
         }
 
         .search-box:focus { border-color: #00ff9f; box-shadow: 0 0 8px rgba(0, 255, 160, 0.3); }
@@ -338,6 +360,7 @@
             .btn-back, .button-primary, .btn-clear-all { width: 100%; }
             .filter-top, .questoes-options, .modal-buttons { flex-direction: column; }
             .checkbox-grid { grid-template-columns: 1fr; }
+            .filter-actions { flex-direction: column; width: 100%; } .filter-actions > * { width: 100%; }
         }
     </style>
 </head>
@@ -360,28 +383,39 @@
 
         <div class="filter-section">
             <div class="filter-top">
-                <input type="text" class="search-box" id="searchInput" placeholder="Filtro de pesquisa..." onkeyup="filterHistory()">
                 
-                <select id="statusFilter" class="filter-select" onchange="filterHistory()">
-                    <option value="all">Todos os Status</option>
-                    <option value="answered">Respondidas</option>
-                    <option value="pending">Pendentes</option>
-                </select>
+                <div class="search-wrapper">
+                    <input type="text" class="search-box" id="searchInput" placeholder="Filtro de pesquisa..." onkeyup="filterHistory()">
+                </div>
+                
+                <div class="filter-actions">
+                    <select id="statusFilter" class="filter-select" onchange="filterHistory()">
+                        <option value="all">Todos os Status</option>
+                        <option value="answered">Respondidas</option>
+                        <option value="pending">Pendentes</option>
+                    </select>
 
-                <select id="aiFilter" class="filter-select" onchange="filterHistory()">
-                    <option value="all">Todas as IAs</option>
-                    {% if llms %}
-                        {% for llm in llms %}
-                            <option value="{{ llm.nome|lower }}">{{ llm.nome }}</option>
-                        {% endfor %}
-                    {% endif %}
-                </select>
-                
-                <div class="questoes-options">
+                    <select id="aiFilter" class="filter-select" onchange="filterHistory()">
+                        <option value="all">Todas as IAs</option>
+                        {% if llms %}
+                            {% for llm in llms %}
+                                <option value="{{ llm.nome|lower }}">{{ llm.nome }}</option>
+                            {% endfor %}
+                        {% endif %}
+                    </select>
+                    
                     <button type="button" class="button-primary" onclick="abrirModalUpload()">Upload</button>
                     <button type="button" class="button-primary" onclick="abrirModalFormQuestao()">Adicionar</button>
                 </div>
             </div>
+            
+            {% if historico %}
+            <div style="display: flex; justify-content: flex-end; width: 100%; margin-top: 10px;">
+                <button type="button" class="btn-clear-all" data-action="{% url 'limpar_questoes' %}" data-title="☢ LIMPAR TUDO?" data-desc="Você tem certeza? Todas as questões serão apagadas para sempre." data-btn-text="Sim, limpar tudo" onclick="configurarModal(this)">
+                    ☢ Apagar Todas as Questões
+                </button>
+            </div>
+            {% endif %}
         </div>
 
         <div class="history-grid" id="historyGrid">

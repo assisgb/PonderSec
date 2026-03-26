@@ -248,7 +248,10 @@
                     <div class="form-icon">📋</div>
                     <div>
                         <div class="form-name">{{ formulario.nome }}</div>
-                        <div class="form-meta">{{ formulario.questoes.count }} pergunta(s)</div>
+                        <div class="form-meta">
+                            {{ formulario.questoes.count }} pergunta(s) • 
+                            <span style="color: #00ff9f; font-weight: 500;">{{ formulario.qtd_avaliadores|default:"0" }} avaliador(es)</span>
+                        </div>
                     </div>
                 </div>
                 <div class="form-actions">
@@ -261,9 +264,9 @@
                         Del
                     </button>
                     {% if formulario.questoes.count > 0 %}
-                    <a href="{% url 'avaliacao_respostas' formulario.id formulario.questoes.first.id %}" class="btn-action enviar">
-                        Enviar
-                    </a>
+                    <button type="button" class="btn-action enviar" onclick="abrirModalCompartilhar('{{ formulario.id }}')">
+                        Compartilhar
+                    </button>
                     {% endif %}
                 </div>
             </div>
@@ -369,7 +372,65 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="modalCompartilhar">
+        <div class="modal" style="max-width: 500px; text-align: center;">
+            <div class="modal-header">
+                <span class="modal-title">Compartilhar Formulário</span>
+                <button class="modal-close" onclick="fecharModal('modalCompartilhar')">✕</button>
+            </div>
+            
+            <p style="color: #8ba1b0; margin-bottom: 24px; font-size: 15px; line-height: 1.6;">
+                Copie o link abaixo e envie para os avaliadores.<br>Eles não precisam de senha para responder.
+            </p>
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 16px;">
+                <input type="text" id="linkCompartilhamento" class="field-input" style="margin-bottom: 0; color: #00ff9f; background: rgba(0, 255, 160, 0.05);" readonly>
+                
+                <button type="button" class="btn-action" onclick="copiarLink()" style="margin: 0; padding: 0 16px; font-size: 20px;" title="Copiar Link">
+                    📋
+                </button>
+            </div>
+            
+            <div id="copyToast" style="color: #00ff9f; font-size: 14px; display: none; margin-bottom: 24px; font-weight: 600;">
+                ✓ Link copiado para a área de transferência!
+            </div>
+            
+            <div class="modal-footer" style="justify-content: center;">
+                <button type="button" class="btn-modal-cancel" onclick="fecharModal('modalCompartilhar')">Fechar</button>
+            </div>
+        </div>
+    </div>
+
     <script>
+
+        function abrirModalCompartilhar(id) {
+            const linkInput = document.getElementById('linkCompartilhamento');
+            
+            const urlBase = window.location.origin; // => Monta a URL dinâmica: ex: http://0.0.0.0:8000/avaliacao/responder/5/
+            linkInput.value = `${urlBase}/avaliacao/responder/${id}/`;
+            
+            document.getElementById('copyToast').style.display = 'none';
+            
+            abrirModal('modalCompartilhar');
+        }
+
+        function copiarLink() {
+            const linkInput = document.getElementById('linkCompartilhamento');
+            
+            linkInput.select();
+            linkInput.setSelectionRange(0, 99999); 
+            
+            navigator.clipboard.writeText(linkInput.value).then(() => { // => Copia para a área de transferência nativa do navegador
+                const toast = document.getElementById('copyToast');
+                toast.style.display = 'block';
+                setTimeout(() => {
+                    toast.style.display = 'none';
+                }, 3000);
+            }).catch(err => {
+                console.error('Erro ao copiar: ', err);
+                alert("Não foi possível copiar o link automaticamente.");
+            });
+        }
         function toggleQuestao(el) {
             el.classList.toggle('selected');
             const cb = el.querySelector('input[type="checkbox"]');
@@ -420,7 +481,6 @@
             form.submit();
         }
 
-        // Fechar clicando fora do modal
         document.querySelectorAll('.modal-overlay').forEach(overlay => {
             overlay.addEventListener('click', function(e) {
                 if (e.target === this) fecharModal(this.id);
