@@ -7,122 +7,556 @@
     <title>{{ formulario.nome }} — Avaliação PonderSEC</title>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: "Space Grotesk", system-ui, sans-serif;
-            background: radial-gradient(circle at top, #051015 0, #02060b 45%, #000000 100%);
-            color: #e5fef6; min-height: 100vh; padding: 40px 20px;
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --green: #00ff9f;
+            --green-dim: rgba(0,255,160,0.13);
+            --green-glow: rgba(0,255,160,0.35);
+            --purple: #bb86fc;
+            --purple-dim: rgba(187,134,252,0.12);
+            --bg-card: rgba(11,20,29,0.82);
+            --border: rgba(0,255,160,0.18);
+            --text: #e5fef6;
+            --text-muted: #8ba1b0;
+            --text-label: #c5d9e3;
+            --input-bg: #050a11;
+            --input-border: #1b2635;
         }
-        .background-grid { position: fixed; inset: 0; background-image: linear-gradient(90deg, rgba(0, 255, 160, 0.06) 1px, transparent 1px), linear-gradient(180deg, rgba(0, 255, 160, 0.06) 1px, transparent 1px); background-size: 40px 40px; opacity: 0.4; pointer-events: none; z-index: 0; }
-        .glow-orb { position: fixed; width: 600px; height: 600px; border-radius: 50%; background: radial-gradient(circle, rgba(0, 255, 160, 0.15), transparent 70%); top: -10%; left: 50%; transform: translateX(-50%); filter: blur(80px); opacity: 0.6; pointer-events: none; z-index: 0; }
-        
-        .container { position: relative; max-width: 900px; margin: 0 auto; z-index: 2; }
-        
-        .header-public { text-align: center; margin-bottom: 40px; }
-        .header-public img { width: 80px; height: 80px; border-radius: 12px; margin-bottom: 16px; filter: drop-shadow(0 0 10px rgba(0, 255, 160, 0.3)); }
-        .form-title { color: #00ff9f; font-size: 32px; font-weight: 700; margin-bottom: 8px; }
-        .form-subtitle { color: #8ba1b0; font-size: 16px; }
 
-        .section-card { background: rgba(11, 20, 29, 0.6); border: 1px solid rgba(0, 255, 160, 0.2); border-radius: 16px; padding: 32px; margin-bottom: 32px; box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4); }
-        .section-title { color: #7df6c2; font-size: 18px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; margin-bottom: 24px; border-bottom: 1px solid rgba(0, 255, 160, 0.1); padding-bottom: 12px; }
+        html, body {
+            height: 100%;
+            font-family: "Space Grotesk", system-ui, sans-serif;
+            background: radial-gradient(circle at top, #051015 0, #02060b 45%, #000 100%);
+            color: var(--text);
+            overflow-x: hidden;
+        }
 
-        .input-group { margin-bottom: 20px; }
-        .field-label { display: block; color: #c5d9e3; font-size: 14px; margin-bottom: 8px; font-weight: 500; }
-        .field-input { width: 100%; padding: 14px 18px; background: #050a11; border: 1px solid #1b2635; border-radius: 10px; color: #e5fef6; font-size: 15px; font-family: "Space Grotesk", sans-serif; outline: none; transition: all 0.2s; }
-        .field-input:focus { border-color: #00ff9f; box-shadow: 0 0 12px rgba(0, 255, 160, 0.2); }
+        .bg-grid {
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            background-image:
+                linear-gradient(90deg, rgba(0,255,160,0.05) 1px, transparent 1px),
+                linear-gradient(180deg, rgba(0,255,160,0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+        .bg-orb {
+            position: fixed; z-index: 0; pointer-events: none;
+            width: 700px; height: 700px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(0,255,160,0.1), transparent 70%);
+            top: -15%; left: 50%; transform: translateX(-50%);
+            filter: blur(90px);
+        }
 
-        .question-box { background: rgba(0, 255, 160, 0.03); border: 1px solid rgba(0, 255, 160, 0.1); border-radius: 12px; padding: 24px; margin-bottom: 24px; }
-        .question-text { font-size: 18px; font-weight: 600; color: #fff; line-height: 1.5; margin-bottom: 20px; }
-        
-        .ai-response-box { background: #050a11; border: 1px solid #1b2635; border-radius: 10px; padding: 20px; margin-bottom: 20px; border-left: 4px solid #bb86fc; }
-        .ai-badge { display: inline-block; background: rgba(187, 134, 252, 0.1); color: #bb86fc; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 16px; border: 1px solid rgba(187, 134, 252, 0.3); }
-        .response-content { color: #c5d9e3; font-size: 15px; line-height: 1.7; white-space: pre-wrap; margin-bottom: 24px; max-height: 400px; overflow-y: auto; padding-right: 10px; }
-        .response-content::-webkit-scrollbar { width: 6px; } .response-content::-webkit-scrollbar-thumb { background: #1b2635; border-radius: 3px; }
+        /* ══ SCREEN 1 — IDENTIFICATION ══ */
+        .screen-ident {
+            position: relative; z-index: 2;
+            min-height: 100vh; display: flex;
+            align-items: center; justify-content: center;
+            padding: 40px 20px;
+        }
+        .ident-card {
+            width: 100%; max-width: 500px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px; padding: 40px;
+            box-shadow: 0 8px 60px rgba(0,0,0,0.6);
+            backdrop-filter: blur(14px);
+        }
+        .ident-header { text-align: center; margin-bottom: 32px; }
+        .ident-header img {
+            width: 60px; height: 60px; border-radius: 12px;
+            margin-bottom: 14px;
+            filter: drop-shadow(0 0 12px var(--green-glow));
+        }
+        .ident-header h1 { color: var(--green); font-size: 20px; font-weight: 700; margin-bottom: 5px; }
+        .ident-header p  { color: var(--text-muted); font-size: 13px; }
 
-        .metric-grid { display: grid; gap: 20px; background: rgba(255, 255, 255, 0.02); padding: 20px; border-radius: 8px; border: 1px dashed rgba(255, 255, 255, 0.1); }
-        .metric-item { display: flex; flex-direction: column; gap: 8px; }
-        .metric-name { font-size: 14px; color: #00ff9f; font-weight: 600; text-transform: uppercase; }
-        .metric-desc { font-size: 13px; color: #8ba1b0; margin-bottom: 8px; }
-        
-        .score-input { width: 100px; padding: 12px; background: #020509; border: 1px solid #1b2635; border-radius: 8px; color: #00ff9f; font-size: 18px; font-weight: 700; text-align: center; outline: none; }
-        .score-input:focus { border-color: #00ff9f; }
-        
-        textarea.field-input { min-height: 80px; resize: vertical; }
+        .field-group { margin-bottom: 16px; }
+        .field-label {
+            display: block; color: var(--text-label); font-size: 11px;
+            font-weight: 700; margin-bottom: 6px;
+            text-transform: uppercase; letter-spacing: 0.07em;
+        }
+        .field-input {
+            width: 100%; padding: 12px 14px;
+            background: var(--input-bg); border: 1px solid var(--input-border);
+            border-radius: 10px; color: var(--text); font-size: 14px;
+            font-family: "Space Grotesk", sans-serif; outline: none; transition: all 0.2s;
+        }
+        .field-input:focus { border-color: var(--green); box-shadow: 0 0 12px var(--green-dim); }
 
-        .btn-submit { width: 100%; padding: 18px; background: linear-gradient(90deg, #00ff9f, #00ff57); border: none; border-radius: 12px; color: #000; font-size: 18px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; cursor: pointer; transition: all 0.2s; font-family: "Space Grotesk", sans-serif; margin-top: 20px; }
-        .btn-submit:hover { box-shadow: 0 0 30px rgba(0, 255, 160, 0.4); transform: translateY(-2px); }
+        .btn-start {
+            width: 100%; margin-top: 8px; padding: 14px;
+            background: linear-gradient(90deg, #00ff9f, #00e87a);
+            border: none; border-radius: 12px;
+            color: #000; font-size: 14px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.1em;
+            cursor: pointer; font-family: "Space Grotesk", sans-serif; transition: all 0.2s;
+        }
+        .btn-start:hover { box-shadow: 0 0 28px rgba(0,255,160,0.4); transform: translateY(-1px); }
+
+        /* ══ SCREEN 2 — EVALUATION  ══
+           Uses a fixed 100vh column layout so content never overflows page */
+        .screen-eval {
+            display: none;
+            position: fixed; inset: 0; z-index: 2;
+            flex-direction: column;
+            padding: 14px 20px 10px;
+        }
+        .screen-eval.active { display: flex; }
+
+        /* inner centering wrapper */
+        .eval-inner {
+            display: flex; flex-direction: column;
+            height: 100%; max-width: 860px;
+            margin: 0 auto; width: 100%;
+        }
+
+        /* Top bar */
+        .eval-topbar {
+            display: flex; align-items: center; gap: 12px;
+            margin-bottom: 10px; flex-shrink: 0;
+        }
+        .eval-logo { width: 32px; height: 32px; border-radius: 8px; filter: drop-shadow(0 0 6px var(--green-glow)); }
+        .eval-title { color: var(--green); font-size: 14px; font-weight: 700; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .eval-counter { color: var(--text-muted); font-size: 12px; font-weight: 600; white-space: nowrap; }
+        .eval-counter span { color: var(--green); }
+
+        /* Progress */
+        .progress-track {
+            flex-shrink: 0;
+            width: 100%; height: 4px;
+            background: var(--input-border); border-radius: 99px;
+            cursor: pointer; position: relative; overflow: visible;
+            margin-bottom: 8px;
+        }
+        .progress-fill {
+            height: 100%; background: linear-gradient(90deg, var(--green), #00e87a);
+            border-radius: 99px;
+            transition: width 0.4s cubic-bezier(0.4,0,0.2,1); position: relative;
+        }
+        .progress-fill::after {
+            content: ''; position: absolute; right: -5px; top: 50%;
+            transform: translateY(-50%);
+            width: 10px; height: 10px; border-radius: 50%;
+            background: var(--green); box-shadow: 0 0 8px var(--green-glow);
+        }
+
+        /* Dots */
+        .dots-row {
+            flex-shrink: 0;
+            display: flex; flex-wrap: wrap; gap: 5px;
+            justify-content: center; margin-bottom: 8px;
+        }
+        .dot {
+            width: 7px; height: 7px; border-radius: 50%;
+            background: var(--input-border); cursor: pointer;
+            border: none; padding: 0; flex-shrink: 0; transition: all 0.2s;
+        }
+        .dot.active { background: var(--green); box-shadow: 0 0 7px var(--green-glow); transform: scale(1.5); }
+        .dot.done   { background: rgba(0,255,160,0.35); }
+
+        /* ── Carousel shell — fills ALL remaining vertical space ── */
+        .carousel-shell {
+            flex: 1; min-height: 0;          /* key: shrink-to-fit */
+            overflow: hidden;
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            background: rgba(5,10,18,0.88);
+            position: relative;
+            margin-bottom: 8px;
+        }
+        .carousel-shell::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; z-index: 1;
+            background: linear-gradient(90deg, transparent, var(--green), transparent);
+            opacity: 0.4;
+        }
+        .carousel-track {
+            display: flex; height: 100%;
+            transition: transform 0.42s cubic-bezier(0.4,0,0.2,1);
+            will-change: transform;
+        }
+
+        /* ── Slide — full height column ── */
+        .slide {
+            min-width: 100%; height: 100%; flex-shrink: 0;
+            display: flex; flex-direction: column; overflow: hidden;
+        }
+
+        /* Top section: fixed, not scrollable */
+        .slide-top { flex-shrink: 0; padding: 18px 22px 0; }
+
+        .slide-meta {
+            display: flex; gap: 8px; align-items: center;
+            margin-bottom: 12px; flex-wrap: wrap;
+        }
+        .badge-q {
+            background: var(--green-dim); color: var(--green);
+            border: 1px solid rgba(0,255,160,0.3);
+            padding: 4px 10px; border-radius: 20px; font-size: 10px;
+            font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+        }
+        .badge-ai {
+            background: var(--purple-dim); color: var(--purple);
+            border: 1px solid rgba(187,134,252,0.3);
+            padding: 4px 10px; border-radius: 20px; font-size: 10px;
+            font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+        }
+        .question-text {
+            font-size: 14px; font-weight: 600; color: var(--text);
+            line-height: 1.5; margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .response-box {
+            max-height: 110px; overflow-y: auto;
+            background: #020509;
+            border: 1px solid var(--input-border);
+            border-left: 3px solid var(--purple);
+            border-radius: 8px; padding: 10px 13px;
+            margin-bottom: 10px;
+        }
+        .response-box::-webkit-scrollbar { width: 4px; }
+        .response-box::-webkit-scrollbar-thumb { background: #1b2635; border-radius: 2px; }
+        .response-text { color: var(--text-label); font-size: 13px; line-height: 1.7; white-space: pre-wrap; }
+
+        .divider { flex-shrink: 0; height: 1px; background: rgba(0,255,160,0.08); margin: 0 22px; }
+
+        /* Bottom section: scrollable metrics */
+        .slide-metrics {
+            flex: 1; min-height: 0; overflow-y: auto;
+            padding: 14px 22px 18px;
+        }
+        .slide-metrics::-webkit-scrollbar { width: 4px; }
+        .slide-metrics::-webkit-scrollbar-thumb { background: #1b2635; border-radius: 2px; }
+
+        .metric-block { margin-bottom: 18px; }
+        .metric-block:last-child { margin-bottom: 0; }
+        .metric-label {
+            font-size: 11px; font-weight: 700; color: var(--green);
+            text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 2px;
+        }
+        .metric-desc { font-size: 11px; color: var(--text-muted); margin-bottom: 10px; line-height: 1.4; }
+
+        /* ── LIKERT ── */
+        .likert-group {
+            display: grid; grid-template-columns: repeat(5, 1fr);
+            gap: 6px; margin-bottom: 10px;
+        }
+        .likert-option input[type="radio"] { display: none; }
+        .likert-option label {
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 3px; padding: 10px 3px;
+            border-radius: 10px;
+            border: 1px solid var(--input-border);
+            background: var(--input-bg);
+            cursor: pointer; transition: all 0.18s;
+            text-align: center; min-height: 72px;
+        }
+        .likert-option label:hover {
+            border-color: rgba(0,255,160,0.5);
+            background: rgba(0,255,160,0.05);
+            transform: translateY(-2px);
+        }
+        .likert-option input:checked + label {
+            border-color: var(--green);
+            background: var(--green-dim);
+            box-shadow: 0 0 12px rgba(0,255,160,0.2);
+        }
+        .likert-emoji { font-size: 18px; line-height: 1; }
+        .likert-num {
+            font-size: 15px; font-weight: 700;
+            color: var(--text-muted); line-height: 1;
+        }
+        .likert-option input:checked + label .likert-num { color: var(--green); }
+        .likert-anchor {
+            font-size: 8px; color: var(--text-muted);
+            line-height: 1.25; max-width: 54px;
+        }
+        .likert-option input:checked + label .likert-anchor { color: #7df6c2; }
+
+        .comment-field {
+            width: 100%; padding: 9px 11px;
+            background: var(--input-bg); border: 1px solid var(--input-border);
+            border-radius: 8px; color: var(--text); font-size: 12px;
+            font-family: "Space Grotesk", sans-serif; outline: none;
+            resize: none; height: 52px; transition: border-color 0.2s;
+        }
+        .comment-field:focus { border-color: rgba(0,255,160,0.5); }
+        .comment-field::placeholder { color: #2a3848; }
+
+        /* ── Nav row ── */
+        .eval-nav {
+            flex-shrink: 0;
+            display: flex; gap: 8px; align-items: center;
+        }
+        .btn-nav {
+            display: flex; align-items: center; justify-content: center;
+            padding: 11px 18px; border-radius: 10px;
+            font-family: "Space Grotesk", sans-serif;
+            font-size: 12px; font-weight: 700;
+            cursor: pointer; transition: all 0.2s; border: none;
+            text-transform: uppercase; letter-spacing: 0.07em;
+        }
+        .btn-prev {
+            background: transparent; color: var(--text-muted);
+            border: 1px solid var(--input-border); min-width: 110px;
+        }
+        .btn-prev:hover:not(:disabled) { border-color: var(--green); color: var(--green); }
+        .btn-prev:disabled { opacity: 0.3; cursor: not-allowed; }
+        .btn-next { flex: 1; background: linear-gradient(90deg, #00ff9f, #00e87a); color: #000; }
+        .btn-next:hover { box-shadow: 0 0 20px rgba(0,255,160,0.4); transform: translateY(-1px); }
+
+        .btn-submit-final {
+            flex: 1; padding: 11px 18px;
+            background: linear-gradient(90deg, #00ff9f, #00ff57);
+            border: none; border-radius: 10px;
+            color: #000; font-size: 12px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.08em;
+            cursor: pointer; font-family: "Space Grotesk", sans-serif;
+            transition: all 0.2s; display: none;
+        }
+        .btn-submit-final.visible { display: block; }
+        .btn-submit-final:hover { box-shadow: 0 0 22px rgba(0,255,160,0.45); transform: translateY(-1px); }
+
+        .completion-msg {
+            display: none; flex-shrink: 0; text-align: center;
+            background: var(--green-dim); border: 1px solid rgba(0,255,160,0.22);
+            border-radius: 8px; padding: 8px 16px; margin-bottom: 6px;
+        }
+        .completion-msg.visible { display: block; }
+        .completion-msg h3 { color: var(--green); font-size: 13px; margin-bottom: 1px; }
+        .completion-msg p  { color: var(--text-muted); font-size: 11px; }
+
+        .kbd-hint { flex-shrink: 0; font-size: 10px; color: #2a3848; text-align: center; margin-top: 4px; }
+        .kbd { display: inline-block; background: #0d1a24; border: 1px solid #1b2635; border-radius: 3px; padding: 1px 5px; font-size: 9px; color: #3a5062; }
+
+        @media (max-width: 480px) {
+            .likert-group { gap: 3px; }
+            .likert-option label { padding: 7px 2px; min-height: 62px; }
+            .likert-emoji { font-size: 14px; }
+            .likert-num { font-size: 12px; }
+        }
     </style>
 </head>
 <body>
-    <div class="background-grid"></div>
-    <div class="glow-orb"></div>
+    <div class="bg-grid"></div>
+    <div class="bg-orb"></div>
 
-    <div class="container">
-        <div class="header-public">
-            <img src="{% static 'pondersec_logo.jpg' %}" alt="PonderSEC Logo">
-            <h1 class="form-title">{{ formulario.nome }}</h1>
-            <p class="form-subtitle">Painel de Avaliação Cega de Inteligência Artificial</p>
-        </div>
+    <form method="POST" id="evalForm">
+        {% csrf_token %}
 
-        <form method="POST">
-            {% csrf_token %}
-
-            <div class="section-card">
-                <h2 class="section-title">1. Identificação do Avaliador</h2>
-                <div class="input-group">
-                    <label class="field-label">Nome Completo</label>
-                    <input type="text" name="nome" class="field-input" required placeholder="Digite seu nome">
+        <!-- ══ SCREEN 1 ══ -->
+        <div class="screen-ident" id="screenIdent">
+            <div class="ident-card">
+                <div class="ident-header">
+                    <img src="{% static 'pondersec_logo.jpg' %}" alt="PonderSEC">
+                    <h1>{{ formulario.nome }}</h1>
+                    <p>Painel de Avaliação Cega de Inteligência Artificial</p>
                 </div>
-                <div class="input-group">
+                <div class="field-group">
+                    <label class="field-label">Nome Completo</label>
+                    <input type="text" name="nome" class="field-input" required placeholder="Digite seu nome completo">
+                </div>
+                <div class="field-group">
                     <label class="field-label">E-mail Profissional</label>
                     <input type="email" name="email" class="field-input" required placeholder="exemplo@empresa.com">
                 </div>
-                <div class="input-group">
+                <div class="field-group">
                     <label class="field-label">Profissão / Cargo</label>
-                    <input type="text" name="profissao" class="field-input" required placeholder="Ex: Engenheiro de Segurança, Desenvolvedor...">
+                    <input type="text" name="profissao" class="field-input" required placeholder="Ex: Engenheiro de Segurança, Dev...">
                 </div>
+                <button type="button" class="btn-start" id="btnStart">Iniciar Avaliação →</button>
             </div>
+        </div>
 
-            <div class="section-card">
-                <h2 class="section-title">2. Avaliação das Respostas</h2>
-                
-                {% for questao in formulario.questoes.all %}
-                <div class="question-box">
-                    <div class="question-text">Q{{ forloop.counter }}. {{ questao.conteudo }}</div>
+        <!-- ══ SCREEN 2 ══ -->
+        <div class="screen-eval" id="screenEval">
+            <div class="eval-inner">
 
-                    {% for resp in questao.respostas.all %}
-                    <div class="ai-response-box">
-                        <div class="ai-badge">✦ Resposta da IA ({{ resp.llm.nome }})</div>
-                        <div class="response-content">{{ resp.conteudo_resposta }}</div>
-                        
-                        <div class="metric-grid">
-                            {% for metrica in metricas %}
-                            <div class="metric-item">
-                                <span class="metric-name">{{ metrica.nome }}</span>
-                                <span class="metric-desc">{{ metrica.descricao }}</span>
-                                
-                                {% if metrica.tipo == 'quantitativa' %}
-                                <div style="display: flex; align-items: center; gap: 12px;">
-                                    <input type="number" name="quanti_{{ resp.id }}_{{ metrica.id }}" class="score-input" min="0" max="{{ metrica.pontuacao_maxima|default:10 }}" required placeholder="0">
-                                    <span style="color: #6b7b8d; font-size: 14px;">(Nota Máxima: {{ metrica.pontuacao_maxima|default:10 }})</span>
+                <div class="eval-topbar">
+                    <img src="{% static 'pondersec_logo.jpg' %}" alt="" class="eval-logo">
+                    <span class="eval-title">{{ formulario.nome }}</span>
+                    <span class="eval-counter"><span id="counterCurr">1</span> / <span id="counterTotal">1</span></span>
+                </div>
+
+                <div class="progress-track" id="progressTrack">
+                    <div class="progress-fill" id="progressFill" style="width:0%"></div>
+                </div>
+
+                <div class="dots-row" id="dotsRow"></div>
+
+                <!-- Carousel -->
+                <div class="carousel-shell">
+                    <div class="carousel-track" id="carouselTrack">
+
+                        {% for questao in formulario.questoes.all %}
+                        {% for resp in questao.respostas.all %}
+                        <div class="slide">
+
+                            <div class="slide-top">
+                                <div class="slide-meta">
+                                    <span class="badge-q">Q{{ forloop.parentloop.counter }} / {{ formulario.questoes.count }}</span>
+                                    <span class="badge-ai">✦ {{ resp.llm.nome }}</span>
                                 </div>
-                                {% endif %}
-                                
-                                <textarea name="quali_{{ resp.id }}_{{ metrica.id }}" class="field-input" placeholder="Justificativa ou comentário sobre esta métrica (Opcional)"></textarea>
+                                <div class="question-text">{{ questao.conteudo }}</div>
+                                <div class="response-box">
+                                    <div class="response-text">{{ resp.conteudo_resposta }}</div>
+                                </div>
                             </div>
-                            {% endfor %}
+
+                            <div class="divider"></div>
+
+                            <div class="slide-metrics">
+                                {% for metrica in metricas %}
+                                <div class="metric-block">
+                                    <div class="metric-label">{{ metrica.nome }}</div>
+                                    <div class="metric-desc">{{ metrica.descricao }}</div>
+
+                                    {% if metrica.tipo == 'quantitativa' %}
+                                    <div class="likert-group">
+                                        {% for val, emoji, anchor in likert_options %}
+                                        <div class="likert-option">
+                                            <input type="radio"
+                                                id="lk_{{ resp.id }}_{{ metrica.id }}_{{ val }}"
+                                                name="quanti_{{ resp.id }}_{{ metrica.id }}"
+                                                value="{{ val }}" required>
+                                            <label for="lk_{{ resp.id }}_{{ metrica.id }}_{{ val }}">
+                                                <span class="likert-emoji">{{ emoji }}</span>
+                                                <span class="likert-num">{{ val }}</span>
+                                                <span class="likert-anchor">{{ anchor }}</span>
+                                            </label>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+
+                                    <textarea
+                                        name="quali_{{ resp.id }}_{{ metrica.id }}"
+                                        class="comment-field"
+                                        placeholder="Comentário sobre {{ metrica.nome }} (opcional)"></textarea>
+                                </div>
+                                {% endfor %}
+                            </div>
+
                         </div>
+                        {% empty %}
+                        <div class="slide">
+                            <div class="slide-top">
+                                <p style="color:#ff5566;padding:20px;">Nenhuma IA respondeu à Q{{ forloop.counter }}.</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% endfor %}
+
                     </div>
-                    {% empty %}
-                    <p style="color: #ff5566;">Nenhuma IA respondeu a esta pergunta ainda.</p>
-                    {% endfor %}
-
                 </div>
-                {% endfor %}
-            </div>
 
-            <button type="submit" class="btn-submit">Enviar Avaliação</button>
-        </form>
-    </div>
+                <div class="completion-msg" id="completionMsg">
+                    <h3>✦ Todas as respostas avaliadas</h3>
+                    <p>Revise e clique em Enviar abaixo.</p>
+                </div>
+
+                <div class="eval-nav">
+                    <button type="button" class="btn-nav btn-prev" id="btnPrev" disabled>← Anterior</button>
+                    <button type="button" class="btn-nav btn-next" id="btnNext">Próximo →</button>
+                    <button type="submit" class="btn-submit-final" id="btnSubmit">Enviar Avaliação ✓</button>
+                </div>
+
+                <div class="kbd-hint">
+                    Navegue com <span class="kbd">←</span> <span class="kbd">→</span> do teclado
+                </div>
+
+            </div>
+        </div>
+
+    </form>
+
+    <script>
+    (function () {
+        const btnStart      = document.getElementById('btnStart');
+        const screenIdent   = document.getElementById('screenIdent');
+        const screenEval    = document.getElementById('screenEval');
+        const track         = document.getElementById('carouselTrack');
+        const fill          = document.getElementById('progressFill');
+        const counterCurr   = document.getElementById('counterCurr');
+        const counterTotal  = document.getElementById('counterTotal');
+        const dotsRow       = document.getElementById('dotsRow');
+        const btnPrev       = document.getElementById('btnPrev');
+        const btnNext       = document.getElementById('btnNext');
+        const btnSubmit     = document.getElementById('btnSubmit');
+        const completionMsg = document.getElementById('completionMsg');
+        const progressTrack = document.getElementById('progressTrack');
+
+        const slides = Array.from(track.querySelectorAll('.slide'));
+        const total  = slides.length;
+        let current  = 0;
+        counterTotal.textContent = total;
+
+        /* Start */
+        btnStart.addEventListener('click', () => {
+            const inputs = screenIdent.querySelectorAll('input[required]');
+            let ok = true;
+            inputs.forEach(i => { if (!i.value.trim()) { i.focus(); ok = false; } });
+            if (!ok) return;
+            screenIdent.style.display = 'none';
+            screenEval.classList.add('active');
+            buildDots(); render();
+        });
+
+        /* Dots */
+        function buildDots() {
+            slides.forEach((_, i) => {
+                const d = document.createElement('button');
+                d.type = 'button'; d.className = 'dot';
+                d.addEventListener('click', () => goTo(i));
+                dotsRow.appendChild(d);
+            });
+        }
+
+        /* Progress click */
+        progressTrack.addEventListener('click', e => {
+            const r = progressTrack.getBoundingClientRect();
+            const pct = (e.clientX - r.left) / r.width;
+            goTo(Math.round(Math.max(0, Math.min(total - 1, pct * (total - 1)))));
+        });
+
+        /* Navigation */
+        function goTo(i) { current = Math.max(0, Math.min(total - 1, i)); render(); }
+        btnPrev.addEventListener('click', () => goTo(current - 1));
+        btnNext.addEventListener('click', () => goTo(current + 1));
+        document.addEventListener('keydown', e => {
+            if (!screenEval.classList.contains('active')) return;
+            if (e.key === 'ArrowRight') goTo(current + 1);
+            if (e.key === 'ArrowLeft')  goTo(current - 1);
+        });
+
+        /* Render */
+        function render() {
+            track.style.transform = `translateX(-${current * 100}%)`;
+            counterCurr.textContent = current + 1;
+            fill.style.width = (total > 1 ? (current / (total - 1)) * 100 : 100) + '%';
+            dotsRow.querySelectorAll('.dot').forEach((d, i) => {
+                d.classList.toggle('active', i === current);
+                d.classList.toggle('done',   i < current);
+            });
+            btnPrev.disabled = current === 0;
+            const last = current === total - 1;
+            btnNext.style.display = last ? 'none' : '';
+            btnSubmit.classList.toggle('visible', last);
+            completionMsg.classList.toggle('visible', last);
+        }
+
+        /* Likert pulse */
+        document.querySelectorAll('.likert-option input[type="radio"]').forEach(r => {
+            r.addEventListener('change', function () {
+                const lbl = this.nextElementSibling;
+                lbl.style.transform = 'scale(1.08)';
+                setTimeout(() => lbl.style.transform = '', 150);
+            });
+        });
+    })();
+    </script>
 </body>
 </html>
