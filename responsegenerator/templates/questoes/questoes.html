@@ -382,13 +382,12 @@
         </div>
 
         <div class="filter-section">
-            <div class="filter-top">
+            
+            <input type="text" class="search-box" id="searchInput" placeholder="Filtro de pesquisa..." onkeyup="filterHistory()" style="width: 100%;">
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
                 
-                <div class="search-wrapper">
-                    <input type="text" class="search-box" id="searchInput" placeholder="Filtro de pesquisa..." onkeyup="filterHistory()">
-                </div>
-                
-                <div class="filter-actions">
+                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
                     <select id="statusFilter" class="filter-select" onchange="filterHistory()">
                         <option value="all">Todos os Status</option>
                         <option value="answered">Respondidas</option>
@@ -403,19 +402,32 @@
                             {% endfor %}
                         {% endif %}
                     </select>
-                    
+
+                    <select id="formFilter" class="filter-select" onchange="filterHistory()">
+                        <option value="all">Todos os Formulários</option>
+                        {% if formularios %}
+                            {% for form in formularios %}
+                                <option value="{{ form.nome|lower }}">{{ form.nome }}</option>
+                            {% endfor %}
+                        {% endif %}
+                    </select>
+                </div>
+                
+                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
                     <button type="button" class="button-primary" onclick="abrirModalUpload()">Upload</button>
                     <button type="button" class="button-primary" onclick="abrirModalFormQuestao()">Adicionar</button>
                 </div>
+
             </div>
             
             {% if historico %}
-            <div style="display: flex; justify-content: flex-end; width: 100%; margin-top: 10px;">
+            <div style="display: flex; justify-content: flex-end; width: 100%; border-top: 1px solid rgba(0, 255, 160, 0.1); padding-top: 16px; margin-top: 4px;">
                 <button type="button" class="btn-clear-all" data-action="{% url 'limpar_questoes' %}" data-title="☢ LIMPAR TUDO?" data-desc="Você tem certeza? Todas as questões serão apagadas para sempre." data-btn-text="Sim, limpar tudo" onclick="configurarModal(this)">
                     ☢ Apagar Todas as Questões
                 </button>
             </div>
             {% endif %}
+
         </div>
 
         <div class="history-grid" id="historyGrid">
@@ -424,15 +436,16 @@
                 {% for item in historico %}
                     {% if item.respostas.exists %}
                         <div class="history-card" 
-                             data-question="{{ item.conteudo|lower }}"
-                             data-status="answered"
-                             data-ias="{% for resp in item.respostas.all %}{{ resp.llm.nome|lower }} {% endfor %}">
+                            data-question="{{ item.conteudo|lower }}"
+                            data-status="answered"
+                            data-ias="{% for resp in item.respostas.all %}{{ resp.llm.nome|lower }} {% endfor %}"
+                            data-forms="{% for form in item.formularios.all %}{{ form.nome|lower }} {% endfor %}">
                              
                             <div class="card-header">
                                 <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
                                     <span class="status-badge status-answered">✓ Respondida</span>
                                     
-                                    {% for form in item.formulario_set.all %}
+                                    {% for form in item.formularios.all %}
                                         <span class="status-badge" style="background: rgba(187, 134, 252, 0.1); color: #bb86fc; border: 1px solid rgba(187, 134, 252, 0.3);">
                                             📄 {{ form.nome }}
                                         </span>
@@ -636,6 +649,7 @@
             const searchText = document.getElementById('searchInput').value.toLowerCase();
             const statusFilter = document.getElementById('statusFilter').value;
             const aiFilter = document.getElementById('aiFilter').value.toLowerCase();
+            const formFilter = document.getElementById('formFilter').value.toLowerCase();
             
             const cards = document.querySelectorAll('.history-card');
 
@@ -643,12 +657,14 @@
                 const question = card.getAttribute('data-question') || "";
                 const status = card.getAttribute('data-status') || "";
                 const ias = card.getAttribute('data-ias') || "";
+                const forms = card.getAttribute('data-forms') || "";
 
                 const matchSearch = question.includes(searchText);
                 const matchStatus = (statusFilter === 'all') || (status === statusFilter);
                 const matchAI = (aiFilter === 'all') || ias.includes(aiFilter);
+                const matchForm = (formFilter === 'all') || forms.includes(formFilter);
 
-                if (matchSearch && matchStatus && matchAI) {
+                if (matchSearch && matchStatus && matchAI && matchForm) {
                     card.style.display = '';
                 } else {
                     card.style.display = 'none';

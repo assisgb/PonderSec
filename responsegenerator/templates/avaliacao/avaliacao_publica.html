@@ -1,0 +1,128 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ formulario.nome }} — Avaliação PonderSEC</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: "Space Grotesk", system-ui, sans-serif;
+            background: radial-gradient(circle at top, #051015 0, #02060b 45%, #000000 100%);
+            color: #e5fef6; min-height: 100vh; padding: 40px 20px;
+        }
+        .background-grid { position: fixed; inset: 0; background-image: linear-gradient(90deg, rgba(0, 255, 160, 0.06) 1px, transparent 1px), linear-gradient(180deg, rgba(0, 255, 160, 0.06) 1px, transparent 1px); background-size: 40px 40px; opacity: 0.4; pointer-events: none; z-index: 0; }
+        .glow-orb { position: fixed; width: 600px; height: 600px; border-radius: 50%; background: radial-gradient(circle, rgba(0, 255, 160, 0.15), transparent 70%); top: -10%; left: 50%; transform: translateX(-50%); filter: blur(80px); opacity: 0.6; pointer-events: none; z-index: 0; }
+        
+        .container { position: relative; max-width: 900px; margin: 0 auto; z-index: 2; }
+        
+        .header-public { text-align: center; margin-bottom: 40px; }
+        .header-public img { width: 80px; height: 80px; border-radius: 12px; margin-bottom: 16px; filter: drop-shadow(0 0 10px rgba(0, 255, 160, 0.3)); }
+        .form-title { color: #00ff9f; font-size: 32px; font-weight: 700; margin-bottom: 8px; }
+        .form-subtitle { color: #8ba1b0; font-size: 16px; }
+
+        .section-card { background: rgba(11, 20, 29, 0.6); border: 1px solid rgba(0, 255, 160, 0.2); border-radius: 16px; padding: 32px; margin-bottom: 32px; box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4); }
+        .section-title { color: #7df6c2; font-size: 18px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; margin-bottom: 24px; border-bottom: 1px solid rgba(0, 255, 160, 0.1); padding-bottom: 12px; }
+
+        .input-group { margin-bottom: 20px; }
+        .field-label { display: block; color: #c5d9e3; font-size: 14px; margin-bottom: 8px; font-weight: 500; }
+        .field-input { width: 100%; padding: 14px 18px; background: #050a11; border: 1px solid #1b2635; border-radius: 10px; color: #e5fef6; font-size: 15px; font-family: "Space Grotesk", sans-serif; outline: none; transition: all 0.2s; }
+        .field-input:focus { border-color: #00ff9f; box-shadow: 0 0 12px rgba(0, 255, 160, 0.2); }
+
+        .question-box { background: rgba(0, 255, 160, 0.03); border: 1px solid rgba(0, 255, 160, 0.1); border-radius: 12px; padding: 24px; margin-bottom: 24px; }
+        .question-text { font-size: 18px; font-weight: 600; color: #fff; line-height: 1.5; margin-bottom: 20px; }
+        
+        .ai-response-box { background: #050a11; border: 1px solid #1b2635; border-radius: 10px; padding: 20px; margin-bottom: 20px; border-left: 4px solid #bb86fc; }
+        .ai-badge { display: inline-block; background: rgba(187, 134, 252, 0.1); color: #bb86fc; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 16px; border: 1px solid rgba(187, 134, 252, 0.3); }
+        .response-content { color: #c5d9e3; font-size: 15px; line-height: 1.7; white-space: pre-wrap; margin-bottom: 24px; max-height: 400px; overflow-y: auto; padding-right: 10px; }
+        .response-content::-webkit-scrollbar { width: 6px; } .response-content::-webkit-scrollbar-thumb { background: #1b2635; border-radius: 3px; }
+
+        .metric-grid { display: grid; gap: 20px; background: rgba(255, 255, 255, 0.02); padding: 20px; border-radius: 8px; border: 1px dashed rgba(255, 255, 255, 0.1); }
+        .metric-item { display: flex; flex-direction: column; gap: 8px; }
+        .metric-name { font-size: 14px; color: #00ff9f; font-weight: 600; text-transform: uppercase; }
+        .metric-desc { font-size: 13px; color: #8ba1b0; margin-bottom: 8px; }
+        
+        .score-input { width: 100px; padding: 12px; background: #020509; border: 1px solid #1b2635; border-radius: 8px; color: #00ff9f; font-size: 18px; font-weight: 700; text-align: center; outline: none; }
+        .score-input:focus { border-color: #00ff9f; }
+        
+        textarea.field-input { min-height: 80px; resize: vertical; }
+
+        .btn-submit { width: 100%; padding: 18px; background: linear-gradient(90deg, #00ff9f, #00ff57); border: none; border-radius: 12px; color: #000; font-size: 18px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; cursor: pointer; transition: all 0.2s; font-family: "Space Grotesk", sans-serif; margin-top: 20px; }
+        .btn-submit:hover { box-shadow: 0 0 30px rgba(0, 255, 160, 0.4); transform: translateY(-2px); }
+    </style>
+</head>
+<body>
+    <div class="background-grid"></div>
+    <div class="glow-orb"></div>
+
+    <div class="container">
+        <div class="header-public">
+            <img src="{% static 'pondersec_logo.jpg' %}" alt="PonderSEC Logo">
+            <h1 class="form-title">{{ formulario.nome }}</h1>
+            <p class="form-subtitle">Painel de Avaliação Cega de Inteligência Artificial</p>
+        </div>
+
+        <form method="POST">
+            {% csrf_token %}
+
+            <div class="section-card">
+                <h2 class="section-title">1. Identificação do Avaliador</h2>
+                <div class="input-group">
+                    <label class="field-label">Nome Completo</label>
+                    <input type="text" name="nome" class="field-input" required placeholder="Digite seu nome">
+                </div>
+                <div class="input-group">
+                    <label class="field-label">E-mail Profissional</label>
+                    <input type="email" name="email" class="field-input" required placeholder="exemplo@empresa.com">
+                </div>
+                <div class="input-group">
+                    <label class="field-label">Profissão / Cargo</label>
+                    <input type="text" name="profissao" class="field-input" required placeholder="Ex: Engenheiro de Segurança, Desenvolvedor...">
+                </div>
+            </div>
+
+            <div class="section-card">
+                <h2 class="section-title">2. Avaliação das Respostas</h2>
+                
+                {% for questao in formulario.questoes.all %}
+                <div class="question-box">
+                    <div class="question-text">Q{{ forloop.counter }}. {{ questao.conteudo }}</div>
+
+                    {% for resp in questao.respostas.all %}
+                    <div class="ai-response-box">
+                        <div class="ai-badge">✦ Resposta da IA ({{ resp.llm.nome }})</div>
+                        <div class="response-content">{{ resp.conteudo_resposta }}</div>
+                        
+                        <div class="metric-grid">
+                            {% for metrica in metricas %}
+                            <div class="metric-item">
+                                <span class="metric-name">{{ metrica.nome }}</span>
+                                <span class="metric-desc">{{ metrica.descricao }}</span>
+                                
+                                {% if metrica.tipo == 'quantitativa' %}
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <input type="number" name="quanti_{{ resp.id }}_{{ metrica.id }}" class="score-input" min="0" max="{{ metrica.pontuacao_maxima|default:10 }}" required placeholder="0">
+                                    <span style="color: #6b7b8d; font-size: 14px;">(Nota Máxima: {{ metrica.pontuacao_maxima|default:10 }})</span>
+                                </div>
+                                {% endif %}
+                                
+                                <textarea name="quali_{{ resp.id }}_{{ metrica.id }}" class="field-input" placeholder="Justificativa ou comentário sobre esta métrica (Opcional)"></textarea>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p style="color: #ff5566;">Nenhuma IA respondeu a esta pergunta ainda.</p>
+                    {% endfor %}
+
+                </div>
+                {% endfor %}
+            </div>
+
+            <button type="submit" class="btn-submit">Enviar Avaliação</button>
+        </form>
+    </div>
+</body>
+</html>

@@ -10,7 +10,7 @@ from datetime import timedelta
 import re
 from django.http import JsonResponse, HttpResponse
 import json
-from responsegenerator.models import Historico, Categoria, LLM, Questao, Resposta, Avaliacao, Metrica, Formulario
+from responsegenerator.models import Historico, Categoria, LLM, Questao, Resposta, Avaliacao, Metrica, Formulario, Avaliador, AvaliacaoFormulario
 
 def salvar_no_historico(user, pergunta, resposta):
     resp_obj = Resposta.objects.create(conteudo_resposta=resposta)
@@ -199,11 +199,13 @@ def questoes(request):
     lista_questoes = Questao.objects.all().order_by('-id')
     lista_categorias = Categoria.objects.all()
     llms = LLM.objects.all()
+    formulario = Formulario.objects.all()
     
     return render(request, 'questoes/questoes.html', {
         "historico": lista_questoes,
         "categorias": lista_categorias,
-        "llms": llms
+        "llms": llms,
+        "formularios": formulario
     })
 
 @login_required
@@ -496,3 +498,42 @@ def avaliacao_deletar_formulario(request, id):
     if request.method == 'POST':
         formulario.delete()
     return redirect('avaliacao')
+
+def responder_avaliacao_publica(request, formulario_id):
+    formulario = get_object_or_404(Formulario, id=formulario_id)
+    metricas = Metrica.objects.filter(ativa=True)
+
+    if request.method == 'POST':
+        nome = request.POST.get('nome')
+        email = request.POST.get('email')
+        profissao = request.POST.get('profissao')
+
+        avaliador = Avaliador.objects.create(
+            nome=nome,
+            email=email,
+            profissao=profissao,
+            formulario=formulario
+        )
+
+        for chave, valor in request.POST.items():
+            if chave.startswith('quanti_') and valor:
+                partes = chave.split('_')
+                resposta_id = partes[1]
+                metrica_id = partes[2]
+
+                texto_quali = request.POST.get(f'quali_{resposta_id}_{metrica_id}', '')
+
+                AvaliacaoFormulario.objects.create(
+                    avaliador=avaliador,
+                    resposta_id=resposta_id,
+                    metrica_id=metrica_id,
+                    avaliacao_quanti=valor,
+                    avaliacao_quali=texto_quali
+                )
+            return render(request, 'avaliacao/avaliacao_sucesso.html')
+    
+    contexto = {
+        'formulario': formulario,
+        'metricas': metricas
+    }
+    return render(request, 'avaliacao/avaliacao_publica.html', contexto)

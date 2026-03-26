@@ -95,3 +95,26 @@ class Formulario(models.Model):
 
     def __str__(self):
         return self.nome
+    
+class Avaliador(models.Model):
+    nome = models.CharField(max_length=100)
+    email = models.EmailField(unique=True)
+    profissao = models.CharField(max_length=100, blank=True, null=True)
+    formulario = models.ForeignKey(Formulario, on_delete=models.CASCADE, related_name='avaliadores')
+    data_resposta = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.nome} - {self.email}"
+    
+class AvaliacaoFormulario(models.Model):
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    avaliador = models.ForeignKey(Avaliador, on_delete=models.CASCADE, null=True, blank=True, related_name='avaliacoes')
+
+    resposta = models.ForeignKey(Resposta, on_delete=models.CASCADE)
+    metrica = models.ForeignKey(Metrica, on_delete=models.SET_NULL, null=True)
+    avaliacao_quali = models.TextField(blank=True, null=True)
+    avaliacao_quanti = models.IntegerField(blank=True, null=True)
+
+    def __str__(self):
+        nome_valiador = self.usuario.username if self.usuario else self.avaliador.nome
+        return f"{nome_valiador} - {self.resposta}"

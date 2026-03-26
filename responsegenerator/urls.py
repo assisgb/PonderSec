@@ -18,6 +18,7 @@ urlpatterns = [
     path('avaliacao/editar/<int:id>/', views.avaliacao_editar_formulario, name="avaliacao_editar_formulario"),
     path('avaliacao/deletar/<int:id>/', views.avaliacao_deletar_formulario, name="avaliacao_deletar_formulario"),
     path('avaliacao/<int:formulario_id>/questao/<int:questao_id>/', views.avaliacao_respostas, name="avaliacao_respostas"),
+    path('avaliacao/responder/<int:formulario_id>/', views.responder_avaliacao_publica, name='responder_avaliacao_publica'),
     path('setup/', views.setup, name="setup"),
     path('setup_llm/', views.setup_llm, name="setup_llm"),
     path('setup_configurar_llm/', views.setup_configurar_llm, name="setup_configurar_llm"),
