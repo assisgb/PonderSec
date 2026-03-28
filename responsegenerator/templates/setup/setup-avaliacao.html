@@ -4,14 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PonderSEC — Avaliação</title>
+    <title>PonderSEC — Métricas</title>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: "Space Grotesk", system-ui, sans-serif;
@@ -25,299 +21,267 @@
         }
 
         .background-grid {
-            position: fixed;
-            inset: 0;
-            background-image: 
+            position: fixed; inset: 0;
+            background-image:
                 linear-gradient(90deg, rgba(0, 255, 160, 0.06) 1px, transparent 1px),
                 linear-gradient(180deg, rgba(0, 255, 160, 0.06) 1px, transparent 1px);
-            background-size: 40px 40px;
-            opacity: 0.4;
-            pointer-events: none;
+            background-size: 40px 40px; opacity: 0.4; pointer-events: none;
         }
 
         .scanline {
-            position: fixed;
-            inset: 0;
-            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.7));
-            background-size: 100% 4px;
-            opacity: 0.25;
-            pointer-events: none;
+            position: fixed; inset: 0;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.7), rgba(0,0,0,0.15), rgba(0,0,0,0.7));
+            background-size: 100% 4px; opacity: 0.25; pointer-events: none;
         }
 
         .glow-orb {
-            position: fixed;
-            width: 500px;
-            height: 500px;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(0, 255, 160, 0.25), transparent 70%);
-            top: -10%;
-            right: -5%;
-            filter: blur(80px);
-            opacity: 0.6;
-            pointer-events: none;
+            position: fixed; width: 600px; height: 600px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 255, 160, 0.15), transparent 70%);
+            top: -15%; right: -10%; filter: blur(100px); opacity: 0.8; pointer-events: none;
+        }
+
+        .glow-orb-2 {
+            position: fixed; width: 400px; height: 400px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 180, 255, 0.08), transparent 70%);
+            bottom: -10%; left: -5%; filter: blur(80px); opacity: 0.6; pointer-events: none;
         }
 
         .container {
-            position: relative;
-            max-width: 1200px;
-            width: 100%;
-            z-index: 2;
+            position: relative; width: 100%; max-width: 900px; z-index: 2;
         }
 
+        /* HEADER */
         .header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 35px;
-            padding: 30px 35px;
-            background: rgba(11, 20, 29, 0.6);
-            border-radius: 16px;
-            border: 1px solid rgba(0, 255, 160, 0.15);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            display: flex; align-items: center; gap: 22px;
+            margin-bottom: 32px; padding: 28px 35px;
+            background: radial-gradient(circle at top, #0b141d 0, #050a11 55%, #020509 100%);
+            border-radius: 20px;
+            box-shadow: 0 0 0 1px rgba(0, 255, 160, 0.15), 0 20px 60px rgba(0,0,0,0.8);
         }
 
-        .logo-section {
-            display: flex;
-            align-items: center;
-            gap: 22px;
+        .logo img {
+            width: 68px; border-radius: 12px;
+            filter: drop-shadow(0 0 12px rgba(0, 255, 160, 0.6));
         }
 
-        .logo-section img {
-            width: 85px;
-            height: 85px;
-            border-radius: 12px;
-            filter: drop-shadow(0 0 8px rgba(0, 255, 160, 0.4));
-        }
-
-        .header-title {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
+        .header-text { flex: 1; }
 
         .product-name {
-            color: #7df6c2;
-            text-transform: uppercase;
-            letter-spacing: 0.25em;
-            font-size: 12px;
-            font-weight: 600;
+            color: #4ecf9a; text-transform: uppercase;
+            letter-spacing: 0.3em; font-size: 11px; font-weight: 600; margin-bottom: 4px;
         }
 
         .page-title {
-            color: #00ff9f;
-            font-size: 28px;
-            font-weight: 600;
+            color: #00ff9f; font-size: 26px; font-weight: 700;
+            text-shadow: 0 0 30px rgba(0, 255, 160, 0.3); margin-bottom: 4px;
         }
 
+        .subtitle { font-size: 13px; color: #5a7a8a; }
+
         .btn-back {
-            padding: 14px 32px;
-            background: rgba(0, 255, 160, 0.1);
-            border: 1px solid rgba(0, 255, 160, 0.3);
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 15px;
-            font-weight: 600;
-            color: #00ff9f;
-            text-decoration: none;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            transition: all 0.2s;
+            padding: 12px 26px;
+            background: rgba(0, 255, 160, 0.08);
+            border: 1px solid rgba(0, 255, 160, 0.2);
+            border-radius: 10px; cursor: pointer;
+            font-size: 13px; font-weight: 700; color: #00ff9f;
+            text-decoration: none; text-transform: uppercase;
+            letter-spacing: 0.08em; transition: all 0.2s;
+            display: flex; align-items: center; gap: 8px;
         }
 
         .btn-back:hover {
-            background: rgba(0, 255, 160, 0.15);
-            border-color: #00ff9f;
-            transform: translateY(-1px);
+            background: rgba(0, 255, 160, 0.14);
+            border-color: rgba(0, 255, 160, 0.4);
         }
 
+        /* TOOLBAR */
         .toolbar {
-            display: flex;
-            gap: 18px;
-            margin-bottom: 30px;
+            display: flex; gap: 14px; margin-bottom: 24px;
         }
 
-        .search-bar {
-            position: relative;
-            flex: 1;
-        }
+        .search-bar { position: relative; flex: 1; }
 
         .search-input {
-            width: 100%;
-            padding: 16px 20px 16px 50px;
-            background: #050a11;
-            border: 1px solid #1b2635;
-            border-radius: 10px;
-            color: #e5fef6;
-            font-size: 16px;
+            width: 100%; padding: 13px 18px 13px 46px;
+            background: rgba(5, 10, 17, 0.9); border: 1px solid #1b2635;
+            border-radius: 10px; color: #e5fef6; font-size: 14px;
             font-family: "Space Grotesk", system-ui, sans-serif;
-            outline: none;
-            transition: all 0.2s;
+            outline: none; transition: all 0.2s;
         }
 
-        .search-input::placeholder {
-            color: #6b7b8d;
-        }
-
-        .search-input:focus {
-            border-color: #00ff9f;
-            box-shadow: 0 0 8px rgba(0, 255, 160, 0.3);
-        }
+        .search-input::placeholder { color: #3a5062; }
+        .search-input:focus { border-color: rgba(0, 255, 160, 0.4); box-shadow: 0 0 10px rgba(0, 255, 160, 0.08); }
 
         .search-icon {
-            position: absolute;
-            left: 18px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #7df6c2;
-            font-size: 20px;
+            position: absolute; left: 15px; top: 50%;
+            transform: translateY(-50%); color: #4ecf9a;
+            display: flex; align-items: center;
         }
 
         .btn-add {
-            padding: 16px 32px;
+            padding: 13px 24px;
             background: rgba(0, 255, 160, 0.1);
-            border: 1px solid rgba(0, 255, 160, 0.3);
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
-            color: #00ff9f;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            transition: all 0.2s;
-            white-space: nowrap;
+            border: 1px solid rgba(0, 255, 160, 0.25);
+            border-radius: 10px; cursor: pointer;
+            font-size: 13px; font-weight: 700; color: #00ff9f;
+            text-decoration: none; text-transform: uppercase;
+            letter-spacing: 0.08em; transition: all 0.2s;
+            display: flex; align-items: center; gap: 8px; white-space: nowrap;
         }
 
         .btn-add:hover {
-            background: rgba(0, 255, 160, 0.15);
-            border-color: #00ff9f;
-            transform: translateY(-1px);
+            background: rgba(0, 255, 160, 0.16);
+            border-color: rgba(0, 255, 160, 0.5);
+            box-shadow: 0 0 20px rgba(0, 255, 160, 0.1);
         }
 
+        /* SECTION LABEL */
+        .section-label {
+            font-size: 10px; color: #4ecf9a; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.25em;
+            margin-bottom: 16px; display: flex; align-items: center; gap: 12px;
+        }
+
+        .section-label::after {
+            content: ''; flex: 1; height: 1px;
+            background: linear-gradient(to right, rgba(0, 255, 160, 0.2), transparent);
+        }
+
+        /* METRICS GRID */
         .metrics-list {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            gap: 16px;
         }
 
         .metric-card {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 26px 30px;
-            background: rgba(11, 20, 29, 0.4);
-            border: 1px solid rgba(0, 255, 160, 0.15);
-            border-radius: 12px;
-            transition: all 0.2s;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 22px 24px;
+            background: linear-gradient(135deg, rgba(11, 20, 29, 0.9) 0%, rgba(5, 10, 17, 0.95) 100%);
+            border: 1px solid rgba(0, 255, 160, 0.1);
+            border-radius: 16px; transition: all 0.3s;
+            position: relative; overflow: hidden;
         }
+
+        .metric-card::before {
+            content: '';
+            position: absolute; inset: 0;
+            background: radial-gradient(circle at 0% 0%, rgba(0, 255, 160, 0.05) 0%, transparent 60%);
+            opacity: 0; transition: opacity 0.3s;
+        }
+
+        .metric-card:hover::before { opacity: 1; }
 
         .metric-card:hover {
             border-color: rgba(0, 255, 160, 0.3);
-            background: rgba(11, 20, 29, 0.6);
+            box-shadow: 0 0 24px rgba(0, 0, 0, 0.4), 0 0 20px rgba(0, 255, 160, 0.06);
+            transform: translateY(-2px);
         }
 
-        .metric-info {
-            display: flex;
-            align-items: center;
-            gap: 22px;
+        .metric-info { display: flex; align-items: center; gap: 16px; flex: 1; }
+
+        .metric-icon-box {
+            width: 48px; height: 48px; flex-shrink: 0;
+            background: rgba(0, 255, 160, 0.06);
+            border: 1px solid rgba(0, 255, 160, 0.15);
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.3s;
         }
 
-        .metric-icon {
-            font-size: 44px;
+        .metric-card:hover .metric-icon-box {
+            background: rgba(0, 255, 160, 0.1);
+            border-color: rgba(0, 255, 160, 0.3);
+            box-shadow: 0 0 16px rgba(0, 255, 160, 0.12);
         }
 
-        .metric-details {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
+        .metric-icon-box svg {
+            filter: drop-shadow(0 0 5px rgba(0, 255, 160, 0.35));
+            transition: filter 0.3s;
         }
+
+        .metric-card:hover .metric-icon-box svg {
+            filter: drop-shadow(0 0 10px rgba(0, 255, 160, 0.6));
+        }
+
+        .metric-details { display: flex; flex-direction: column; gap: 4px; }
 
         .metric-name {
-            font-size: 20px;
-            font-weight: 600;
-            color: #e5fef6;
+            font-size: 15px; font-weight: 700; color: #e5fef6;
         }
 
-        .metric-description {
-            font-size: 14px;
-            color: #8ba1b0;
+        .metric-meta {
+            display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
         }
 
-        .metric-actions {
-            display: flex;
-            gap: 12px;
+        .metric-description { font-size: 12px; color: #5a7a8a; line-height: 1.4; }
+
+        .badge-tipo {
+            font-size: 9px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.08em; padding: 2px 8px; border-radius: 20px;
         }
 
-        .btn-icon {
-            width: 42px;
-            height: 42px;
-            border-radius: 8px;
-            border: 1px solid;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            transition: all 0.2s;
-        }
-
-        .btn-edit {
-            background: rgba(0, 255, 160, 0.08);
-            border-color: rgba(0, 255, 160, 0.2);
-            color: #7df6c2;
-        }
-
-        .btn-edit:hover {
-            background: rgba(0, 255, 160, 0.12);
-            border-color: rgba(0, 255, 160, 0.3);
+        .badge-quanti {
+            background: rgba(0, 255, 160, 0.1);
+            border: 1px solid rgba(0, 255, 160, 0.25);
             color: #00ff9f;
         }
 
+        .badge-quali {
+            background: rgba(187, 134, 252, 0.1);
+            border: 1px solid rgba(187, 134, 252, 0.25);
+            color: #bb86fc;
+        }
+
+        .metric-actions { display: flex; gap: 8px; flex-shrink: 0; margin-left: 12px; }
+
+        .btn-icon {
+            width: 36px; height: 36px; border-radius: 8px; border: 1px solid;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s; background: none;
+        }
+
         .btn-delete {
-            background: rgba(255, 0, 0, 0.08);
-            border-color: rgba(255, 0, 0, 0.2);
-            color: #ff6b6b;
+            border-color: rgba(255, 80, 80, 0.2);
+            color: #cc5555;
         }
 
         .btn-delete:hover {
-            background: rgba(255, 0, 0, 0.12);
-            border-color: rgba(255, 0, 0, 0.3);
+            background: rgba(255, 80, 80, 0.1);
+            border-color: rgba(255, 80, 80, 0.4);
+            color: #ff6b6b;
+            box-shadow: 0 0 12px rgba(255, 80, 80, 0.15);
         }
 
-        @media (max-width: 768px) {
-            .header {
-                flex-direction: column;
-                gap: 15px;
-                text-align: center;
-            }
-
-            .logo-section {
-                flex-direction: column;
-            }
-
-            .btn-back {
-                width: 100%;
-            }
-
-            .toolbar {
-                flex-direction: column;
-            }
-
-            .metrics-list {
-                grid-template-columns: 1fr;
-            }
-
-            .metric-card {
-                flex-direction: column;
-                gap: 12px;
-                text-align: center;
-            }
-
-            .metric-info {
-                flex-direction: column;
-            }
+        .empty-state {
+            grid-column: 1 / -1; text-align: center;
+            padding: 50px 20px; color: #3a5062; font-size: 14px;
         }
-        a{
-            text-decoration: none;
+
+        .empty-state svg { margin-bottom: 14px; opacity: 0.3; }
+
+        /* BOTTOM */
+        .btn-back-bottom {
+            width: 100%; margin-top: 24px; padding: 13px;
+            background: rgba(255, 70, 70, 0.06);
+            border: 1px solid rgba(255, 70, 70, 0.2);
+            border-radius: 12px; cursor: pointer;
+            font-size: 12px; font-weight: 700; color: #cc5555;
+            text-decoration: none; text-transform: uppercase;
+            letter-spacing: 0.12em; transition: all 0.25s;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+
+        .btn-back-bottom:hover {
+            background: rgba(255, 70, 70, 0.12);
+            border-color: rgba(255, 70, 70, 0.4);
+            color: #ff6b6b;
+        }
+
+        @media (max-width: 700px) {
+            .metrics-list { grid-template-columns: 1fr; }
+            .header { flex-direction: column; text-align: center; }
+            .toolbar { flex-direction: column; }
         }
     </style>
 </head>
@@ -325,151 +289,113 @@
     <div class="background-grid"></div>
     <div class="scanline"></div>
     <div class="glow-orb"></div>
+    <div class="glow-orb-2"></div>
 
     <div class="container">
+
         <div class="header">
-            <div class="logo-section">
+            <div class="logo">
                 <img src="{% static 'pondersec_logo.jpg' %}" alt="PonderSEC Logo">
-                <div class="header-title">
-                    <div class="product-name">PONDERSEC</div>
-                    <div class="page-title">Métricas de Avaliação</div>
-                </div>
             </div>
-            <a href="{% url 'setup' %}" class="btn-back">Voltar</a>
+            <div class="header-text">
+                <div class="product-name">PonderSEC</div>
+                <div class="page-title">Métricas de Avaliação</div>
+                <div class="subtitle">Gerencie os critérios de avaliação das respostas</div>
+            </div>
+            <a href="{% url 'setup' %}" class="btn-back">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                    <path d="M19 12H5M11 6l-6 6 6 6"/>
+                </svg>
+                Voltar
+            </a>
         </div>
 
         <div class="toolbar">
             <div class="search-bar">
-                <span class="search-icon">🔎</span>
-                <input 
-                    type="text" 
-                    class="search-input" 
-                    id="searchInput"
-                    placeholder="Buscar métrica..."
-                    onkeyup="filterMetrics()"
-                >
+                <span class="search-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ecf9a" stroke-width="2" stroke-linecap="round">
+                        <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+                    </svg>
+                </span>
+                <input type="text" class="search-input" id="searchInput"
+                    placeholder="Buscar métrica..." onkeyup="filterMetrics()">
             </div>
-            <a href="{% url 'setup_adicionar_metrica' %}">
-                <button class="btn-add" >+ Adicionar</button>
+            <a href="{% url 'setup_adicionar_metrica' %}" class="btn-add">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                    <path d="M12 5v14M5 12h14"/>
+                </svg>
+                Adicionar
             </a>
-            
         </div>
+
+        <div class="section-label">Métricas Cadastradas</div>
 
         <div class="metrics-list" id="metricsList">
-            <div class="metric-card" data-name="acuracia">
+            {% for metrica in metricas %}
+            <div class="metric-card" data-name="{{ metrica.nome|lower }}">
                 <div class="metric-info">
-                    <div class="metric-icon">🎯</div>
+                    <div class="metric-icon-box">
+                        {% if metrica.tipo == 'quantitativa' %}
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00ff9f" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 20h18"/><path d="M5 20V14"/><path d="M8 20V10"/>
+                            <path d="M11 20V6"/><path d="M14 20V9"/><path d="M17 20V13"/><path d="M20 20V16"/>
+                        </svg>
+                        {% else %}
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#bb86fc" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                        </svg>
+                        {% endif %}
+                    </div>
                     <div class="metric-details">
-                        <div class="metric-name">Acurácia</div>
-                        <div class="metric-description">Precisão das respostas geradas</div>
+                        <div class="metric-name">{{ metrica.nome }}</div>
+                        <div class="metric-meta">
+                            <span class="badge-tipo {% if metrica.tipo == 'quantitativa' %}badge-quanti{% else %}badge-quali{% endif %}">
+                                {{ metrica.tipo }}
+                            </span>
+                        </div>
+                        <div class="metric-description">{{ metrica.descricao }}</div>
                     </div>
                 </div>
                 <div class="metric-actions">
-
-                    <a href="{% url 'setup_configurar_metrica' %}">
-                    <button class="btn-icon btn-edit" onclick="editMetric('Acurácia')" title="Editar">✏️</button>
-                    </a>
-
-                    <button class="btn-icon btn-delete" onclick="deleteMetric('Acurácia')" title="Deletar">🗑️</button>
+                    <form method="POST" action="{% url 'setup_deletar_metrica' metrica.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-icon btn-delete" title="Deletar"
+                            onclick="return confirm('Deletar a métrica {{ metrica.nome }}?')">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                <polyline points="3 6 5 6 21 6"/>
+                                <path d="M19 6l-1 14H6L5 6"/>
+                                <path d="M10 11v6M14 11v6"/>
+                                <path d="M9 6V4h6v2"/>
+                            </svg>
+                        </button>
+                    </form>
                 </div>
             </div>
-
-            <div class="metric-card" data-name="completude">
-                <div class="metric-info">
-                    <div class="metric-icon">📋</div>
-                    <div class="metric-details">
-                        <div class="metric-name">Completude</div>
-                        <div class="metric-description">Abrangência do conteúdo fornecido</div>
-                    </div>
-                </div>
-                <div class="metric-actions">
-                    <a href="{% url 'setup_configurar_metrica' %}">
-                    <button class="btn-icon btn-edit" onclick="editMetric('Completude')" title="Editar">✏️</button>
-                    </a>
-                    <button class="btn-icon btn-delete" onclick="deleteMetric('Completude')" title="Deletar">🗑️</button>
-                </div>
+            {% empty %}
+            <div class="empty-state">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#4ecf9a" stroke-width="1.5" stroke-linecap="round">
+                    <path d="M3 20h18"/><path d="M5 20V14"/><path d="M8 20V10"/>
+                    <path d="M11 20V6"/><path d="M14 20V9"/>
+                </svg>
+                <p>Nenhuma métrica cadastrada ainda.</p>
             </div>
-
-            <div class="metric-card" data-name="conformidade_e_seguranca">
-                <div class="metric-info">
-                    <a href="{% url 'setup_configurar_metrica' %}">
-                    <div class="metric-icon">⭐</div>
-                    </a>
-                    <div class="metric-details">
-                        <div class="metric-name">Conformidade e Segurança</div>
-                        <div class="metric-description">Adequação ao contexto da pergunta</div>
-                    </div>
-                </div>
-                <div class="metric-actions">
-                    <a href="{% url 'setup_configurar_metrica' %}">
-                    <button class="btn-icon btn-edit" onclick="editMetric('conformidade_e_seguranca')" title="Editar">✏️</button>
-                    </a>
-                    <button class="btn-icon btn-delete" onclick="deleteMetric('conformidade_e_seguranca')" title="Deletar">🗑️</button>
-                </div>
-            </div>
-
-            <div class="metric-card" data-name="clareza">
-                <div class="metric-info">
-                    <div class="metric-icon">🧭</div>
-                    <div class="metric-details">
-                        <div class="metric-name">Clareza</div>
-                        <div class="metric-description">Objetividade e clareza da resposta</div>
-                    </div>
-                </div>
-                <div class="metric-actions">
-                    <a href="{% url 'setup_configurar_metrica' %}">
-                    <button class="btn-icon btn-edit" onclick="editMetric('clareza')" title="Editar">✏️</button>
-                    </a>
-                    <button class="btn-icon btn-delete" onclick="deleteMetric('clareza')" title="Deletar">🗑️</button>
-                </div>
-            </div>
-
-            <div class="metric-card" data-name="ausencia_de_alucinacao">
-                <div class="metric-info">
-                    <div class="metric-icon">💭</div>
-                    <div class="metric-details">
-                        <div class="metric-name">Ausência de Alucinação</div>
-                        <div class="metric-description">Objetividade e clareza da resposta</div>
-                    </div>
-                </div>
-                <div class="metric-actions">
-                    <a href="{% url 'setup_configurar_metrica' %}">
-                    <button class="btn-icon btn-edit" onclick="editMetric('ausencia_de_alucinacao')" title="Editar">✏️</button>
-                    </a>
-                    <button class="btn-icon btn-delete" onclick="deleteMetric('ausencia_de_alucinacao')" title="Deletar">🗑️</button>
-                </div>
-            </div>
+            {% endfor %}
         </div>
+
+        <a href="{% url 'setup' %}" class="btn-back-bottom">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <path d="M19 12H5M11 6l-6 6 6 6"/>
+            </svg>
+            Voltar ao Setup
+        </a>
     </div>
 
     <script>
         function filterMetrics() {
-            const input = document.getElementById('searchInput');
-            const filter = input.value.toLowerCase();
-            const cards = document.querySelectorAll('.metric-card');
-
-            cards.forEach(card => {
-                const name = card.getAttribute('data-name');
-                if (name.includes(filter)) {
-                    card.style.display = '';
-                } else {
-                    card.style.display = 'none';
-                }
+            const filter = document.getElementById('searchInput').value.toLowerCase();
+            document.querySelectorAll('.metric-card').forEach(card => {
+                card.style.display = card.getAttribute('data-name').includes(filter) ? '' : 'none';
             });
-        }
-
-        function addMetric() {
-            alert('Funcionalidade de adicionar métrica');
-        }
-
-        function editMetric(name) {
-            alert('Editar: ' + name);
-        }
-
-        function deleteMetric(name) {
-            if (confirm('Deseja realmente deletar a métrica ' + name + '?')) {
-                alert('Métrica ' + name + ' deletada!');
-            }
         }
     </script>
 </body>
