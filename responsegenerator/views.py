@@ -237,23 +237,43 @@ def upload_perguntas(request):
         if arquivo:
             perguntas = []
             conteudo_texto = arquivo.read().decode("utf-8")
-            
-            for linha in conteudo_texto.split("\n"):
-                match = re.search(r'PERGUNTA\s*:\s*"?(.+?)"?$', linha, re.IGNORECASE)
-                
-                if match:
-                    texto_pergunta = match.group(1).strip()
-                    perguntas.append(texto_pergunta)
-                    Questao.objects.create(conteudo=texto_pergunta)
-            
+            nome_arquivo = arquivo.name.lower()
+
+            if nome_arquivo.endswith(".json"):
+                try:
+                    dados = json.loads(conteudo_texto)
+
+                    if not isinstance(dados, list):
+                        dados = [dados]
+
+                    for item in dados:
+                        texto_pergunta = item.get("pergunta", "").strip()
+                        if texto_pergunta:
+                            perguntas.append(texto_pergunta)
+                            Questao.objects.create(conteudo=texto_pergunta)
+
+                except (json.JSONDecodeError, AttributeError):
+                    django_messages.error(request, "Arquivo JSON inválido ou mal formatado.")
+                    return redirect('questoes')
+
+            else:
+                for linha in conteudo_texto.split("\n"):
+                    match = re.search(r'PERGUNTA\s*:\s*"?(.+?)"?$', linha, re.IGNORECASE)
+
+                    if match:
+                        texto_pergunta = match.group(1).strip()
+                        perguntas.append(texto_pergunta)
+                        Questao.objects.create(conteudo=texto_pergunta)
+
             if perguntas:
                 django_messages.success(request, f"{len(perguntas)} perguntas importadas com sucesso!")
             else:
                 django_messages.error(request, "Nenhuma pergunta encontrada no arquivo.")
         else:
             django_messages.error(request, "Nenhum arquivo foi enviado.")
-            
-    return redirect('questoes') 
+
+    return redirect('questoes')
+
 
 @login_required
 def questoes_cadastro_categoria(request):
