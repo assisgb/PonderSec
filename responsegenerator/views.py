@@ -11,6 +11,8 @@ import re
 from django.http import JsonResponse, HttpResponse
 import json
 from responsegenerator.models import Historico, Categoria, LLM, Questao, Resposta, Avaliacao, Metrica, Formulario, Avaliador, AvaliacaoFormulario
+from django.db.models import Avg
+from collections import defaultdict
 
 def salvar_no_historico(user, pergunta, resposta):
     resp_obj = Resposta.objects.create(conteudo_resposta=resposta)
@@ -591,3 +593,43 @@ def responder_avaliacao_publica(request, formulario_id):
         'likert_options': likert_options,
     }
     return render(request, 'avaliacao/avaliacao_publica.html', contexto)
+
+
+
+
+@login_required
+def dashboard_avaliacoes(request):
+    # Busca todas as metricas ativas
+    metricas = list(Metrica.objects.filter(ativa=True).values('id', 'nome', 'pontuacao_maxima'))
+    
+    # Busca todos os LLMs
+    llms = list(LLM.objects.all().values('id', 'nome'))
+    
+    # Para cada metrica calcula a média por LLM
+    dados = {}
+    for metrica in metricas:
+        dados_metrica = {}
+        for llm in llms:
+            media = AvaliacaoFormulario.objects.filter(
+                metrica_id=metrica['id'],
+                resposta__llm_id=llm['id'],
+                avaliacao_quanti__isnull=False
+            ).aggregate(media=Avg('avaliacao_quanti'))['media']
+            
+            dados_metrica[llm['nome']] = round(media, 2) if media is not None else None
+        
+        dados[metrica['nome']] = {
+            'id': metrica['id'],
+            'pontuacao_maxima': metrica['pontuacao_maxima'] or 5,
+            'dados': dados_metrica
+        }
+    
+    return render(request, 'avaliacao/dashboard_avaliacoes.html', {
+        'metricas_json': json.dumps(dados),
+        'llms_json': json.dumps([l['nome'] for l in llms]),
+        'metricas_lista': metricas,
+    })
+
+@login_required
+def menu_avaliacao(request):
+    return render(request,"avaliacao/menu_avaliacao.html")
