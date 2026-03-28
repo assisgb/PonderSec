@@ -28,7 +28,7 @@ urlpatterns = [
     path('setup_avaliacao/', views.setup_avaliacao, name="setup_avaliacao"),
     path('setup-adicionar-metrica/', views.setup_adicionar_metrica, name='setup_adicionar_metrica'),
     path('setup-configurar-metrica/', views.setup_configurar_metrica, name='setup_configurar_metrica'),
-    #path('setup-deletar-metrica/<int:id>/', views.setup_deletar_metrica, name='setup_deletar_metrica'),
+    path('setup-deletar-metrica/<int:id>/', views.setup_deletar_metrica, name='setup_deletar_metrica'),
     path('historico/', views.historico, name="historico"),
     path("api/llm/<int:id>/delete/", views.deletar_llm, name="delete_llm"),
     path("api/llm/<int:id>/edit/", views.edit_llm_api),
