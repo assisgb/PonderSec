@@ -10,6 +10,7 @@ from datetime import timedelta
 import re
 from django.http import JsonResponse, HttpResponse
 import json
+from django.views.decorators.http import require_http_methods
 from responsegenerator.models import Historico, Categoria, LLM, Questao, Resposta, Avaliacao, Metrica, Formulario, Avaliador, AvaliacaoFormulario
 from django.db.models import Avg
 from collections import defaultdict
@@ -429,12 +430,14 @@ def setup_adicionar_metrica(request):
 def setup_configurar_metrica(request):
     return render(request, 'setup/setup-configurar-metrica.html')
 
-@login_required
+@require_http_methods(["DELETE"])
 def setup_deletar_metrica(request, id):
-    metrica = get_object_or_404(Metrica, id=id)
-    if request.method == 'POST':
+    try:
+        metrica = get_object_or_404(Metrica, id=id)
         metrica.delete()
-    return redirect('setup_avaliacao')
+        return JsonResponse({"status": "success"})
+    except Exception as e:
+        return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
 @login_required
 def deletar_llm(request, id):

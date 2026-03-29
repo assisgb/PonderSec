@@ -247,6 +247,30 @@
             overflow: auto;
         }
 
+        .btn-limpar{
+             padding: 10px 28px;
+            background: rgba(255, 0, 0, 0.1);
+            border: 1px solid rgba(255, 0, 0, 0.3);
+            border-radius: 999px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            color: #ff6b6b;
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-limpar:hover {
+            background: rgba(255, 0, 0, 0.2);
+            border-color: #ff6b6b;
+            transform: translateY(-2px);
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.3);
+        }
+
         .ai-name {
             font-size: 14px;
             font-weight: 700;
@@ -281,7 +305,7 @@
 
             <button class="btn-limpar" onclick="limparRespostas()">⟳ Limpar</button>
 
-            <button class="btn-run" onclick="executeQuestions()">
+            <button class="btn-back-header" onclick="executeQuestions()">
                 <span>▶</span>
                 <span>Executar</span>
             </button>

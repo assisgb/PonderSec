@@ -9,298 +9,268 @@
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
 
     <style>
-        *{
-            box-sizing:border-box;
-            margin:0;
-            padding:0;
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: "Space Grotesk", system-ui, sans-serif;
+            background: radial-gradient(circle at top, #051015 0, #02060b 45%, #000000 100%);
+            color: #e5fef6;
+            min-height: 100vh;
+            padding: 20px;
         }
 
-        body{
-            font-family:"Space Grotesk",system-ui,sans-serif;
-            background:radial-gradient(circle at top,#051015 0,#02060b 45%,#000000 100%);
-            color:#e5fef6;
-            min-height:100vh;
-            padding:20px;
-        }
-
-        .background-grid{
-            position:fixed;
-            inset:0;
+        .background-grid {
+            position: fixed;
+            inset: 0;
             background-image:
-            linear-gradient(90deg,rgba(0,255,160,0.06) 1px,transparent 1px),
-            linear-gradient(180deg,rgba(0,255,160,0.06) 1px,transparent 1px);
-            background-size:40px 40px;
-            opacity:.4;
-            pointer-events:none;
+                linear-gradient(90deg, rgba(0,255,160,0.06) 1px, transparent 1px),
+                linear-gradient(180deg, rgba(0,255,160,0.06) 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: 0.4;
+            pointer-events: none;
         }
 
-        .scanline{
-            position:fixed;
-            inset:0;
-            background:linear-gradient(to bottom,rgba(0,0,0,.7),rgba(0,0,0,.15),rgba(0,0,0,.7));
-            background-size:100% 4px;
-            opacity:.25;
-            pointer-events:none;
+        .scanline {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.7), rgba(0,0,0,0.15), rgba(0,0,0,0.7));
+            background-size: 100% 4px;
+            opacity: 0.25;
+            pointer-events: none;
         }
 
-        .glow-orb{
-            position:fixed;
-            width:500px;
-            height:500px;
-            border-radius:50%;
-            background:radial-gradient(circle,rgba(0,255,160,.25),transparent 70%);
-            top:-10%;
-            right:-5%;
-            filter:blur(80px);
-            opacity:.6;
-            pointer-events:none;
+        .container {
+            position: relative;
+            max-width: 1200px;
+            margin: 0 auto;
         }
 
-        .container{
-            position:relative;
-            max-width:1000px;
-            margin:auto;
-            z-index:2;
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 35px;
+            padding: 30px 35px;
+            background: rgba(11,20,29,0.6);
+            border-radius: 16px;
+            border: 1px solid rgba(0,255,160,0.15);
         }
 
-        .header{
-            display:flex;
-            align-items:center;
-            justify-content:space-between;
-            margin-bottom:20px;
-            padding:25px 30px;
-            background:radial-gradient(circle at top left,#0b141d 0,#050a11 100%);
-            border-radius:16px;
-            border:1px solid rgba(0,255,160,.25);
-            box-shadow:0 8px 30px rgba(0,0,0,.6);
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 22px;
         }
 
-        .logo-section{
-            display:flex;
-            align-items:center;
-            gap:18px;
+        .logo-section img {
+            width: 85px;
+            height: 85px;
+            border-radius: 12px;
         }
 
-        .logo-section img{
-            width:70px;
-            height:70px;
-            border-radius:10px;
-            filter:drop-shadow(0 0 15px rgba(0,255,160,.8));
+        .header-title {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
         }
 
-        .header-title{
-            display:flex;
-            flex-direction:column;
-            gap:4px;
+        .product-name {
+            color: #7df6c2;
+            text-transform: uppercase;
+            letter-spacing: 0.25em;
+            font-size: 12px;
+            font-weight: 600;
         }
 
-        .product-name{
-            color:#7df6c2;
-            text-transform:uppercase;
-            letter-spacing:.25em;
-            font-size:11px;
-            font-weight:600;
+        .page-title {
+            color: #00ff9f;
+            font-size: 28px;
+            font-weight: 600;
         }
 
-        .page-title{
-            color:#00ff9f;
-            font-size:26px;
-            font-weight:700;
+        a { text-decoration: none; }
+
+        .btn-back {
+            padding: 12px 28px;
+            background: rgba(0,255,160,0.1);
+            border: 1px solid rgba(0,255,160,0.3);
+            border-radius: 8px;
+            color: #00ff9f;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            cursor: pointer;
+            font-family: "Space Grotesk", system-ui, sans-serif;
+            font-size: 14px;
         }
 
-        .btn-back{
-            padding:15px 28px;
-            background:linear-gradient(90deg,#00ff9f,#00ff57);
-            border:none;
-            border-radius:15px;
-            cursor:pointer;
-            font-size:15px;
-            font-weight:700;
-            color:#020509;
-            letter-spacing:.08em;
-            transition:.2s;
+        .btn-back:hover {
+            background: rgba(0,255,160,0.15);
+            border-color: #00ff9f;
+            transform: translateY(-1px);
         }
 
-        .btn-back:hover{
-            transform:translateY(-2px);
-            box-shadow:0 0 25px rgba(0,255,160,1);
+        /* Section */
+        .metrics-section {
+            padding: 30px;
+            background: rgba(11,20,29,0.5);
+            border-radius: 12px;
+            border: 1px solid rgba(0,255,160,0.2);
+            margin-bottom: 30px;
         }
 
-        .btn-add{
-            padding:15px 28px;
-            background:linear-gradient(90deg,#00ff9f,#00ff57);
-            border:none;
-            border-radius:15px;
-            cursor:pointer;
-            font-size:15px;
-            font-weight:700;
-            color:#020509;
-            letter-spacing:.08em;
-            transition:.2s;
-            margin-bottom: 15px;
-        }
-
-        .btn-add:hover{
-            transform:translateY(-2px);
-            box-shadow:0 0 25px rgba(0,255,160,1);
-        }
-
-        a{text-decoration: none;}
-
-    /* ---------- MODAL ---------- */
-
-        .modal{
-            display:none;
-            position:fixed;
-            inset:0;
-            background:rgba(0,0,0,.75);
-            backdrop-filter:blur(6px);
-            z-index:1000;
-
-            justify-content:center;
-            align-items:center;
-        }
-
-        .modal-content{
-            width:100%;
-            max-width:600px;
-
-            background:radial-gradient(circle at top left,#0b141d 0,#050a11 100%);
-            border:1px solid rgba(0,255,160,.25);
-            border-radius:16px;
-
-            box-shadow:
-            0 0 40px rgba(0,255,160,.15),
-            0 8px 30px rgba(0,0,0,.8);
-
-            padding:35px;
-            display:flex;
-            flex-direction:column;
-            gap:25px;
-
-            animation:modalFade .25s ease;
-        }
-
-        .modal-editar{
-            display:none;
-            position:fixed;
-            inset:0;
-            background:rgba(0,0,0,.75);
-            backdrop-filter:blur(6px);
-            z-index:1000;
-
-            justify-content:center;
-            align-items:center;
-        }
-
-        .modal-editar-content{
-            width:100%;
-            max-width:600px;
-
-            background:radial-gradient(circle at top left,#0b141d 0,#050a11 100%);
-            border:1px solid rgba(0,255,160,.25);
-            border-radius:16px;
-
-            box-shadow:
-            0 0 40px rgba(0,255,160,.15),
-            0 8px 30px rgba(0,0,0,.8);
-
-            padding:35px;
-            display:flex;
-            flex-direction:column;
-            gap:25px;
-
-            animation:modalFade .25s ease;
-        }
-
-        .config-card{
-            display:flex;
-            flex-direction:column;
-            gap:20px;
-        }
-
-        .form-group{
-            display:flex;
-            flex-direction:column;
-            gap:6px;
-        }
-
-        label{
-            font-size:13px;
-            color:#7df6c2;
-        }
-
-        input,select{
-            padding:14px;
-            background:#050a11;
-            border:1px solid #1b2635;
-            border-radius:10px;
-            color:#e5fef6;
-            font-size:14px;
-        }
-
-        input:focus,select:focus{
-            border-color:#00ff9f;
-            box-shadow:0 0 15px rgba(0,255,160,.5);
-        }
-
-        .btn-save{
-            padding:16px;
-            background:linear-gradient(90deg,#00ff9f,#00ff57);
-            border:none;
-            border-radius:12px;
-            font-weight:700;
-            cursor:pointer;
-            color:#020509;
-            letter-spacing:.1em;
-        }
-
-        .btn-save:hover{
-            transform:translateY(-2px);
-            box-shadow:0 0 25px rgba(0,255,160,1);
-        }
-
-        @keyframes modalFade{
-            from{
-                opacity:0;
-                transform:translateY(-15px) scale(.97);
-            }
-            to{
-                opacity:1;
-                transform:translateY(0) scale(1);
-            }
-        }
-
+        /* Grid de cards */
         .history-grid {
             display: grid;
             gap: 18px;
         }
-                
-        .history-card {
-            background: rgba(11, 20, 29, 0.4);
-            border: 1px solid rgba(0, 255, 160, 0.15);
-            border-radius: 12px;
-            padding: 24px 28px;
-            transition: all 0.2s;
 
+        .history-card {
+            background: rgba(11,20,29,0.4);
+            border: 1px solid rgba(0,255,160,0.15);
+            border-radius: 10px;
+            padding: 20px 24px;
+            transition: all 0.2s;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
         .history-card:hover {
-            border-color: rgba(0, 255, 160, 0.3);
-            background: rgba(11, 20, 29, 0.6);
+            border-color: rgba(0,255,160,0.3);
+            background: rgba(11,20,29,0.6);
             transform: translateX(4px);
         }
-        
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
+
+        .llm-name {
+            font-size: 15px;
+            font-weight: 500;
+            color: #e5fef6;
         }
 
+        /* Botões de ação */
+        .btn-add,
+        .btn-save,
+        .btn-delete {
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-family: "Space Grotesk", system-ui, sans-serif;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .btn-add {
+            background: rgba(0,255,160,0.15);
+            border: 1px solid rgba(0,255,160,0.4);
+            color: #00ff9f;
+            margin-bottom: 15px;
+        }
+
+        .btn-add:hover {
+            background: rgba(0,255,160,0.15);
+            border-color: #00ff9f;
+            transform: translateY(-1px);
+        }
+
+        .btn-save {
+            background: rgba(0,255,160,0.1);
+            border: 1px solid rgba(0,255,160,0.3);
+            color: #00ff9f;
+            margin-left: 8px;
+        }
+
+        .btn-save:hover {
+            background: rgba(0,255,160,0.15);
+            border-color: #00ff9f;
+            transform: translateY(-1px);
+        }
+
+        .btn-delete {
+            background: rgba(255,0,0,0.1);
+            border: 1px solid rgba(255,0,0,0.3);
+            color: #ff6b6b;
+        }
+
+        .btn-delete:hover {
+            background: rgba(255,0,0,0.15);
+            border-color: #ff6b6b;
+            transform: translateY(-1px);
+        }
+
+        /* Modal */
+        .modal,
+        .modal-editar {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.75);
+            backdrop-filter: blur(6px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content,
+        .modal-editar-content {
+            width: 100%;
+            max-width: 600px;
+            background: rgba(11,20,29,0.6);
+            border: 1px solid rgba(0,255,160,0.15);
+            border-radius: 16px;
+            box-shadow: 0 0 40px rgba(0,255,160,0.15), 0 8px 30px rgba(0,0,0,0.8);
+            padding: 35px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            animation: modalFade 0.25s ease;
+        }
+
+        @keyframes modalFade {
+            from { opacity: 0; transform: translateY(-15px) scale(0.97); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* Formulários */
+        .config-card {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        label {
+            font-size: 13px;
+            color: #7df6c2;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 10px;
+            background: #050a11;
+            border: 1px solid #1b2635;
+            border-radius: 6px;
+            color: #e5fef6;
+            font-family: "Space Grotesk", system-ui, sans-serif;
+            font-size: 14px;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: #00ff9f;
+            box-shadow: 0 0 10px rgba(0,255,160,0.3);
+        }
+
+        /* Password toggle */
         .password-container {
             position: relative;
             display: flex;
@@ -308,8 +278,7 @@
         }
 
         .password-container input {
-            width: 100%;
-            padding-right: 45px; /* Abre espaço no canto direito para o olho não ficar por cima do texto */
+            padding-right: 45px;
         }
 
         .btn-toggle-password {
@@ -332,7 +301,6 @@
             opacity: 1;
             transform: scale(1.1);
         }
-
     </style>
 </head>
 
@@ -340,12 +308,10 @@
 
     <div class="background-grid"></div>
     <div class="scanline"></div>
-    <div class="glow-orb"></div>
 
     <div class="container">
 
         <div class="header">
-
             <div class="logo-section">
                 <img src="{% static 'pondersec_logo.jpg' %}">
                 <div class="header-title">
@@ -353,9 +319,7 @@
                     <div class="page-title">Gerenciar LLMs</div>
                 </div>
             </div>
-
             <a href="{% url 'setup' %}" class="btn-back">Voltar</a>
-
         </div>
 
         <button class="btn-add" onclick="abrirModal()">+ Adicionar</button>
@@ -366,24 +330,18 @@
                 <div class="history-card" id="llm-{{ llm.id }}">
                     <div class="llm-name" id="llm-nome-{{ llm.id }}">{{ llm.nome }}</div>
                     <div>
-                        <button class="btn-icon btn-save" onclick="deletarLLM({{llm.id}})">
-                            🗑️
-                        </button>
-                        <button class="btn-save" onclick="editarLLM({{ llm.id }}, '{{ llm.nome|escapejs }}', '{{ llm.api_key|escapejs }}')">
-                            ✏️
-                        </button>
+                        <button class="btn-delete" onclick="deletarLLM({{ llm.id }})">🗑️</button>
+                        <button class="btn-save" onclick="editarLLM({{ llm.id }}, '{{ llm.nome|escapejs }}', '{{ llm.api_key|escapejs }}')">✏️</button>
                     </div>
                 </div>
-                {%endfor%}
+                {% endfor %}
             {% endif %}
         </div>
-        
+
     </div>
 
-    <!-- MODAL -->
-
+    <!-- MODAL ADICIONAR -->
     <div class="modal" id="modal">
-
         <div class="modal-content">
             <div class="page-title">Adicionar LLM</div>
 
@@ -398,7 +356,7 @@
                             <option value="OpenAI">OpenAI</option>
                             <option value="Anthropic">Anthropic</option>
                             <option value="Groq">Groq</option>
-                            <option value="Gemini">Gemini</option> 
+                            <option value="Gemini">Gemini</option>
                             <option value="Local">Local</option>
                         </select>
                     </div>
@@ -414,52 +372,54 @@
                         <label>API Key</label>
                         <div class="password-container">
                             <input type="password" name="apiKey" id="apiKeyInput" placeholder="Cole sua chave aqui...">
-                            
-                            <button type="button" class="btn-toggle-password" onclick="togglePassword('apiKeyInput', this)">
-                                👁️
-                            </button>
+                            <button type="button" class="btn-toggle-password" onclick="togglePassword('apiKeyInput', this)">👁️</button>
                         </div>
                     </div>
 
-                    <button class="btn-save" type="submit">Adicionar Modelo</button>
+                    <button class="btn-add" type="submit">Adicionar Modelo</button>
                     <button type="button" class="btn-back" onclick="fecharModal()">Cancelar</button>
+
                 </div>
             </form>
         </div>
-
     </div>
 
+    <!-- MODAL EDITAR -->
     <div class="modal-editar" id="modal-editar">
         <div class="modal-editar-content">
             <div class="page-title">Editar LLM</div>
 
             <input type="hidden" id="edit-id">
 
-            <label>Provedor</label>
-            <select id="edit-provider" onchange="atualizarModelosEdicao()">
-                <option value="Selecione">Selecione</option>
-                <option value="OpenAI">OpenAI</option>
-                <option value="Anthropic">Anthropic</option>
-                <option value="Groq">Groq</option>
-                <option value="Gemini">Gemini</option>
-                <option value="Local">Local</option>
-            </select>
-
-            <label>Modelo</label>
-            <select id="edit-model">
-                <option value="">Selecione um provedor primeiro</option>
-            </select>
-
-            <label>API Key</label>
-            <div class="password-container">
-                <input type="password" id="edit-apikey">
-                <button type="button" class="btn-toggle-password" onclick="togglePassword('edit-apikey', this)">
-                    👁️
-                </button>
+            <div class="form-group">
+                <label>Provedor</label>
+                <select id="edit-provider" onchange="atualizarModelosEdicao()">
+                    <option value="Selecione">Selecione</option>
+                    <option value="OpenAI">OpenAI</option>
+                    <option value="Anthropic">Anthropic</option>
+                    <option value="Groq">Groq</option>
+                    <option value="Gemini">Gemini</option>
+                    <option value="Local">Local</option>
+                </select>
             </div>
-            
-            <button class="btn-add" onclick="salvarEdicao()">Salvar</button>
-            <button class="btn-back" onclick="sairEdicao()">Sair</button>
+
+            <div class="form-group">
+                <label>Modelo</label>
+                <select id="edit-model">
+                    <option value="">Selecione um provedor primeiro</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>API Key</label>
+                <div class="password-container">
+                    <input type="password" id="edit-apikey">
+                    <button type="button" class="btn-toggle-password" onclick="togglePassword('edit-apikey', this)">👁️</button>
+                </div>
+            </div>
+
+            <button class="btn-save" onclick="salvarEdicao()">Salvar</button>
+            <button class="btn-back" onclick="sairEdicao()">Cancelar</button>
         </div>
     </div>
 
@@ -489,14 +449,13 @@
 
         function togglePassword(inputId, btnElement) {
             const input = document.getElementById(inputId);
-            
             if (input.type === "password") {
                 input.type = "text";
-                btnElement.innerHTML = "🙈"; // Troca para o macaquinho fechando o olho (ou outro emoji que preferir)
+                btnElement.innerHTML = "🙈";
                 btnElement.style.opacity = "1";
             } else {
                 input.type = "password";
-                btnElement.innerHTML = "👁️"; // Volta para o olho normal
+                btnElement.innerHTML = "👁️";
                 btnElement.style.opacity = "0.6";
             }
         }
@@ -505,14 +464,12 @@
             const providerSelect = document.getElementById("providerSelect");
             const modelSelect = document.getElementById("modelSelect");
             const provedorSelecionado = providerSelect.value;
-
             modelSelect.innerHTML = "";
-
             if (provedorSelecionado && modelosPorProvedor[provedorSelecionado]) {
                 modelosPorProvedor[provedorSelecionado].forEach(modelo => {
                     const option = document.createElement("option");
-                    option.value = modelo.value; // O valor exato que a API exige
-                    option.textContent = modelo.label; // O nome bonito que aparece na tela pro usuário
+                    option.value = modelo.value;
+                    option.textContent = modelo.label;
                     modelSelect.appendChild(option);
                 });
             } else {
@@ -527,14 +484,12 @@
             const providerSelect = document.getElementById("edit-provider");
             const modelSelect = document.getElementById("edit-model");
             const provedorSelecionado = providerSelect.value;
-
             modelSelect.innerHTML = "";
-
             if (provedorSelecionado && modelosPorProvedor[provedorSelecionado]) {
                 modelosPorProvedor[provedorSelecionado].forEach(modelo => {
                     const option = document.createElement("option");
-                    option.value = modelo.value; // O valor exato que a API exige
-                    option.textContent = modelo.label; // O nome bonito que aparece na tela pro usuário
+                    option.value = modelo.value;
+                    option.textContent = modelo.label;
                     modelSelect.appendChild(option);
                 });
             } else {
@@ -547,50 +502,38 @@
 
         function descobrirProvedorPorModelo(modeloValor) {
             for (const [provedor, modelos] of Object.entries(modelosPorProvedor)) {
-                if (modelos.some(m => m.value === modeloValor)) {
-                    return provedor;
-                }
+                if (modelos.some(m => m.value === modeloValor)) return provedor;
             }
-            return "Selecione"; // Fallback se não achar
+            return "Selecione";
         }
 
-
-        function editarLLM(id, nome, api_key){
+        function editarLLM(id, nome, api_key) {
             document.getElementById("edit-id").value = id;
             document.getElementById("edit-apikey").value = api_key;
             const provedor = descobrirProvedorPorModelo(nome);
             document.getElementById("edit-provider").value = provedor;
-
             atualizarModelosEdicao();
-
             document.getElementById("edit-model").value = nome;
-
             document.getElementById("modal-editar").style.display = "flex";
         }
 
-        function salvarEdicao(){
+        function salvarEdicao() {
             const id = document.getElementById("edit-id").value;
-            const nome = document.getElementById("edit-model").value; 
+            const nome = document.getElementById("edit-model").value;
             const api_key = document.getElementById("edit-apikey").value;
-
             fetch(`/api/llm/${id}/edit/`, {
                 method: "PUT",
-                headers:{
-                    "Content-Type":"application/json",
+                headers: {
+                    "Content-Type": "application/json",
                     "X-CSRFToken": getCSRFToken()
                 },
-                body: JSON.stringify({
-                    nome: nome,
-                    api_key: api_key
-                })
+                body: JSON.stringify({ nome, api_key })
             })
             .then(res => res.json())
             .then(data => {
-                if(data.status === "success"){
+                if (data.status === "success") {
                     const elemento = document.getElementById(`llm-nome-${id}`);
-                    if(elemento){
-                        elemento.innerText = nome;
-                    }
+                    if (elemento) elemento.innerText = nome;
                     document.getElementById("modal-editar").style.display = "none";
                 } else {
                     alert("Erro ao salvar: " + data.message);
@@ -602,40 +545,30 @@
             });
         }
 
-        function sairEdicao(){ document.getElementById("modal-editar").style.display="none" }
+        function sairEdicao() { document.getElementById("modal-editar").style.display = "none"; }
 
         function deletarLLM(id) {
             fetch(`/api/llm/${id}/delete/`, {
-
                 method: "DELETE",
-                headers: {
-                    "X-CSRFToken": getCSRFToken()
-                }
+                headers: { "X-CSRFToken": getCSRFToken() }
             })
             .then(response => response.json())
             .then(data => {
-
-                if(data.status === "success"){
-                    const card = document.getElementById(`llm-${id}`)
-                    if(card){
-                        card.remove()
-                    }
+                if (data.status === "success") {
+                    const card = document.getElementById(`llm-${id}`);
+                    if (card) card.remove();
                 }
-
-            })
+            });
         }
 
-        function getCSRFToken(){ return document.querySelector('[name=csrfmiddlewaretoken]').value }
-        function abrirModal(){ document.getElementById("modal").style.display="flex" }
-        function fecharModal(){ document.getElementById("modal").style.display="none" }
-        
-        window.onclick=function(event){
-            const modal=document.getElementById("modal")
-            if(event.target==modal){
-                modal.style.display="none"
-            }
-        }
+        function getCSRFToken() { return document.querySelector('[name=csrfmiddlewaretoken]').value; }
+        function abrirModal() { document.getElementById("modal").style.display = "flex"; }
+        function fecharModal() { document.getElementById("modal").style.display = "none"; }
 
+        window.onclick = function(event) {
+            const modal = document.getElementById("modal");
+            if (event.target == modal) modal.style.display = "none";
+        }
     </script>
 
 </body>

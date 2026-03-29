@@ -160,14 +160,18 @@
             background: linear-gradient(135deg, rgba(11, 20, 29, 0.9) 0%, rgba(5, 10, 17, 0.95) 100%);
             border: 1px solid rgba(0, 255, 160, 0.1);
             border-radius: 16px; transition: all 0.3s;
-            position: relative; overflow: hidden;
+            position: relative;  overflow: visible;;
         }
 
         .metric-card::before {
-            content: '';
-            position: absolute; inset: 0;
-            background: radial-gradient(circle at 0% 0%, rgba(0, 255, 160, 0.05) 0%, transparent 60%);
-            opacity: 0; transition: opacity 0.3s;
+              content: '';
+                position: absolute;
+                inset: 0;
+                background: radial-gradient(circle at 0% 0%, rgba(0, 255, 160, 0.05) 0%, transparent 60%);
+                opacity: 0;
+                transition: opacity 0.3s;
+                pointer-events: none; /* <-- adiciona isso, garante que o ::before nunca bloqueie cliques */
+                border-radius: 16px;  
         }
 
         .metric-card:hover::before { opacity: 1; }
@@ -302,12 +306,7 @@
                 <div class="page-title">Métricas de Avaliação</div>
                 <div class="subtitle">Gerencie os critérios de avaliação das respostas</div>
             </div>
-            <a href="{% url 'setup' %}" class="btn-back">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-                    <path d="M19 12H5M11 6l-6 6 6 6"/>
-                </svg>
-                Voltar
-            </a>
+            
         </div>
 
         <div class="toolbar">
@@ -332,7 +331,7 @@
 
         <div class="metrics-list" id="metricsList">
             {% for metrica in metricas %}
-            <div class="metric-card" data-name="{{ metrica.nome|lower }}">
+            <div class="metric-card" data-name="{{ metrica.nome|lower }}" data-id="{{ metrica.id }}">
                 <div class="metric-info">
                     <div class="metric-icon-box">
                         {% if metrica.tipo == 'quantitativa' %}
@@ -357,10 +356,9 @@
                     </div>
                 </div>
                 <div class="metric-actions">
-                    <form method="POST" action="{% url 'setup_deletar_metrica' metrica.id %}">
-                        {% csrf_token %}
-                        <button type="submit" class="btn-icon btn-delete" title="Deletar"
-                            onclick="return confirm('Deletar a métrica {{ metrica.nome }}?')">
+                        
+                        <button class="btn-icon btn-delete" title="Deletar"
+                            onclick="deletar_metrica({{ metrica.id }})">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                                 <polyline points="3 6 5 6 21 6"/>
                                 <path d="M19 6l-1 14H6L5 6"/>
@@ -368,7 +366,7 @@
                                 <path d="M9 6V4h6v2"/>
                             </svg>
                         </button>
-                    </form>
+                   
                 </div>
             </div>
             {% empty %}
@@ -397,6 +395,24 @@
                 card.style.display = card.getAttribute('data-name').includes(filter) ? '' : 'none';
             });
         }
+
+
+        function deletar_metrica(metrica_id) {
+        fetch(`/setup-deletar-metrica/${metrica_id}/`, {
+            method: "DELETE",
+            headers: {
+                "X-CSRFToken": document.cookie.match(/csrftoken=([^;]+)/)?.[1] || ""
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === "success") {
+                // Remove o card da tela sem recarregar
+                const card = document.querySelector(`[data-id="${metrica_id}"]`);
+                if (card) card.remove();
+            }
+        });
+    }
     </script>
 </body>
 </html>
