@@ -88,7 +88,6 @@
             border: 1px solid rgba(255, 170, 0, 0.3);
         }
         
-        /* HEADER E FILTROS (Mantidos iguais) */
         .header {
             display: flex;
             align-items: center;
@@ -142,7 +141,6 @@
             gap: 16px; 
             align-items: center; 
             width: 100%; 
-
         }
         
         .filter-select {
@@ -232,7 +230,6 @@
 
         .btn-clear-all:hover { background: rgba(255, 0, 80, 0.15); border-color: #ff0050; }
 
-        /* LISTA DE QUESTÕES (Mantida igual) */
         .history-grid { display: grid; gap: 18px; }
         
         .history-card {
@@ -248,6 +245,7 @@
         .card-date { font-size: 11px; color: #7df6c2; text-transform: uppercase; letter-spacing: 0.12em; padding: 6px 14px; background: rgba(0, 255, 160, 0.12); border-radius: 20px; font-weight: 600; }
         .card-actions { display: flex; gap: 10px; }
         
+        /* ── BTN-ICON base (ver detalhes) ── */
         .btn-icon {
             background: rgba(0, 255, 160, 0.08);
             border: 1px solid rgba(0, 255, 160, 0.2);
@@ -265,12 +263,26 @@
         }
 
         .btn-icon:hover { background: rgba(0, 255, 160, 0.15); border-color: rgba(0, 255, 160, 0.4); color: #00ff9f; transform: scale(1.05); }
+
+        /* ── BTN-ICON variante deletar (vermelho) ── */
+        .btn-icon.btn-icon-danger {
+            background: rgba(255, 0, 80, 0.08);
+            border-color: rgba(255, 0, 80, 0.25);
+            color: #ff4d80;
+        }
+
+        .btn-icon.btn-icon-danger:hover {
+            background: rgba(255, 0, 80, 0.15);
+            border-color: #ff0050;
+            color: #ff4d80;
+            box-shadow: 0 0 10px rgba(255, 0, 80, 0.2);
+        }
+
         .card-question { font-size: 18px; font-weight: 600; color: #e5fef6; margin-bottom: 12px; line-height: 1.5; }
         .card-preview { font-size: 14px; color: #8ba1b0; line-height: 1.7; margin-bottom: 16px; }
         .card-footer { display: flex; gap: 10px; padding-top: 14px; border-top: 1px solid rgba(0, 255, 160, 0.12); }
         .tag { font-size: 10px; color: #7df6c2; background: rgba(0, 255, 160, 0.1); padding: 5px 12px; border-radius: 14px; text-transform: uppercase; font-weight: 600; }
         .empty-state { text-align: center; color: #6b7b8d; padding: 60px 20px; background: rgba(11, 20, 29, 0.3); border: 1px dashed rgba(0, 255, 160, 0.2); border-radius: 12px; }
-
 
         .modal-overlay {
             position: fixed;
@@ -320,7 +332,6 @@
         .btn-solid-primary { background: linear-gradient(90deg,#00ff9f,#00ff57); border: none; color: #020509; }
         .btn-solid-primary:hover { box-shadow: 0 0 20px rgba(0,255,160,0.6); transform: translateY(-1px); }
 
-        /* Upload Específico */
         .drop-zone { border: 2px dashed rgba(0,255,160,0.4); border-radius: 12px; padding: 40px 20px; text-align: center; cursor: pointer; transition: all 0.25s; background: rgba(0,255,160,0.03); margin-bottom: 15px; }
         .drop-zone:hover, .drop-zone.dragover { background: rgba(0,255,160,0.08); border-color: #00ff9f; box-shadow: 0 0 20px rgba(0,255,160,0.3); }
         .drop-zone p { color: #7df6c2; font-size: 15px; }
@@ -454,7 +465,7 @@
                                 
                                 <div class="card-actions">
                                     <button type="button" class="btn-icon" title="Ver detalhes" data-url="{% url 'ver_detalhes_questao' item.id %}" onclick="abrirModalDetalhes(this)">👁</button>
-                                    <button type="button" class="btn-icon" title="Deletar" data-action="{% url 'deletar_questao_historico' item.id %}" data-title="Apagar Registro?" data-desc="Esta ação removerá esta questão permanentemente." data-btn-text="Sim, apagar" onclick="configurarModal(this)">🗑</button>
+                                    <button type="button" class="btn-icon btn-icon-danger" title="Deletar" data-action="{% url 'deletar_questao_historico' item.id %}" data-title="Apagar Registro?" data-desc="Esta ação removerá esta questão permanentemente." data-btn-text="Sim, apagar" onclick="configurarModal(this)">🗑</button>
                                 </div>
                             </div>
                             
@@ -501,7 +512,7 @@
                                 
                                 <div class="card-actions">
                                     <button type="button" class="btn-icon" title="Ver detalhes" data-url="{% url 'ver_detalhes_questao' item.id %}" onclick="abrirModalDetalhes(this)">👁</button>
-                                    <button type="button" class="btn-icon" title="Deletar" data-action="{% url 'deletar_questao_historico' item.id %}" data-title="Apagar Registro?" data-desc="Esta ação removerá esta questão permanentemente." data-btn-text="Sim, apagar" onclick="configurarModal(this)">🗑</button>
+                                    <button type="button" class="btn-icon btn-icon-danger" title="Deletar" data-action="{% url 'deletar_questao_historico' item.id %}" data-title="Apagar Registro?" data-desc="Esta ação removerá esta questão permanentemente." data-btn-text="Sim, apagar" onclick="configurarModal(this)">🗑</button>
                                 </div>
                             </div>
                             
@@ -549,7 +560,7 @@
                 <div class="file-name" id="fileName"></div>
                 <div class="modal-buttons">
                     <button type="button" class="btn-modal btn-cancel" onclick="fecharModalUpload()">Cancelar</button>
-                    <button type="button" class="btn-modal btn-solid-primary" onclick="submitUpload()">Enviar Arquivo</button>
+                    <button type="button" class="btn-modal btn-back" onclick="submitUpload()">Enviar Arquivo</button>
                 </div>
             </form>
         </div>
@@ -566,7 +577,6 @@
                 <label class="form-label" for="pergunta">Texto da pergunta</label>
                 <textarea name="pergunta" id="pergunta" placeholder="Digite aqui a pergunta..."></textarea>
                 
-                
                 <div class="ai-options">
                     <h3>IAs que responderão</h3>
                     <div class="checkbox-grid">
@@ -575,7 +585,6 @@
                         <label><input type="checkbox">{{llm.nome}}</label>
                         {% endfor %}
                         {% endif %}
-               
                     </div>
                 </div>
 
@@ -594,7 +603,7 @@
                 <div class="modal-buttons">
                     <button type="button" class="btn-modal btn-cancel" onclick="fecharModalFormQuestao()">Cancelar</button>
                     <button type="reset" class="btn-modal btn-cancel" style="flex: 0.5;">Limpar</button>
-                    <button type="submit" class="btn-modal btn-solid-primary">Salvar</button>
+                    <button type="submit" class="btn-modal btn-back">Salvar</button>
                 </div>
             </form>
         </div>
@@ -616,7 +625,7 @@
 
                 <div class="modal-buttons">
                     <button type="button" class="btn-modal btn-cancel" onclick="fecharModalCategoria()">Cancelar</button>
-                    <button type="submit" class="btn-modal btn-solid-primary" onclick="fecharModalCategoria()">Salvar</button>
+                    <button type="submit" class="btn-modal btn-back" onclick="fecharModalCategoria()">Salvar</button>
                 </div>
             </form>
         </div>
@@ -634,8 +643,7 @@
                 </div>
             </div>
 
-            <div id="respostasContainer" style="display: flex; gap: 20px; flex-wrap: wrap;">
-                </div>
+            <div id="respostasContainer" style="display: flex; gap: 20px; flex-wrap: wrap;"></div>
 
             <div class="modal-buttons" style="margin-top: 30px;">
                 <button type="button" class="btn-modal btn-cancel" onclick="fecharModalDetalhes()" style="max-width: 200px;">Fechar</button>
@@ -645,7 +653,6 @@
 
     <script>
         function filterHistory() {
-            // Pega o valor dos 3 campos
             const searchText = document.getElementById('searchInput').value.toLowerCase();
             const statusFilter = document.getElementById('statusFilter').value;
             const aiFilter = document.getElementById('aiFilter').value.toLowerCase();
@@ -664,17 +671,10 @@
                 const matchAI = (aiFilter === 'all') || ias.includes(aiFilter);
                 const matchForm = (formFilter === 'all') || forms.includes(formFilter);
 
-                if (matchSearch && matchStatus && matchAI && matchForm) {
-                    card.style.display = '';
-                } else {
-                    card.style.display = 'none';
-                }
+                card.style.display = (matchSearch && matchStatus && matchAI && matchForm) ? '' : 'none';
             });
         }
         
-        // ----------------------------------------
-        // MODAL 1: Confirmação Universal
-        // ----------------------------------------
         function configurarModal(btn) {
             const modal = document.getElementById('modalUniversal');
             document.getElementById('modalForm').action = btn.getAttribute('data-action');
@@ -687,9 +687,6 @@
         function fecharModal() { document.getElementById('modalUniversal').classList.remove('active'); }
         document.getElementById('modalUniversal').addEventListener('click', function(e) { if (e.target === this) fecharModal(); });
 
-        // ----------------------------------------
-        // MODAL 2: Upload de Arquivos
-        // ----------------------------------------
         const uploadModal = document.getElementById('uploadModal');
         const fileInput = document.getElementById("fileInput");
         const fileName = document.getElementById("fileName");
@@ -720,71 +717,37 @@
             document.getElementById("uploadForm").submit();
         }
 
-        // ----------------------------------------
-        // MODAL 3: Adicionar / Editar Questão
-        // ----------------------------------------
         const formQuestaoModal = document.getElementById('formQuestaoModal');
-        
         function abrirModalFormQuestao() { formQuestaoModal.classList.add('active'); }
         function fecharModalFormQuestao() { formQuestaoModal.classList.remove('active'); }
         formQuestaoModal.addEventListener('click', function(e) { if (e.target === this) fecharModalFormQuestao(); });
 
-        // ----------------------------------------
-        // MODAL 4: Cadastrar Categoria
-        // ----------------------------------------
         const categoriaModal = document.getElementById('categoriaModal');
-        
-        function abrirModalCategoria() { 
-            // Fecha o modal de questão para abrir o de categoria (evita sobreposição confusa)
-            fecharModalFormQuestao(); 
-            categoriaModal.classList.add('active'); 
-        }
-        
-        function fecharModalCategoria() { 
-            categoriaModal.classList.remove('active');
-            abrirModalFormQuestao(); // Reabre o modal de questão para continuar o fluxo 
-        }
-        
-        categoriaModal.addEventListener('click', function(e) { 
-            if (e.target === this) fecharModalCategoria(); 
-        });
+        function abrirModalCategoria() { fecharModalFormQuestao(); categoriaModal.classList.add('active'); }
+        function fecharModalCategoria() { categoriaModal.classList.remove('active'); abrirModalFormQuestao(); }
+        categoriaModal.addEventListener('click', function(e) { if (e.target === this) fecharModalCategoria(); });
 
-        // ----------------------------------------
-        // MODAL 5: Ver Detalhes (AJAX Dinâmico)
-        // ----------------------------------------
         const detalhesModal = document.getElementById('detalhesModal');
-        
         function abrirModalDetalhes(btn) {
             const url = btn.getAttribute('data-url');
             const respostasContainer = document.getElementById('respostasContainer');
-            
             detalhesModal.classList.add('active');
             document.getElementById('detalhesPergunta').innerText = "Carregando detalhes do servidor...";
-            
-            // Limpa as respostas anteriores e exibe "Carregando"
             respostasContainer.innerHTML = '<p style="color: #8ba1b0; text-align: center; width: 100%;">Buscando respostas...</p>';
-            
             fetch(url)
                 .then(response => response.json())
                 .then(data => {
                     document.getElementById('detalhesData').innerText = data.data;
                     document.getElementById('detalhesPergunta').innerText = data.pergunta;
-                    
                     respostasContainer.innerHTML = '';
-
-                    // Se não tiver nenhuma resposta salva
                     if (data.respostas.length === 0) {
                         respostasContainer.innerHTML = '<p style="color: #ff4d4d; width: 100%; text-align: center; padding: 20px;">Nenhuma IA respondeu a esta pergunta.</p>';
                         return;
                     }
-
-                    // Loop para criar as caixas apenas das IAs que responderam
                     data.respostas.forEach(resp => {
                         const div = document.createElement('div');
                         div.style.flex = "1";
                         div.style.minWidth = "300px";
-                        
-                        // Desenha a caixa com a cor específica da IA (usando HEX e opacidade)
                         div.innerHTML = `
                             <label class="form-label" style="color: ${resp.cor}; text-shadow: 0 0 8px ${resp.cor}66;">
                                 ✦ Resposta ${resp.ia}
@@ -802,15 +765,8 @@
                     respostasContainer.innerHTML = '';
                 });
         }
-
-        function fecharModalDetalhes() {
-            detalhesModal.classList.remove('active');
-        }
-
-        detalhesModal.addEventListener('click', function(e) {
-            if (e.target === this) fecharModalDetalhes();
-        });
-
+        function fecharModalDetalhes() { detalhesModal.classList.remove('active'); }
+        detalhesModal.addEventListener('click', function(e) { if (e.target === this) fecharModalDetalhes(); });
     </script>
 </body>
 </html>

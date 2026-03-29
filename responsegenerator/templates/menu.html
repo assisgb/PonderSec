@@ -7,11 +7,7 @@
     <title>PonderSEC — Menu</title>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: "Space Grotesk", system-ui, sans-serif;
@@ -25,54 +21,40 @@
         }
 
         .background-grid {
-            position: fixed;
-            inset: 0;
-            background-image: 
+            position: fixed; inset: 0;
+            background-image:
                 linear-gradient(90deg, rgba(0, 255, 160, 0.06) 1px, transparent 1px),
                 linear-gradient(180deg, rgba(0, 255, 160, 0.06) 1px, transparent 1px);
-            background-size: 40px 40px;
-            opacity: 0.4;
-            pointer-events: none;
+            background-size: 40px 40px; opacity: 0.4; pointer-events: none;
         }
 
         .scanline {
-            position: fixed;
-            inset: 0;
-            background: linear-gradient(
-                to bottom,
-                rgba(0, 0, 0, 0.7),
-                rgba(0, 0, 0, 0.15),
-                rgba(0, 0, 0, 0.7)
-            );
-            background-size: 100% 4px;
-            opacity: 0.25;
-            pointer-events: none;
+            position: fixed; inset: 0;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.7), rgba(0,0,0,0.15), rgba(0,0,0,0.7));
+            background-size: 100% 4px; opacity: 0.25; pointer-events: none;
         }
 
         .glow-orb {
-            position: fixed;
-            width: 500px;
-            height: 500px;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(0, 255, 160, 0.3), transparent 65%);
-            top: 10%;
-            right: 10%;
-            filter: blur(80px);
-            opacity: 0.75;
-            pointer-events: none;
+            position: fixed; width: 500px; height: 500px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 255, 160, 0.25), transparent 70%);
+            top: -10%; right: -5%; filter: blur(80px); opacity: 0.6; pointer-events: none;
+        }
+
+        .glow-orb-2 {
+            position: fixed; width: 350px; height: 350px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 150, 255, 0.15), transparent 70%);
+            bottom: 10%; left: -5%; filter: blur(80px); opacity: 0.5; pointer-events: none;
         }
 
         .container {
             position: relative;
             width: 100%;
             max-width: 950px;
-            background: radial-gradient(circle at top, #0b141d 0, #050a11 55%, #020509 100%);
-            border-radius: 18px;
+            background: rgba(11, 20, 29, 0.6);
+            border-radius: 16px;
             padding: 35px 40px;
-            box-shadow: 
-                0 0 0 1px rgba(0, 255, 160, 0.25),
-                0 18px 60px rgba(0, 0, 0, 0.9),
-                0 0 40px rgba(0, 255, 160, 0.35);
+            border: 1px solid rgba(0, 255, 160, 0.15);
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5), 0 0 40px rgba(0, 255, 160, 0.08);
             z-index: 2;
         }
 
@@ -82,19 +64,21 @@
         }
 
         .logo img {
-            width: 120px;
-            border-radius: 10px;
-            filter: 
-                drop-shadow(0 0 10px rgba(0, 255, 160, 0.8))
-                drop-shadow(0 0 30px rgba(0, 255, 160, 0.5));
+            width: 52px;
+            height: 52px;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 255, 160, 0.3);
+            filter: drop-shadow(0 0 8px rgba(0, 255, 160, 0.4));
+            object-fit: cover;
         }
 
         .product-name {
             text-align: center;
             color: #7df6c2;
             text-transform: uppercase;
-            letter-spacing: 0.28em;
-            font-size: 12px;
+            letter-spacing: 0.25em;
+            font-size: 11px;
+            font-weight: 600;
             margin-bottom: 5px;
         }
 
@@ -109,102 +93,121 @@
         .subtitle {
             text-align: center;
             font-size: 13px;
-            color: #8ba1b0;
+            color: #6b7b8d;
             margin-bottom: 28px;
         }
 
         .menu-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 18px;
+            gap: 16px;
             margin-bottom: 22px;
         }
 
         .menu-card {
-            background: radial-gradient(circle at top left, #0b141d 0, #050a11 100%);
-            border: 1px solid rgba(0, 255, 160, 0.25);
-            border-radius: 14px;
+            background: rgba(11, 20, 29, 0.5);
+            border: 1px solid rgba(0, 255, 160, 0.12);
+            border-radius: 12px;
             padding: 25px 20px;
             cursor: pointer;
-            transition: all 0.3s;
-            text-align: center;
+            transition: all 0.2s;
             text-decoration: none;
             color: inherit;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            gap: 10px;
+            align-items: flex-start;
+            gap: 12px;
+            position: relative;
+            overflow: hidden;
         }
+
+        .menu-card::before {
+            content: '';
+            position: absolute; inset: 0;
+            background: radial-gradient(circle at 0% 0%, rgba(0, 255, 160, 0.06) 0%, transparent 60%);
+            opacity: 0; transition: opacity 0.35s;
+        }
+
+        .menu-card:hover::before { opacity: 1; }
 
         .menu-card:hover {
-            border-color: #00ff9f;
-            box-shadow: 0 0 30px rgba(0, 255, 160, 0.4);
-            transform: translateY(-5px);
-            background: radial-gradient(circle at top left, #0d1823 0, #060b12 100%);
+            border-color: rgba(0, 255, 160, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 0 20px rgba(0, 255, 160, 0.08);
         }
 
-        .menu-icon {
-            font-size: 42px;
-            margin-bottom: 6px;
-            filter: drop-shadow(0 0 10px rgba(0, 255, 160, 0.5));
+        .card-icon {
+            width: 52px; height: 52px;
+            background: rgba(0, 255, 160, 0.06);
+            border: 1px solid rgba(0, 255, 160, 0.15);
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.35s;
+        }
+
+        .menu-card:hover .card-icon {
+            background: rgba(0, 255, 160, 0.1);
+            border-color: rgba(0, 255, 160, 0.3);
+            box-shadow: 0 0 20px rgba(0, 255, 160, 0.15);
+        }
+
+        .card-icon svg {
+            filter: drop-shadow(0 0 6px rgba(0, 255, 160, 0.4));
+            transition: filter 0.35s;
+        }
+
+        .menu-card:hover .card-icon svg {
+            filter: drop-shadow(0 0 12px rgba(0, 255, 160, 0.7));
         }
 
         .menu-title {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 700;
             color: #00ff9f;
             text-transform: uppercase;
             letter-spacing: 0.1em;
-            margin-bottom: 5px;
         }
 
         .menu-description {
             font-size: 12px;
-            color: #8ba1b0;
-            line-height: 1.4;
+            color: #6b7b8d;
+            line-height: 1.5;
         }
 
         .logout-section {
             text-align: center;
             padding-top: 18px;
-            border-top: 1px solid rgba(0, 255, 160, 0.15);
+            border-top: 1px solid rgba(0, 255, 160, 0.08);
         }
 
         .btn-logout {
             padding: 10px 28px;
-            background: rgba(255, 0, 0, 0.1);
-            border: 1px solid rgba(255, 0, 0, 0.3);
-            border-radius: 999px;
+            background: rgba(255, 80, 80, 0.08);
+            border: 1px solid rgba(255, 80, 80, 0.25);
+            border-radius: 8px;
             cursor: pointer;
             font-size: 13px;
             font-weight: 600;
             color: #ff6b6b;
             text-decoration: none;
             text-transform: uppercase;
-            letter-spacing: 0.08em;
+            letter-spacing: 0.05em;
             transition: all 0.2s;
             display: inline-block;
+            font-family: inherit;
         }
 
         .btn-logout:hover {
-            background: rgba(255, 0, 0, 0.2);
+            background: rgba(255, 80, 80, 0.15);
             border-color: #ff6b6b;
-            transform: translateY(-2px);
-            box-shadow: 0 0 20px rgba(255, 0, 0, 0.3);
+            transform: translateY(-1px);
+            box-shadow: 0 0 12px rgba(255, 80, 80, 0.2);
         }
 
         @media (max-width: 768px) {
-            .menu-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .headline {
-                font-size: 24px;
-            }
-
-            .container {
-                padding: 30px 25px;
-            }
+            .menu-grid { grid-template-columns: 1fr; }
+            .headline { font-size: 20px; }
+            .container { padding: 30px 25px; }
         }
     </style>
 </head>
@@ -212,6 +215,7 @@
     <div class="background-grid"></div>
     <div class="scanline"></div>
     <div class="glow-orb"></div>
+    <div class="glow-orb-2"></div>
 
     <div class="container">
         <div class="logo">
@@ -222,26 +226,48 @@
         <div class="subtitle">Escolha uma das opções abaixo para continuar</div>
 
         <div class="menu-grid">
+
             <a href="{% url 'questoes' %}" class="menu-card">
-                <div class="menu-icon">📝</div>
+                <div class="card-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00ff9f" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 11l3 3L22 4"/>
+                        <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+                    </svg>
+                </div>
                 <div class="menu-title">Questões</div>
                 <div class="menu-description">Gerenciar e responder questões do sistema</div>
             </a>
 
             <a href="{% url 'setup' %}" class="menu-card">
-                <div class="menu-icon">⚙️</div>
+                <div class="card-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00ff9f" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3"/>
+                        <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+                    </svg>
+                </div>
                 <div class="menu-title">Setup</div>
                 <div class="menu-description">Configurações e personalização do sistema</div>
             </a>
 
             <a href="{% url 'menu-consulta' %}" class="menu-card">
-                <div class="menu-icon">🔍</div>
+                <div class="card-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00ff9f" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"/>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
+                </div>
                 <div class="menu-title">Consulta</div>
                 <div class="menu-description">Buscar e consultar informações no banco de dados</div>
             </a>
 
             <a href="{% url 'menu_avaliacao' %}" class="menu-card">
-                <div class="menu-icon">📊</div>
+                <div class="card-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00ff9f" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="20" x2="18" y2="10"/>
+                        <line x1="12" y1="20" x2="12" y2="4"/>
+                        <line x1="6"  y1="20" x2="6"  y2="14"/>
+                    </svg>
+                </div>
                 <div class="menu-title">Avaliação</div>
                 <div class="menu-description">Análise e avaliação de resultados</div>
             </a>
@@ -255,6 +281,5 @@
             </form>
         </div>
     </div>
-    
 </body>
 </html>
