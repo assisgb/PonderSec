@@ -382,6 +382,11 @@
             <p style="color: #8ba1b0; margin-bottom: 24px; font-size: 15px; line-height: 1.6;">
                 Copie o link abaixo e envie para os avaliadores.<br>Eles não precisam de senha para responder.
             </p>
+
+            <label style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 24px; cursor: pointer; color: #e5fef6; font-size: 15px; background: rgba(0, 255, 160, 0.05); padding: 12px; border-radius: 8px; border: 1px dashed rgba(0, 255, 160, 0.3);">
+                <input type="checkbox" id="blindTestToggle" onchange="atualizarLinkCompartilhamento()" style="width: 18px; height: 18px; accent-color: #00ff9f;">
+                <strong>Ativar Blind Test</strong> (Ocultar nomes das IAs)
+            </label>
             
             <div style="display: flex; gap: 10px; margin-bottom: 16px;">
                 <input type="text" id="linkCompartilhamento" class="field-input" style="margin-bottom: 0; color: #00ff9f; background: rgba(0, 255, 160, 0.05);" readonly>
@@ -403,15 +408,32 @@
 
     <script>
 
+        let formIdAtual = null;
+
         function abrirModalCompartilhar(id) {
+            formIdAtual = id;
             const linkInput = document.getElementById('linkCompartilhamento');
             
             const urlBase = window.location.origin; // => Monta a URL dinâmica: ex: http://0.0.0.0:8000/avaliacao/responder/5/
-            linkInput.value = `${urlBase}/avaliacao/responder/${id}/`;
+            linkInput.value = `${urlBase}/avaliacao/responder/${formIdAtual}/`;
             
             document.getElementById('copyToast').style.display = 'none';
             
             abrirModal('modalCompartilhar');
+        }
+
+        function atualizarLinkCompartilhamento() {
+            if (!formIdAtual) return;
+            
+            const linkInput = document.getElementById('linkCompartilhamento');
+            const urlBase = window.location.origin;
+            let linkFinal = `${urlBase}/avaliacao/responder/${formIdAtual}/`;
+
+            if (document.getElementById('blindTestToggle').checked) {
+                linkFinal += "?blind=true";
+            }
+            
+            linkInput.value = linkFinal;
         }
 
         function copiarLink() {
@@ -431,6 +453,7 @@
                 alert("Não foi possível copiar o link automaticamente.");
             });
         }
+        
         function toggleQuestao(el) {
             el.classList.toggle('selected');
             const cb = el.querySelector('input[type="checkbox"]');
