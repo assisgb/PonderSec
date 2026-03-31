@@ -3,6 +3,7 @@ from django.utils import timezone
 from django.contrib import messages as django_messages
 from django.contrib.auth.decorators import login_required
 from google import genai
+import openai
 import os
 import re
 from groq import Groq
@@ -153,7 +154,15 @@ def consulta(request):
                             model=llm.nome,
                         )
                         texto_ia_limpa = chat_completion.choices[0].message.content
-                    
+
+                    elif "openai" in provedor or "OpenAI" in provedor or "openAI" in provedor:
+                        client = openai.OpenAI(api_key=llm.api_key)
+                        response = client.chat.completions.create(
+                            model=llm.nome,
+                            messages=[{"role": "user", "content": prompt_final}]
+                        )
+                        texto_ia_limpa = response.choices[0].message.content
+
                     # Você pode adicionar OpenAI, Anthropic, etc., aqui depois seguindo a mesma estrutura
                     else:
                         texto_ia_limpa = f"Provedor '{llm.descricao}' não implementado no backend."
@@ -354,6 +363,25 @@ def gerar_respostas(request, questao_id):
                     model=llm.nome,
                 )
                 texto_ia_limpa = chat_completion.choices[0].message.content
+
+            elif "openai" in provedor or "OpenAI" in provedor or "openAI" in provedor:
+                client = openai.OpenAI(api_key=llm.api_key)
+                response = client.chat.completions.create(
+                    model=llm.nome,
+                    messages=[{"role": "user", "content": prompt_final}]
+                )
+                texto_ia_limpa = response.choices[0].message.content
+            
+            elif "deepseek" in provedor:
+                client = openai.OpenAI(
+                    api_key=llm.api_key, 
+                    base_url="https://api.deepseek.com"
+                )
+                response = client.chat.completions.create(
+                    model=llm.nome, # Ex: "deepseek-chat" ou "deepseek-reasoner"
+                    messages=[{"role": "user", "content": prompt_final}]
+                )
+                texto_ia_limpa = response.choices[0].message.content
             
             else:
                 texto_ia_limpa = f"Provedor '{llm.descricao}' não reconhecido para execução automática."
@@ -618,12 +646,18 @@ def responder_avaliacao_publica(request, formulario_id):
         email = request.POST.get('email')
         profissao = request.POST.get('profissao')
 
-        avaliador = Avaliador.objects.create(
-            nome=nome,
+        avaliador, created = Avaliador.objects.get_or_create(
             email=email,
-            profissao=profissao,
-            formulario=formulario
+            defaults={
+                'nome': nome,
+                'profissao': profissao,
+                'formulario': formulario
+            }
         )
+
+        if not created:
+            avaliador.formulario = formulario
+            avaliador.save()
 
         for chave, valor in request.POST.items():
             if chave.startswith('quanti_') and valor:
@@ -641,11 +675,14 @@ def responder_avaliacao_publica(request, formulario_id):
                 )
 
         return render(request, 'avaliacao/avaliacao_sucesso.html')
+    
+    modo_cego = request.GET.get('blind') == 'true'
 
     contexto = {
         'formulario': formulario,
         'metricas': metricas,
         'likert_options': likert_options,
+        'blind_mode': modo_cego,
     }
     return render(request, 'avaliacao/avaliacao_publica.html', contexto)
 

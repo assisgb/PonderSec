@@ -413,7 +413,14 @@
                             <div class="slide-top">
                                 <div class="slide-meta">
                                     <span class="badge-q">Q{{ forloop.parentloop.counter }} / {{ formulario.questoes.count }}</span>
-                                    <span class="badge-ai">✦ {{ resp.llm.nome }}</span>
+                                    <span class="badge-ai">
+                                        ✦ 
+                                        {% if blind_mode %}
+                                            Resposta IA #{{ forloop.counter }}
+                                        {% else %}
+                                            {{ resp.llm.nome }}
+                                        {% endif %}
+                                    </span>
                                 </div>
                                 <div class="question-text">{{ questao.conteudo }}</div>
                                 <div class="response-box">
