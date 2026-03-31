@@ -97,26 +97,24 @@
         }
 
         .btn-run {
-            padding: 14px 32px;
-            background: linear-gradient(90deg, #00ff9f, #00ff57);
-            border: none;
+            padding: 12px 24px;
+            background: rgba(0, 255, 160, 0.1);
+            border: 1px solid rgba(0, 255, 160, 0.3);
             border-radius: 8px;
             cursor: pointer;
-            font-size: 15px;
-            font-weight: 700;
-            color: #020509;
+            font-size: 14px;
+            font-weight: 600;
+            color: #00ff9f;
+            text-decoration: none;
             text-transform: uppercase;
-            letter-spacing: 0.08em;
+            letter-spacing: 0.05em;
             transition: all 0.2s;
             white-space: nowrap;
-            display: flex;
-            align-items: center;
-            gap: 8px;
         }
 
         .btn-run:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 0 20px rgba(0, 255, 160, 0.6);
+            background: rgba(0, 255, 160, 0.15);
+            border-color: #00ff9f;
         }
 
         .questions-list {
@@ -286,6 +284,30 @@
             max-height: 320px;
             overflow-y: auto;
         }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 3px;
+            background: #1b2635;
+            border-radius: 99px;
+            margin-top: 12px;
+            overflow: hidden;
+            display: none;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #00ff9f, #00ff57);
+            border-radius: 99px;
+            animation: progressAnim 1.5s ease-in-out infinite;
+        }
+
+        @keyframes progressAnim {
+            0%   { width: 0%; margin-left: 0%; }
+            50%  { width: 60%; margin-left: 20%; }
+            100% { width: 0%; margin-left: 100%; }
+}
     </style>
 </head>
 
@@ -294,8 +316,12 @@
     <div class="background-grid"></div>
 
     <div class="container">
-
+            <div class="progress-bar-container" id="progressBar">
+                 <div class="progress-bar-fill"></div>
+            </div>
         <div class="header">
+
+            
 
             <a href="{% url 'menu-consulta' %}" class="btn-back-header">← Consulta</a>
 
@@ -436,6 +462,8 @@
             btnRun.innerHTML = '<span>⏳</span><span>Processando...</span>';
             btnRun.disabled = true;
 
+            document.getElementById('progressBar').style.display = 'block';
+
             try { // Cria um array de requisições
                 const requisicoes = Array.from(selectedQuestions).map(id => 
                     fetch(`/gerar_resposta/${id}`)
@@ -444,6 +472,7 @@
                 await Promise.all(requisicoes); // => Espera TODAS as requisições terminarem ao mesmo tempo
 
                 selectedQuestions.clear(); // => Limpa as seleções e recarrega a página apenas quando tudo estiver pronto
+                document.getElementById('progressBar').style.display = 'none';
                 location.reload();
                 
             } catch (error) {
