@@ -30,109 +30,78 @@
 
         .scanline {
             position: fixed; inset: 0;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.7), rgba(0,0,0,0.15), rgba(0,0,0,0.7));
-            background-size: 100% 4px; opacity: 0.25; pointer-events: none;
+            background-image: repeating-linear-gradient(
+                to bottom,
+                transparent 0px, transparent 3px,
+                rgba(0,0,0,0.12) 3px, rgba(0,0,0,0.12) 4px
+            );
+            opacity: 0.6; pointer-events: none;
         }
 
         .glow-orb {
-            position: fixed; width: 600px; height: 600px; border-radius: 50%;
-            background: radial-gradient(circle, rgba(0, 255, 160, 0.15), transparent 70%);
-            top: -15%; right: -10%; filter: blur(100px); opacity: 0.8; pointer-events: none;
+            position: fixed; width: 500px; height: 500px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 255, 160, 0.12), transparent 65%);
+            top: 10%; right: 10%; filter: blur(100px); opacity: 0.5; pointer-events: none;
         }
 
-        .glow-orb-2 {
-            position: fixed; width: 400px; height: 400px; border-radius: 50%;
-            background: radial-gradient(circle, rgba(0, 180, 255, 0.08), transparent 70%);
-            bottom: -10%; left: -5%; filter: blur(80px); opacity: 0.6; pointer-events: none;
-        }
-
-        .container {
-            position: relative; width: 100%; max-width: 900px; z-index: 2;
-        }
+        .container { position: relative; width: 100%; max-width: 900px; z-index: 2; }
 
         /* HEADER */
         .header {
-            display: flex; align-items: center; gap: 22px;
-            margin-bottom: 32px; padding: 28px 35px;
+            display: flex; align-items: center; gap: 20px;
+            margin-bottom: 28px; padding: 28px 35px;
             background: radial-gradient(circle at top, #0b141d 0, #050a11 55%, #020509 100%);
-            border-radius: 20px;
-            box-shadow: 0 0 0 1px rgba(0, 255, 160, 0.15), 0 20px 60px rgba(0,0,0,0.8);
+            border-radius: 18px;
+            box-shadow: 0 0 0 1px rgba(0,255,160,0.12), 0 18px 60px rgba(0,0,0,0.9), 0 0 30px rgba(0,255,160,0.08);
         }
 
         .logo img {
-            width: 68px; border-radius: 12px;
-            filter: drop-shadow(0 0 12px rgba(0, 255, 160, 0.6));
+            width: 68px; border-radius: 10px;
+            filter: drop-shadow(0 0 10px rgba(0,255,160,0.8)) drop-shadow(0 0 30px rgba(0,255,160,0.5));
         }
 
         .header-text { flex: 1; }
 
         .product-name {
-            color: #4ecf9a; text-transform: uppercase;
-            letter-spacing: 0.3em; font-size: 11px; font-weight: 600; margin-bottom: 4px;
+            color: #7df6c2; text-transform: uppercase;
+            letter-spacing: 0.28em; font-size: 12px; font-weight: 700; margin-bottom: 4px;
         }
 
-        .page-title {
-            color: #00ff9f; font-size: 26px; font-weight: 700;
-            text-shadow: 0 0 30px rgba(0, 255, 160, 0.3); margin-bottom: 4px;
-        }
-
-        .subtitle { font-size: 13px; color: #5a7a8a; }
-
-        .btn-back {
-            padding: 12px 26px;
-            background: rgba(0, 255, 160, 0.08);
-            border: 1px solid rgba(0, 255, 160, 0.2);
-            border-radius: 10px; cursor: pointer;
-            font-size: 13px; font-weight: 700; color: #00ff9f;
-            text-decoration: none; text-transform: uppercase;
-            letter-spacing: 0.08em; transition: all 0.2s;
-            display: flex; align-items: center; gap: 8px;
-        }
-
-        .btn-back:hover {
-            background: rgba(0, 255, 160, 0.14);
-            border-color: rgba(0, 255, 160, 0.4);
-        }
+        .page-title { color: #00ff9f; font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+        .subtitle   { font-size: 13px; color: #8ba1b0; }
 
         /* TOOLBAR */
-        .toolbar {
-            display: flex; gap: 14px; margin-bottom: 24px;
-        }
+        .toolbar { display: flex; gap: 14px; margin-bottom: 24px; }
 
         .search-bar { position: relative; flex: 1; }
 
         .search-input {
             width: 100%; padding: 13px 18px 13px 46px;
-            background: rgba(5, 10, 17, 0.9); border: 1px solid #1b2635;
+            background: rgba(5,10,17,0.9); border: 1px solid #1b2635;
             border-radius: 10px; color: #e5fef6; font-size: 14px;
             font-family: "Space Grotesk", system-ui, sans-serif;
             outline: none; transition: all 0.2s;
         }
-
         .search-input::placeholder { color: #3a5062; }
-        .search-input:focus { border-color: rgba(0, 255, 160, 0.4); box-shadow: 0 0 10px rgba(0, 255, 160, 0.08); }
+        .search-input:focus { border-color: rgba(0,255,160,0.4); box-shadow: 0 0 10px rgba(0,255,160,0.08); }
 
         .search-icon {
             position: absolute; left: 15px; top: 50%;
-            transform: translateY(-50%); color: #4ecf9a;
-            display: flex; align-items: center;
+            transform: translateY(-50%); display: flex; align-items: center;
         }
 
         .btn-add {
             padding: 13px 24px;
-            background: rgba(0, 255, 160, 0.1);
-            border: 1px solid rgba(0, 255, 160, 0.25);
+            background: rgba(0,255,160,0.1); border: 1px solid rgba(0,255,160,0.25);
             border-radius: 10px; cursor: pointer;
             font-size: 13px; font-weight: 700; color: #00ff9f;
             text-decoration: none; text-transform: uppercase;
             letter-spacing: 0.08em; transition: all 0.2s;
             display: flex; align-items: center; gap: 8px; white-space: nowrap;
         }
-
         .btn-add:hover {
-            background: rgba(0, 255, 160, 0.16);
-            border-color: rgba(0, 255, 160, 0.5);
-            box-shadow: 0 0 20px rgba(0, 255, 160, 0.1);
+            background: rgba(0,255,160,0.16); border-color: rgba(0,255,160,0.5);
+            box-shadow: 0 0 20px rgba(0,255,160,0.1);
         }
 
         /* SECTION LABEL */
@@ -141,100 +110,65 @@
             text-transform: uppercase; letter-spacing: 0.25em;
             margin-bottom: 16px; display: flex; align-items: center; gap: 12px;
         }
-
         .section-label::after {
             content: ''; flex: 1; height: 1px;
-            background: linear-gradient(to right, rgba(0, 255, 160, 0.2), transparent);
+            background: linear-gradient(to right, rgba(0,255,160,0.2), transparent);
         }
 
         /* METRICS GRID */
-        .metrics-list {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-        }
+        .metrics-list { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 
         .metric-card {
             display: flex; align-items: center; justify-content: space-between;
             padding: 22px 24px;
-            background: linear-gradient(135deg, rgba(11, 20, 29, 0.9) 0%, rgba(5, 10, 17, 0.95) 100%);
-            border: 1px solid rgba(0, 255, 160, 0.1);
+            background: linear-gradient(135deg, rgba(11,20,29,0.9) 0%, rgba(5,10,17,0.95) 100%);
+            border: 1px solid rgba(0,255,160,0.1);
             border-radius: 16px; transition: all 0.3s;
-            position: relative;  overflow: visible;;
+            position: relative; overflow: visible;
         }
-
         .metric-card::before {
-              content: '';
-                position: absolute;
-                inset: 0;
-                background: radial-gradient(circle at 0% 0%, rgba(0, 255, 160, 0.05) 0%, transparent 60%);
-                opacity: 0;
-                transition: opacity 0.3s;
-                pointer-events: none; /* <-- adiciona isso, garante que o ::before nunca bloqueie cliques */
-                border-radius: 16px;  
+            content: ''; position: absolute; inset: 0;
+            background: radial-gradient(circle at 0% 0%, rgba(0,255,160,0.05) 0%, transparent 60%);
+            opacity: 0; transition: opacity 0.3s; pointer-events: none; border-radius: 16px;
         }
-
         .metric-card:hover::before { opacity: 1; }
-
         .metric-card:hover {
-            border-color: rgba(0, 255, 160, 0.3);
-            box-shadow: 0 0 24px rgba(0, 0, 0, 0.4), 0 0 20px rgba(0, 255, 160, 0.06);
+            border-color: rgba(0,255,160,0.3);
+            box-shadow: 0 0 24px rgba(0,0,0,0.4), 0 0 20px rgba(0,255,160,0.06);
             transform: translateY(-2px);
         }
 
-        .metric-info { display: flex; align-items: center; gap: 16px; flex: 1; }
+        .metric-info { display: flex; align-items: center; gap: 16px; flex: 1; min-width: 0; }
 
         .metric-icon-box {
             width: 48px; height: 48px; flex-shrink: 0;
-            background: rgba(0, 255, 160, 0.06);
-            border: 1px solid rgba(0, 255, 160, 0.15);
-            border-radius: 12px;
-            display: flex; align-items: center; justify-content: center;
+            background: rgba(0,255,160,0.06); border: 1px solid rgba(0,255,160,0.15);
+            border-radius: 12px; display: flex; align-items: center; justify-content: center;
             transition: all 0.3s;
         }
-
         .metric-card:hover .metric-icon-box {
-            background: rgba(0, 255, 160, 0.1);
-            border-color: rgba(0, 255, 160, 0.3);
-            box-shadow: 0 0 16px rgba(0, 255, 160, 0.12);
+            background: rgba(0,255,160,0.1); border-color: rgba(0,255,160,0.3);
+            box-shadow: 0 0 16px rgba(0,255,160,0.12);
         }
+        .metric-icon-box svg { filter: drop-shadow(0 0 5px rgba(0,255,160,0.35)); transition: filter 0.3s; }
+        .metric-card:hover .metric-icon-box svg { filter: drop-shadow(0 0 10px rgba(0,255,160,0.6)); }
 
-        .metric-icon-box svg {
-            filter: drop-shadow(0 0 5px rgba(0, 255, 160, 0.35));
-            transition: filter 0.3s;
-        }
-
-        .metric-card:hover .metric-icon-box svg {
-            filter: drop-shadow(0 0 10px rgba(0, 255, 160, 0.6));
-        }
-
-        .metric-details { display: flex; flex-direction: column; gap: 4px; }
-
-        .metric-name {
-            font-size: 15px; font-weight: 700; color: #e5fef6;
-        }
-
-        .metric-meta {
-            display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
-        }
-
-        .metric-description { font-size: 12px; color: #5a7a8a; line-height: 1.4; }
+        .metric-details { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+        .metric-name { font-size: 15px; font-weight: 700; color: #e5fef6; }
+        .metric-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .metric-description { font-size: 12px; color: #8ba1b0; line-height: 1.4; }
 
         .badge-tipo {
             font-size: 9px; font-weight: 700; text-transform: uppercase;
             letter-spacing: 0.08em; padding: 2px 8px; border-radius: 20px;
         }
+        .badge-quanti { background: rgba(0,255,160,0.1); border: 1px solid rgba(0,255,160,0.25); color: #00ff9f; }
+        .badge-quali  { background: rgba(187,134,252,0.1); border: 1px solid rgba(187,134,252,0.25); color: #bb86fc; }
 
-        .badge-quanti {
-            background: rgba(0, 255, 160, 0.1);
-            border: 1px solid rgba(0, 255, 160, 0.25);
-            color: #00ff9f;
-        }
-
-        .badge-quali {
-            background: rgba(187, 134, 252, 0.1);
-            border: 1px solid rgba(187, 134, 252, 0.25);
-            color: #bb86fc;
+        .metric-score {
+            font-size: 10px; color: #4ecf9a; font-weight: 600;
+            background: rgba(0,255,160,0.05); border: 1px solid rgba(0,255,160,0.12);
+            padding: 2px 8px; border-radius: 20px;
         }
 
         .metric-actions { display: flex; gap: 8px; flex-shrink: 0; margin-left: 12px; }
@@ -244,48 +178,165 @@
             cursor: pointer; display: flex; align-items: center; justify-content: center;
             transition: all 0.2s; background: none;
         }
-
-        .btn-delete {
-            border-color: rgba(255, 80, 80, 0.2);
-            color: #cc5555;
+        .btn-edit {
+            border-color: rgba(0,255,160,0.2); color: #4ecf9a;
         }
-
+        .btn-edit:hover {
+            background: rgba(0,255,160,0.08); border-color: rgba(0,255,160,0.4);
+            color: #00ff9f; box-shadow: 0 0 12px rgba(0,255,160,0.12);
+        }
+        .btn-delete { border-color: rgba(255,80,80,0.2); color: #cc5555; }
         .btn-delete:hover {
-            background: rgba(255, 80, 80, 0.1);
-            border-color: rgba(255, 80, 80, 0.4);
-            color: #ff6b6b;
-            box-shadow: 0 0 12px rgba(255, 80, 80, 0.15);
+            background: rgba(255,80,80,0.1); border-color: rgba(255,80,80,0.4);
+            color: #ff6b6b; box-shadow: 0 0 12px rgba(255,80,80,0.15);
         }
 
         .empty-state {
             grid-column: 1 / -1; text-align: center;
             padding: 50px 20px; color: #3a5062; font-size: 14px;
         }
-
         .empty-state svg { margin-bottom: 14px; opacity: 0.3; }
 
-        /* BOTTOM */
+        /* BOTTOM BTN */
         .btn-back-bottom {
-            width: 100%; margin-top: 24px; padding: 13px;
-            background: rgba(255, 70, 70, 0.06);
-            border: 1px solid rgba(255, 70, 70, 0.2);
-            border-radius: 12px; cursor: pointer;
-            font-size: 12px; font-weight: 700; color: #cc5555;
+            width: 100%; margin-top: 24px; padding: 10px 28px;
+            background: rgba(255,0,0,0.1); border: 1px solid rgba(255,0,0,0.3);
+            border-radius: 999px; cursor: pointer;
+            font-size: 13px; font-weight: 600; color: #ff6b6b;
             text-decoration: none; text-transform: uppercase;
-            letter-spacing: 0.12em; transition: all 0.25s;
+            letter-spacing: 0.08em; transition: all 0.2s;
             display: flex; align-items: center; justify-content: center; gap: 8px;
         }
-
         .btn-back-bottom:hover {
-            background: rgba(255, 70, 70, 0.12);
-            border-color: rgba(255, 70, 70, 0.4);
-            color: #ff6b6b;
+            background: rgba(255,0,0,0.2); border-color: #ff6b6b;
+            transform: translateY(-2px); box-shadow: 0 0 20px rgba(255,0,0,0.3);
+        }
+
+        /* ═══════════════════════════
+           MODAL
+        ═══════════════════════════ */
+        .modal-overlay {
+            position: fixed; inset: 0; z-index: 100;
+            background: rgba(0,0,0,0.8);
+            display: none; align-items: center; justify-content: center; padding: 20px;
+        }
+        .modal-overlay.active { display: flex; }
+
+        .modal {
+            position: relative; width: 100%; max-width: 580px;
+            max-height: 90vh; overflow-y: auto;
+            background: radial-gradient(circle at top, #0b141d 0, #050a11 55%, #020509 100%);
+            border: 1px solid rgba(0,255,160,0.25); border-radius: 18px; padding: 36px;
+            box-shadow: 0 0 0 1px rgba(0,255,160,0.08), 0 18px 60px rgba(0,0,0,0.9), 0 0 20px rgba(0,255,160,0.06);
+        }
+        .modal::-webkit-scrollbar { width: 4px; }
+        .modal::-webkit-scrollbar-thumb { background: rgba(0,255,160,0.2); border-radius: 2px; }
+
+        .modal-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 24px; padding-bottom: 20px;
+            border-bottom: 1px solid rgba(0,255,160,0.12);
+        }
+
+        .modal-title-wrap { display: flex; flex-direction: column; gap: 2px; }
+        .modal-product { color: #7df6c2; text-transform: uppercase; letter-spacing: 0.28em; font-size: 10px; font-weight: 700; }
+        .modal-title   { color: #00ff9f; font-size: 20px; font-weight: 700; }
+
+        .modal-close {
+            background: none; border: 1px solid rgba(255,80,80,0.2); border-radius: 8px;
+            color: #cc5555; font-size: 16px; cursor: pointer;
+            width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s; line-height: 1;
+        }
+        .modal-close:hover { background: rgba(255,80,80,0.1); border-color: rgba(255,80,80,0.4); color: #ff6b6b; }
+
+        .modal-section-label {
+            font-size: 10px; color: #4ecf9a; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.25em;
+            margin-bottom: 16px; display: flex; align-items: center; gap: 10px;
+        }
+        .modal-section-label::after {
+            content: ''; flex: 1; height: 1px;
+            background: linear-gradient(to right, rgba(0,255,160,0.2), transparent);
+        }
+
+        .field-group { margin-bottom: 16px; }
+
+        .field-label {
+            display: block; color: #c5d9e3; font-size: 11px; font-weight: 700;
+            margin-bottom: 7px; text-transform: uppercase; letter-spacing: 0.08em;
+        }
+
+        .field-input, .field-textarea, .field-select {
+            width: 100%; padding: 12px 14px;
+            background: #050a11; border: 1px solid #1b2635;
+            border-radius: 10px; color: #e5fef6; font-size: 14px;
+            font-family: "Space Grotesk", sans-serif; outline: none; transition: all 0.2s;
+        }
+        .field-input:focus, .field-textarea:focus, .field-select:focus {
+            border-color: rgba(0,255,160,0.4); box-shadow: 0 0 10px rgba(0,255,160,0.08);
+        }
+        .field-input::placeholder, .field-textarea::placeholder { color: #3a5062; }
+        .field-textarea { resize: vertical; min-height: 80px; }
+        .field-select option { background: #050a11; }
+
+        /* Tipo radio pills */
+        .tipo-group { display: flex; gap: 10px; }
+        .tipo-option input[type="radio"] { display: none; }
+        .tipo-option label {
+            display: flex; align-items: center; gap: 8px;
+            padding: 10px 18px; border-radius: 10px;
+            border: 1px solid #1b2635; background: #050a11;
+            cursor: pointer; font-size: 13px; font-weight: 600;
+            color: #8ba1b0; transition: all 0.2s; white-space: nowrap;
+        }
+        .tipo-option input:checked + label {
+            border-color: rgba(0,255,160,0.4); background: rgba(0,255,160,0.08);
+            color: #00ff9f;
+        }
+        .tipo-option label:hover { border-color: rgba(0,255,160,0.25); }
+
+        /* Score range row */
+        .score-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+        .field-input[type="number"] { -moz-appearance: textfield; }
+        .field-input[type="number"]::-webkit-inner-spin-button,
+        .field-input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+        /* quanti-only section */
+        .quanti-fields { display: none; }
+        .quanti-fields.visible { display: block; }
+
+        .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+
+        .btn-modal-cancel {
+            padding: 11px 24px; background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.12); border-radius: 10px;
+            cursor: pointer; font-size: 13px; font-weight: 700; color: #8ba1b0;
+            text-transform: uppercase; letter-spacing: 0.06em; transition: all 0.2s;
+            font-family: "Space Grotesk", sans-serif;
+        }
+        .btn-modal-cancel:hover { background: rgba(255,255,255,0.08); }
+
+        .btn-modal-save {
+            padding: 11px 28px; background: rgba(0,255,160,0.12);
+            border: 1px solid rgba(0,255,160,0.4); border-radius: 10px;
+            cursor: pointer; font-size: 13px; font-weight: 700; color: #00ff9f;
+            text-transform: uppercase; letter-spacing: 0.06em; transition: all 0.2s;
+            font-family: "Space Grotesk", sans-serif;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .btn-modal-save:hover {
+            background: rgba(0,255,160,0.2); border-color: #00ff9f;
+            box-shadow: 0 0 20px rgba(0,255,160,0.2);
         }
 
         @media (max-width: 700px) {
             .metrics-list { grid-template-columns: 1fr; }
             .header { flex-direction: column; text-align: center; }
             .toolbar { flex-direction: column; }
+            .score-row { grid-template-columns: 1fr; }
+            .tipo-group { flex-wrap: wrap; }
         }
     </style>
 </head>
@@ -293,7 +344,6 @@
     <div class="background-grid"></div>
     <div class="scanline"></div>
     <div class="glow-orb"></div>
-    <div class="glow-orb-2"></div>
 
     <div class="container">
 
@@ -306,7 +356,6 @@
                 <div class="page-title">Métricas de Avaliação</div>
                 <div class="subtitle">Gerencie os critérios de avaliação das respostas</div>
             </div>
-            
         </div>
 
         <div class="toolbar">
@@ -319,12 +368,12 @@
                 <input type="text" class="search-input" id="searchInput"
                     placeholder="Buscar métrica..." onkeyup="filterMetrics()">
             </div>
-            <a href="{% url 'setup_adicionar_metrica' %}" class="btn-add">
+            <button class="btn-add" onclick="abrirModal()">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
                     <path d="M12 5v14M5 12h14"/>
                 </svg>
                 Adicionar
-            </a>
+            </button>
         </div>
 
         <div class="section-label">Métricas Cadastradas</div>
@@ -351,29 +400,43 @@
                             <span class="badge-tipo {% if metrica.tipo == 'quantitativa' %}badge-quanti{% else %}badge-quali{% endif %}">
                                 {{ metrica.tipo }}
                             </span>
+                            {% if metrica.tipo == 'quantitativa' %}
+                            <span class="metric-score">máx {{ metrica.pontuacao_maxima|default:"5" }}</span>
+                            {% endif %}
                         </div>
                         <div class="metric-description">{{ metrica.descricao }}</div>
                     </div>
                 </div>
                 <div class="metric-actions">
-                        
-                        <button class="btn-icon btn-delete" title="Deletar"
-                            onclick="deletar_metrica({{ metrica.id }})">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                                <polyline points="3 6 5 6 21 6"/>
-                                <path d="M19 6l-1 14H6L5 6"/>
-                                <path d="M10 11v6M14 11v6"/>
-                                <path d="M9 6V4h6v2"/>
-                            </svg>
-                        </button>
-                   
+                    <button class="btn-icon btn-edit" title="Editar"
+                        onclick="abrirModalEditar(
+                            {{ metrica.id }},
+                            '{{ metrica.nome|escapejs }}',
+                            '{{ metrica.descricao|escapejs }}',
+                            '{{ metrica.tipo }}',
+                            '{{ metrica.pontuacao_maxima|default:5 }}',
+                            '{{ metrica.criterio_texto|default:""|escapejs }}'
+                        )">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                    </button>
+                    <button class="btn-icon btn-delete" title="Deletar"
+                        onclick="deletar_metrica({{ metrica.id }})">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                            <polyline points="3 6 5 6 21 6"/>
+                            <path d="M19 6l-1 14H6L5 6"/>
+                            <path d="M10 11v6M14 11v6"/>
+                            <path d="M9 6V4h6v2"/>
+                        </svg>
+                    </button>
                 </div>
             </div>
             {% empty %}
             <div class="empty-state">
                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#4ecf9a" stroke-width="1.5" stroke-linecap="round">
-                    <path d="M3 20h18"/><path d="M5 20V14"/><path d="M8 20V10"/>
-                    <path d="M11 20V6"/><path d="M14 20V9"/>
+                    <path d="M3 20h18"/><path d="M5 20V14"/><path d="M8 20V10"/><path d="M11 20V6"/><path d="M14 20V9"/>
                 </svg>
                 <p>Nenhuma métrica cadastrada ainda.</p>
             </div>
@@ -388,7 +451,146 @@
         </a>
     </div>
 
+    <!-- ═══════════════════════════════════════
+         MODAL UNIFICADO — ADICIONAR / EDITAR
+    ═══════════════════════════════════════ -->
+    <div class="modal-overlay" id="modalMetrica">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title-wrap">
+                    <span class="modal-product">PonderSEC</span>
+                    <span class="modal-title" id="modalTitulo">Adicionar Métrica</span>
+                </div>
+                <button class="modal-close" onclick="fecharModal()">✕</button>
+            </div>
+
+            <form method="POST" id="formMetrica">
+                {% csrf_token %}
+                <input type="hidden" name="metrica_id" id="fMetricaId" value="">
+
+                <div class="modal-section-label">Dados da Métrica</div>
+
+                <div class="field-group">
+                    <label class="field-label">Nome da Métrica</label>
+                    <input type="text" name="nome" id="fNome" class="field-input"
+                        placeholder="Ex: Acurácia, Clareza..." required>
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label">Descrição</label>
+                    <input type="text" name="descricao" id="fDescricao" class="field-input"
+                        placeholder="Descreva o que esta métrica avalia">
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label">Tipo de Métrica</label>
+                    <div class="tipo-group">
+                        <div class="tipo-option">
+                            <input type="radio" name="tipo" id="tipoQuanti" value="quantitativa" checked
+                                onchange="toggleQuantiFields()">
+                            <label for="tipoQuanti">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                    <path d="M3 20h18"/><path d="M8 20V10"/><path d="M13 20V6"/><path d="M18 20V14"/>
+                                </svg>
+                                Quantitativa
+                            </label>
+                        </div>
+                        <div class="tipo-option">
+                            <input type="radio" name="tipo" id="tipoQuali" value="qualitativa"
+                                onchange="toggleQuantiFields()">
+                            <label for="tipoQuali">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                                </svg>
+                                Qualitativa
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Campos apenas para quantitativa -->
+                <div class="quanti-fields visible" id="quantiFields">
+                    <div class="modal-section-label">Pontuação</div>
+                    <div class="field-group">
+                        <label class="field-label">Pontuação Máxima</label>
+                        <input type="number" name="pontuacao_maxima" id="fPontuacaoMax"
+                            class="field-input" placeholder="Ex: 5" value="5" min="1">
+                    </div>
+                </div>
+
+                <div class="field-group" style="margin-top: 4px;">
+                    <label class="field-label">Critério de Avaliação</label>
+                    <textarea name="criterio_texto" id="fCriterio" class="field-textarea"
+                        placeholder="Descreva os critérios para avaliar esta métrica..."></textarea>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-modal-cancel" onclick="fecharModal()">Cancelar</button>
+                    <button type="submit" class="btn-modal-save" id="btnSalvar">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                            <path d="M12 5v14M5 12h14"/>
+                        </svg>
+                        <span id="btnSalvarLabel">Adicionar Métrica</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
+        const overlay = document.getElementById('modalMetrica');
+        let modoEditar = false;
+
+        function abrirModal() {
+            modoEditar = false;
+            document.getElementById('modalTitulo').textContent    = 'Adicionar Métrica';
+            document.getElementById('btnSalvarLabel').textContent = 'Adicionar Métrica';
+            document.getElementById('formMetrica').action = "{% url 'setup_adicionar_metrica' %}";
+
+            document.getElementById('fMetricaId').value  = '';
+            document.getElementById('fNome').value        = '';
+            document.getElementById('fDescricao').value   = '';
+            document.getElementById('fCriterio').value    = '';
+            document.getElementById('fPontuacaoMax').value = '5';
+            document.getElementById('tipoQuanti').checked = true;
+            toggleQuantiFields();
+
+            overlay.classList.add('active');
+        }
+
+        function abrirModalEditar(id, nome, descricao, tipo, ponMax, criterio) {
+            modoEditar = true;
+            document.getElementById('modalTitulo').textContent    = 'Editar Métrica';
+            document.getElementById('btnSalvarLabel').textContent = 'Salvar Alterações';
+            document.getElementById('formMetrica').action = "{% url 'setup_configurar_metrica' %}";
+
+            document.getElementById('fMetricaId').value   = id;
+            document.getElementById('fNome').value         = nome;
+            document.getElementById('fDescricao').value    = descricao;
+            document.getElementById('fCriterio').value     = criterio;
+            document.getElementById('fPontuacaoMax').value = ponMax;
+
+            if (tipo === 'quantitativa') {
+                document.getElementById('tipoQuanti').checked = true;
+            } else {
+                document.getElementById('tipoQuali').checked = true;
+            }
+            toggleQuantiFields();
+
+            overlay.classList.add('active');
+        }
+
+        function fecharModal() {
+            overlay.classList.remove('active');
+        }
+
+        function toggleQuantiFields() {
+            const quanti = document.getElementById('tipoQuanti').checked;
+            document.getElementById('quantiFields').classList.toggle('visible', quanti);
+            // Ícone do botão salvar muda para lápis no editar
+            const icon = document.querySelector('#btnSalvar svg path');
+        }
+
         function filterMetrics() {
             const filter = document.getElementById('searchInput').value.toLowerCase();
             document.querySelectorAll('.metric-card').forEach(card => {
@@ -396,23 +598,30 @@
             });
         }
 
-
         function deletar_metrica(metrica_id) {
-        fetch(`/setup-deletar-metrica/${metrica_id}/`, {
-            method: "DELETE",
-            headers: {
-                "X-CSRFToken": document.cookie.match(/csrftoken=([^;]+)/)?.[1] || ""
-            }
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.status === "success") {
-                // Remove o card da tela sem recarregar
-                const card = document.querySelector(`[data-id="${metrica_id}"]`);
-                if (card) card.remove();
-            }
-        });
-    }
+            fetch(`/setup-deletar-metrica/${metrica_id}/`, {
+                method: "DELETE",
+                headers: { "X-CSRFToken": document.cookie.match(/csrftoken=([^;]+)/)?.[1] || "" }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === "success") {
+                    const card = document.querySelector(`[data-id="${metrica_id}"]`);
+                    if (card) {
+                        card.style.transition = 'opacity 0.25s, transform 0.25s';
+                        card.style.opacity = '0';
+                        card.style.transform = 'scale(0.95)';
+                        setTimeout(() => card.remove(), 260);
+                    }
+                }
+            });
+        }
+
+        // Fechar clicando fora
+        overlay.addEventListener('click', e => { if (e.target === overlay) fecharModal(); });
+
+        // Inicializa visibilidade dos campos quanti
+        toggleQuantiFields();
     </script>
 </body>
 </html>

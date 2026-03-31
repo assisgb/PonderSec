@@ -397,41 +397,93 @@ def setup_llm(request):
     return render(request, 'setup/setup-llm.html',{"llms_cadastradas": llms_cadastradas})
 
 @login_required
-def setup_avaliacao(request):
-    metricas = Metrica.objects.filter(ativa=True)
-    return render(request, 'setup/setup-avaliacao.html', {'metricas': metricas})
-
-@login_required
 def setup_configurar_llm(request):
     return render(request, 'setup/setup-configurar-llm.html')
 
+# ─────────────────────────────────────────────
+#  MÉTRICAS — views corrigidas
+#  Substitua as funções correspondentes no seu views.py
+# ─────────────────────────────────────────────
+
+@login_required
+def setup_avaliacao(request):
+    """
+    Lista todas as métricas ativas.
+    Template: setup/setup-avaliacao.html  (seu arquivo setup_metricas.html renomeado)
+    """
+    metricas = Metrica.objects.filter(ativa=True)
+    return render(request, 'setup/setup-avaliacao.html', {'metricas': metricas})
+
+
 @login_required
 def setup_adicionar_metrica(request):
+    """
+    Recebe POST do modal 'Adicionar Métrica'.
+    Campos esperados: nome, descricao, tipo, pontuacao_maxima, criterio_texto
+    """
     if request.method == 'POST':
-        nome = request.POST.get('nome')
-        descricao = request.POST.get('descricao')
-        tipo = request.POST.get('tipo')
+        nome             = request.POST.get('nome', '').strip()
+        descricao        = request.POST.get('descricao', '').strip()
+        tipo             = request.POST.get('tipo', 'quantitativa')
         pontuacao_maxima = request.POST.get('pontuacao_maxima')
-        criterio_texto = request.POST.get('criterio_texto')
+        criterio_texto   = request.POST.get('criterio_texto', '').strip()
+
+        if not nome:
+            django_messages.error(request, 'O nome da métrica é obrigatório.')
+            return redirect('setup_avaliacao')
 
         Metrica.objects.create(
-            nome=nome,
-            descricao=descricao,
-            tipo=tipo,
-            pontuacao_maxima=pontuacao_maxima if pontuacao_maxima else None,
-            criterio_texto=criterio_texto,
-            ativa=True
+            nome             = nome,
+            descricao        = descricao,
+            tipo             = tipo,
+            pontuacao_maxima = int(pontuacao_maxima) if pontuacao_maxima else None,
+            criterio_texto   = criterio_texto,
+            ativa            = True,
         )
         return redirect('setup_avaliacao')
 
-    return render(request, 'setup/setup-adicionar-metrica.html')
+    # GET — não é usado (modal inline), mas redireciona com segurança
+    return redirect('setup_avaliacao')
+
 
 @login_required
 def setup_configurar_metrica(request):
-    return render(request, 'setup/setup-configurar-metrica.html')
+    """
+    Edita uma métrica existente.
+    Recebe POST do modal 'Editar Métrica' com campo oculto 'metrica_id'.
+    Campos: metrica_id, nome, descricao, tipo, pontuacao_maxima, criterio_texto
+    """
+    if request.method == 'POST':
+        metrica_id       = request.POST.get('metrica_id')
+        nome             = request.POST.get('nome', '').strip()
+        descricao        = request.POST.get('descricao', '').strip()
+        tipo             = request.POST.get('tipo', 'quantitativa')
+        pontuacao_maxima = request.POST.get('pontuacao_maxima')
+        criterio_texto   = request.POST.get('criterio_texto', '').strip()
+
+        if not metrica_id:
+            django_messages.error(request, 'ID da métrica não informado.')
+            return redirect('setup_avaliacao')
+
+        metrica = get_object_or_404(Metrica, id=metrica_id)
+        metrica.nome             = nome
+        metrica.descricao        = descricao
+        metrica.tipo             = tipo
+        metrica.pontuacao_maxima = int(pontuacao_maxima) if pontuacao_maxima else None
+        metrica.criterio_texto   = criterio_texto
+        metrica.save()
+
+        return redirect('setup_avaliacao')
+
+    return redirect('setup_avaliacao')
+
 
 @require_http_methods(["DELETE"])
 def setup_deletar_metrica(request, id):
+    """
+    Deleta uma métrica via DELETE (chamada AJAX do front).
+    Retorna JSON { status: "success" } ou { status: "error" }.
+    """
     try:
         metrica = get_object_or_404(Metrica, id=id)
         metrica.delete()
