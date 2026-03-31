@@ -545,8 +545,10 @@ def menu_consulta(request):
 
 @login_required
 def executar_consulta(request):
-    questoes = Questao.objects.all()
-    return render(request, 'consulta/executar-consulta.html', {"questoes":  questoes})
+    questoes = Questao.objects.prefetch_related('respostas').all()
+    return render(request, 'consulta/executar-consulta.html', {
+        "questoes": questoes
+    })
 
 @login_required
 def consulta_comparacao(request):

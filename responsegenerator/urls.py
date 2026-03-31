@@ -33,5 +33,6 @@ urlpatterns = [
     path("api/llm/<int:id>/delete/", views.deletar_llm, name="delete_llm"),
     path("api/llm/<int:id>/edit/", views.edit_llm_api),
     path('avaliacao/dashboard/', views.dashboard_avaliacoes, name='dashboard_avaliacoes'),
-    path('menu_avaliacao/', views.menu_avaliacao, name='menu_avaliacao')
+    path('menu_avaliacao/', views.menu_avaliacao, name='menu_avaliacao'),
+    path('setup-configurar-metrica/', views.setup_configurar_metrica, name='setup_configurar_metrica'),
 ]

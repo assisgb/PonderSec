@@ -5,3 +5,5 @@ groq
 openai
 python-dotenv
 aiohttp
+django-extensions
+werkzeug

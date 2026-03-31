@@ -237,16 +237,37 @@
 
         /* Bottom section: scrollable metrics */
         .slide-metrics {
-        flex: 1;
-        min-height: 0;
-        overflow-y: auto;
-        padding: 14px 22px 18px;
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            padding: 14px 22px 18px;
+
+            display: grid;
+            grid-template-columns: repeat(2, 1fr); /* ← colunas */
+            gap: 16px;
         }
+
         .slide-metrics::-webkit-scrollbar { width: 4px; }
         .slide-metrics::-webkit-scrollbar-thumb { background: #1b2635; border-radius: 2px; }
 
-        .metric-block { margin-bottom: 18px; }
-        .metric-block:last-child { margin-bottom: 0; }
+       .metric-block {
+            background: rgba(0,255,160,0.03);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px;
+
+            margin: 0;
+
+            display: flex;
+            flex-direction: column;
+
+            transition: 0.2s;
+        }
+
+        .metric-block:hover {
+            border-color: var(--green);
+            box-shadow: 0 0 10px var(--green-dim);
+        }
         .metric-label {
             font-size: 11px; font-weight: 700; color: var(--green);
             text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 2px;
@@ -301,7 +322,11 @@
         .comment-field:focus { border-color: rgba(0,255,160,0.5); }
         .comment-field::placeholder { color: #2a3848; }
 
+        
+
         /* ── Nav row ── */
+    
+
         .eval-nav {
             flex-shrink: 0;
             display: flex; gap: 8px; align-items: center;
@@ -347,11 +372,10 @@
         .kbd-hint { flex-shrink: 0; font-size: 10px; color: #2a3848; text-align: center; margin-top: 4px; }
         .kbd { display: inline-block; background: #0d1a24; border: 1px solid #1b2635; border-radius: 3px; padding: 1px 5px; font-size: 9px; color: #3a5062; }
 
-        @media (max-width: 480px) {
-            .likert-group { gap: 3px; }
-            .likert-option label { padding: 7px 2px; min-height: 62px; }
-            .likert-emoji { font-size: 14px; }
-            .likert-num { font-size: 12px; }
+        @media (max-width: 768px) {
+            .slide-metrics {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -437,20 +461,23 @@
                                     <div class="metric-desc">{{ metrica.descricao }}</div>
 
                                     {% if metrica.tipo == 'quantitativa' %}
-                                    <div class="likert-group">
-                                        {% for val, emoji, anchor in likert_options %}
-                                        <div class="likert-option">
-                                            <input type="radio"
-                                                id="lk_{{ resp.id }}_{{ metrica.id }}_{{ val }}"
-                                                name="quanti_{{ resp.id }}_{{ metrica.id }}"
-                                                value="{{ val }}" required>
-                                            <label for="lk_{{ resp.id }}_{{ metrica.id }}_{{ val }}">
-                                                <span class="likert-emoji">{{ emoji }}</span>
-                                                <span class="likert-num">{{ val }}</span>
-                                                <span class="likert-anchor">{{ anchor }}</span>
-                                            </label>
+                                    <div class="slider-container">
+                                        <input type="range"
+                                            min="1" max="5" step="1"
+                                            value="3"
+                                            name="quanti_{{ resp.id }}_{{ metrica.id }}"
+                                            class="slider"
+                                            oninput="updateSlider(this)">
+                                        
+                                        <div class="slider-labels">
+                                            <span>😡</span>
+                                            <span>😕</span>
+                                            <span>😐</span>
+                                            <span>🙂</span>
+                                            <span>😄</span>
                                         </div>
-                                        {% endfor %}
+
+                                        <div class="slider-value">3</div>
                                     </div>
                                     {% endif %}
 
