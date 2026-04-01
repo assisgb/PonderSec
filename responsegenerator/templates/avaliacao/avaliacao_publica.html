@@ -95,8 +95,7 @@
         }
         .btn-start:hover { box-shadow: 0 0 28px rgba(0,255,160,0.4); transform: translateY(-1px); }
 
-        /* ══ SCREEN 2 — EVALUATION  ══
-           Uses a fixed 100vh column layout so content never overflows page */
+        /* ══ SCREEN 2 — EVALUATION ══ */
         .screen-eval {
             display: none;
             position: fixed; inset: 0; z-index: 2;
@@ -105,10 +104,9 @@
         }
         .screen-eval.active { display: flex; }
 
-        /* inner centering wrapper */
         .eval-inner {
             display: flex; flex-direction: column;
-            height: 100%; max-width: 1000px;
+            height: 100%; max-width: 1100px;
             margin: 0 auto; width: 100%;
         }
 
@@ -156,9 +154,9 @@
         .dot.active { background: var(--green); box-shadow: 0 0 7px var(--green-glow); transform: scale(1.5); }
         .dot.done   { background: rgba(0,255,160,0.35); }
 
-        /* ── Carousel shell — fills ALL remaining vertical space ── */
+        /* Carousel shell */
         .carousel-shell {
-            flex: 1; min-height: 0;          /* key: shrink-to-fit */
+            flex: 1; min-height: 0;
             overflow: hidden;
             border-radius: 14px;
             border: 1px solid var(--border);
@@ -177,18 +175,17 @@
             will-change: transform;
         }
 
-        /* ── Slide — full height column ── */
-       .slide {
+        /* Slide */
+        .slide {
             min-width: 100%; height: 100%; flex-shrink: 0;
             display: flex; flex-direction: column; overflow: hidden;
         }
 
-        /* Top section: fixed, not scrollable */
+        /* Top section */
         .slide-top {
             flex-shrink: 0;
             padding: 18px 22px 0;
-            height: 40%;   /* ← altura fixa: metade do carousel */
-            width: 998px;       
+            height: 42%;
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -215,11 +212,11 @@
             line-height: 1.5; margin-bottom: 10px;
             padding-bottom: 10px;
             border-bottom: 1px solid rgba(255,255,255,0.06);
-            flex-shrink: 0;       /* ← não encolhe, sempre visível */
+            flex-shrink: 0;
         }
         .response-box {
             flex: 1;
-            min-height: 0;        /* ← obrigatório para scroll funcionar em flex */
+            min-height: 0;
             overflow-y: auto;
             background: #020509;
             border: 1px solid var(--input-border);
@@ -228,105 +225,144 @@
             padding: 10px 13px;
             margin-bottom: 12px;
         }
-
         .response-box::-webkit-scrollbar { width: 4px; }
         .response-box::-webkit-scrollbar-thumb { background: #1b2635; border-radius: 2px; }
         .response-text { color: var(--text-label); font-size: 13px; line-height: 1.7; white-space: pre-wrap; }
 
         .divider { flex-shrink: 0; height: 1px; background: rgba(0,255,160,0.08); margin: 0 22px; }
 
-        /* Bottom section: scrollable metrics */
+        /* ══ METRICS GRID — até 5 colunas, quebra linha automaticamente ══ */
         .slide-metrics {
             flex: 1;
             min-height: 0;
             overflow-y: auto;
             padding: 14px 22px 18px;
 
-            display: grid;
-            grid-template-columns: repeat(2, 1fr); /* ← colunas */
-            gap: 16px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-content: flex-start;
         }
-
         .slide-metrics::-webkit-scrollbar { width: 4px; }
         .slide-metrics::-webkit-scrollbar-thumb { background: #1b2635; border-radius: 2px; }
 
-       .metric-block {
+        /* Cada métrica ocupa 1/4 da linha menos os gaps — até 4 por linha */
+        .metric-block {
+            /* calc: (100% - 3 gaps de 12px) / 4 */
+            flex: 0 0 calc((100% - 36px) / 4);
+            min-width: 180px; /* fallback para telas menores */
             background: rgba(0,255,160,0.03);
             border: 1px solid var(--border);
             border-radius: 12px;
-            padding: 14px;
-
-            margin: 0;
-
+            padding: 12px 14px;
             display: flex;
             flex-direction: column;
-
             transition: 0.2s;
         }
-
         .metric-block:hover {
             border-color: var(--green);
             box-shadow: 0 0 10px var(--green-dim);
         }
         .metric-label {
-            font-size: 11px; font-weight: 700; color: var(--green);
+            font-size: 10px; font-weight: 700; color: var(--green);
             text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 2px;
         }
-        .metric-desc { font-size: 11px; color: var(--text-muted); margin-bottom: 10px; line-height: 1.4; }
+        .metric-desc {
+            font-size: 10px; color: var(--text-muted); margin-bottom: 10px; line-height: 1.4;
+        }
 
-        /* ── LIKERT ── */
-        .likert-group {
-            display: grid; grid-template-columns: repeat(5, 1fr);
-            gap: 6px; margin-bottom: 10px;
+        /* ══ LIKERT DRAG SLIDER (escala 1–5 fixa, inteiros) ══ */
+        .likert-drag {
+            margin-bottom: 10px;
+            user-select: none;
         }
-        .likert-option input[type="radio"] { display: none; }
-        .likert-option label {
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            gap: 3px; padding: 10px 3px;
-            border-radius: 10px;
-            border: 1px solid var(--input-border);
-            background: var(--input-bg);
-            cursor: pointer; transition: all 0.18s;
-            text-align: center; min-height: 72px;
+        .likert-track-wrap {
+            position: relative;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            cursor: grab;
+            margin-bottom: 4px;
         }
-        .likert-option label:hover {
-            border-color: rgba(0,255,160,0.5);
-            background: rgba(0,255,160,0.05);
-            transform: translateY(-2px);
+        .likert-track-wrap:active { cursor: grabbing; }
+        .likert-rail {
+            width: 100%;
+            height: 4px;
+            background: var(--input-border);
+            border-radius: 99px;
+            position: relative;
         }
-        .likert-option input:checked + label {
-            border-color: var(--green);
-            background: var(--green-dim);
-            box-shadow: 0 0 12px rgba(0,255,160,0.2);
+        .likert-fill {
+            position: absolute;
+            left: 0; top: 0; height: 100%;
+            background: linear-gradient(90deg, var(--green), #00e87a);
+            border-radius: 99px;
+            transition: width 0.12s;
+            pointer-events: none;
         }
-        .likert-emoji { font-size: 18px; line-height: 1; }
-        .likert-num {
-            font-size: 15px; font-weight: 700;
-            color: var(--text-muted); line-height: 1;
+        /* tick marks */
+        .likert-ticks {
+            position: absolute;
+            top: 50%; transform: translateY(-50%);
+            left: 0; width: 100%;
+            display: flex; justify-content: space-between;
+            pointer-events: none;
         }
-        .likert-option input:checked + label .likert-num { color: var(--green); }
-        .likert-anchor {
-            font-size: 8px; color: var(--text-muted);
-            line-height: 1.25; max-width: 54px;
+        .likert-tick {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--input-border);
+            border: 2px solid #050a11;
+            transition: background 0.15s, transform 0.15s;
+            flex-shrink: 0;
         }
-        .likert-option input:checked + label .likert-anchor { color: #7df6c2; }
+        .likert-thumb {
+            position: absolute;
+            top: 50%; transform: translate(-50%, -50%);
+            width: 22px; height: 22px; border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 10px rgba(0,255,160,0.5);
+            border: 3px solid #050a11;
+            transition: left 0.12s, transform 0.1s;
+            cursor: grab;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 11px; font-weight: 700; color: #000;
+            z-index: 2;
+        }
+        .likert-thumb:active { transform: translate(-50%, -50%) scale(1.15); cursor: grabbing; }
+        .likert-labels {
+            display: flex; justify-content: space-between;
+            padding: 0 2px;
+        }
+        .likert-lbl {
+            font-size: 7px; color: var(--text-muted);
+            text-align: center; line-height: 1.2;
+            flex: 1;
+        }
+        .likert-lbl.active { color: var(--green); font-weight: 700; }
+        .likert-emoji-row {
+            display: flex; justify-content: space-between;
+            padding: 0 2px; margin-bottom: 6px;
+        }
+        .likert-emo {
+            font-size: 14px; flex: 1; text-align: center;
+            transition: transform 0.15s, opacity 0.15s;
+            opacity: 0.4;
+        }
+        .likert-emo.active { transform: scale(1.3); opacity: 1; }
 
+        /* Comment field */
         .comment-field {
-            width: 100%; padding: 9px 11px;
+            width: 100%; padding: 7px 10px;
             background: var(--input-bg); border: 1px solid var(--input-border);
-            border-radius: 8px; color: var(--text); font-size: 12px;
+            border-radius: 8px; color: var(--text); font-size: 11px;
             font-family: "Space Grotesk", sans-serif; outline: none;
-            resize: none; height: 52px; transition: border-color 0.2s;
+            resize: none; height: 44px; transition: border-color 0.2s;
+            margin-top: auto;
         }
         .comment-field:focus { border-color: rgba(0,255,160,0.5); }
         .comment-field::placeholder { color: #2a3848; }
 
-        
-
-        /* ── Nav row ── */
-    
-
+        /* Nav */
         .eval-nav {
             flex-shrink: 0;
             display: flex; gap: 8px; align-items: center;
@@ -372,9 +408,10 @@
         .kbd-hint { flex-shrink: 0; font-size: 10px; color: #2a3848; text-align: center; margin-top: 4px; }
         .kbd { display: inline-block; background: #0d1a24; border: 1px solid #1b2635; border-radius: 3px; padding: 1px 5px; font-size: 9px; color: #3a5062; }
 
-        @media (max-width: 768px) {
-            .slide-metrics {
-                grid-template-columns: 1fr;
+        /* Responsive: em telas pequenas reduz para 2 colunas */
+        @media (max-width: 700px) {
+            .metric-block {
+                flex: 0 0 calc((100% - 12px) / 2);
             }
         }
     </style>
@@ -438,7 +475,7 @@
                                 <div class="slide-meta">
                                     <span class="badge-q">Q{{ forloop.parentloop.counter }} / {{ formulario.questoes.count }}</span>
                                     <span class="badge-ai">
-                                        ✦ 
+                                        ✦
                                         {% if blind_mode %}
                                             Resposta IA #{{ forloop.counter }}
                                         {% else %}
@@ -454,6 +491,7 @@
 
                             <div class="divider"></div>
 
+                            <!-- Métricas: flex-wrap, até 5 por linha -->
                             <div class="slide-metrics">
                                 {% for metrica in metricas %}
                                 <div class="metric-block">
@@ -461,30 +499,52 @@
                                     <div class="metric-desc">{{ metrica.descricao }}</div>
 
                                     {% if metrica.tipo == 'quantitativa' %}
-                                    <div class="slider-container">
-                                        <input type="range"
-                                            min="1" max="5" step="1"
-                                            value="3"
-                                            name="quanti_{{ resp.id }}_{{ metrica.id }}"
-                                            class="slider"
-                                            oninput="updateSlider(this)">
-                                        
-                                        <div class="slider-labels">
-                                            <span>😡</span>
-                                            <span>😕</span>
-                                            <span>😐</span>
-                                            <span>🙂</span>
-                                            <span>😄</span>
+                                    <!-- Likert drag slider 1–5, valor inteiro -->
+                                    <div class="likert-drag"
+                                         data-resp="{{ resp.id }}"
+                                         data-metrica="{{ metrica.id }}"
+                                         data-val="3">
+
+                                        <div class="likert-emoji-row">
+                                            <span class="likert-emo" data-pos="1">😡</span>
+                                            <span class="likert-emo" data-pos="2">😕</span>
+                                            <span class="likert-emo active" data-pos="3">😐</span>
+                                            <span class="likert-emo" data-pos="4">🙂</span>
+                                            <span class="likert-emo" data-pos="5">😄</span>
                                         </div>
 
-                                        <div class="slider-value">3</div>
+                                        <div class="likert-track-wrap">
+                                            <div class="likert-rail">
+                                                <div class="likert-fill" style="width:50%"></div>
+                                                <div class="likert-ticks">
+                                                    <div class="likert-tick"></div>
+                                                    <div class="likert-tick"></div>
+                                                    <div class="likert-tick"></div>
+                                                    <div class="likert-tick"></div>
+                                                    <div class="likert-tick"></div>
+                                                </div>
+                                            </div>
+                                            <div class="likert-thumb" style="left:50%">3</div>
+                                        </div>
+
+                                        <div class="likert-labels">
+                                            <span class="likert-lbl" data-pos="1">Muito<br>ruim</span>
+                                            <span class="likert-lbl" data-pos="2">Ruim</span>
+                                            <span class="likert-lbl active" data-pos="3">Regular</span>
+                                            <span class="likert-lbl" data-pos="4">Bom</span>
+                                            <span class="likert-lbl" data-pos="5">Excelente</span>
+                                        </div>
                                     </div>
+                                    <input type="hidden"
+                                           name="quanti_{{ resp.id }}_{{ metrica.id }}"
+                                           id="likert_{{ resp.id }}_{{ metrica.id }}"
+                                           value="3">
                                     {% endif %}
 
                                     <textarea
                                         name="quali_{{ resp.id }}_{{ metrica.id }}"
                                         class="comment-field"
-                                        placeholder="Comentário sobre {{ metrica.nome }} (opcional)"></textarea>
+                                        placeholder="Comentário (opcional)"></textarea>
                                 </div>
                                 {% endfor %}
                             </div>
@@ -523,59 +583,140 @@
     </form>
 
     <script>
+    /* ── Likert drag slider ── */
     (function () {
-        const btnStart      = document.getElementById('btnStart');
-        const screenIdent   = document.getElementById('screenIdent');
-        const screenEval    = document.getElementById('screenEval');
-        const track         = document.getElementById('carouselTrack');
-        const fill          = document.getElementById('progressFill');
-        const counterCurr   = document.getElementById('counterCurr');
-        const counterTotal  = document.getElementById('counterTotal');
-        const dotsRow       = document.getElementById('dotsRow');
-        const btnPrev       = document.getElementById('btnPrev');
-        const btnNext       = document.getElementById('btnNext');
-        const btnSubmit     = document.getElementById('btnSubmit');
-        const completionMsg = document.getElementById('completionMsg');
-        const progressTrack = document.getElementById('progressTrack');
+        var STEPS = [1, 2, 3, 4, 5];
 
-        const slides = Array.from(track.querySelectorAll('.slide'));
-        const total  = slides.length;
-        let current  = 0;
+        function pctFromVal(val) { return (val - 1) / 4; }   /* 1→0%, 5→100% */
+
+        function updateDrag(widget, val) {
+            var pct = pctFromVal(val);
+            widget.setAttribute('data-val', val);
+
+            var thumb = widget.querySelector('.likert-thumb');
+            var fill  = widget.querySelector('.likert-fill');
+            thumb.style.left = (pct * 100) + '%';
+            thumb.textContent = val;
+            fill.style.width  = (pct * 100) + '%';
+
+            widget.querySelectorAll('.likert-emo').forEach(function(e) {
+                e.classList.toggle('active', +e.getAttribute('data-pos') === val);
+            });
+            widget.querySelectorAll('.likert-lbl').forEach(function(l) {
+                l.classList.toggle('active', +l.getAttribute('data-pos') === val);
+            });
+            widget.querySelectorAll('.likert-tick').forEach(function(t, i) {
+                t.style.background = (i < val) ? 'var(--green)' : '';
+            });
+
+            var resp    = widget.getAttribute('data-resp');
+            var metrica = widget.getAttribute('data-metrica');
+            var hidden  = document.getElementById('likert_' + resp + '_' + metrica);
+            if (hidden) hidden.value = val;
+        }
+
+        function valFromEvent(widget, clientX) {
+            var rail = widget.querySelector('.likert-rail');
+            var rect = rail.getBoundingClientRect();
+            var pct  = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+            return Math.round(pct * 4) + 1;   /* snap to 1–5 */
+        }
+
+        function initWidget(widget) {
+            updateDrag(widget, 3);   /* default value */
+
+            var dragging = false;
+
+            function onMove(clientX) {
+                if (!dragging) return;
+                updateDrag(widget, valFromEvent(widget, clientX));
+            }
+
+            /* mouse */
+            widget.querySelector('.likert-track-wrap').addEventListener('mousedown', function(e) {
+                dragging = true;
+                updateDrag(widget, valFromEvent(widget, e.clientX));
+                e.preventDefault();
+            });
+            document.addEventListener('mousemove', function(e) { onMove(e.clientX); });
+            document.addEventListener('mouseup',   function()  { dragging = false; });
+
+            /* touch */
+            widget.querySelector('.likert-track-wrap').addEventListener('touchstart', function(e) {
+                dragging = true;
+                updateDrag(widget, valFromEvent(widget, e.touches[0].clientX));
+                e.preventDefault();
+            }, { passive: false });
+            document.addEventListener('touchmove', function(e) {
+                if (dragging) onMove(e.touches[0].clientX);
+            }, { passive: true });
+            document.addEventListener('touchend', function() { dragging = false; });
+
+            /* click anywhere on the rail also snaps */
+            widget.querySelector('.likert-rail').addEventListener('click', function(e) {
+                updateDrag(widget, valFromEvent(widget, e.clientX));
+            });
+        }
+
+        document.querySelectorAll('.likert-drag').forEach(initWidget);
+    })();
+
+    /* ── App principal ── */
+    (function () {
+        var btnStart      = document.getElementById('btnStart');
+        var screenIdent   = document.getElementById('screenIdent');
+        var screenEval    = document.getElementById('screenEval');
+        var track         = document.getElementById('carouselTrack');
+        var fill          = document.getElementById('progressFill');
+        var counterCurr   = document.getElementById('counterCurr');
+        var counterTotal  = document.getElementById('counterTotal');
+        var dotsRow       = document.getElementById('dotsRow');
+        var btnPrev       = document.getElementById('btnPrev');
+        var btnNext       = document.getElementById('btnNext');
+        var btnSubmit     = document.getElementById('btnSubmit');
+        var completionMsg = document.getElementById('completionMsg');
+        var progressTrack = document.getElementById('progressTrack');
+
+        var slides  = Array.from(track.querySelectorAll('.slide'));
+        var total   = slides.length;
+        var current = 0;
         counterTotal.textContent = total;
 
         /* Start */
-        btnStart.addEventListener('click', () => {
-            const inputs = screenIdent.querySelectorAll('input[required]');
-            let ok = true;
-            inputs.forEach(i => { if (!i.value.trim()) { i.focus(); ok = false; } });
+        btnStart.addEventListener('click', function() {
+            var inputs = screenIdent.querySelectorAll('input[required]');
+            var ok = true;
+            inputs.forEach(function(i) { if (!i.value.trim()) { i.focus(); ok = false; } });
             if (!ok) return;
             screenIdent.style.display = 'none';
             screenEval.classList.add('active');
-            buildDots(); render();
+            buildDots();
+            render();
         });
 
         /* Dots */
         function buildDots() {
-            slides.forEach((_, i) => {
-                const d = document.createElement('button');
-                d.type = 'button'; d.className = 'dot';
-                d.addEventListener('click', () => goTo(i));
+            slides.forEach(function(_, i) {
+                var d = document.createElement('button');
+                d.type = 'button';
+                d.className = 'dot';
+                d.addEventListener('click', function() { goTo(i); });
                 dotsRow.appendChild(d);
             });
         }
 
         /* Progress click */
-        progressTrack.addEventListener('click', e => {
-            const r = progressTrack.getBoundingClientRect();
-            const pct = (e.clientX - r.left) / r.width;
+        progressTrack.addEventListener('click', function(e) {
+            var r = progressTrack.getBoundingClientRect();
+            var pct = (e.clientX - r.left) / r.width;
             goTo(Math.round(Math.max(0, Math.min(total - 1, pct * (total - 1)))));
         });
 
         /* Navigation */
         function goTo(i) { current = Math.max(0, Math.min(total - 1, i)); render(); }
-        btnPrev.addEventListener('click', () => goTo(current - 1));
-        btnNext.addEventListener('click', () => goTo(current + 1));
-        document.addEventListener('keydown', e => {
+        btnPrev.addEventListener('click', function() { goTo(current - 1); });
+        btnNext.addEventListener('click', function() { goTo(current + 1); });
+        document.addEventListener('keydown', function(e) {
             if (!screenEval.classList.contains('active')) return;
             if (e.key === 'ArrowRight') goTo(current + 1);
             if (e.key === 'ArrowLeft')  goTo(current - 1);
@@ -583,28 +724,19 @@
 
         /* Render */
         function render() {
-            track.style.transform = `translateX(-${current * 100}%)`;
+            track.style.transform = 'translateX(-' + (current * 100) + '%)';
             counterCurr.textContent = current + 1;
             fill.style.width = (total > 1 ? (current / (total - 1)) * 100 : 100) + '%';
-            dotsRow.querySelectorAll('.dot').forEach((d, i) => {
+            dotsRow.querySelectorAll('.dot').forEach(function(d, i) {
                 d.classList.toggle('active', i === current);
                 d.classList.toggle('done',   i < current);
             });
             btnPrev.disabled = current === 0;
-            const last = current === total - 1;
+            var last = current === total - 1;
             btnNext.style.display = last ? 'none' : '';
             btnSubmit.classList.toggle('visible', last);
             completionMsg.classList.toggle('visible', last);
         }
-
-        /* Likert pulse */
-        document.querySelectorAll('.likert-option input[type="radio"]').forEach(r => {
-            r.addEventListener('change', function () {
-                const lbl = this.nextElementSibling;
-                lbl.style.transform = 'scale(1.08)';
-                setTimeout(() => lbl.style.transform = '', 150);
-            });
-        });
     })();
     </script>
 </body>
