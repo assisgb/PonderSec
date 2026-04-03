@@ -7,3 +7,4 @@ python-dotenv
 aiohttp
 django-extensions
 werkzeug
+django-sslserver
