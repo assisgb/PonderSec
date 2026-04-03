@@ -7,6 +7,8 @@
     <title>Dashboard de Avaliações · PonderSec</title>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -52,7 +54,6 @@
             padding-bottom: 60px;
         }
 
-        /* ── HEADER ── */
         .header {
             display: flex; align-items: center; justify-content: space-between;
             margin-bottom: 35px; padding: 28px 35px;
@@ -74,6 +75,8 @@
         .product-name { color: #7df6c2; text-transform: uppercase; letter-spacing: 0.25em; font-size: 11px; font-weight: 600; }
         .page-title   { color: #00ff9f; font-size: 24px; font-weight: 700; }
 
+        .header-actions { display: flex; align-items: center; gap: 12px; }
+
         .btn-back {
             padding: 12px 26px; background: rgba(0, 255, 160, 0.08);
             border: 1px solid rgba(0, 255, 160, 0.25); border-radius: 8px;
@@ -83,7 +86,73 @@
         }
         .btn-back:hover { background: rgba(0, 255, 160, 0.15); border-color: #00ff9f; transform: translateY(-1px); }
 
-        /* ── STATS CARDS ── */
+        .btn-export-pdf {
+            padding: 12px 22px;
+            background: rgba(255, 180, 0, 0.08);
+            border: 1px solid rgba(255, 180, 0, 0.3);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px; font-weight: 600;
+            color: #ffb400;
+            font-family: inherit;
+            text-transform: uppercase; letter-spacing: 0.05em;
+            transition: all 0.2s;
+            display: inline-flex; align-items: center; gap: 8px;
+            white-space: nowrap;
+        }
+        .btn-export-pdf:hover:not(:disabled) {
+            background: rgba(255, 180, 0, 0.15);
+            border-color: #ffb400;
+            transform: translateY(-1px);
+            box-shadow: 0 0 16px rgba(255, 180, 0, 0.2);
+        }
+        .btn-export-pdf:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .btn-export-pdf .export-spinner {
+            display: none; width: 14px; height: 14px;
+            border: 2px solid rgba(255, 180, 0, 0.3);
+            border-top-color: #ffb400;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+        .btn-export-pdf.loading .export-spinner { display: block; }
+        .btn-export-pdf.loading .export-icon   { display: none; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .pdf-overlay {
+            display: none;
+            position: fixed; inset: 0; z-index: 9999;
+            background: rgba(2, 6, 11, 0.88);
+            backdrop-filter: blur(6px);
+            align-items: center; justify-content: center;
+            flex-direction: column; gap: 20px;
+        }
+        .pdf-overlay.visible { display: flex; }
+        .pdf-overlay-box {
+            background: rgba(11, 20, 29, 0.95);
+            border: 1px solid rgba(0, 255, 160, 0.2);
+            border-radius: 16px;
+            padding: 36px 48px;
+            display: flex; flex-direction: column; align-items: center; gap: 18px;
+            min-width: 320px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.6), 0 0 60px rgba(0,255,160,0.06);
+        }
+        .pdf-overlay-icon { font-size: 36px; }
+        .pdf-overlay-title { font-size: 16px; font-weight: 700; color: #00ff9f; text-transform: uppercase; letter-spacing: 0.1em; }
+        .pdf-overlay-msg { font-size: 13px; color: #7df6c2; text-align: center; min-height: 20px; }
+        .pdf-progress-track {
+            width: 260px; height: 6px;
+            background: rgba(0, 255, 160, 0.1);
+            border-radius: 99px; overflow: hidden;
+        }
+        .pdf-progress-bar {
+            height: 100%; width: 0%;
+            background: linear-gradient(90deg, #00ff9f, #00cfff);
+            border-radius: 99px;
+            transition: width 0.4s ease;
+            box-shadow: 0 0 8px rgba(0,255,160,0.5);
+        }
+        .pdf-step-counter { font-size: 11px; color: #6b7b8d; }
+
         .stats-row {
             display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 16px; margin-bottom: 30px;
@@ -99,7 +168,6 @@
         .stat-value { font-size: 28px; font-weight: 700; color: #00ff9f; }
         .stat-sub   { font-size: 12px; color: #6b7b8d; margin-top: 4px; }
 
-        /* ── MAIN CHART CARD ── */
         .chart-card {
             background: rgba(11, 20, 29, 0.55);
             border: 1px solid rgba(0, 255, 160, 0.15);
@@ -114,7 +182,6 @@
         .chart-title    { font-size: 20px; font-weight: 700; color: #e5fef6; }
         .chart-subtitle { font-size: 13px; color: #6b7b8d; }
 
-        /* ── CHART TYPE SWITCHER ── */
         .chart-type-switcher {
             display: flex; gap: 6px; align-items: center;
             padding: 5px;
@@ -136,10 +203,8 @@
         }
         .type-btn .type-icon { font-size: 15px; line-height: 1; }
 
-        /* ── CONTROLS ROW ── */
         .controls-row { display: flex; flex-direction: column; align-items: flex-end; gap: 12px; }
 
-        /* ── MÉTRICA NAVIGATOR ── */
         .metrica-nav { display: flex; align-items: center; gap: 10px; }
         .nav-btn {
             width: 40px; height: 40px;
@@ -172,7 +237,6 @@
         .pill.disabled-pill  { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
         .nav-btn.disabled-nav { opacity: 0.2; cursor: not-allowed; pointer-events: none; }
 
-        /* ── HINTS ── */
         .context-hint {
             display: none; align-items: center; gap: 8px;
             padding: 8px 16px; border-radius: 8px;
@@ -183,17 +247,14 @@
         .hint-radar   { background: rgba(0,207,255,0.07); border: 1px solid rgba(0,207,255,0.2); color: #00cfff; }
         .hint-stacked { background: rgba(255,180,0,0.07);  border: 1px solid rgba(255,180,0,0.2);  color: #ffb400; }
 
-        /* ── CHART AREA ── */
         .chart-wrapper { position: relative; height: 480px; margin-bottom: 28px; }
         .chart-wrapper canvas { transition: opacity 0.2s ease; }
         .chart-wrapper.fading canvas { opacity: 0; }
 
-        /* ── EMPTY STATE ── */
         .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 300px; color: #6b7b8d; }
         .empty-state .empty-icon { font-size: 52px; margin-bottom: 16px; opacity: 0.6; }
         .empty-state p { font-size: 15px; }
 
-        /* ── LEGEND ── */
         .chart-legend {
             display: flex; flex-wrap: wrap; gap: 12px;
             padding-top: 20px;
@@ -202,11 +263,12 @@
         .legend-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #c5d9e3; }
         .legend-dot  { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
 
-        /* ── COUNTER ── */
         .metrica-counter { font-size: 12px; color: #6b7b8d; text-align: center; min-width: 50px; }
 
         @media (max-width: 768px) {
             .header { flex-direction: column; gap: 20px; align-items: flex-start; }
+            .header-actions { width: 100%; flex-direction: column; }
+            .btn-export-pdf, .btn-back { width: 100%; justify-content: center; }
             .chart-top { flex-direction: column; }
             .chart-card { padding: 24px 20px; }
             .pill { font-size: 12px; padding: 6px 12px; }
@@ -222,6 +284,19 @@
 <div class="glow-orb"></div>
 <div class="glow-orb-2"></div>
 
+<!-- PDF PROGRESS OVERLAY -->
+<div class="pdf-overlay" id="pdfOverlay">
+    <div class="pdf-overlay-box">
+        <div class="pdf-overlay-icon">📄</div>
+        <div class="pdf-overlay-title">Gerando PDF</div>
+        <div class="pdf-overlay-msg" id="pdfOverlayMsg">Inicializando...</div>
+        <div class="pdf-progress-track">
+            <div class="pdf-progress-bar" id="pdfProgressBar"></div>
+        </div>
+        <div class="pdf-step-counter" id="pdfStepCounter"></div>
+    </div>
+</div>
+
 <div class="container">
 
     <!-- HEADER -->
@@ -233,7 +308,13 @@
                 <span class="page-title">Dashboard de Avaliações</span>
             </div>
         </div>
-        <a href="{% url 'menu-consulta' %}" class="btn-back">← Voltar</a>
+        <div class="header-actions">
+            <button class="btn-export-pdf" id="btnExportPdf" onclick="exportarPDF()">
+                <span class="export-icon">⬇ Exportar PDF</span>
+                <span class="export-spinner"></span>
+            </button>
+            <a href="{% url 'menu-consulta' %}" class="btn-back">← Voltar</a>
+        </div>
     </div>
 
     <!-- STATS -->
@@ -300,7 +381,7 @@
             <span>O gráfico empilhado exibe <strong>todas as métricas</strong> acumuladas por LLM — permite comparar o score total e a composição de cada modelo.</span>
         </div>
         <div id="hintRadar" class="context-hint hint-radar">
-            <span>🕸️</span>
+            <span>🕸</span>
             <span>O Radar exibe <strong>todas as métricas</strong> simultaneamente. Passe o mouse sobre os números nos anéis para ver o nível de qualidade.</span>
         </div>
 
@@ -345,7 +426,7 @@ const RING_LABELS = {
 };
 
 // ════════════════════════════════════════════════════════
-// PLUGIN — labels nos anéis do Radar (número + hover pill)
+// PLUGIN — labels nos anéis do Radar
 // ════════════════════════════════════════════════════════
 const radarRingLabelPlugin = {
     id: 'radarRingLabels',
@@ -360,7 +441,7 @@ const radarRingLabelPlugin = {
         const centerX  = r.xCenter;
         const centerY  = r.yCenter;
         const maxVal   = r.max;
-        const angleRad = -Math.PI / 2; // topo do gráfico
+        const angleRad = -Math.PI / 2;
 
         ctx.save();
         ctx.textAlign    = 'center';
@@ -376,7 +457,6 @@ const radarRingLabelPlugin = {
             const isHov  = this._hovered === nivelNum;
 
             if (isHov) {
-                // ── HOVER: pill expandida com badge + label ──
                 ctx.font = '600 11px "Space Grotesk", system-ui, sans-serif';
                 const padding = 6;
                 const textW   = ctx.measureText(text).width;
@@ -385,23 +465,19 @@ const radarRingLabelPlugin = {
                 const boxX    = dotX - boxW / 2;
                 const boxY    = dotY - boxH / 2;
 
-                // Glow
                 ctx.shadowColor = color + '66';
                 ctx.shadowBlur  = 10;
 
-                // Fundo
                 ctx.fillStyle = 'rgba(2,6,11,0.92)';
                 ctx.beginPath();
                 ctx.roundRect(boxX, boxY, boxW, boxH, 10);
                 ctx.fill();
 
-                // Borda
                 ctx.shadowBlur  = 0;
                 ctx.strokeStyle = color;
                 ctx.lineWidth   = 1.5;
                 ctx.stroke();
 
-                // Badge numérico (círculo à esquerda)
                 const badgeR = 7;
                 const badgeX = boxX + padding + badgeR;
                 const badgeY = dotY;
@@ -413,7 +489,6 @@ const radarRingLabelPlugin = {
                 ctx.font      = '700 10px "Space Grotesk", system-ui, sans-serif';
                 ctx.fillText(nivel, badgeX, badgeY);
 
-                // Texto do label
                 ctx.fillStyle = color;
                 ctx.font      = '600 11px "Space Grotesk", system-ui, sans-serif';
                 ctx.textAlign = 'left';
@@ -421,9 +496,7 @@ const radarRingLabelPlugin = {
                 ctx.textAlign = 'center';
 
             } else {
-                // ── NORMAL: círculo com número ──
                 const radius = 10;
-
                 ctx.fillStyle = 'rgba(2,6,11,0.75)';
                 ctx.beginPath();
                 ctx.arc(dotX, dotY, radius, 0, Math.PI * 2);
@@ -859,7 +932,6 @@ function buildLegendRadar(totais) {
     const legend = document.getElementById('chartLegend');
     legend.innerHTML = '';
 
-    // LLMs
     LLMS.forEach((llm, i) => {
         legend.appendChild(makeLegendItem(
             PALETTE[i % PALETTE.length].border,
@@ -867,7 +939,6 @@ function buildLegendRadar(totais) {
         ));
     });
 
-    // Dica de interação
     const tip = document.createElement('div');
     tip.style.cssText = `
         width: 100%; margin-top: 6px; padding: 8px 14px;
@@ -938,6 +1009,573 @@ function makeLegendItem(color, text) {
     item.appendChild(dot);
     item.appendChild(txt);
     return item;
+}
+
+// ════════════════════════════════════════════════════════════════
+// CAPTURA DE GRÁFICO — tema claro para PDF
+// ════════════════════════════════════════════════════════════════
+function captureChartType(type, metricaIndex) {
+    return new Promise((resolve) => {
+        const prevType  = chartType;
+        const prevIndex = indiceSelecionado;
+
+        chartType         = type;
+        indiceSelecionado = metricaIndex !== undefined ? metricaIndex : indiceSelecionado;
+
+        if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+
+        const origAnimation       = Chart.defaults.animation;
+        Chart.defaults.animation  = { duration: 0 };
+
+        // ── Aplica fundo branco no wrapper e canvas ──
+        const canvas  = document.getElementById('barChart');
+        const wrapper = document.getElementById('chartWrapper');
+
+        const prevWrapperBg = wrapper.style.background;
+        const prevCanvasBg  = canvas.style.background;
+        wrapper.style.background = '#ffffff';
+        canvas.style.background  = '#ffffff';
+
+        // Renderiza o gráfico no tipo solicitado
+        if      (type === 'radar')   renderRadar();
+        else if (type === 'stacked') renderStacked();
+        else                         renderBar(metricaIndex);
+
+        // Adapta cores do gráfico ativo para fundo claro
+        if (chartInstance) {
+            // Eixo X
+            if (chartInstance.options.scales?.x) {
+                chartInstance.options.scales.x.ticks.color  = '#1a1a2e';
+                chartInstance.options.scales.x.grid.color   = 'rgba(0,0,0,0.08)';
+                chartInstance.options.scales.x.border.color = 'rgba(0,0,0,0.15)';
+            }
+            // Eixo Y
+            if (chartInstance.options.scales?.y) {
+                chartInstance.options.scales.y.ticks.color  = '#333344';
+                chartInstance.options.scales.y.grid.color   = 'rgba(0,0,0,0.08)';
+                chartInstance.options.scales.y.border.color = 'rgba(0,0,0,0.15)';
+                if (chartInstance.options.scales.y.title)
+                    chartInstance.options.scales.y.title.color = '#1a1a2e';
+            }
+            // Eixo Radar
+            if (chartInstance.options.scales?.r) {
+                chartInstance.options.scales.r.angleLines.color    = 'rgba(0,0,0,0.15)';
+                chartInstance.options.scales.r.grid.color          = 'rgba(0,0,0,0.1)';
+                chartInstance.options.scales.r.pointLabels.color   = '#1a1a2e';
+                chartInstance.options.scales.r.ticks.color         = '#444455';
+                chartInstance.options.scales.r.ticks.backdropColor = '#ffffff';
+            }
+
+            // Cores dos datasets — sólidas e visíveis no branco
+            chartInstance.data.datasets.forEach((ds, i) => {
+                const p = PALETTE[i % PALETTE.length];
+                if (type === 'bar') {
+                    ds.backgroundColor = p.border + 'cc';
+                    ds.borderColor     = p.border;
+                } else if (type === 'stacked') {
+                    ds.backgroundColor = p.border + 'bb';
+                    ds.borderColor     = p.border;
+                } else if (type === 'radar') {
+                    ds.backgroundColor      = p.border + '33';
+                    ds.borderColor          = p.border;
+                    ds.pointBackgroundColor = p.border;
+                    ds.pointBorderColor     = '#ffffff';
+                }
+            });
+
+            chartInstance.update('none');
+        }
+
+        // Aguarda dois frames para garantir pintura completa
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                html2canvas(canvas, {
+                    backgroundColor: '#ffffff',
+                    scale: 2.5,
+                    useCORS: true,
+                    logging: false,
+                }).then(capturedCanvas => {
+                    const dataURL = capturedCanvas.toDataURL('image/png', 1.0);
+
+                    // ── Restaura estado original ──
+                    wrapper.style.background = prevWrapperBg;
+                    canvas.style.background  = prevCanvasBg;
+                    Chart.defaults.animation = origAnimation;
+                    chartType         = prevType;
+                    indiceSelecionado = prevIndex;
+
+                    if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+                    if      (prevType === 'radar')   renderRadar();
+                    else if (prevType === 'stacked') renderStacked();
+                    else                             renderBar(prevIndex);
+
+                    resolve(dataURL);
+                });
+            });
+        });
+    });
+}
+
+// ════════════════════════════════════════════════════════════════
+// EXPORTAÇÃO PDF
+// ════════════════════════════════════════════════════════════════
+function setOverlayProgress(pct, msg, step) {
+    document.getElementById('pdfProgressBar').style.width = pct + '%';
+    document.getElementById('pdfOverlayMsg').textContent  = msg;
+    if (step) document.getElementById('pdfStepCounter').textContent = step;
+}
+
+async function exportarPDF() {
+    const btn = document.getElementById('btnExportPdf');
+    btn.disabled = true;
+    btn.classList.add('loading');
+
+    const overlay = document.getElementById('pdfOverlay');
+    overlay.classList.add('visible');
+    setOverlayProgress(0, 'Carregando bibliotecas...', '');
+
+    try {
+        const { jsPDF } = window.jspdf;
+
+        const pdf       = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+        const pageW     = pdf.internal.pageSize.getWidth();
+        const pageH     = pdf.internal.pageSize.getHeight();
+        const margin    = 14;
+        const contentW  = pageW - margin * 2;
+
+        const fill = (r, g, b) => pdf.setFillColor(Math.round(r), Math.round(g), Math.round(b));
+        const draw = (r, g, b) => pdf.setDrawColor(Math.round(r), Math.round(g), Math.round(b));
+        const text = (r, g, b) => pdf.setTextColor(Math.round(r), Math.round(g), Math.round(b));
+
+        // ── Paleta PDF ──
+        const BG    = { r: 5,   g: 10,  b: 17  };
+        const GREEN = { r: 0,   g: 200, b: 120 };   // verde mais escuro — legível no branco
+        const CYAN  = { r: 0,   g: 160, b: 210 };
+        const GOLD  = { r: 200, g: 140, b: 0   };
+        const TXT   = { r: 229, g: 254, b: 246 };
+        const DARK  = { r: 20,  g: 20,  b: 40  };   // texto escuro para área de gráfico
+        const MUTED = { r: 107, g: 123, b: 141 };
+        const RED   = { r: 220, g: 50,  b: 70  };
+
+        function hex2rgb(hex) {
+            return {
+                r: parseInt(hex.slice(1, 3), 16),
+                g: parseInt(hex.slice(3, 5), 16),
+                b: parseInt(hex.slice(5, 7), 16),
+            };
+        }
+
+        function dim(c, f) {
+            return { r: c.r * f, g: c.g * f, b: c.b * f };
+        }
+
+        // ── Fundo da página (tema escuro para estrutura) ──
+        function drawPageBg() {
+            fill(BG.r, BG.g, BG.b);
+            pdf.rect(0, 0, pageW, pageH, 'F');
+            draw(0, 80, 50);
+            pdf.setLineWidth(0.08);
+            for (let x = 0; x <= pageW; x += 10) { pdf.line(x, 0, x, pageH); }
+            for (let y = 0; y <= pageH; y += 10) { pdf.line(0, y, pageW, y); }
+        }
+
+        function drawHeader(title, subtitle, pNum, pTotal) {
+            fill(11, 20, 29);
+            pdf.roundedRect(margin, margin, contentW, 18, 3, 3, 'F');
+            draw(GREEN.r, GREEN.g, GREEN.b);
+            pdf.setLineWidth(0.3);
+            pdf.roundedRect(margin, margin, contentW, 18, 3, 3, 'S');
+
+            fill(0, 40, 25);
+            pdf.roundedRect(margin + 4, margin + 3, 28, 12, 2, 2, 'F');
+            text(GREEN.r, GREEN.g, GREEN.b);
+            pdf.setFontSize(7);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text('PONDERSEC', margin + 18, margin + 9.5, { align: 'center' });
+            pdf.setFontSize(5.5);
+            pdf.setFont('helvetica', 'normal');
+            pdf.text('ANALYTICS', margin + 18, margin + 13, { align: 'center' });
+
+            draw(GREEN.r, GREEN.g, GREEN.b);
+            pdf.setLineWidth(0.2);
+            pdf.line(margin + 35, margin + 4, margin + 35, margin + 14);
+
+            text(TXT.r, TXT.g, TXT.b);
+            pdf.setFontSize(11);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text(title, margin + 40, margin + 9);
+
+            text(MUTED.r, MUTED.g, MUTED.b);
+            pdf.setFontSize(7);
+            pdf.setFont('helvetica', 'normal');
+            pdf.text(subtitle, margin + 40, margin + 14);
+
+            text(MUTED.r, MUTED.g, MUTED.b);
+            pdf.setFontSize(7);
+            pdf.text(`Pag. ${pNum} / ${pTotal}`, pageW - margin - 2, margin + 9.5, { align: 'right' });
+            const now = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            pdf.text(now, pageW - margin - 2, margin + 14, { align: 'right' });
+        }
+
+        function drawSectionLabel(labelText, y, c) {
+            const d = dim(c, 0.12);
+            fill(d.r, d.g, d.b);
+            pdf.roundedRect(margin, y, contentW, 7, 1.5, 1.5, 'F');
+            draw(c.r, c.g, c.b);
+            pdf.setLineWidth(0.2);
+            pdf.roundedRect(margin, y, contentW, 7, 1.5, 1.5, 'S');
+            text(c.r, c.g, c.b);
+            pdf.setFontSize(7.5);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text(labelText, margin + 4, y + 4.5);
+        }
+
+        // ── Fundo branco para a área do gráfico ──
+        function drawChartBg(x, y, w, h) {
+            fill(255, 255, 255);
+            pdf.roundedRect(x, y, w, h, 4, 4, 'F');
+            draw(200, 200, 210);
+            pdf.setLineWidth(0.2);
+            pdf.roundedRect(x, y, w, h, 4, 4, 'S');
+        }
+
+        // ── Stats globais ──
+        const totaisGlobais   = LLMS.map(llm =>
+            metricaNomes.reduce((s, m) => s + (METRICAS_DATA[m].dados[llm] || 0), 0)
+        );
+        const melhorGlobalIdx = totaisGlobais.indexOf(Math.max(...totaisGlobais));
+        const totalPages      = 3 + metricaNomes.length;
+        let pageNum = 0;
+
+        // ═══════════════════════════════
+        // PÁGINA 1 — CAPA
+        // ═══════════════════════════════
+        pageNum++;
+        setOverlayProgress(5, 'Gerando capa...', `Passo 1 / ${totalPages}`);
+        await new Promise(r => setTimeout(r, 50));
+
+        drawPageBg();
+
+        text(GREEN.r, GREEN.g, GREEN.b);
+        pdf.setFontSize(28);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Dashboard de Avaliacoes', pageW / 2, 55, { align: 'center' });
+
+        text(CYAN.r, CYAN.g, CYAN.b);
+        pdf.setFontSize(11);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text('PonderSec - Relatorio Comparativo de LLMs', pageW / 2, 65, { align: 'center' });
+
+        draw(GREEN.r, GREEN.g, GREEN.b);
+        pdf.setLineWidth(0.5);
+        pdf.line(pageW / 2 - 50, 72, pageW / 2 + 50, 72);
+
+        // Cards de stats
+        const cardW = 52, cardH = 28, cardGap = 8;
+        const cardsX = (pageW - (4 * cardW + 3 * cardGap)) / 2;
+        const cardsY = 80;
+
+        const statsCards = [
+            { label: 'LLMs Avaliados',  value: String(LLMS.length),                        sub: 'modelos',     c: GREEN },
+            { label: 'Metricas Ativas', value: String(metricaNomes.length),                 sub: 'criterios',   c: CYAN  },
+            { label: 'Melhor Score',    value: totaisGlobais[melhorGlobalIdx].toFixed(1),   sub: 'score total', c: GOLD  },
+            { label: 'Top LLM',         value: (LLMS[melhorGlobalIdx] || '-').slice(0, 10), sub: 'geral',       c: GREEN },
+        ];
+
+        statsCards.forEach((card, i) => {
+            const cx = cardsX + i * (cardW + cardGap);
+            fill(11, 20, 29);
+            pdf.roundedRect(cx, cardsY, cardW, cardH, 3, 3, 'F');
+            draw(card.c.r, card.c.g, card.c.b);
+            pdf.setLineWidth(0.3);
+            pdf.roundedRect(cx, cardsY, cardW, cardH, 3, 3, 'S');
+
+            text(card.c.r, card.c.g, card.c.b);
+            pdf.setFontSize(15);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text(card.value, cx + cardW / 2, cardsY + 13, { align: 'center' });
+
+            text(MUTED.r, MUTED.g, MUTED.b);
+            pdf.setFontSize(6);
+            pdf.setFont('helvetica', 'normal');
+            pdf.text(card.label.toUpperCase(), cx + cardW / 2, cardsY + 19, { align: 'center' });
+            pdf.text(card.sub, cx + cardW / 2, cardsY + 23.5, { align: 'center' });
+        });
+
+        // Tabela de scores
+        const tableY = cardsY + cardH + 12;
+        drawSectionLabel('Resumo Geral de Scores por Modelo', tableY, CYAN);
+
+        const tY   = tableY + 10;
+        const colW = contentW / (LLMS.length + 1);
+
+        fill(0, 30, 20);
+        pdf.rect(margin, tY, contentW, 7, 'F');
+        text(GREEN.r, GREEN.g, GREEN.b);
+        pdf.setFontSize(7);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('METRICA', margin + 3, tY + 4.5);
+        LLMS.forEach((llm, i) => {
+            pdf.text(llm, margin + colW * (i + 1) + colW / 2, tY + 4.5, { align: 'center' });
+        });
+
+        metricaNomes.forEach((m, ri) => {
+            const rowY = tY + 7 + ri * 7;
+            if (ri % 2 === 0) { fill(8, 16, 24); } else { fill(5, 10, 17); }
+            pdf.rect(margin, rowY, contentW, 7, 'F');
+
+            text(TXT.r, TXT.g, TXT.b);
+            pdf.setFontSize(6.5);
+            pdf.setFont('helvetica', 'normal');
+            pdf.text(m.length > 28 ? m.slice(0, 26) + '.' : m, margin + 3, rowY + 4.5);
+
+            LLMS.forEach((llm, ci) => {
+                const v   = METRICAS_DATA[m].dados[llm];
+                const max = METRICAS_DATA[m].pontuacao_maxima || 5;
+                const val = (v !== null && v !== undefined) ? v : null;
+                const cx  = margin + colW * (ci + 1) + colW / 2;
+
+                if (val !== null) {
+                    const pct = val / max;
+                    const c   = pct >= 0.8 ? GREEN : pct >= 0.6 ? CYAN : pct >= 0.4 ? GOLD : RED;
+                    text(c.r, c.g, c.b);
+                    pdf.setFont('helvetica', 'bold');
+                    pdf.text(`${val}/${max}`, cx, rowY + 4.5, { align: 'center' });
+                } else {
+                    text(MUTED.r, MUTED.g, MUTED.b);
+                    pdf.setFont('helvetica', 'normal');
+                    pdf.text('-', cx, rowY + 4.5, { align: 'center' });
+                }
+            });
+        });
+
+        text(MUTED.r, MUTED.g, MUTED.b);
+        pdf.setFontSize(6);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(
+            `Gerado em ${new Date().toLocaleString('pt-BR')} - PonderSec Analytics`,
+            pageW / 2, pageH - 6, { align: 'center' }
+        );
+
+        // ═══════════════════════════════
+        // PÁGINA 2 — BARRAS EMPILHADAS
+        // ═══════════════════════════════
+        pageNum++;
+        setOverlayProgress(15, 'Capturando grafico empilhado...', `Passo 2 / ${totalPages}`);
+        await new Promise(r => setTimeout(r, 80));
+
+        const imgStacked = await captureChartType('stacked');
+
+        pdf.addPage();
+        drawPageBg();
+        drawHeader('Comparativo por Score Acumulado', 'Barras empilhadas - todas as metricas por modelo', pageNum, totalPages);
+        drawSectionLabel('Grafico de Barras Empilhadas', margin + 22, GOLD);
+
+        const stackedImgY = margin + 30;
+        const stackedImgH = pageH - stackedImgY - margin - 16;
+
+        drawChartBg(margin, stackedImgY, contentW, stackedImgH);
+        pdf.addImage(imgStacked, 'PNG', margin + 2, stackedImgY + 2, contentW - 4, stackedImgH - 4);
+
+        // Legenda
+        const legY = stackedImgY + stackedImgH + 4;
+        text(MUTED.r, MUTED.g, MUTED.b);
+        pdf.setFontSize(6);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text('Legenda:', margin, legY + 4);
+
+        metricaNomes.forEach((m, i) => {
+            const c  = hex2rgb(PALETTE[i % PALETTE.length].border);
+            const lx = margin + 18 + i * ((contentW - 18) / metricaNomes.length);
+            fill(c.r, c.g, c.b);
+            pdf.roundedRect(lx, legY + 1.5, 3, 3, 0.5, 0.5, 'F');
+            text(DARK.r, DARK.g, DARK.b);
+            pdf.setFontSize(5.5);
+            pdf.text(m.length > 16 ? m.slice(0, 14) + '.' : m, lx + 4.5, legY + 4);
+        });
+
+        // ═══════════════════════════════
+        // PÁGINA 3 — RADAR
+        // ═══════════════════════════════
+        pageNum++;
+        setOverlayProgress(30, 'Capturando grafico radar...', `Passo 3 / ${totalPages}`);
+        await new Promise(r => setTimeout(r, 80));
+
+        const imgRadar = await captureChartType('radar');
+
+        pdf.addPage();
+        drawPageBg();
+        drawHeader('Visao Multidimensional - Radar', 'Todas as metricas simultaneas por modelo de linguagem', pageNum, totalPages);
+        drawSectionLabel('Grafico Radar - Performance Multidimensional', margin + 22, CYAN);
+
+        const radarImgW = contentW * 0.78;
+        const radarImgH = pageH - margin * 2 - 34;
+        const radarImgX = margin;
+        const radarImgY = margin + 30;
+
+        drawChartBg(radarImgX, radarImgY, radarImgW, radarImgH);
+        pdf.addImage(imgRadar, 'PNG', radarImgX + 2, radarImgY + 2, radarImgW - 4, radarImgH - 4);
+
+        // Painel lateral
+        const panelX = radarImgX + radarImgW + 6;
+        const panelW = contentW - radarImgW - 6;
+
+        fill(11, 20, 29);
+        pdf.roundedRect(panelX, radarImgY, panelW, radarImgH, 3, 3, 'F');
+        draw(CYAN.r, CYAN.g, CYAN.b);
+        pdf.setLineWidth(0.2);
+        pdf.roundedRect(panelX, radarImgY, panelW, radarImgH, 3, 3, 'S');
+
+        text(CYAN.r, CYAN.g, CYAN.b);
+        pdf.setFontSize(7);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('MODELOS', panelX + panelW / 2, radarImgY + 7, { align: 'center' });
+
+        draw(CYAN.r, CYAN.g, CYAN.b);
+        pdf.setLineWidth(0.15);
+        pdf.line(panelX + 4, radarImgY + 9, panelX + panelW - 4, radarImgY + 9);
+
+        LLMS.forEach((llm, i) => {
+            const c     = hex2rgb(PALETTE[i % PALETTE.length].border);
+            const d     = dim(c, 0.15);
+            const lyPos = radarImgY + 14 + i * 18;
+
+            fill(d.r, d.g, d.b);
+            pdf.roundedRect(panelX + 4, lyPos, panelW - 8, 14, 2, 2, 'F');
+            draw(c.r, c.g, c.b);
+            pdf.setLineWidth(0.25);
+            pdf.roundedRect(panelX + 4, lyPos, panelW - 8, 14, 2, 2, 'S');
+
+            fill(c.r, c.g, c.b);
+            pdf.circle(panelX + 9, lyPos + 5, 2, 'F');
+
+            text(c.r, c.g, c.b);
+            pdf.setFontSize(6.5);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text(llm, panelX + 13, lyPos + 5.5);
+
+            text(MUTED.r, MUTED.g, MUTED.b);
+            pdf.setFontSize(5.5);
+            pdf.setFont('helvetica', 'normal');
+            pdf.text(`Score total: ${totaisGlobais[i].toFixed(1)}`, panelX + 9, lyPos + 10.5);
+        });
+
+        // ═══════════════════════════════
+        // PÁGINAS 4+ — BARRAS POR MÉTRICA
+        // ═══════════════════════════════
+        for (let mi = 0; mi < metricaNomes.length; mi++) {
+            pageNum++;
+            const progPct = 30 + Math.round((mi / metricaNomes.length) * 65);
+            setOverlayProgress(progPct, `Capturando metrica: ${metricaNomes[mi]}`, `Passo ${pageNum} / ${totalPages}`);
+            await new Promise(r => setTimeout(r, 60));
+
+            const imgBar = await captureChartType('bar', mi);
+
+            pdf.addPage();
+            drawPageBg();
+
+            const nomeMetrica = metricaNomes[mi];
+            const metricaInfo = METRICAS_DATA[nomeMetrica];
+            const maxScore    = metricaInfo.pontuacao_maxima || 5;
+
+            drawHeader(
+                `Metrica: ${nomeMetrica}`,
+                `Pontuacao maxima: ${maxScore} - Barras individuais por LLM`,
+                pageNum, totalPages
+            );
+            drawSectionLabel(nomeMetrica, margin + 22, GREEN);
+
+            // Gráfico ocupa a largura total da página
+            const barImgY = margin + 30;
+            const barImgH = pageH - barImgY - margin - 18;
+
+            drawChartBg(margin, barImgY, contentW, barImgH);
+            pdf.addImage(imgBar, 'PNG', margin + 2, barImgY + 2, contentW - 4, barImgH - 4);
+
+            // Legenda dos LLMs abaixo do gráfico
+            const barLegY = barImgY + barImgH + 4;
+            const valores  = LLMS.map(llm => {
+                const v = metricaInfo.dados[llm];
+                return (v !== null && v !== undefined) ? v : null;
+            });
+            const valoresValidos = valores.filter(v => v !== null);
+            const maxVal         = valoresValidos.length > 0 ? Math.max(...valoresValidos) : 0;
+            const colLegW        = contentW / LLMS.length;
+
+            LLMS.forEach((llm, i) => {
+                const c   = hex2rgb(PALETTE[i % PALETTE.length].border);
+                const val = valores[i];
+                const lx  = margin + i * colLegW;
+                const isTop = val !== null && val === maxVal;
+
+                fill(c.r * 0.12, c.g * 0.12, c.b * 0.12);
+                pdf.roundedRect(lx + 1, barLegY, colLegW - 2, 12, 2, 2, 'F');
+                draw(c.r, c.g, c.b);
+                pdf.setLineWidth(isTop ? 0.5 : 0.2);
+                pdf.roundedRect(lx + 1, barLegY, colLegW - 2, 12, 2, 2, 'S');
+
+                // Bolinha de cor
+                fill(c.r, c.g, c.b);
+                pdf.circle(lx + 6, barLegY + 6, 2, 'F');
+
+                text(c.r, c.g, c.b);
+                pdf.setFontSize(6);
+                pdf.setFont('helvetica', 'bold');
+                pdf.text(llm, lx + 10, barLegY + 5);
+
+                text(MUTED.r, MUTED.g, MUTED.b);
+                pdf.setFontSize(5.5);
+                pdf.setFont('helvetica', 'normal');
+                pdf.text(
+                    val !== null ? `${val} / ${maxScore}` : 'Sem dados',
+                    lx + 10, barLegY + 9.5
+                );
+
+                // Destaque "melhor"
+                if (isTop) {
+                    text(GREEN.r, GREEN.g, GREEN.b);
+                    pdf.setFontSize(5);
+                    pdf.setFont('helvetica', 'bold');
+                    pdf.text('★ TOP', lx + colLegW - 8, barLegY + 7, { align: 'center' });
+                }
+            });
+
+            text(MUTED.r, MUTED.g, MUTED.b);
+            pdf.setFontSize(6);
+            pdf.setFont('helvetica', 'normal');
+            pdf.text(
+                `Gerado em ${new Date().toLocaleString('pt-BR')} - PonderSec Analytics`,
+                pageW / 2, pageH - 4, { align: 'center' }
+            );
+        }
+
+        // ═══════════════════════════════
+        // FINALIZA
+        // ═══════════════════════════════
+        setOverlayProgress(98, 'Finalizando e salvando...', '');
+        await new Promise(r => setTimeout(r, 100));
+
+        // Restaura o dashboard
+        chartType         = 'bar';
+        indiceSelecionado = 0;
+        if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+        renderChart(0);
+
+        const dataStr = new Date().toISOString().slice(0, 10);
+        pdf.save(`PonderSec_Dashboard_${dataStr}.pdf`);
+
+        setOverlayProgress(100, 'PDF gerado com sucesso!', '');
+        await new Promise(r => setTimeout(r, 800));
+
+    } catch (err) {
+        console.error('[PDF Export Error]', err);
+        setOverlayProgress(0, `Erro: ${err.message}`, '');
+        await new Promise(r => setTimeout(r, 2500));
+    } finally {
+        overlay.classList.remove('visible');
+        btn.disabled = false;
+        btn.classList.remove('loading');
+    }
 }
 
 // ════════════════════════════════════════════
