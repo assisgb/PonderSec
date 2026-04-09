@@ -1,5 +1,6 @@
 services:
-  # Serviço do Banco de Dados (PostgreSQL)
+
+  #BD(PostgreSQL)
   db:
     image: postgres:15-alpine
     volumes:
@@ -12,7 +13,10 @@ services:
       - "${POSTGRES_PORT}:5432"
     restart: always
 
-  # Serviço do Site (Django)
+    networks:
+      - minha_rede
+
+  #(Django)
   web:
     build: .
     command: >
@@ -34,6 +38,8 @@ services:
       - DB_PASSWORD=${POSTGRES_PASSWORD}
       - DB_HOST=${DB_HOST}
       - DB_PORT=${POSTGRES_PORT}
+    networks:
+      - minha_rede
 
   pgadmin:
     image: dpage/pgadmin4
@@ -47,6 +53,13 @@ services:
       - db
     volumes:
       - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - minha_rede
+
+
+networks:
+  minha_rede:
+    driver: bridge
 
 volumes:
   postgres_data:
