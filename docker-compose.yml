@@ -18,11 +18,10 @@ services:
     command: >
       sh -c "python manage.py makemigrations &&
              python manage.py migrate &&
-             python manage.py runsslserver 0.0.0.0:8000"
+             python manage.py runserver 0.0.0.0:8000"
     volumes:
       - .:/app
-    ports:
-      - "${DJANGO_PORT}:8000"
+      - static_volume:/usuarios/static
     env_file:
       - .env
     depends_on:
@@ -39,7 +38,7 @@ services:
     image: dpage/pgadmin4
     restart: always
     ports:
-      - "${PGADMIN_PORT}:80"
+      - "${PGADMIN_PORT}:8000"
     environment:
       - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL}
       - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD}
@@ -48,6 +47,20 @@ services:
     volumes:
       - pgadmin_data:/var/lib/pgadmin
 
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+      - static_volume:/usuarios/static # Só adicione essa linha se você usar arquivos estáticos via volume
+      - ./nginx/selfsigned.crt:/etc/nginx/ssl/selfsigned.crt:ro
+      - ./nginx/selfsigned.key:/etc/nginx/ssl/selfsigned.key:ro
+    depends_on:
+      - web
+
 volumes:
+  static_volume:
   postgres_data:
   pgadmin_data:
