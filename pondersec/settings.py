@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-%y-2+movo6))$jx5%uuh^z2&(a08e!xunbz*7uq)c&28uqjusg
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = ['10.208.1.214','localhost']
 
 
 # Application definition
@@ -42,6 +42,18 @@ INSTALLED_APPS = [
     'usuarios',
     'responsegenerator',
 ]
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://10.208.1.214',
+    'http://10.208.1.214',
+    'https://pondersec.ufam.edu',  # Já deixe pronto para quando o DNS funcionar!
+    'http://pondersec.ufam.edu',
+    'https://localhost',
+    'http://localhost',
+    'https://127.0.0.1',
+    'http://127.0.0.1',
+]
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -121,8 +133,11 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
-
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'usuarios', 'static'),
+]
 STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 LOGIN_URL = '/'
 LOGIN_REDIRECT_URL = '/perguntar/'
