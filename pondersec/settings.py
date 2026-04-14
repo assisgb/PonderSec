@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-%y-2+movo6))$jx5%uuh^z2&(a08e!xunbz*7uq)c&28uqjusg
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['10.208.1.214','localhost']
+ALLOWED_HOSTS = ['10.208.200.20','localhost','pondersec.icomp.ufam.edu.br']
 
 
 # Application definition
@@ -46,12 +46,13 @@ INSTALLED_APPS = [
 CSRF_TRUSTED_ORIGINS = [
     'https://10.208.1.214',
     'http://10.208.1.214',
-    'https://pondersec.ufam.edu',  # Já deixe pronto para quando o DNS funcionar!
+    'https://pondersec.icomp.ufam.edu.br',  # Já deixe pronto para quando o DNS funcionar!
     'http://pondersec.ufam.edu',
     'https://localhost',
     'http://localhost',
     'https://127.0.0.1',
     'http://127.0.0.1',
+    'https://10.208.200.20',
 ]
 
 
