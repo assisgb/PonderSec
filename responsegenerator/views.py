@@ -609,7 +609,7 @@ def responder_avaliacao_publica(request, formulario_id):
                 texto_quali = request.POST.get(f'quali_{resposta_id}_{metrica_id}', '')
 
                 AvaliacaoFormulario.objects.create(
-		    usuario=request.usuario,
+		    usuario=request.user,
                     avaliador=avaliador,
                     resposta_id=resposta_id,
                     metrica_id=metrica_id,
