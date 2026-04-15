@@ -496,7 +496,7 @@ def consulta_comparacao(request):
 
 @login_required
 def avaliacao(request):
-    formularios = Formulario.objects.filter(criado_por=request.user)
+    formularios = Formulario.objects.filter(usuario=request.user)
     questoes = Questao.objects.all()
     return render(request, 'avaliacao/avaliacao_lista.html', {
         'formularios': formularios,
