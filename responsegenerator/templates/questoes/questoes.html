@@ -616,35 +616,25 @@
                 {% csrf_token %}
                 
                 <label class="form-label" for="pergunta">Texto da pergunta</label>
-                <textarea name="pergunta" id="pergunta" placeholder="Digite aqui a pergunta..."></textarea>
+                <textarea name="pergunta" id="pergunta" required placeholder="Digite aqui a pergunta sobre cibersegurança..."></textarea>
                 
                 <div class="ai-options">
                     <h3>IAs que responderão</h3>
                     <div class="checkbox-grid">
                         {% if llms %}
-                        {% for llm in llms %}
-                        <label><input type="checkbox">{{llm.nome}}</label>
-                        {% endfor %}
+                            {% for llm in llms %}
+                            <label><input type="checkbox" name="llms_selecionados" value="{{ llm.id }}"> {{ llm.nome }}</label>
+                            {% endfor %}
+                        {% else %}
+                            <p>Nenhuma IA configurada. Vá em Setup para adicionar.</p>
                         {% endif %}
                     </div>
-                </div>
-
-                <label class="form-label">Categoria da questão</label>
-                <div class="group-select">
-                    <select name="categoria" required>
-                        <option value="">Selecione uma Categoria</option>
-                        {% for categoria in categorias %}
-                        <option value="{{ categoria.id }}">{{ categoria.nome_categoria }}</option>
-                        {% endfor %}
-                    </select>
-                    
-                    <button type="button" class="add-group" onclick="abrirModalCategoria()" title="Adicionar nova categoria">+</button>
                 </div>
 
                 <div class="modal-buttons">
                     <button type="button" class="btn-modal btn-cancel" onclick="fecharModalFormQuestao()">Cancelar</button>
                     <button type="reset" class="btn-modal btn-cancel" style="flex: 0.5;">Limpar</button>
-                    <button type="submit" class="btn-modal btn-back">Salvar</button>
+                    <button type="submit" id="btnSalvarQuestao" class="btn-modal btn-back">Salvar</button>
                 </div>
             </form>
         </div>
@@ -696,8 +686,11 @@
 
         function bloquearBotao() {
             var btn = document.getElementById("btnSalvarQuestao");
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Classificando com IA...';
+            setTimeout(function() {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processando...';
+            }, 10);
+            
             return true;
         }
 
@@ -761,6 +754,7 @@
             }
             fileName.textContent = "Selecionado: " + file.name; fileName.style.color = "#00ff9f";
         }
+
         function submitUpload() {
             if (!fileInput.files.length) { fileName.textContent = "Selecione um arquivo."; fileName.style.color = "#ff4d4d"; return; }
             document.getElementById("uploadForm").submit();
