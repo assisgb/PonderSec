@@ -6,7 +6,6 @@ from django.contrib.auth import authenticate
 from django.contrib.auth import login
 from django.contrib.auth import logout
 
-
 # Create your views here.
 def cadastro(request):
     if request.method == "GET":

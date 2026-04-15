@@ -509,7 +509,7 @@
                             <div class="card-header">
                                 <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
                                     <span class="status-badge status-pending">⏳ Pendente</span>
-                                    
+                                    <span class="badge-categoria">{{ item.categoria.nome_categoria|default:"Sem categoria" }}</span>
                                     {% for form in item.formularios.all %}
                                         <span class="status-badge" style="background: rgba(187, 134, 252, 0.1); color: #bb86fc; border: 1px solid rgba(187, 134, 252, 0.3);">
                                             📄 {{ form.nome }}

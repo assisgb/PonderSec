@@ -7,6 +7,7 @@ class Metrica(models.Model):
         ('quantitativa', 'Quantitativa'),
         ('qualitativa', 'Qualitativa'),
     ]
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
     nome = models.CharField(max_length=100)
     descricao = models.TextField()
     tipo = models.CharField(max_length=20, choices=TIPO_CHOICES)
@@ -29,8 +30,12 @@ class LLM(models.Model):
 
 
 class Categoria(models.Model):
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
     nome_categoria = models.CharField(max_length=100)
     descricao_categoria = models.TextField(blank=True, null=True)
+
+    class Meta:
+        unique_together = ('usuario', 'nome_categoria')
 
     def __str__(self):
         return self.nome_categoria
