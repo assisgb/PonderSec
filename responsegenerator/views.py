@@ -81,7 +81,7 @@ def ver_detalhes_questao(request, id):
 @login_required
 def limpar_questoes(request):
     if request.method == 'POST':
-        Questao.objects.all().delete()
+        Historico.objects.filter(usuario=request.user).delete()
     return redirect('questoes')
 
 @login_required
@@ -208,10 +208,10 @@ def historico(request):
 
 @login_required
 def questoes(request):
-    lista_questoes = Questao.objects.all().order_by('-id')
-    lista_categorias = Categoria.objects.all()
-    llms = LLM.objects.all()
-    formulario = Formulario.objects.all()
+    lista_questoes = Questao.objects.filter(usuario=request.user).select_related('categoria').order_by('-id')
+    lista_categorias = Categoria.objects.filter(usuario=request.user)
+    llms = LLM.objects.filter(usuario=request.user)
+    formulario = Formulario.objects.filter(usuario=request.user)
     
     return render(request, 'questoes/questoes.html', {
         "historico": lista_questoes,
@@ -224,20 +224,74 @@ def questoes(request):
 def add_questoes(request):
     if request.method == "POST":
         pergunta_texto = request.POST.get('pergunta')
-        categoria_id = request.POST.get('categoria')
         
         if pergunta_texto:
-            nova_questao = Questao(conteudo=pergunta_texto)
+            nome_categoria = "Geral"
+            llm_ativo = LLM.objects.filter(ativo=True).first()
             
-            if categoria_id and str(categoria_id).strip(): 
+            if llm_ativo:
+                prompt_classificacao = (
+                    "Você é um classificador de dados estrito. Leia a pergunta abaixo "
+                    "e responda APENAS com o nome de uma categoria de cibersegurança "
+                    "(ex: Criptografia, Redes, Phishing, Engenharia Social). "
+                    "NÃO use pontos finais, NÃO explique, NÃO escreva frases. "
+                    "Apenas 1 ou 2 palavras definindo o tema.\n\n"
+                    f"Pergunta: {pergunta_texto}"
+                )
+
+                provedor = llm_ativo.descricao.lower() if llm_ativo.descricao else ""
+
                 try:
-                    categoria = Categoria.objects.get(id=int(categoria_id))
-                    nova_questao.categoria = categoria
-                except (Categoria.DoesNotExist, ValueError):
-                    pass
-                    
-            nova_questao.save()
-            django_messages.success(request, "Questão adicionada com sucesso!")
+                    if "gemini" in provedor or "google" in provedor:
+                        client = genai.Client(api_key=llm_ativo.api_key)
+                        resp = client.models.generate_content(model=llm_ativo.nome, contents=prompt_classificacao)
+                        nome_categoria = resp.text.strip().title()
+
+                    elif "groq" in provedor:
+                        client = Groq(api_key=llm_ativo.api_key)
+                        chat_completion = client.chat.completions.create(
+                            messages=[{"role": "user", "content": prompt_classificacao}],
+                            model=llm_ativo.nome,
+                        )
+                        nome_categoria = chat_completion.choices[0].message.content.strip().title()
+
+                    elif "openai" in provedor or "OpenAI" in provedor or "openAI" in provedor:
+                        client = openai.OpenAI(api_key=llm_ativo.api_key)
+                        response = client.chat.completions.create(
+                            model=llm_ativo.nome,
+                            messages=[{"role": "user", "content": prompt_classificacao}]
+                        )
+                        nome_categoria = response.choices[0].message.content.strip().title()
+
+                    elif "deepseek" in provedor:
+                        client = openai.OpenAI(
+                            api_key=llm_ativo.api_key, 
+                            base_url="https://api.deepseek.com"
+                        )
+                        response = client.chat.completions.create(
+                            model=llm_ativo.nome, # Ex: "deepseek-chat" ou "deepseek-reasoner"
+                            messages=[{"role": "user", "content": prompt_classificacao}]
+                        )
+                        nome_categoria = response.choices[0].message.content.strip().title()
+
+                except Exception as e:
+                    print(f"Erro ao classificar categoria com IA: {str(e)}")
+                    nome_categoria = "Geral"
+
+            nome_categoria = re.sub(r'[^\w\s]', '', nome_categoria)[:50]  # Limpa caracteres especiais e limita a 50 chars
+            categoria_obj, created = Categoria.objects.get_or_create(
+                nome_categoria=nome_categoria,
+                request_usuario=request.user,
+                defaults={'descricao_categoria': f'Categoria gerada automaticamente: {nome_categoria}'}
+            )
+
+            Questao.objects.create(
+                conteudo=pergunta_texto,
+                usuario=request.user,
+                categoria=categoria_obj,
+            )
+
+            django_messages.success(request, f"Questão adicionada com sucesso e classificada automaticamente como '{nome_categoria}'!")
         
     return redirect('questoes')
     
@@ -295,6 +349,7 @@ def questoes_cadastro_categoria(request):
 
         if nome_categoria:
             Categoria.objects.create(
+                usuario=request.user,
                 nome_categoria=nome_categoria,
                 descricao_categoria=descricao_categoria
             )
@@ -545,7 +600,7 @@ def menu_consulta(request):
 
 @login_required
 def executar_consulta(request):
-    questoes = Questao.objects.prefetch_related('respostas').all()
+    questoes = Questao.objects.prefetch_related('respostas').filter(usuario=request.user)
     return render(request, 'consulta/executar-consulta.html', {
         "questoes": questoes
     })
@@ -687,8 +742,6 @@ def responder_avaliacao_publica(request, formulario_id):
         'blind_mode': modo_cego,
     }
     return render(request, 'avaliacao/avaliacao_publica.html', contexto)
-
-
 
 
 @login_required
