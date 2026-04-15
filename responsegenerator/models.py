@@ -7,7 +7,7 @@ class Metrica(models.Model):
         ('quantitativa', 'Quantitativa'),
         ('qualitativa', 'Qualitativa'),
     ]
-    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     nome = models.CharField(max_length=100)
     descricao = models.TextField()
     tipo = models.CharField(max_length=20, choices=TIPO_CHOICES)
@@ -20,6 +20,7 @@ class Metrica(models.Model):
 
 
 class LLM(models.Model):
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     nome = models.CharField(max_length=100)
     descricao = models.TextField(blank=True, null=True)
     api_key = models.CharField(max_length=255)
@@ -30,7 +31,7 @@ class LLM(models.Model):
 
 
 class Categoria(models.Model):
-    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     nome_categoria = models.CharField(max_length=100)
     descricao_categoria = models.TextField(blank=True, null=True)
 
@@ -42,6 +43,7 @@ class Categoria(models.Model):
 
 
 class Questao(models.Model):
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     conteudo = models.TextField()
     categoria = models.ForeignKey(Categoria, on_delete=models.SET_NULL, null=True)
 
@@ -94,9 +96,10 @@ class Historico(models.Model):
         return f"{self.usuario.username} - {self.data}"
 
 class Formulario(models.Model):
+    
     nome = models.CharField(max_length=200)
     questoes = models.ManyToManyField(Questao, blank=True, related_name='formularios')
-    criado_por = models.ForeignKey(User, on_delete=models.CASCADE)
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
         return self.nome

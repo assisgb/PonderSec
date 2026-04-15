@@ -211,7 +211,7 @@ def questoes(request):
     lista_questoes = Questao.objects.filter(usuario=request.user).select_related('categoria').order_by('-id')
     lista_categorias = Categoria.objects.filter(usuario=request.user)
     llms = LLM.objects.filter(usuario=request.user)
-    formulario = Formulario.objects.filter(usuario=request.user)
+    formulario = Formulario.objects.filter(criado_por=request.user)
     
     return render(request, 'questoes/questoes.html', {
         "historico": lista_questoes,
@@ -281,7 +281,7 @@ def add_questoes(request):
             nome_categoria = re.sub(r'[^\w\s]', '', nome_categoria)[:50]  # Limpa caracteres especiais e limita a 50 chars
             categoria_obj, created = Categoria.objects.get_or_create(
                 nome_categoria=nome_categoria,
-                request_usuario=request.user,
+                usuario=request.user,
                 defaults={'descricao_categoria': f'Categoria gerada automaticamente: {nome_categoria}'}
             )
 
@@ -470,13 +470,14 @@ def setup_llm(request):
         api_key = request.POST.get("apiKey")
 
         LLM.objects.create(
+	    usuario = request.user,
             nome = nome,
             descricao = provedor,
             api_key = api_key
         )
         redirect('setup_llm')
 
-    llms_cadastradas = LLM.objects.all()
+    llms_cadastradas = LLM.objects.filter(usuario=request.user)
     return render(request, 'setup/setup-llm.html',{"llms_cadastradas": llms_cadastradas})
 
 @login_required
