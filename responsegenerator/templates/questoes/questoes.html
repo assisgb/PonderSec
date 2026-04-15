@@ -612,7 +612,7 @@
             <div class="modal-title">Adicionar Questão</div>
             <div class="modal-desc">Configure a pergunta e selecione as IAs responsáveis</div>
 
-            <form method="POST" action="{% url 'add_questoes' %}">
+            <form method="POST" action="{% url 'add_questoes' %}" onsubmit="bloquearBotao()">
                 {% csrf_token %}
                 
                 <label class="form-label" for="pergunta">Texto da pergunta</label>
@@ -693,6 +693,14 @@
     </div>
 
     <script>
+
+        function bloquearBotao() {
+            var btn = document.getElementById("btnSalvarQuestao");
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Classificando com IA...';
+            return true;
+        }
+
         function filterHistory() {
             const searchText = document.getElementById('searchInput').value.toLowerCase();
             const statusFilter = document.getElementById('statusFilter').value;
