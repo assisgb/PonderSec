@@ -508,6 +508,7 @@
                              
                             <div class="card-header">
                                 <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                                    <small>ID da Questão no Banco: #{{ questao.id }}</small>
                                     <span class="status-badge status-pending">⏳ Pendente</span>
                                     <span class="badge-categoria">{{ item.categoria.nome_categoria|default:"Sem categoria" }}</span>
                                     {% for form in item.formularios.all %}
