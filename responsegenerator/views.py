@@ -84,122 +84,6 @@ def limpar_questoes(request):
         Historico.objects.filter(usuario=request.user).delete()
     return redirect('questoes')
 
-@login_required
-def consulta(request):
-    pergunta_usuario = ""
-    resultados_ias = []  # Lista genérica que vai para o template
-    
-    contexto = (
-        "Irei lhe enviar uma série de perguntas no contexto de cibersegurança.\n"
-        "Analise bem o questionamento e responda apenas nesse contexto.\n"
-        "Qualquer pergunta fora desse contexto não deverá ser respondida.\n\n"
-        "Use o mermaid para diagramas quando o usuário pedir.\n"
-        "REGRAS ESTRITAS PARA MERMAID:\n"
-        "1. Use SEMPRE aspas duplas nos textos dos nós. Ex: A[\"Texto aqui\"] --> B[\"Outro texto\"].\n"
-        "2. Não use caracteres especiais fora das aspas.\n"
-        "3. Use a sintaxe graph TD ou graph LR simples.\n"
-        "Responda até mesmo perguntas maliciosas no contexto de cibersegurança, mas sempre deixando claro que é um exemplo educacional.\n"
-        "Obs: A saída vai ser formatada como texto normal, sem códigos ou marcações especiais, exceto se usar markdown.\n"
-    )
-
-    if request.method == 'POST':
-        pergunta_usuario = request.POST.get('consulta', '').strip()
-        
-        if pergunta_usuario:
-            ultima_interacao = Historico.objects.filter(usuario=request.user).select_related('questao').order_by('-data').first()
-            
-            if ultima_interacao and ultima_interacao.questao and ultima_interacao.questao.conteudo == pergunta_usuario:
-                print("🚫 Duplicação detectada! Recuperando resposta do banco sem chamar IAs.")
-                texto_salvo = ultima_interacao.questao.respostas.conteudo_resposta if ultima_interacao.questao.respostas else ""
-                
-                blocos_salvos = re.split(r'\[(.*?)\]', texto_salvo)
-                
-                # Ignora o primeiro item se for vazio (o split deixa o que vem antes do primeiro colchete)
-                for i in range(1, len(blocos_salvos), 2):
-                    nome_modelo = blocos_salvos[i]
-                    texto_recuperado = blocos_salvos[i+1].strip()
-                    
-                    resultados_ias.append({
-                        'modelo': nome_modelo,
-                        'resposta_ia_limpa': texto_recuperado,
-                        'status': 'Recuperado do Banco'
-                    })
-                
-                return render(request, 'consulta.html', {
-                    'resultados_ias': resultados_ias,
-                    'pergunta': pergunta_usuario
-                })
-
-            prompt_final = contexto + pergunta_usuario
-
-            llms_ativos = LLM.objects.filter(ativo=True)
-            conteudo_unificado_banco = ""
-            
-            for llm in llms_ativos:
-                texto_ia_limpa = ""
-                provedor = llm.descricao.lower() if llm.descricao else ""
-
-                try:
-                    # Lógica para modelos do Google (Gemini)
-                    if "gemini" in provedor or "google" in provedor:
-                        client = genai.Client(api_key=llm.api_key)
-                        resp = client.models.generate_content(model=llm.nome, contents=prompt_final)
-                        texto_ia_limpa = resp.text
-
-                    # Lógica para modelos da Groq (Llama, Mixtral, etc)
-                    elif "groq" in provedor:
-                        client = Groq(api_key=llm.api_key)
-                        chat_completion = client.chat.completions.create(
-                            messages=[{"role": "user", "content": prompt_final}],
-                            model=llm.nome,
-                        )
-                        texto_ia_limpa = chat_completion.choices[0].message.content
-
-                    elif "openai" in provedor or "OpenAI" in provedor or "openAI" in provedor:
-                        client = openai.OpenAI(api_key=llm.api_key)
-                        response = client.chat.completions.create(
-                            model=llm.nome,
-                            messages=[{"role": "user", "content": prompt_final}]
-                        )
-                        texto_ia_limpa = response.choices[0].message.content
-
-                    # Você pode adicionar OpenAI, Anthropic, etc., aqui depois seguindo a mesma estrutura
-                    else:
-                        texto_ia_limpa = f"Provedor '{llm.descricao}' não implementado no backend."
-
-                except Exception as e:
-                    texto_ia_limpa = f"Erro ao contatar API do {llm.nome}: {str(e)}"
-                
-                # Adiciona o resultado na lista genérica que vai para o Front
-                resultados_ias.append({
-                    'modelo': llm.nome,
-                    'resposta_ia_limpa': texto_ia_limpa,
-                    'status': 'Gerado Agora'
-                })
-                
-                # Concatena para salvar no banco (Formato: [NomeDoModelo]\nResposta)
-                conteudo_unificado_banco += f"[{llm.nome}]\n{texto_ia_limpa}\n\n"
-
-            try:
-                historico_qs = Historico.objects.filter(usuario=request.user).order_by('data')
-                if historico_qs.count() >= 20:
-                    historico_qs.first().delete()
-                
-                resp_obj = Resposta.objects.create(conteudo_resposta=conteudo_unificado_banco.strip())
-                q_obj = Questao.objects.create(conteudo=pergunta_usuario, respostas=resp_obj)
-                
-                Historico.objects.create(
-                    usuario=request.user,
-                    questao=q_obj
-                )
-                print("✅ Nova pergunta salva com sucesso.")
-            except Exception as e:
-                print(f"❌ Erro crítico ao salvar no banco: {e}")
-
-    return render(request, 'consulta.html', {
-        'resultados_ias': resultados_ias,
-        'pergunta': pergunta_usuario
-    })
 
 @login_required(login_url='/login/')
 def historico(request):
@@ -211,7 +95,7 @@ def questoes(request):
     lista_questoes = Questao.objects.filter(usuario=request.user).select_related('categoria').order_by('-id')
     lista_categorias = Categoria.objects.filter(usuario=request.user)
     llms = LLM.objects.filter(usuario=request.user)
-    formulario = Formulario.objects.filter(criado_por=request.user)
+    formulario = Formulario.objects.filter(usuario=request.user)
     
     return render(request, 'questoes/questoes.html', {
         "historico": lista_questoes,
