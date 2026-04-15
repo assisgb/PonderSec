@@ -92,7 +92,7 @@ def historico(request):
 
 @login_required
 def questoes(request):
-    lista_questoes = Questao.objects.filter(usuario=request.user).select_related('categoria').order_by('-id')
+    lista_questoes = Questao.objects.filter(usuario=request.user).select_related('categoria').order_by('-id').distinct()
     lista_categorias = Categoria.objects.filter(usuario=request.user)
     llms = LLM.objects.filter(usuario=request.user)
     formulario = Formulario.objects.filter(usuario=request.user)
