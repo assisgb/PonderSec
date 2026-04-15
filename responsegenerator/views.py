@@ -536,7 +536,7 @@ def avaliacao_adicionar_formulario(request):
         questoes_ids = request.POST.getlist('questoes')
         formulario = Formulario.objects.create(
             nome=nome,
-            criado_por=request.user
+            usuario=request.user
         )
         formulario.questoes.set(questoes_ids)
         formulario.save()
@@ -548,7 +548,7 @@ def avaliacao_adicionar_formulario(request):
 
 @login_required
 def avaliacao_editar_formulario(request, id):
-    formulario = get_object_or_404(Formulario, id=id, criado_por=request.user)
+    formulario = get_object_or_404(Formulario, id=id, usuario=request.user)
 
     if request.method == 'POST':
         nome = request.POST.get('nome')
@@ -566,7 +566,7 @@ def avaliacao_editar_formulario(request, id):
 
 @login_required
 def avaliacao_deletar_formulario(request, id):
-    formulario = get_object_or_404(Formulario, id=id, criado_por=request.user)
+    formulario = get_object_or_404(Formulario, id=id, usuario=request.user)
     if request.method == 'POST':
         formulario.delete()
     return redirect('avaliacao')
@@ -609,6 +609,7 @@ def responder_avaliacao_publica(request, formulario_id):
                 texto_quali = request.POST.get(f'quali_{resposta_id}_{metrica_id}', '')
 
                 AvaliacaoFormulario.objects.create(
+		    usuario=request.usuario,
                     avaliador=avaliador,
                     resposta_id=resposta_id,
                     metrica_id=metrica_id,
