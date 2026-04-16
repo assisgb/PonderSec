@@ -55,8 +55,7 @@ services:
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
       - static_volume:/usuarios/static # Só adicione essa linha se você usar arquivos estáticos via volume
-      - ./nginx/selfsigned.crt:/etc/nginx/ssl/selfsigned.crt:ro
-      - ./nginx/selfsigned.key:/etc/nginx/ssl/selfsigned.key:ro
+      - ./certificados:/etc/letsencrypt
     depends_on:
       - web
 

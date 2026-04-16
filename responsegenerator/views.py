@@ -78,12 +78,12 @@ def ver_detalhes_questao(request, id):
         print(f"Erro em ver_detalhes_questao: {str(e)}")
         return JsonResponse({'erro': str(e)}, status=500)
 
-@login_required
+@login_required 
 def limpar_questoes(request):
-    if request.method == 'POST':
+    if request.method == 'POST':   
         Historico.objects.filter(usuario=request.user).delete()
     return redirect('questoes')
-
+ 
 
 @login_required(login_url='/login/')
 def historico(request):
@@ -542,7 +542,7 @@ def avaliacao_adicionar_formulario(request):
         formulario.save()
         return redirect('avaliacao')
 
-    questoes = Questao.objects.all()
+    questoes = Questao.objects.filter(usuario=request.user).order_by('-id')
     return render(request, 'avaliacao/avaliacao_adicionar_formulario.html', {'questoes': questoes})
 
 
@@ -558,7 +558,7 @@ def avaliacao_editar_formulario(request, id):
         formulario.save()
         return redirect('avaliacao')
 
-    questoes = Questao.objects.all()
+    questoes = Questao.objects.filter(usuario=request.user).order_by('-id')
     return render(request, 'avaliacao/avaliacao_editar_formulario.html', {
         'formulario': formulario,
         'questoes': questoes
@@ -636,7 +636,7 @@ def dashboard_avaliacoes(request):
     metricas = list(Metrica.objects.filter(ativa=True).values('id', 'nome', 'pontuacao_maxima'))
     
     # Busca todos os LLMs
-    llms = list(LLM.objects.all().values('id', 'nome'))
+    llms = list(LLM.objects.filter(usuario=request.user).values('id', 'nome').order_by('-id'))
     
     # Para cada metrica calcula a média por LLM
     dados = {}
