@@ -8,3 +8,5 @@ aiohttp
 django-extensions
 werkzeug
 django-sslserver
+gunicorn
+whitenoise
