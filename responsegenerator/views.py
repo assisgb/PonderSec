@@ -111,7 +111,7 @@ def add_questoes(request):
         
         if pergunta_texto:
             nome_categoria = "Geral"
-            llm_ativo = LLM.objects.filter(ativo=True).first()
+            llm_ativo = LLM.objects.filter(usuario=request.user, ativo=True).first()
             
             if llm_ativo:
                 prompt_classificacao = (
@@ -270,7 +270,7 @@ def get_respostas(request, questao_id):
 @login_required
 def gerar_respostas(request, questao_id):
     questao = get_object_or_404(Questao, id=questao_id)
-    llms_ativos = LLM.objects.filter(ativo=True)
+    llms_ativos = LLM.objects.filter(usuario=request.user,ativo=True)
     
     contexto = ("Irei lhe enviar uma série de perguntas no contexto de cibersegurança.\n"
                 "Analise bem o questionamento e responda apenas nesse contexto.\n"
@@ -354,7 +354,7 @@ def setup_llm(request):
         api_key = request.POST.get("apiKey")
 
         LLM.objects.create(
-	    usuario = request.user,
+	        usuario = request.user,
             nome = nome,
             descricao = provedor,
             api_key = api_key
@@ -368,18 +368,13 @@ def setup_llm(request):
 def setup_configurar_llm(request):
     return render(request, 'setup/setup-configurar-llm.html')
 
-# ─────────────────────────────────────────────
-#  MÉTRICAS — views corrigidas
-#  Substitua as funções correspondentes no seu views.py
-# ─────────────────────────────────────────────
-
 @login_required
 def setup_avaliacao(request):
     """
     Lista todas as métricas ativas.
     Template: setup/setup-avaliacao.html  (seu arquivo setup_metricas.html renomeado)
     """
-    metricas = Metrica.objects.filter(ativa=True)
+    metricas = Metrica.objects.filter(usuario=request.user, ativa=True)
     return render(request, 'setup/setup-avaliacao.html', {'metricas': metricas})
 
 
@@ -508,7 +503,7 @@ def avaliacao_respostas(request, formulario_id, questao_id):
     formulario = get_object_or_404(Formulario, id=formulario_id)
     questao = get_object_or_404(Questao, id=questao_id)
     respostas = Resposta.objects.filter(questao=questao)
-    metricas = Metrica.objects.filter(ativa=True)
+    metricas = Metrica.objects.filter(usuario=request.user, ativa=True)
 
     if request.method == 'POST':
         data = json.loads(request.body)
@@ -609,7 +604,7 @@ def responder_avaliacao_publica(request, formulario_id):
                 texto_quali = request.POST.get(f'quali_{resposta_id}_{metrica_id}', '')
 
                 AvaliacaoFormulario.objects.create(
-		    usuario=request.user,
+		            usuario=request.user,
                     avaliador=avaliador,
                     resposta_id=resposta_id,
                     metrica_id=metrica_id,
@@ -633,7 +628,7 @@ def responder_avaliacao_publica(request, formulario_id):
 @login_required
 def dashboard_avaliacoes(request):
     # Busca todas as metricas ativas
-    metricas = list(Metrica.objects.filter(ativa=True).values('id', 'nome', 'pontuacao_maxima'))
+    metricas = list(Metrica.objects.filter(usuario=request.user, ativa=True).values('id', 'nome', 'pontuacao_maxima'))
     
     # Busca todos os LLMs
     llms = list(LLM.objects.filter(usuario=request.user).values('id', 'nome').order_by('-id'))
