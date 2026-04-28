@@ -208,44 +208,64 @@
         </div>
 
         <div class="product-name">PONDERSEC</div>
-        <div class="headline">Criar Conta</div>
-
-        <p class="subtitle">
-            Registre-se para acessar a <span>LLM ofensiva</span> da PonderSEC.
-        </p>
-
-        <form class="form" action="{% url 'cadastro' %}" method="POST">{% csrf_token %}
-            <!-- Quando integrar ao Django:
-            action="{% url 'cadastro' %}"
-            e adicionar {% csrf_token %}
-            -->
-
-            <div class="form-group">
-                <label>Nome de Usuário</label>
-                <input type="text" name="username" placeholder="ex: root.pentest">
+        {% if erro %}
+            <div style="background: rgba(255, 80, 54, 0.1); border: 1px solid #f55036; color: #f55036; padding: 10px; border-radius: 8px; text-align: center; font-size: 13px; margin-bottom: 15px;">
+                {{ erro }}
             </div>
+        {% endif %}
 
-            <div class="form-group">
-                <label>E-mail</label>
-                <input type="email" name="email" placeholder="voce@empresa.com">
+        {% if precisa_verificar %}
+            <div class="headline">Verificação de Segurança</div>
+            <p class="subtitle">
+                O firewall exige autenticação. Enviamos um token para <span>{{ email_user|default:"seu e-mail" }}</span>.
+            </p>
+
+            <form class="form" action="{% url 'cadastro' %}" method="POST">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label style="text-align: center;">Código de 6 dígitos</label>
+                    <input type="text" name="codigo_input" placeholder="000000" maxlength="6" style="text-align: center; font-size: 24px; letter-spacing: 0.2em; font-weight: bold;" required autocomplete="off">
+                </div>
+
+                <button type="submit" class="button-primary">Autenticar Sistema</button>
+            </form>
+
+        {% else %}
+            <div class="headline">Criar Conta</div>
+
+            <p class="subtitle">
+                Registre-se para acessar a <span>LLM ofensiva</span> da PonderSEC.
+            </p>
+
+            <form class="form" action="{% url 'cadastro' %}" method="POST">{% csrf_token %}
+
+                <div class="form-group">
+                    <label>Nome de Usuário</label>
+                    <input type="text" name="username" placeholder="ex: root.pentest">
+                </div>
+
+                <div class="form-group">
+                    <label>E-mail</label>
+                    <input type="email" name="email" placeholder="voce@empresa.com">
+                </div>
+
+                <div class="form-group">
+                    <label>Senha</label>
+                    <input type="password" name="password" placeholder="••••••••">
+                </div>
+
+                <div class="form-group">
+                    <label>Confirmar Senha</label>
+                    <input type="password" name="password_confirm" placeholder="••••••••">
+                </div>
+
+                <button type="submit" class="button-primary">Cadastrar</button>
+            </form>
+
+            <div class="footer">
+                Já possui conta? <a href="{% url 'login' %}">Entrar</a>
             </div>
-
-            <div class="form-group">
-                <label>Senha</label>
-                <input type="password" name="password" placeholder="••••••••">
-            </div>
-
-            <div class="form-group">
-                <label>Confirmar Senha</label>
-                <input type="password" name="password_confirm" placeholder="••••••••">
-            </div>
-
-            <button type="submit" class="button-primary">Cadastrar</button>
-        </form>
-
-        <div class="footer">
-            Já possui conta? <a href="{% url 'login' %}">Entrar</a>
-        </div>
+        {% endif %}
 
     </div>
 

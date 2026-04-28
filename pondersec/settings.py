@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-%y-2+movo6))$jx5%uuh^z2&(a08e!xunbz*7uq)c&28uqjusg
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['10.208.200.20','localhost','pondersec.icomp.ufam.edu.br']
+ALLOWED_HOSTS = ['10.208.200.20','localhost','pondersec.icomp.ufam.edu.br', ['*']]
 
 
 # Application definition
@@ -66,6 +66,18 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+# --- CONFIGURAÇÕES DE E-MAIL (BREVO) ---
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp-relay.brevo.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+# Você vai pegar esses dois dados lá no painel do Brevo (em SMTP & API):
+EMAIL_HOST_USER = os.environ.get('HOST_API_EMAIL') 
+EMAIL_HOST_PASSWORD = os.environ.get('SENHA_API_EMAIL')
+
+DEFAULT_FROM_EMAIL = 'PonderSec <naoresp00@gmail.com>'
 
 ROOT_URLCONF = 'pondersec.urls'
 

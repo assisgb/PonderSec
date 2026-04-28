@@ -95,6 +95,7 @@ class Historico(models.Model):
     def __str__(self):
         return f"{self.usuario.username} - {self.data}"
 
+
 class Formulario(models.Model):
     
     nome = models.CharField(max_length=200)
@@ -103,7 +104,8 @@ class Formulario(models.Model):
 
     def __str__(self):
         return self.nome
-    
+
+
 class Avaliador(models.Model):
     nome = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
@@ -113,7 +115,8 @@ class Avaliador(models.Model):
 
     def __str__(self):
         return f"{self.nome} - {self.email}"
-    
+
+
 class AvaliacaoFormulario(models.Model):
     usuario = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     avaliador = models.ForeignKey(Avaliador, on_delete=models.CASCADE, null=True, blank=True, related_name='avaliacoes')

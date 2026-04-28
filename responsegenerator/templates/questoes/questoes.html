@@ -392,6 +392,20 @@
             <a href="{% url 'menu' %}" class="btn-back">Voltar</a>
         </div>
 
+        {% if messages %}
+            <div style="margin-bottom: 25px;">
+            {% for message in messages %}
+                <div style="background: {% if message.tags == 'error' %}rgba(255, 80, 54, 0.1){% else %}rgba(0, 255, 160, 0.1){% endif %}; 
+                            border: 1px solid {% if message.tags == 'error' %}#f55036{% else %}#00ff9f{% endif %}; 
+                            color: {% if message.tags == 'error' %}#f55036{% else %}#00ff9f{% endif %}; 
+                            padding: 16px 24px; border-radius: 12px; font-size: 14px; font-weight: 500; text-align: center;
+                            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);">
+                    {{ message }}
+                </div>
+            {% endfor %}
+            </div>
+        {% endif %}
+
         <div class="filter-section">
             
             <input type="text" class="search-box" id="searchInput" placeholder="Filtro de pesquisa..." onkeyup="filterHistory()" style="width: 100%;">
