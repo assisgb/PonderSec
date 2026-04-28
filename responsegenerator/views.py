@@ -8,7 +8,6 @@ import os
 import re
 from groq import Groq
 from datetime import timedelta
-import re
 from django.http import JsonResponse, HttpResponse
 import json
 from django.views.decorators.http import require_http_methods
@@ -16,11 +15,11 @@ from responsegenerator.models import Historico, Categoria, LLM, Questao, Respost
 from django.db.models import Avg
 from collections import defaultdict
 
+
 def salvar_no_historico(user, pergunta, resposta):
-    resp_obj = Resposta.objects.create(conteudo_resposta=resposta)
-    q_obj = Questao.objects.create(conteudo=pergunta)  # removido respostas=resp_obj
-    resp_obj.questao = q_obj  # associa pelo ForeignKey correto
-    resp_obj.save()
+    # BLINDADO: Garante que a Questao pertence ao usuário na criação automática
+    q_obj = Questao.objects.create(conteudo=pergunta, usuario=user)  
+    resp_obj = Resposta.objects.create(conteudo_resposta=resposta, questao=q_obj)
 
     Historico.objects.create(
         usuario=user,
@@ -33,7 +32,8 @@ def menu(request):
 
 @login_required
 def deletar_questao_historico(request, id):
-    item = get_object_or_404(Questao, id=id)
+    # BLINDADO: Só deleta se a questão for daquele usuário
+    item = get_object_or_404(Questao, id=id, usuario=request.user)
     if request.method == 'POST':
         item.delete()
     return redirect('questoes')
@@ -41,8 +41,8 @@ def deletar_questao_historico(request, id):
 @login_required
 def ver_detalhes_questao(request, id):
     try:
-        # Busca direto na tabela de Questões (não mais no Histórico)
-        questao = get_object_or_404(Questao, id=id)
+        # BLINDADO: Impede de ver detalhes da questão de outro pesquisador
+        questao = get_object_or_404(Questao, id=id, usuario=request.user)
 
         respostas_encontradas = []
         respostas_qs = Resposta.objects.filter(questao=questao).select_related('llm')
@@ -162,7 +162,7 @@ def add_questoes(request):
                     print(f"Erro ao classificar categoria com IA: {str(e)}")
                     nome_categoria = "Geral"
 
-            nome_categoria = re.sub(r'[^\w\s]', '', nome_categoria)[:50]  # Limpa caracteres especiais e limita a 50 chars
+            nome_categoria = re.sub(r'[^\w\s]', '', nome_categoria)[:50]  
             categoria_obj, created = Categoria.objects.get_or_create(
                 nome_categoria=nome_categoria,
                 usuario=request.user,
@@ -189,6 +189,12 @@ def upload_perguntas(request):
             conteudo_texto = arquivo.read().decode("utf-8")
             nome_arquivo = arquivo.name.lower()
 
+            categoria_geral, _ = Categoria.objects.get_or_create(
+                nome_categoria="Geral",
+                usuario=request.user,
+                defaults={'descricao_categoria': 'Categoria importada via arquivo'}
+            )
+
             if nome_arquivo.endswith(".json"):
                 try:
                     dados = json.loads(conteudo_texto)
@@ -200,7 +206,7 @@ def upload_perguntas(request):
                         texto_pergunta = item.get("pergunta", "").strip()
                         if texto_pergunta:
                             perguntas.append(texto_pergunta)
-                            Questao.objects.create(conteudo=texto_pergunta)
+                            Questao.objects.create(conteudo=texto_pergunta, usuario=request.user, categoria=categoria_geral)
 
                 except (json.JSONDecodeError, AttributeError):
                     django_messages.error(request, "Arquivo JSON inválido ou mal formatado.")
@@ -213,7 +219,7 @@ def upload_perguntas(request):
                     if match:
                         texto_pergunta = match.group(1).strip()
                         perguntas.append(texto_pergunta)
-                        Questao.objects.create(conteudo=texto_pergunta)
+                        Questao.objects.create(conteudo=texto_pergunta, usuario=request.user, categoria=categoria_geral)
 
             if perguntas:
                 django_messages.success(request, f"{len(perguntas)} perguntas importadas com sucesso!")
@@ -249,9 +255,11 @@ def setup(request):
 
 @login_required
 def get_respostas(request, questao_id):
+    # BLINDADO: Apenas pega as respostas de uma questão que pertença ao usuário
     questao = get_object_or_404(
         Questao.objects.prefetch_related("respostas__llm"), 
-        id=questao_id
+        id=questao_id,
+        usuario=request.user
     )
     
     lista_respostas = []
@@ -269,8 +277,9 @@ def get_respostas(request, questao_id):
 
 @login_required
 def gerar_respostas(request, questao_id):
-    questao = get_object_or_404(Questao, id=questao_id)
-    llms_ativos = LLM.objects.filter(usuario=request.user,ativo=True)
+    # BLINDADO
+    questao = get_object_or_404(Questao, id=questao_id, usuario=request.user)
+    llms_ativos = LLM.objects.filter(usuario=request.user, ativo=True)
     
     contexto = ("Irei lhe enviar uma série de perguntas no contexto de cibersegurança.\n"
                 "Analise bem o questionamento e responda apenas nesse contexto.\n"
@@ -317,7 +326,7 @@ def gerar_respostas(request, questao_id):
                     base_url="https://api.deepseek.com"
                 )
                 response = client.chat.completions.create(
-                    model=llm.nome, # Ex: "deepseek-chat" ou "deepseek-reasoner"
+                    model=llm.nome, 
                     messages=[{"role": "user", "content": prompt_final}]
                 )
                 texto_ia_limpa = response.choices[0].message.content
@@ -328,7 +337,7 @@ def gerar_respostas(request, questao_id):
         except Exception as e:
             texto_ia_limpa = f"Erro na IA {llm.nome}: {str(e)}"
 
-        Resposta.objects.create( # => Salva a resposta real atrelada àquela questão e àquele modelo específico
+        Resposta.objects.create(
             questao_id=questao_id,
             llm=llm,
             conteudo_resposta=texto_ia_limpa.strip()
@@ -336,10 +345,12 @@ def gerar_respostas(request, questao_id):
 
     return JsonResponse({'status': 'ok'})
 
+@login_required
 def limpar_respostas(request):
     if request.method == "POST":
         try:
-            Resposta.objects.all().delete()
+            # BLINDADO: Apaga apenas as respostas das questões que pertencem ao usuário logado
+            Resposta.objects.filter(questao__usuario=request.user).delete()
             return JsonResponse({"ok": True})
         except Exception as e:
             return JsonResponse({"ok": False, "erro": str(e)}, status=500)
@@ -354,7 +365,7 @@ def setup_llm(request):
         api_key = request.POST.get("apiKey")
 
         LLM.objects.create(
-	        usuario = request.user,
+            usuario = request.user,
             nome = nome,
             descricao = provedor,
             api_key = api_key
@@ -370,20 +381,11 @@ def setup_configurar_llm(request):
 
 @login_required
 def setup_avaliacao(request):
-    """
-    Lista todas as métricas ativas.
-    Template: setup/setup-avaliacao.html  (seu arquivo setup_metricas.html renomeado)
-    """
     metricas = Metrica.objects.filter(usuario=request.user, ativa=True)
     return render(request, 'setup/setup-avaliacao.html', {'metricas': metricas})
 
-
 @login_required
 def setup_adicionar_metrica(request):
-    """
-    Recebe POST do modal 'Adicionar Métrica'.
-    Campos esperados: nome, descricao, tipo, pontuacao_maxima, criterio_texto
-    """
     if request.method == 'POST':
         nome             = request.POST.get('nome', '').strip()
         descricao        = request.POST.get('descricao', '').strip()
@@ -396,6 +398,7 @@ def setup_adicionar_metrica(request):
             return redirect('setup_avaliacao')
 
         Metrica.objects.create(
+            usuario          = request.user, # BLINDADO: Amarra a nova métrica ao usuário
             nome             = nome,
             descricao        = descricao,
             tipo             = tipo,
@@ -405,17 +408,11 @@ def setup_adicionar_metrica(request):
         )
         return redirect('setup_avaliacao')
 
-    # GET — não é usado (modal inline), mas redireciona com segurança
     return redirect('setup_avaliacao')
 
 
 @login_required
 def setup_configurar_metrica(request):
-    """
-    Edita uma métrica existente.
-    Recebe POST do modal 'Editar Métrica' com campo oculto 'metrica_id'.
-    Campos: metrica_id, nome, descricao, tipo, pontuacao_maxima, criterio_texto
-    """
     if request.method == 'POST':
         metrica_id       = request.POST.get('metrica_id')
         nome             = request.POST.get('nome', '').strip()
@@ -428,7 +425,8 @@ def setup_configurar_metrica(request):
             django_messages.error(request, 'ID da métrica não informado.')
             return redirect('setup_avaliacao')
 
-        metrica = get_object_or_404(Metrica, id=metrica_id)
+        # BLINDADO
+        metrica = get_object_or_404(Metrica, id=metrica_id, usuario=request.user)
         metrica.nome             = nome
         metrica.descricao        = descricao
         metrica.tipo             = tipo
@@ -440,15 +438,12 @@ def setup_configurar_metrica(request):
 
     return redirect('setup_avaliacao')
 
-
+@login_required
 @require_http_methods(["DELETE"])
 def setup_deletar_metrica(request, id):
-    """
-    Deleta uma métrica via DELETE (chamada AJAX do front).
-    Retorna JSON { status: "success" } ou { status: "error" }.
-    """
     try:
-        metrica = get_object_or_404(Metrica, id=id)
+        # BLINDADO: Protegido com decorator login_required e filtrado pelo dono
+        metrica = get_object_or_404(Metrica, id=id, usuario=request.user)
         metrica.delete()
         return JsonResponse({"status": "success"})
     except Exception as e:
@@ -457,17 +452,19 @@ def setup_deletar_metrica(request, id):
 @login_required
 def deletar_llm(request, id):
     if request.method == "DELETE":
-        LLM.objects.filter(id=id).delete()
+        LLM.objects.filter(id=id, usuario=request.user).delete()
         return JsonResponse({"status": "success", "id": id})
     return JsonResponse({"status": "error"})
 
+@login_required
 def edit_llm_api(request, id):
     if request.method == "PUT":
         data = json.loads(request.body)
         nome = data.get("nome")
         api_key = data.get("api_key")
 
-        llm = LLM.objects.get(id=id)
+        # BLINDADO: A versão anterior .get().filter() causava quebra e não protegia.
+        llm = get_object_or_404(LLM, id=id, usuario=request.user)
         llm.nome = nome
         llm.api_key = api_key
         llm.save()
@@ -492,7 +489,7 @@ def consulta_comparacao(request):
 @login_required
 def avaliacao(request):
     formularios = Formulario.objects.filter(usuario=request.user)
-    questoes = Questao.objects.all()
+    questoes = Questao.objects.filter(usuario=request.user)
     return render(request, 'avaliacao/avaliacao_lista.html', {
         'formularios': formularios,
         'questoes': questoes
@@ -500,8 +497,10 @@ def avaliacao(request):
 
 @login_required
 def avaliacao_respostas(request, formulario_id, questao_id):
-    formulario = get_object_or_404(Formulario, id=formulario_id)
-    questao = get_object_or_404(Questao, id=questao_id)
+    # BLINDADO
+    formulario = get_object_or_404(Formulario, id=formulario_id, usuario=request.user)
+    questao = get_object_or_404(Questao, id=questao_id, usuario=request.user)
+    
     respostas = Resposta.objects.filter(questao=questao)
     metricas = Metrica.objects.filter(usuario=request.user, ativa=True)
 
@@ -567,8 +566,9 @@ def avaliacao_deletar_formulario(request, id):
     return redirect('avaliacao')
 
 def responder_avaliacao_publica(request, formulario_id):
+    # Aqui não vai request.user pois é uma rota pública para avaliadores externos (blind test)
     formulario = get_object_or_404(Formulario, id=formulario_id)
-    metricas = Metrica.objects.filter(ativa=True)
+    metricas = Metrica.objects.filter(usuario=formulario.usuario, ativa=True)
 
     likert_options = [
         (1, '😞', 'Muito Ruim'),
@@ -604,7 +604,7 @@ def responder_avaliacao_publica(request, formulario_id):
                 texto_quali = request.POST.get(f'quali_{resposta_id}_{metrica_id}', '')
 
                 AvaliacaoFormulario.objects.create(
-		            usuario=request.user,
+                    usuario=formulario.usuario, # BLINDADO: Vincula a avaliação gerada ao dono do formulário
                     avaliador=avaliador,
                     resposta_id=resposta_id,
                     metrica_id=metrica_id,
@@ -627,13 +627,10 @@ def responder_avaliacao_publica(request, formulario_id):
 
 @login_required
 def dashboard_avaliacoes(request):
-    # Busca todas as metricas ativas
     metricas = list(Metrica.objects.filter(usuario=request.user, ativa=True).values('id', 'nome', 'pontuacao_maxima'))
     
-    # Busca todos os LLMs
     llms = list(LLM.objects.filter(usuario=request.user).values('id', 'nome').order_by('-id'))
     
-    # Para cada metrica calcula a média por LLM
     dados = {}
     for metrica in metricas:
         dados_metrica = {}

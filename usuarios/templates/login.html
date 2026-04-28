@@ -201,37 +201,51 @@
 
     <div class="container">
 
-        <!-- LOGO -->
         <div class="logo">
-            <img src="{% static 'pondersec_logo.jpg' %}"  alt= "PonderSEC Logo">
+            <img src="{% static 'pondersec_logo.jpg' %}" alt="PonderSEC Logo">
         </div>
 
         <div class="product-name">PONDERSEC</div>
         <div class="headline">Entrar</div>
         <div class="subtitle">Bem-vindo! Por favor, <span>faça login</span> para continuar.</div>
-        <form class="form" action="{% url 'login' %}" method="POST">{% csrf_token %}
-            <!-- Quando integrar ao Django:
-            action="{% url 'cadastro' %}"
-            e adicionar {% csrf_token %}
-            -->
+
+        {% if error %}
+            <div style="background: rgba(255, 80, 54, 0.1); border: 1px solid #f55036; color: #f55036; padding: 10px; border-radius: 8px; text-align: center; font-size: 13px; margin-bottom: 15px;">
+                {{ error }}
+            </div>
+        {% endif %}
+
+        {% if messages %}
+            {% for message in messages %}
+                <div style="background: {% if message.tags == 'error' %}rgba(255, 80, 54, 0.1){% else %}rgba(0, 255, 160, 0.1){% endif %}; 
+                            border: 1px solid {% if message.tags == 'error' %}#f55036{% else %}#00ff9f{% endif %}; 
+                            color: {% if message.tags == 'error' %}#f55036{% else %}#00ff9f{% endif %}; 
+                            padding: 10px; border-radius: 8px; text-align: center; font-size: 13px; margin-bottom: 15px;">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <form class="form" action="{% url 'login' %}" method="POST">
+            {% csrf_token %}
 
             <div class="form-group">
                 <label>Nome de Usuário</label>
-                <input type="text" name="username" placeholder="ex: root.pentest">
+                <input type="text" name="username" placeholder="ex: root.pentest" required>
             </div>
 
             <div class="form-group">
                 <label>Senha</label>
-                <input type="password" name="password" placeholder="••••••••">
+                <input type="password" name="password" placeholder="••••••••" required>
             </div>
 
             <button type="submit" class="button-primary">Entrar</button>
-             <div class="footer">
-            Não está cadastrado? <a href="{% url 'cadastro' %}">Cadastrar</a>
-        </div>
+            
+            <div class="footer">
+                Não está cadastrado? <a href="{% url 'cadastro' %}">Cadastrar</a>
+            </div>
 
         </form>
-
 
     </div>
 

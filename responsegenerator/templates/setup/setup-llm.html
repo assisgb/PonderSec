@@ -322,6 +322,20 @@
             <a href="{% url 'setup' %}" class="btn-back">Voltar</a>
         </div>
 
+        {% if messages %}
+            <div style="margin-bottom: 25px;">
+            {% for message in messages %}
+                <div style="background: {% if message.tags == 'error' %}rgba(255, 80, 54, 0.1){% else %}rgba(0, 255, 160, 0.1){% endif %}; 
+                            border: 1px solid {% if message.tags == 'error' %}#f55036{% else %}#00ff9f{% endif %}; 
+                            color: {% if message.tags == 'error' %}#f55036{% else %}#00ff9f{% endif %}; 
+                            padding: 16px 24px; border-radius: 12px; font-size: 14px; font-weight: 500; text-align: center;
+                            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);">
+                    {{ message }}
+                </div>
+            {% endfor %}
+            </div>
+        {% endif %}
+
         <button class="btn-add" onclick="abrirModal()">+ Adicionar</button>
 
         <div class="history-grid">
@@ -330,8 +344,8 @@
                 <div class="history-card" id="llm-{{ llm.id }}">
                     <div class="llm-name" id="llm-nome-{{ llm.id }}">{{ llm.nome }}</div>
                     <div>
-                        <button class="btn-delete" onclick="deletarLLM({{ llm.id }})">🗑️</button>
-                        <button class="btn-save" onclick="editarLLM({{ llm.id }}, '{{ llm.nome|escapejs }}', '{{ llm.api_key|escapejs }}')">✏️</button>
+                        <button class="btn-delete" onclick="deletarLLM('{{ llm.id }}')">🗑️</button>
+                        <button class="btn-save" onclick="editarLLM('{{ llm.id }}', '{{ llm.nome|escapejs }}', '{{ llm.api_key|escapejs }}')">✏️</button>
                     </div>
                 </div>
                 {% endfor %}
