@@ -358,6 +358,23 @@
             </div>
         </div>
 
+        {% if messages %}
+            <div id="toast-container" style="position: fixed; top: 30px; right: 30px; z-index: 999999; display: flex; flex-direction: column; gap: 12px; pointer-events: none;">
+            {% for message in messages %}
+                <div class="toast-message" style="
+                            background: {% if message.tags == 'error' %}rgba(255, 80, 54, 0.15){% else %}rgba(0, 255, 160, 0.15){% endif %}; 
+                            border: 1px solid {% if message.tags == 'error' %}#f55036{% else %}#00ff9f{% endif %}; 
+                            color: {% if message.tags == 'error' %}#f55036{% else %}#00ff9f{% endif %}; 
+                            padding: 16px 24px; border-radius: 12px; font-size: 14px; font-weight: 600; text-align: center;
+                            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5); backdrop-filter: blur(5px);
+                            transition: opacity 0.5s ease, transform 0.5s ease;
+                            transform: translateX(0); opacity: 1;">
+                    {{ message }}
+                </div>
+            {% endfor %}
+            </div>
+        {% endif %}
+
         <div class="toolbar">
             <div class="search-bar">
                 <span class="search-icon">
@@ -423,7 +440,7 @@
                         </svg>
                     </button>
                     <button class="btn-icon btn-delete" title="Deletar"
-                        onclick="deletar_metrica({{ metrica.id }})">
+                        onclick="deletar_metrica({{metrica.id }})">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                             <polyline points="3 6 5 6 21 6"/>
                             <path d="M19 6l-1 14H6L5 6"/>
