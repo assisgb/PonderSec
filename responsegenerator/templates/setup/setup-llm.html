@@ -323,13 +323,16 @@
         </div>
 
         {% if messages %}
-            <div style="margin-bottom: 25px;">
+            <div id="toast-container" style="position: fixed; top: 30px; right: 30px; z-index: 999999; display: flex; flex-direction: column; gap: 12px; pointer-events: none;">
             {% for message in messages %}
-                <div style="background: {% if message.tags == 'error' %}rgba(255, 80, 54, 0.1){% else %}rgba(0, 255, 160, 0.1){% endif %}; 
+                <div class="toast-message" style="
+                            background: {% if message.tags == 'error' %}rgba(255, 80, 54, 0.15){% else %}rgba(0, 255, 160, 0.15){% endif %}; 
                             border: 1px solid {% if message.tags == 'error' %}#f55036{% else %}#00ff9f{% endif %}; 
                             color: {% if message.tags == 'error' %}#f55036{% else %}#00ff9f{% endif %}; 
-                            padding: 16px 24px; border-radius: 12px; font-size: 14px; font-weight: 500; text-align: center;
-                            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);">
+                            padding: 16px 24px; border-radius: 12px; font-size: 14px; font-weight: 600; text-align: center;
+                            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5); backdrop-filter: blur(5px);
+                            transition: opacity 0.5s ease, transform 0.5s ease;
+                            transform: translateX(0); opacity: 1;">
                     {{ message }}
                 </div>
             {% endfor %}
@@ -344,8 +347,20 @@
                 <div class="history-card" id="llm-{{ llm.id }}">
                     <div class="llm-name" id="llm-nome-{{ llm.id }}">{{ llm.nome }}</div>
                     <div>
-                        <button class="btn-delete" onclick="deletarLLM('{{ llm.id }}')">🗑️</button>
-                        <button class="btn-save" onclick="editarLLM('{{ llm.id }}', '{{ llm.nome|escapejs }}', '{{ llm.api_key|escapejs }}')">✏️</button>
+                        <button class="btn-delete" onclick="deletarLLM('{{ llm.id }}')">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                <polyline points="3 6 5 6 21 6"/>
+                                <path d="M19 6l-1 14H6L5 6"/>
+                                <path d="M10 11v6M14 11v6"/>
+                                <path d="M9 6V4h6v2"/>
+                            </svg>
+                        </button>
+                        <button class="btn-save" onclick="editarLLM('{{ llm.id }}', '{{ llm.nome|escapejs }}', '{{ llm.api_key|escapejs }}')">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                            </svg>
+                        </button>
                     </div>
                 </div>
                 {% endfor %}
@@ -387,7 +402,9 @@
                         <label>API Key</label>
                         <div class="password-container">
                             <input type="password" name="apiKey" id="apiKeyInput" placeholder="Cole sua chave aqui...">
-                            <button type="button" class="btn-toggle-password" onclick="togglePassword('apiKeyInput', this)">👁️</button>
+                            <button type="button" class="btn-toggle-password" onclick="togglePassword('apiKeyInput', this)">
+                                <img src="{% static 'imagem_olho_aberto.png' %}" alt="Mostrar senha" style="width: 20px; height: 20px;">
+                            </button>
                         </div>
                     </div>
 
@@ -430,7 +447,9 @@
                 <label>API Key</label>
                 <div class="password-container">
                     <input type="password" id="edit-apikey">
-                    <button type="button" class="btn-toggle-password" onclick="togglePassword('edit-apikey', this)">👁️</button>
+                    <button type="button" class="btn-toggle-password" onclick="togglePassword('edit-apikey', this)">
+                        <img src="{% static 'imagem_olho_aberto.png' %}" alt="Mostrar senha" style="width: 20px; height: 20px;">
+                    </button>
                 </div>
             </div>
 
@@ -459,7 +478,9 @@
                 { value: "gemini-1.5-pro", label: "Gemini 1.5 Pro" }
             ],
             "DeepSeek": [
-                { value: "deepseek-chat", label: "DeepSeek Chat" },
+                { value: "deepseek-v4-pro", label: "DeepSeek V4 Pro" },
+                { value: "deepseek-v4-flash", label: "DeepSeek V4 Flash" },
+                { value: "deepseek-v3", label: "DeepSeek V3" },
                 { value: "deepseek-reasoner", label: "DeepSeek Reasoner" }
             ],
             "Local": [
@@ -469,13 +490,14 @@
 
         function togglePassword(inputId, btnElement) {
             const input = document.getElementById(inputId);
+            
             if (input.type === "password") {
                 input.type = "text";
-                btnElement.innerHTML = "🙈";
+                btnElement.innerHTML = `<img src="{% static 'imagem_olho_fechado.png' %}" alt="Esconder senha" style="width: 20px; height: 20px;">`;
                 btnElement.style.opacity = "1";
             } else {
                 input.type = "password";
-                btnElement.innerHTML = "👁️";
+                btnElement.innerHTML = `<img src="{% static 'imagem_olho_aberto.png' %}" alt="Mostrar senha" style="width: 20px; height: 20px;">`;
                 btnElement.style.opacity = "0.6";
             }
         }
@@ -580,6 +602,21 @@
                 }
             });
         }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const toasts = document.querySelectorAll('.toast-message');
+            
+            toasts.forEach(toast => {
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateX(50px)';
+
+                    setTimeout(() => {
+                        toast.remove();
+                    }, 500); 
+                }, 6000);
+            });
+        });
 
         function getCSRFToken() { return document.querySelector('[name=csrfmiddlewaretoken]').value; }
         function abrirModal() { document.getElementById("modal").style.display = "flex"; }

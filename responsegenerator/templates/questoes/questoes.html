@@ -89,22 +89,31 @@
         }
         
         .header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 35px;
-            padding: 30px 35px;
-            background: rgba(11, 20, 29, 0.6);
-            border-radius: 16px;
-            border: 1px solid rgba(0, 255, 160, 0.15);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            display: flex; align-items: center; gap: 20px;
+            margin-bottom: 28px; padding: 28px 35px;
+            background: radial-gradient(circle at top, #0b141d 0, #050a11 55%, #020509 100%);
+            border-radius: 18px;
+            box-shadow: 0 0 0 1px rgba(0,255,160,0.12), 0 18px 60px rgba(0,0,0,0.9), 0 0 30px rgba(0,255,160,0.08);
         }
+
+        .logo img {
+            width: 68px; border-radius: 10px;
+            filter: drop-shadow(0 0 10px rgba(0,255,160,0.8)) drop-shadow(0 0 30px rgba(0,255,160,0.5));
+        }
+
+        .header-text { flex: 1; }
+
+        .product-name {
+            color: #7df6c2; text-transform: uppercase;
+            letter-spacing: 0.28em; font-size: 12px; font-weight: 700; margin-bottom: 4px;
+        }
+
+        .page-title { color: #00ff9f; font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+        .subtitle   { font-size: 13px; color: #8ba1b0; }
         
-        .logo-section { display: flex; align-items: center; gap: 22px; }
         .logo-section img { width: 85px; height: 85px; border-radius: 12px; filter: drop-shadow(0 0 8px rgba(0, 255, 160, 0.4)); }
         .header-title { display: flex; flex-direction: column; gap: 6px; }
         .product-name { color: #7df6c2; text-transform: uppercase; letter-spacing: 0.25em; font-size: 12px; font-weight: 600; }
-        .page-title { color: #00ff9f; font-size: 28px; font-weight: 600; }
         
         .btn-back {
             padding: 14px 32px;
@@ -384,22 +393,32 @@
         <div class="header">
             <div class="logo-section">
                 <img src="{% static 'pondersec_logo.jpg' %}" alt="PonderSEC Logo">
-                <div class="header-title">
-                    <div class="product-name">PONDERSEC</div>
-                    <div class="page-title">Questões</div>
-                </div>
             </div>
-            <a href="{% url 'menu' %}" class="btn-back">Voltar</a>
+            <div class="header-text">
+                <div class="product-name">PONDERSEC</div>
+                <div class="headline">Questões</div>
+                <div class="subtitle">Cadastre e gerencie suas questões</div>
+            </div>
+            
+            <a href="{% url 'menu' %}" class="btn-back">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                    <path d="M19 12H5M11 6l-6 6 6 6"/>
+                </svg>
+                Voltar
+            </a>
         </div>
 
         {% if messages %}
-            <div style="margin-bottom: 25px;">
+            <div id="toast-container" style="position: fixed; top: 30px; right: 30px; z-index: 999999; display: flex; flex-direction: column; gap: 12px; pointer-events: none;">
             {% for message in messages %}
-                <div style="background: {% if message.tags == 'error' %}rgba(255, 80, 54, 0.1){% else %}rgba(0, 255, 160, 0.1){% endif %}; 
+                <div class="toast-message" style="
+                            background: {% if message.tags == 'error' %}rgba(255, 80, 54, 0.15){% else %}rgba(0, 255, 160, 0.15){% endif %}; 
                             border: 1px solid {% if message.tags == 'error' %}#f55036{% else %}#00ff9f{% endif %}; 
                             color: {% if message.tags == 'error' %}#f55036{% else %}#00ff9f{% endif %}; 
-                            padding: 16px 24px; border-radius: 12px; font-size: 14px; font-weight: 500; text-align: center;
-                            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);">
+                            padding: 16px 24px; border-radius: 12px; font-size: 14px; font-weight: 600; text-align: center;
+                            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5); backdrop-filter: blur(5px);
+                            transition: opacity 0.5s ease, transform 0.5s ease;
+                            transform: translateX(0); opacity: 1;">
                     {{ message }}
                 </div>
             {% endfor %}
@@ -478,8 +497,20 @@
                                 </div>
                                 
                                 <div class="card-actions">
-                                    <button type="button" class="btn-icon" title="Ver detalhes" data-url="{% url 'ver_detalhes_questao' item.id %}" onclick="abrirModalDetalhes(this)">👁</button>
-                                    <button type="button" class="btn-icon btn-icon-danger" title="Deletar" data-action="{% url 'deletar_questao_historico' item.id %}" data-title="Apagar Registro?" data-desc="Esta ação removerá esta questão permanentemente." data-btn-text="Sim, apagar" onclick="configurarModal(this)">🗑</button>
+                                    <button type="button" class="btn-icon" title="Ver detalhes" data-url="{% url 'ver_detalhes_questao' item.id %}" onclick="abrirModalDetalhes(this)">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                            <circle cx="12" cy="12" r="3"></circle>
+                                        </svg>
+                                    </button>
+                                    <button type="button" class="btn-icon btn-icon-danger" title="Deletar" data-action="{% url 'deletar_questao_historico' item.id %}" data-title="Apagar Registro?" data-desc="Esta ação removerá esta questão permanentemente." data-btn-text="Sim, apagar" onclick="configurarModal(this)">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                            <polyline points="3 6 5 6 21 6"/>
+                                            <path d="M19 6l-1 14H6L5 6"/>
+                                            <path d="M10 11v6M14 11v6"/>
+                                            <path d="M9 6V4h6v2"/>
+                                        </svg>
+                                    </button>
                                 </div>
                             </div>
                             
@@ -532,8 +563,20 @@
                                 </div>
                                 
                                 <div class="card-actions">
-                                    <button type="button" class="btn-icon" title="Ver detalhes" data-url="{% url 'ver_detalhes_questao' item.id %}" onclick="abrirModalDetalhes(this)">👁</button>
-                                    <button type="button" class="btn-icon btn-icon-danger" title="Deletar" data-action="{% url 'deletar_questao_historico' item.id %}" data-title="Apagar Registro?" data-desc="Esta ação removerá esta questão permanentemente." data-btn-text="Sim, apagar" onclick="configurarModal(this)">🗑</button>
+                                    <button type="button" class="btn-icon" title="Ver detalhes" data-url="{% url 'ver_detalhes_questao' item.id %}" onclick="abrirModalDetalhes(this)">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                            <circle cx="12" cy="12" r="3"></circle>
+                                        </svg>
+                                    </button>
+                                    <button type="button" class="btn-icon btn-icon-danger" title="Deletar" data-action="{% url 'deletar_questao_historico' item.id %}" data-title="Apagar Registro?" data-desc="Esta ação removerá esta questão permanentemente." data-btn-text="Sim, apagar" onclick="configurarModal(this)">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="3 6 5 6 21 6"/>
+                                            <path d="M19 6l-1 14H6L5 6"/>
+                                            <path d="M10 11v6M14 11v6"/>
+                                            <path d="M9 6V4h6v2"/>
+                                        </svg>
+                                    </button>
                                 </div>
                             </div>
                             
@@ -788,6 +831,21 @@
                     respostasContainer.innerHTML = '';
                 });
         }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const toasts = document.querySelectorAll('.toast-message');
+            
+            toasts.forEach(toast => {
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateX(50px)';
+
+                    setTimeout(() => {
+                        toast.remove();
+                    }, 500); 
+                }, 6000);
+            });
+        });
         function fecharModalDetalhes() { detalhesModal.classList.remove('active'); }
         detalhesModal.addEventListener('click', function(e) { if (e.target === this) fecharModalDetalhes(); });
     </script>

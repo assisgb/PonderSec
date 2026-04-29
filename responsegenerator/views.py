@@ -81,10 +81,10 @@ def ver_detalhes_questao(request, id):
 @login_required 
 def limpar_questoes(request):
     if request.method == 'POST':   
-        Historico.objects.filter(usuario=request.user).delete()
+        Questao.objects.filter(usuario=request.user).delete()
+        django_messages.success(request, "Todas as questões do seu histórico foram deletadas.")
     return redirect('questoes')
  
-
 @login_required(login_url='/login/')
 def historico(request):
     historico = Historico.objects.filter(usuario=request.user).order_by('-data')
@@ -323,7 +323,7 @@ def gerar_respostas(request, questao_id):
             elif "deepseek" in provedor:
                 client = openai.OpenAI(
                     api_key=llm.api_key, 
-                    base_url="https://api.deepseek.com"
+                    base_url="https://integrate.api.nvidia.com/v1"
                 )
                 response = client.chat.completions.create(
                     model=llm.nome, 
@@ -370,7 +370,8 @@ def setup_llm(request):
             descricao = provedor,
             api_key = api_key
         )
-        redirect('setup_llm')
+        django_messages.success(request, f"IA '{nome}' configurada com sucesso!")
+        return redirect('setup_llm')
 
     llms_cadastradas = LLM.objects.filter(usuario=request.user)
     return render(request, 'setup/setup-llm.html',{"llms_cadastradas": llms_cadastradas})
@@ -396,17 +397,18 @@ def setup_adicionar_metrica(request):
         if not nome:
             django_messages.error(request, 'O nome da métrica é obrigatório.')
             return redirect('setup_avaliacao')
-
-        Metrica.objects.create(
-            usuario          = request.user, # BLINDADO: Amarra a nova métrica ao usuário
-            nome             = nome,
-            descricao        = descricao,
-            tipo             = tipo,
-            pontuacao_maxima = int(pontuacao_maxima) if pontuacao_maxima else None,
-            criterio_texto   = criterio_texto,
-            ativa            = True,
-        )
-        return redirect('setup_avaliacao')
+        
+        else:
+            Metrica.objects.create(
+                usuario          = request.user, # BLINDADO: Amarra a nova métrica ao usuário
+                nome             = nome,
+                descricao        = descricao,
+                tipo             = tipo,
+                pontuacao_maxima = int(pontuacao_maxima) if pontuacao_maxima else None,
+                criterio_texto   = criterio_texto,
+                ativa            = True,
+            )
+            django_messages.success(request, f"Métrica '{nome}' adicionada com sucesso!")
 
     return redirect('setup_avaliacao')
 
@@ -414,38 +416,20 @@ def setup_adicionar_metrica(request):
 @login_required
 def setup_configurar_metrica(request):
     if request.method == 'POST':
-        metrica_id       = request.POST.get('metrica_id')
-        nome             = request.POST.get('nome', '').strip()
-        descricao        = request.POST.get('descricao', '').strip()
-        tipo             = request.POST.get('tipo', 'quantitativa')
-        pontuacao_maxima = request.POST.get('pontuacao_maxima')
-        criterio_texto   = request.POST.get('criterio_texto', '').strip()
-
-        if not metrica_id:
-            django_messages.error(request, 'ID da métrica não informado.')
-            return redirect('setup_avaliacao')
-
-        # BLINDADO
+        metrica_id = request.POST.get('metrica_id')
         metrica = get_object_or_404(Metrica, id=metrica_id, usuario=request.user)
-        metrica.nome             = nome
-        metrica.descricao        = descricao
-        metrica.tipo             = tipo
-        metrica.pontuacao_maxima = int(pontuacao_maxima) if pontuacao_maxima else None
-        metrica.criterio_texto   = criterio_texto
+        metrica.nome = request.POST.get('nome')
         metrica.save()
-
-        return redirect('setup_avaliacao')
-
+        django_messages.success(request, "Configurações da métrica atualizadas!")
     return redirect('setup_avaliacao')
 
 @login_required
 @require_http_methods(["DELETE"])
 def setup_deletar_metrica(request, id):
     try:
-        # BLINDADO: Protegido com decorator login_required e filtrado pelo dono
         metrica = get_object_or_404(Metrica, id=id, usuario=request.user)
         metrica.delete()
-        return JsonResponse({"status": "success"})
+        return JsonResponse({"status": "success", "message": "Métrica deletada com sucesso."})
     except Exception as e:
         return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
@@ -453,8 +437,8 @@ def setup_deletar_metrica(request, id):
 def deletar_llm(request, id):
     if request.method == "DELETE":
         LLM.objects.filter(id=id, usuario=request.user).delete()
-        return JsonResponse({"status": "success", "id": id})
-    return JsonResponse({"status": "error"})
+        return JsonResponse({"status": "success", "message": "LLM deletada com sucesso."})
+    return JsonResponse({"status": "error", "message": "Erro ao deletar LLM."})
 
 @login_required
 def edit_llm_api(request, id):
@@ -468,7 +452,7 @@ def edit_llm_api(request, id):
         llm.nome = nome
         llm.api_key = api_key
         llm.save()
-        return JsonResponse({"status": "success"})
+        return JsonResponse({"status": "success", "message": "LLM atualizada com sucesso."})
     return JsonResponse({"status": "error"})
 
 @login_required
@@ -528,12 +512,10 @@ def avaliacao_adicionar_formulario(request):
     if request.method == 'POST':
         nome = request.POST.get('nome')
         questoes_ids = request.POST.getlist('questoes')
-        formulario = Formulario.objects.create(
-            nome=nome,
-            usuario=request.user
-        )
+        formulario = Formulario.objects.create(nome=nome,usuario=request.user)
         formulario.questoes.set(questoes_ids)
         formulario.save()
+        django_messages.success(request, f"Formulário '{nome}' criado com sucesso!")
         return redirect('avaliacao')
 
     questoes = Questao.objects.filter(usuario=request.user).order_by('-id')
@@ -563,6 +545,7 @@ def avaliacao_deletar_formulario(request, id):
     formulario = get_object_or_404(Formulario, id=id, usuario=request.user)
     if request.method == 'POST':
         formulario.delete()
+        django_messages.success(request, "Formulário removido!")
     return redirect('avaliacao')
 
 def responder_avaliacao_publica(request, formulario_id):
