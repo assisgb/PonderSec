@@ -7,12 +7,8 @@
     <title>PonderSEC — Questões</title>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
             font-family: "Space Grotesk", system-ui, sans-serif;
             background: radial-gradient(circle at top, #051015 0, #02060b 45%, #000000 100%);
@@ -20,74 +16,36 @@
             min-height: 100vh;
             padding: 20px;
         }
-        
+
         .background-grid {
-            position: fixed;
-            inset: 0;
-            background-image: 
+            position: fixed; inset: 0;
+            background-image:
                 linear-gradient(90deg, rgba(0, 255, 160, 0.06) 1px, transparent 1px),
                 linear-gradient(180deg, rgba(0, 255, 160, 0.06) 1px, transparent 1px);
-            background-size: 40px 40px;
-            opacity: 0.4;
-            pointer-events: none;
-            z-index: 0;
+            background-size: 40px 40px; opacity: 0.4; pointer-events: none; z-index: 0;
         }
-        
+
         .scanline {
-            position: fixed;
-            inset: 0;
-            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.7));
-            background-size: 100% 4px;
-            opacity: 0.25;
-            pointer-events: none;
-            z-index: 0;
+            position: fixed; inset: 0;
+            background-image: repeating-linear-gradient(
+                to bottom,
+                transparent 0px, transparent 3px,
+                rgba(0,0,0,0.12) 3px, rgba(0,0,0,0.12) 4px
+            );
+            opacity: 0.6; pointer-events: none; z-index: 0;
         }
 
         .glow-orb {
-            position: fixed;
-            width: 500px;
-            height: 500px;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(0, 255, 160, 0.25), transparent 70%);
-            top: -10%;
-            right: -5%;
-            filter: blur(80px);
-            opacity: 0.6;
-            pointer-events: none;
-            z-index: 0;
-        }
-        
-        .container {
-            position: relative;
-            max-width: 1200px;
-            margin: 0 auto;
-            z-index: 2;
-        }
-        .status-badge {
-            font-size: 11px;
-            padding: 6px 14px;
-            border-radius: 20px;
-            text-transform: uppercase;
-            font-weight: 700;
-            letter-spacing: 0.1em;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
+            position: fixed; width: 500px; height: 500px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 255, 160, 0.12), transparent 65%);
+            top: 10%; right: 10%; filter: blur(100px); opacity: 0.5; pointer-events: none; z-index: 0;
         }
 
-        .status-answered {
-            background: rgba(0, 255, 160, 0.1);
-            color: #00ff9f;
-            border: 1px solid rgba(0, 255, 160, 0.3);
-            box-shadow: 0 0 10px rgba(0, 255, 160, 0.1);
-        }
+        .container { position: relative; max-width: 1200px; margin: 0 auto; z-index: 2; }
 
-        .status-pending {
-            background: rgba(255, 170, 0, 0.1);
-            color: #ffaa00;
-            border: 1px solid rgba(255, 170, 0, 0.3);
-        }
-        
+        /* ═══════════════════════════
+           HEADER
+        ═══════════════════════════ */
         .header {
             display: flex; align-items: center; gap: 20px;
             margin-bottom: 28px; padding: 28px 35px;
@@ -110,277 +68,235 @@
 
         .page-title { color: #00ff9f; font-size: 24px; font-weight: 700; margin-bottom: 4px; }
         .subtitle   { font-size: 13px; color: #8ba1b0; }
-        
-        .logo-section img { width: 85px; height: 85px; border-radius: 12px; filter: drop-shadow(0 0 8px rgba(0, 255, 160, 0.4)); }
-        .header-title { display: flex; flex-direction: column; gap: 6px; }
-        .product-name { color: #7df6c2; text-transform: uppercase; letter-spacing: 0.25em; font-size: 12px; font-weight: 600; }
-        
-        .btn-back {
-            padding: 14px 32px;
-            background: rgba(0, 255, 160, 0.1);
-            border: 1px solid rgba(0, 255, 160, 0.3);
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 15px;
-            font-weight: 600;
-            color: #00ff9f;
-            text-decoration: none;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            transition: all 0.2s;
+
+        .btn-back-header {
+            padding: 12px 24px; background: rgba(0,255,160,0.08);
+            border: 1px solid rgba(0,255,160,0.25); border-radius: 10px;
+            cursor: pointer; font-size: 13px; font-weight: 700; color: #00ff9f;
+            text-decoration: none; text-transform: uppercase; letter-spacing: 0.08em;
+            transition: all 0.2s; display: flex; align-items: center; gap: 8px;
+        }
+        .btn-back-header:hover {
+            background: rgba(0,255,160,0.15); border-color: rgba(0,255,160,0.5);
+            box-shadow: 0 0 20px rgba(0,255,160,0.15); transform: translateY(-1px);
         }
 
-        .btn-back:hover { background: rgba(0, 255, 160, 0.15); border-color: #00ff9f; transform: translateY(-1px); }
-
-        .filter-section {
-            margin-bottom: 30px;
-            padding: 24px;
-            background: rgba(11, 20, 29, 0.4);
-            border: 1px solid rgba(0, 255, 160, 0.15);
-            border-radius: 12px;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
+        /* ═══════════════════════════
+           TOOLBAR & FILTROS
+        ═══════════════════════════ */
+        .toolbar {
+            display: flex; gap: 14px; margin-bottom: 24px; flex-wrap: wrap; align-items: center;
         }
 
-        .filter-top { 
-            display: flex; 
-            flex-direction: row;
-            flex-wrap: nowrap;
-            gap: 16px; 
-            align-items: center; 
-            width: 100%; 
+        .search-bar { position: relative; flex: 1; min-width: 250px; }
+
+        .search-input, .filter-select {
+            width: 100%; padding: 13px 18px;
+            background: rgba(5,10,17,0.9); border: 1px solid #1b2635;
+            border-radius: 10px; color: #e5fef6; font-size: 14px;
+            font-family: "Space Grotesk", system-ui, sans-serif;
+            outline: none; transition: all 0.2s;
         }
-        
-        .filter-select {
-            padding: 14px 16px;
-            background: #050a11;
-            border: 1px solid #1b2635;
-            border-radius: 10px;
-            color: #e5fef6;
-            font-size: 16px;
-            outline: none;
-            cursor: pointer;
-            font-family: "Space Grotesk", sans-serif;
-            min-width: 150px;
-            transition: all 0.2s;
-        }
-        
-        .filter-select:focus { 
-            border-color: #00ff9f; 
-            box-shadow: 0 0 8px rgba(0, 255, 160, 0.3); 
+        .search-input { padding-left: 46px; }
+        .search-input::placeholder { color: #3a5062; }
+        .search-input:focus, .filter-select:focus { border-color: rgba(0,255,160,0.4); box-shadow: 0 0 10px rgba(0,255,160,0.08); }
+
+        .filter-select { width: auto; min-width: 160px; cursor: pointer; padding: 13px 18px; appearance: none; }
+        .filter-select option { background: #050a11; }
+
+        .search-icon {
+            position: absolute; left: 15px; top: 50%;
+            transform: translateY(-50%); display: flex; align-items: center;
         }
 
-        .filter-actions {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex-shrink: 0;
-            white-space: nowrap;
+        .btn-add {
+            padding: 13px 24px; background: rgba(0,255,160,0.1); border: 1px solid rgba(0,255,160,0.25);
+            border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 700; color: #00ff9f;
+            text-decoration: none; text-transform: uppercase; letter-spacing: 0.08em; transition: all 0.2s;
+            display: flex; align-items: center; gap: 8px; white-space: nowrap;
         }
-
-        .search-wrapper {
-            flex: 1;
-            display: flex;
-        }
-
-        .search-box {
-            width: 100%;
-            padding: 16px 20px;
-            background: #050a11;
-            border: 1px solid #1b2635;
-            border-radius: 10px;
-            color: #e5fef6;
-            font-size: 16px;
-            outline: none;
-            font-family: "Space Grotesk", sans-serif;
-            transition: all 0.2s;
-            min-width: 200px;
-        }
-
-        .search-box:focus { border-color: #00ff9f; box-shadow: 0 0 8px rgba(0, 255, 160, 0.3); }
-        .questoes-options { display: flex; gap: 12px; }
-
-        .button-primary {
-            padding: 14px 28px;
-            background: rgba(0, 255, 160, 0.12);
-            border: 1px solid rgba(0, 255, 160, 0.3);
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            color: #00ff9f;
-            text-decoration: none;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            transition: all 0.2s;
-            white-space: nowrap;
-        }
-
-        .button-primary:hover {
-            background: rgba(0, 255, 160, 0.2);
-            border-color: #00ff9f;
-            box-shadow: 0 0 12px rgba(0, 255, 160, 0.3);
+        .btn-add:hover {
+            background: rgba(0,255,160,0.16); border-color: rgba(0,255,160,0.5);
+            box-shadow: 0 0 20px rgba(0,255,160,0.1);
         }
 
         .btn-clear-all {
-            padding: 12px 24px;
-            background: rgba(255, 0, 80, 0.08);
-            border: 1px solid rgba(255, 0, 80, 0.3);
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 600;
-            color: #ff4d80;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            transition: all 0.2s;
+            padding: 13px 24px; background: rgba(255,80,80,0.08); border: 1px solid rgba(255,80,80,0.25);
+            border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 700; color: #cc5555;
+            text-transform: uppercase; letter-spacing: 0.08em; transition: all 0.2s;
+            display: flex; align-items: center; gap: 8px; white-space: nowrap;
+        }
+        .btn-clear-all:hover {
+            background: rgba(255,80,80,0.15); border-color: rgba(255,80,80,0.5);
+            box-shadow: 0 0 20px rgba(255,80,80,0.15); color: #ff6b6b;
         }
 
-        .btn-clear-all:hover { background: rgba(255, 0, 80, 0.15); border-color: #ff0050; }
+        /* ═══════════════════════════
+           CARDS DE HISTÓRICO
+        ═══════════════════════════ */
+        .section-label {
+            font-size: 10px; color: #4ecf9a; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.25em;
+            margin-bottom: 16px; display: flex; align-items: center; gap: 12px;
+        }
+        .section-label::after {
+            content: ''; flex: 1; height: 1px; background: linear-gradient(to right, rgba(0,255,160,0.2), transparent);
+        }
 
-        .history-grid { display: grid; gap: 18px; }
-        
+        .history-grid { display: grid; gap: 16px; margin-bottom: 40px; }
+
         .history-card {
-            background: rgba(11, 20, 29, 0.4);
-            border: 1px solid rgba(0, 255, 160, 0.15);
-            border-radius: 12px;
-            padding: 24px 28px;
-            transition: all 0.2s;
+            display: flex; flex-direction: column; padding: 24px 28px;
+            background: linear-gradient(135deg, rgba(11,20,29,0.9) 0%, rgba(5,10,17,0.95) 100%);
+            border: 1px solid rgba(0,255,160,0.1); border-radius: 16px; transition: all 0.3s;
+            position: relative; overflow: hidden;
+        }
+        .history-card::before {
+            content: ''; position: absolute; inset: 0;
+            background: radial-gradient(circle at 0% 0%, rgba(0,255,160,0.05) 0%, transparent 60%);
+            opacity: 0; transition: opacity 0.3s; pointer-events: none; border-radius: 16px;
+        }
+        .history-card:hover::before { opacity: 1; }
+        .history-card:hover {
+            border-color: rgba(0,255,160,0.3);
+            box-shadow: 0 0 24px rgba(0,0,0,0.4), 0 0 20px rgba(0,255,160,0.06); transform: translateY(-2px);
         }
 
-        .history-card:hover { border-color: rgba(0, 255, 160, 0.3); background: rgba(11, 20, 29, 0.6); transform: translateX(4px); }
-        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-        .card-date { font-size: 11px; color: #7df6c2; text-transform: uppercase; letter-spacing: 0.12em; padding: 6px 14px; background: rgba(0, 255, 160, 0.12); border-radius: 20px; font-weight: 600; }
-        .card-actions { display: flex; gap: 10px; }
-        
-        /* ── BTN-ICON base (ver detalhes) ── */
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; position: relative; z-index: 2; }
+        .card-question { font-size: 18px; font-weight: 700; color: #e5fef6; margin-bottom: 12px; line-height: 1.5; position: relative; z-index: 2; }
+        .card-preview { font-size: 13px; color: #8ba1b0; line-height: 1.6; margin-bottom: 16px; position: relative; z-index: 2; }
+        .card-footer { display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px solid rgba(0, 255, 160, 0.12); padding-top: 16px; position: relative; z-index: 2; }
+
+        /* Badges */
+        .status-badge, .badge-categoria, .tag {
+            font-size: 9px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.08em; padding: 4px 10px; border-radius: 20px;
+            display: inline-flex; align-items: center; gap: 6px;
+        }
+        .status-answered { background: rgba(0,255,160,0.1); border: 1px solid rgba(0,255,160,0.25); color: #00ff9f; }
+        .status-pending { background: rgba(255,170,0,0.1); border: 1px solid rgba(255,170,0,0.25); color: #ffaa00; }
+        .badge-categoria { background: rgba(0,255,160,0.05); border: 1px solid rgba(0,255,160,0.12); color: #4ecf9a; }
+        .tag { background: rgba(5,10,17,0.8); border: 1px solid #1b2635; color: #c5d9e3; }
+        .tag img { width: 14px; height: 14px; filter: brightness(0.8) drop-shadow(0 0 2px rgba(255,255,255,0.2)); }
+
+        /* Ações do Card */
+        .card-actions { display: flex; gap: 8px; }
         .btn-icon {
-            background: rgba(0, 255, 160, 0.08);
-            border: 1px solid rgba(0, 255, 160, 0.2);
-            color: #7df6c2;
-            width: 38px;
-            height: 38px;
-            border-radius: 8px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-            font-size: 16px;
-            text-decoration: none;
+            width: 36px; height: 36px; border-radius: 8px; border: 1px solid;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s; background: none;
+        }
+        .btn-view { border-color: rgba(0,255,160,0.2); color: #4ecf9a; }
+        .btn-view:hover {
+            background: rgba(0,255,160,0.08); border-color: rgba(0,255,160,0.4);
+            color: #00ff9f; box-shadow: 0 0 12px rgba(0,255,160,0.12);
+        }
+        .btn-icon-danger { border-color: rgba(255,80,80,0.2); color: #cc5555; }
+        .btn-icon-danger:hover {
+            background: rgba(255,80,80,0.1); border-color: rgba(255,80,80,0.4);
+            color: #ff6b6b; box-shadow: 0 0 12px rgba(255,80,80,0.15);
         }
 
-        .btn-icon:hover { background: rgba(0, 255, 160, 0.15); border-color: rgba(0, 255, 160, 0.4); color: #00ff9f; transform: scale(1.05); }
+        .empty-state { text-align: center; color: #3a5062; padding: 60px 20px; font-size: 14px; }
+        .empty-state svg { margin-bottom: 14px; opacity: 0.3; }
 
-        /* ── BTN-ICON variante deletar (vermelho) ── */
-        .btn-icon.btn-icon-danger {
-            background: rgba(255, 0, 80, 0.08);
-            border-color: rgba(255, 0, 80, 0.25);
-            color: #ff4d80;
-        }
-
-        .btn-icon.btn-icon-danger:hover {
-            background: rgba(255, 0, 80, 0.15);
-            border-color: #ff0050;
-            color: #ff4d80;
-            box-shadow: 0 0 10px rgba(255, 0, 80, 0.2);
-        }
-
-        .card-question { font-size: 18px; font-weight: 600; color: #e5fef6; margin-bottom: 12px; line-height: 1.5; }
-        .card-preview { font-size: 14px; color: #8ba1b0; line-height: 1.7; margin-bottom: 16px; }
-        .card-footer { display: flex; gap: 10px; padding-top: 14px; border-top: 1px solid rgba(0, 255, 160, 0.12); }
-        .tag { font-size: 10px; color: #7df6c2; background: rgba(0, 255, 160, 0.1); padding: 5px 12px; border-radius: 14px; text-transform: uppercase; font-weight: 600; }
-        .empty-state { text-align: center; color: #6b7b8d; padding: 60px 20px; background: rgba(11, 20, 29, 0.3); border: 1px dashed rgba(0, 255, 160, 0.2); border-radius: 12px; }
-
+        /* ═══════════════════════════
+           MODAIS
+        ═══════════════════════════ */
         .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.85);
+            position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.8);
+            display: none; align-items: center; justify-content: center; padding: 20px;
             backdrop-filter: blur(5px);
-            z-index: 99999;
-            display: none;
-            justify-content: center;
-            align-items: center;
-            opacity: 0;
-            transition: opacity 0.3s ease;
         }
-        
-        .modal-overlay.active { display: flex; opacity: 1; }
-        
-        .modal-box {
-            background: radial-gradient(circle at top left, #0b141d 0, #050a11 100%);
-            border: 1px solid rgba(0, 255, 160, 0.3);
-            box-shadow: 0 0 40px rgba(0, 255, 160, 0.2);
-            padding: 36px;
-            border-radius: 16px;
-            width: 90%;
-            max-width: 440px;
-            text-align: center;
-            transform: scale(0.9);
-            transition: transform 0.3s ease;
-            max-height: 90vh;
-            overflow-y: auto;
+        .modal-overlay.active { display: flex; }
+
+        .modal {
+            position: relative; width: 100%; max-width: 580px; max-height: 90vh; overflow-y: auto;
+            background: radial-gradient(circle at top, #0b141d 0, #050a11 55%, #020509 100%);
+            border: 1px solid rgba(0,255,160,0.25); border-radius: 18px; padding: 36px;
+            box-shadow: 0 0 0 1px rgba(0,255,160,0.08), 0 18px 60px rgba(0,0,0,0.9), 0 0 20px rgba(0,255,160,0.06);
+        }
+        .modal::-webkit-scrollbar { width: 4px; }
+        .modal::-webkit-scrollbar-thumb { background: rgba(0,255,160,0.2); border-radius: 2px; }
+
+        .modal-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid rgba(0,255,160,0.12);
         }
 
-        .modal-overlay.active .modal-box { transform: scale(1); }
-        .modal-title { color: #00ff9f; font-size: 24px; font-weight: 700; margin-bottom: 8px; }
-        .modal-desc { color: #8ba1b0; font-size: 14px; margin-bottom: 24px; line-height: 1.6; }
-        .modal-buttons { display: flex; gap: 14px; justify-content: center; margin-top: 24px;}
-        
-        .btn-modal {
-            padding: 14px 32px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; font-family: "Space Grotesk", sans-serif;
-            transition: all 0.2s; font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; flex: 1;
-        }
-        
-        .btn-cancel { background: transparent; border: 1px solid rgba(255, 255, 255, 0.2); color: #8ba1b0; }
-        .btn-cancel:hover { border-color: rgba(255, 255, 255, 0.4); color: #e5fef6; background: rgba(255, 255, 255, 0.05); }
-        .btn-confirm { background: rgba(255, 77, 77, 0.15); border: 1px solid #ff4d4d; color: #ff4d4d; }
-        .btn-confirm:hover { background: #ff4d4d; color: #fff; box-shadow: 0 0 20px rgba(255, 77, 77, 0.5); }
-        
-        .btn-solid-primary { background: linear-gradient(90deg,#00ff9f,#00ff57); border: none; color: #020509; }
-        .btn-solid-primary:hover { box-shadow: 0 0 20px rgba(0,255,160,0.6); transform: translateY(-1px); }
+        .modal-title-wrap { display: flex; flex-direction: column; gap: 2px; }
+        .modal-product { color: #7df6c2; text-transform: uppercase; letter-spacing: 0.28em; font-size: 10px; font-weight: 700; }
+        .modal-title   { color: #00ff9f; font-size: 20px; font-weight: 700; }
+        .modal-desc    { color: #8ba1b0; font-size: 13px; margin-top: 4px; line-height: 1.5;}
 
-        .drop-zone { border: 2px dashed rgba(0,255,160,0.4); border-radius: 12px; padding: 40px 20px; text-align: center; cursor: pointer; transition: all 0.25s; background: rgba(0,255,160,0.03); margin-bottom: 15px; }
-        .drop-zone:hover, .drop-zone.dragover { background: rgba(0,255,160,0.08); border-color: #00ff9f; box-shadow: 0 0 20px rgba(0,255,160,0.3); }
-        .drop-zone p { color: #7df6c2; font-size: 15px; }
-        .drop-zone span { display: block; margin-top: 8px; color: #6b7b8d; font-size: 13px; }
-        .file-name { font-size: 14px; color: #00ff9f; text-align: center; min-height: 20px;}
-
-        .form-label { font-size: 13px; color: #7df6c2; margin-bottom: 8px; display: block; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; text-align: left; }
-        
-        textarea {
-            width: 100%; min-height: 120px; background: #050a11; border: 1px solid #1b2635; border-radius: 10px;
-            padding: 14px 16px; color: #e5fef6; font-family: "Space Grotesk", system-ui, sans-serif; font-size: 15px;
-            resize: vertical; margin-bottom: 24px; transition: all 0.2s; line-height: 1.6;
+        .modal-close {
+            background: none; border: 1px solid rgba(255,80,80,0.2); border-radius: 8px;
+            color: #cc5555; font-size: 16px; cursor: pointer; width: 34px; height: 34px;
+            display: flex; align-items: center; justify-content: center; transition: all 0.2s; line-height: 1;
         }
-        textarea:focus { outline: none; border-color: #00ff9f; box-shadow: 0 0 16px rgba(0, 255, 160, 0.5); }
+        .modal-close:hover { background: rgba(255,80,80,0.1); border-color: rgba(255,80,80,0.4); color: #ff6b6b; }
+
+        .field-group { margin-bottom: 16px; }
+        .field-label {
+            display: block; color: #c5d9e3; font-size: 11px; font-weight: 700;
+            margin-bottom: 7px; text-transform: uppercase; letter-spacing: 0.08em;
+        }
+
+        .field-input, .field-textarea {
+            width: 100%; padding: 12px 14px; background: #050a11; border: 1px solid #1b2635;
+            border-radius: 10px; color: #e5fef6; font-size: 14px; font-family: "Space Grotesk", sans-serif;
+            outline: none; transition: all 0.2s;
+        }
+        .field-input:focus, .field-textarea:focus { border-color: rgba(0,255,160,0.4); box-shadow: 0 0 10px rgba(0,255,160,0.08); }
+        .field-textarea { resize: vertical; min-height: 100px; }
+
+        .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(0,255,160,0.12); }
+
+        .btn-modal-cancel {
+            padding: 11px 24px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 700; color: #8ba1b0;
+            text-transform: uppercase; letter-spacing: 0.06em; transition: all 0.2s; font-family: "Space Grotesk", sans-serif;
+        }
+        .btn-modal-cancel:hover { background: rgba(255,255,255,0.08); color: #e5fef6; }
+
+        .btn-modal-save {
+            padding: 11px 28px; background: rgba(0,255,160,0.12); border: 1px solid rgba(0,255,160,0.4);
+            border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 700; color: #00ff9f;
+            text-transform: uppercase; letter-spacing: 0.06em; transition: all 0.2s; font-family: "Space Grotesk", sans-serif;
+            display: flex; align-items: center; gap: 8px; flex: 1; justify-content: center;
+        }
+        .btn-modal-save:hover { background: rgba(0,255,160,0.2); border-color: #00ff9f; box-shadow: 0 0 20px rgba(0,255,160,0.2); }
         
-        .ai-options { border: 1px solid rgba(0, 255, 160, 0.2); border-radius: 12px; padding: 20px; margin-bottom: 24px; background: rgba(0, 255, 160, 0.03); text-align: left; }
-        .ai-options h3 { font-size: 13px; color: #7df6c2; margin-bottom: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
-        
+        .btn-modal-danger {
+            background: rgba(255,80,80,0.1); border-color: rgba(255,80,80,0.4); color: #ff6b6b;
+        }
+        .btn-modal-danger:hover { background: rgba(255,80,80,0.2); border-color: #ff6b6b; box-shadow: 0 0 20px rgba(255,80,80,0.2); color: #fff;}
+
+        /* Dropzone */
+        .drop-zone {
+            border: 2px dashed rgba(0,255,160,0.3); border-radius: 12px; padding: 40px 20px;
+            text-align: center; cursor: pointer; transition: all 0.2s; background: rgba(0,255,160,0.03); margin-bottom: 15px;
+        }
+        .drop-zone:hover, .drop-zone.dragover { background: rgba(0,255,160,0.08); border-color: #00ff9f; box-shadow: 0 0 20px rgba(0,255,160,0.15); }
+        .drop-zone p { color: #7df6c2; font-size: 15px; font-weight: 600; }
+        .drop-zone span { display: block; margin-top: 8px; color: #8ba1b0; font-size: 13px; }
+        .file-name { font-size: 13px; font-weight: 600; color: #00ff9f; text-align: center; min-height: 20px; }
+
+        /* Checkboxes IAs */
         .checkbox-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-        .checkbox-grid label { display: flex; align-items: center; gap: 10px; font-size: 14px; color: #e5fef6; cursor: pointer; padding: 8px; border-radius: 8px; transition: all 0.2s; }
-        .checkbox-grid label:hover { background: rgba(0, 255, 160, 0.05); }
-        input[type="checkbox"] { accent-color: #00ff9f; cursor: pointer; width: 18px; height: 18px; }
-
-        .group-select { display: flex; gap: 12px; margin-bottom: 10px; }
-        select { flex: 1; background: #050a11; border: 1px solid #1b2635; border-radius: 10px; padding: 14px 16px; color: #e5fef6; font-family: "Space Grotesk", system-ui, sans-serif; font-size: 15px; cursor: pointer; transition: all 0.2s; }
-        select:focus { outline: none; border-color: #00ff9f; box-shadow: 0 0 16px rgba(0, 255, 160, 0.5); }
-        
-        .add-group {
-            width: 48px; height: 48px; border-radius: 8px; border: 1px solid rgba(0, 255, 160, 0.3); background: rgba(0, 255, 160, 0.1);
-            color: #00ff9f; font-size: 24px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; font-weight: 600; text-decoration: none;
+        .tipo-option label {
+            display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 10px;
+            border: 1px solid #1b2635; background: #050a11; cursor: pointer; font-size: 13px; font-weight: 600;
+            color: #8ba1b0; transition: all 0.2s;
         }
-        .add-group:hover { background: rgba(0, 255, 160, 0.2); border-color: #00ff9f; transform: scale(1.05); }
+        .tipo-option input[type="checkbox"] { accent-color: #00ff9f; width: 16px; height: 16px; cursor: pointer; }
+        .tipo-option label:hover { border-color: rgba(0,255,160,0.25); background: rgba(0,255,160,0.05); color: #c5d9e3;}
 
         @media (max-width: 768px) {
-            .header { flex-direction: column; gap: 15px; text-align: center; }
-            .logo-section { flex-direction: column; }
-            .btn-back, .button-primary, .btn-clear-all { width: 100%; }
-            .filter-top, .questoes-options, .modal-buttons { flex-direction: column; }
+            .header { flex-direction: column; text-align: center; }
+            .toolbar { flex-direction: column; align-items: stretch; }
+            .search-bar, .filter-select { width: 100%; }
             .checkbox-grid { grid-template-columns: 1fr; }
-            .filter-actions { flex-direction: column; width: 100%; } .filter-actions > * { width: 100%; }
         }
     </style>
 </head>
@@ -391,16 +307,16 @@
 
     <div class="container">
         <div class="header">
-            <div class="logo-section">
+            <div class="logo">
                 <img src="{% static 'pondersec_logo.jpg' %}" alt="PonderSEC Logo">
             </div>
             <div class="header-text">
                 <div class="product-name">PONDERSEC</div>
-                <div class="headline">Questões</div>
-                <div class="subtitle">Cadastre e gerencie suas questões</div>
+                <div class="page-title">Questões</div>
+                <div class="subtitle">Cadastre e gerencie suas questões de cibersegurança</div>
             </div>
             
-            <a href="{% url 'menu' %}" class="btn-back">
+            <a href="{% url 'menu' %}" class="btn-back-header">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
                     <path d="M19 12H5M11 6l-6 6 6 6"/>
                 </svg>
@@ -425,58 +341,71 @@
             </div>
         {% endif %}
 
-        <div class="filter-section">
-            
-            <input type="text" class="search-box" id="searchInput" placeholder="Filtro de pesquisa..." onkeyup="filterHistory()" style="width: 100%;">
-            
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
-                
-                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-                    <select id="statusFilter" class="filter-select" onchange="filterHistory()">
-                        <option value="all">Todos os Status</option>
-                        <option value="answered">Respondidas</option>
-                        <option value="pending">Pendentes</option>
-                    </select>
-
-                    <select id="aiFilter" class="filter-select" onchange="filterHistory()">
-                        <option value="all">Todas as IAs</option>
-                        {% if llms %}
-                            {% for llm in llms %}
-                                <option value="{{ llm.nome|lower }}">{{ llm.nome }}</option>
-                            {% endfor %}
-                        {% endif %}
-                    </select>
-
-                    <select id="formFilter" class="filter-select" onchange="filterHistory()">
-                        <option value="all">Todos os Formulários</option>
-                        {% if formularios %}
-                            {% for form in formularios %}
-                                <option value="{{ form.nome|lower }}">{{ form.nome }}</option>
-                            {% endfor %}
-                        {% endif %}
-                    </select>
-                </div>
-                
-                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-                    <button type="button" class="button-primary" onclick="abrirModalUpload()">Upload</button>
-                    <button type="button" class="button-primary" onclick="abrirModalFormQuestao()">Adicionar</button>
-                </div>
-
+        <div class="toolbar">
+            <div class="search-bar">
+                <span class="search-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ecf9a" stroke-width="2" stroke-linecap="round">
+                        <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+                    </svg>
+                </span>
+                <input type="text" class="search-input" id="searchInput" placeholder="Buscar em questões..." onkeyup="filterHistory()">
             </div>
             
-            {% if historico %}
-            <div style="display: flex; justify-content: flex-end; width: 100%; border-top: 1px solid rgba(0, 255, 160, 0.1); padding-top: 16px; margin-top: 4px;">
-                <button type="button" class="btn-clear-all" data-action="{% url 'limpar_questoes' %}" data-title="☢ LIMPAR TUDO?" data-desc="Você tem certeza? Todas as questões serão apagadas para sempre." data-btn-text="Sim, limpar tudo" onclick="configurarModal(this)">
-                    ☢ Apagar Todas as Questões
+            <select id="statusFilter" class="filter-select" onchange="filterHistory()">
+                <option value="all">Todos os Status</option>
+                <option value="answered">Respondidas</option>
+                <option value="pending">Pendentes</option>
+            </select>
+
+            <select id="aiFilter" class="filter-select" onchange="filterHistory()">
+                <option value="all">Todas as IAs</option>
+                {% if llms %}
+                    {% for llm in llms %}
+                        <option value="{{ llm.nome|lower }}">{{ llm.nome }}</option>
+                    {% endfor %}
+                {% endif %}
+            </select>
+
+            <select id="formFilter" class="filter-select" onchange="filterHistory()">
+                <option value="all">Todos os Formulários</option>
+                {% if formularios %}
+                    {% for form in formularios %}
+                        <option value="{{ form.nome|lower }}">{{ form.nome }}</option>
+                    {% endfor %}
+                {% endif %}
+            </select>
+            
+            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                <button class="btn-add" onclick="abrirModalUpload()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    Upload
+                </button>
+                <button class="btn-add" onclick="abrirModalFormQuestao()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                        <path d="M12 5v14M5 12h14"/>
+                    </svg>
+                    Adicionar
                 </button>
             </div>
-            {% endif %}
-
         </div>
+
+        {% if historico %}
+        <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+            <button class="btn-clear-all" data-action="{% url 'limpar_questoes' %}" data-title="LIMPAR TUDO?" data-desc="Você tem certeza? Todas as questões serão apagadas para sempre." data-btn-text="Sim, limpar tudo" onclick="configurarModal(this)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                    <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>
+                </svg>
+                Apagar Tudo
+            </button>
+        </div>
+        {% endif %}
+
+        <div class="section-label">Histórico de Questões</div>
 
         <div class="history-grid" id="historyGrid">
             {% if historico %}
-                
                 {% for item in historico %}
                     {% if item.respostas.exists %}
                         <div class="history-card" 
@@ -487,7 +416,10 @@
                              
                             <div class="card-header">
                                 <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
-                                    <span class="status-badge status-answered">✓ Respondida</span>
+                                    <span class="status-badge status-answered">
+                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                        Respondida
+                                    </span>
                                     <span class="badge-categoria">{{ item.categoria.nome_categoria|default:"Sem categoria" }}</span>
                                     {% for form in item.formularios.all %}
                                         <span class="status-badge" style="background: rgba(187, 134, 252, 0.1); color: #bb86fc; border: 1px solid rgba(187, 134, 252, 0.3);">
@@ -497,8 +429,8 @@
                                 </div>
                                 
                                 <div class="card-actions">
-                                    <button type="button" class="btn-icon" title="Ver detalhes" data-url="{% url 'ver_detalhes_questao' item.id %}" onclick="abrirModalDetalhes(this)">
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <button type="button" class="btn-icon btn-view" title="Ver detalhes" data-url="{% url 'ver_detalhes_questao' item.id %}" onclick="abrirModalDetalhes(this)">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                                             <circle cx="12" cy="12" r="3"></circle>
                                         </svg>
@@ -515,25 +447,24 @@
                             </div>
                             
                             <div class="card-question">{{ item.conteudo }}</div>
-                            <div class="card-preview" style="color: #c5d9e2;">
+                            <div class="card-preview">
                                 {{ item.respostas.first.conteudo_resposta|truncatewords:15|default:"Resposta detalhada gerada." }}...
                             </div>
                             
-                            <div class="card-footer" style="display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px solid rgba(0, 255, 160, 0.12); padding-top: 14px;">
+                            <div class="card-footer">
                                 {% for resp in item.respostas.all %}
-                                    <span class="tag" style="display: flex; align-items: center; gap: 4px;">
+                                    <span class="tag">
                                         {% if 'gpt' in resp.llm.nome|lower or 'openai' in resp.llm.nome|lower %}
-                                            <img src="{% static 'icons8-chatgpt-16.png' %}" alt="ChatGPT" style="width: 14px; height: 14px;">
+                                            <img src="{% static 'icons8-chatgpt-16.png' %}" alt="ChatGPT">
                                         {% elif 'groq' in resp.llm.nome|lower or 'llama' in resp.llm.nome|lower %}
-                                            <img src="{% static 'icons8-llama-48.png' %}" alt="Groq" style="width: 14px; height: 14px;">
+                                            <img src="{% static 'icons8-llama-48.png' %}" alt="Groq">
                                         {% elif 'gemini' in resp.llm.nome|lower %}
-                                            <img src="{% static 'icons8-gemini-ai-94.png' %}" alt="Gemini" style="width: 14px; height: 14px;">
+                                            <img src="{% static 'icons8-gemini-ai-94.png' %}" alt="Gemini">
                                         {% elif 'claude' in resp.llm.nome|lower %}
-                                            <img src="{% static 'icons8-3d-claude-ai-logo-94.png' %}" alt="Claude" style="width: 14px; height: 14px;">
+                                            <img src="{% static 'icons8-3d-claude-ai-logo-94.png' %}" alt="Claude">
                                         {% elif 'deepseek' in resp.llm.nome|lower %}
-                                            <img src="{% static 'icons8-deepseek-94.png' %}" alt="DeepSeek" style="width: 14px; height: 14px;">
+                                            <img src="{% static 'icons8-deepseek-94.png' %}" alt="DeepSeek">
                                         {% else %}⚙️{% endif %}
-                                        
                                         {{ resp.llm.nome|default:"IA Geral" }}
                                     </span>
                                 {% endfor %}
@@ -549,7 +480,7 @@
                              data-status="pending"
                              data-ias=""
                              data-forms="{% for form in item.formularios.all %}{{ form.nome|lower }} {% endfor %}"
-                             style="opacity: 0.8;">
+                             style="opacity: 0.85;">
                              
                             <div class="card-header">
                                 <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
@@ -563,14 +494,14 @@
                                 </div>
                                 
                                 <div class="card-actions">
-                                    <button type="button" class="btn-icon" title="Ver detalhes" data-url="{% url 'ver_detalhes_questao' item.id %}" onclick="abrirModalDetalhes(this)">
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <button type="button" class="btn-icon btn-view" title="Ver detalhes" data-url="{% url 'ver_detalhes_questao' item.id %}" onclick="abrirModalDetalhes(this)">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                                             <circle cx="12" cy="12" r="3"></circle>
                                         </svg>
                                     </button>
                                     <button type="button" class="btn-icon btn-icon-danger" title="Deletar" data-action="{% url 'deletar_questao_historico' item.id %}" data-title="Apagar Registro?" data-desc="Esta ação removerá esta questão permanentemente." data-btn-text="Sim, apagar" onclick="configurarModal(this)">
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                                             <polyline points="3 6 5 6 21 6"/>
                                             <path d="M19 6l-1 14H6L5 6"/>
                                             <path d="M10 11v6M14 11v6"/>
@@ -581,7 +512,7 @@
                             </div>
                             
                             <div class="card-question">{{ item.conteudo }}</div>
-                            <div class="card-preview">
+                            <div class="card-preview" style="color: #6b7b8d; font-style: italic;">
                                 Aguardando execução de IAs no painel de consultas...
                             </div>
                         </div>
@@ -590,130 +521,180 @@
 
             {% else %}
                 <div class="empty-state">
-                    <h2>Nenhuma questão cadastrada</h2>
-                    <p style="margin-top: 8px; font-size: 14px;">Adicione sua primeira questão para começar</p>
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#4ecf9a" stroke-width="1.5" stroke-linecap="round">
+                        <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+                    </svg>
+                    <p>Nenhuma questão cadastrada ainda.</p>
                 </div>
             {% endif %}
         </div>
 
-    <div class="modal-overlay" id="modalUniversal">
-        <div class="modal-box">
-            <div class="modal-title" id="modalTitle">Título</div>
-            <div class="modal-desc" id="modalDesc">Descrição</div>
-            <div class="modal-buttons">
-                <button type="button" class="btn-modal btn-cancel" onclick="fecharModal()">Cancelar</button>
+    </div> <div class="modal-overlay" id="modalUniversal">
+        <div class="modal" style="max-width: 440px; text-align: center;">
+            <div class="modal-header" style="justify-content: center; border-bottom: none; padding-bottom: 0;">
+                <div class="modal-title-wrap">
+                    <span class="modal-product">Atenção</span>
+                    <span class="modal-title" id="modalTitle" style="color: #ff6b6b;">Título</span>
+                </div>
+            </div>
+            <div class="modal-desc" id="modalDesc" style="margin-bottom: 24px;">Descrição</div>
+            
+            <div class="modal-footer" style="justify-content: center; border-top: none;">
+                <button type="button" class="btn-modal-cancel" onclick="fecharModalUniversal()">Cancelar</button>
                 <form id="modalForm" method="POST" action="" style="display: flex; flex: 1;">
                     {% csrf_token %}
-                    <button type="submit" class="btn-modal btn-confirm" id="modalConfirmBtn" style="width: 100%;">Confirmar</button>
+                    <button type="submit" class="btn-modal-save btn-modal-danger" id="modalConfirmBtn">Confirmar</button>
                 </form>
             </div>
         </div>
     </div>
 
     <div class="modal-overlay" id="uploadModal">
-        <div class="modal-box" style="max-width: 500px;">
-            <div class="modal-title">Upload de Arquivo</div>
-            <div class="modal-desc">Envie um arquivo <b>.txt</b> ou <b>.json</b><br>Arraste ou clique para selecionar</div>
+        <div class="modal" style="max-width: 500px;">
+            <div class="modal-header">
+                <div class="modal-title-wrap">
+                    <span class="modal-product">PonderSEC</span>
+                    <span class="modal-title">Upload de Arquivo</span>
+                </div>
+                <button type="button" class="modal-close" onclick="fecharModalUpload()">✕</button>
+            </div>
+            <div class="modal-desc" style="margin-bottom: 20px;">Envie um arquivo <b>.txt</b> ou <b>.json</b> com suas perguntas.</div>
+            
             <form id="uploadForm" method="POST" action="{% url 'upload_perguntas' %}" enctype="multipart/form-data">
                 {% csrf_token %}
                 <div class="drop-zone" id="dropZone">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#00ff9f" stroke-width="1.5" stroke-linecap="round" style="margin-bottom: 12px;">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
                     <p>Arraste o arquivo aqui</p>
                     <span>ou clique para procurar</span>
                     <input type="file" id="fileInput" name="arquivo_upload" accept=".txt,.json" style="display: none;">
                 </div>
                 <div class="file-name" id="fileName"></div>
-                <div class="modal-buttons">
-                    <button type="button" class="btn-modal btn-cancel" onclick="fecharModalUpload()">Cancelar</button>
-                    <button type="button" class="btn-modal btn-back" onclick="submitUpload()">Enviar Arquivo</button>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn-modal-cancel" onclick="fecharModalUpload()">Cancelar</button>
+                    <button type="button" class="btn-modal-save" onclick="submitUpload()">Enviar Arquivo</button>
                 </div>
             </form>
         </div>
     </div>
 
     <div class="modal-overlay" id="formQuestaoModal">
-        <div class="modal-box" style="max-width: 600px;">
-            <div class="modal-title">Adicionar Questão</div>
-            <div class="modal-desc">Configure a pergunta e selecione as IAs responsáveis</div>
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <div class="modal-title-wrap">
+                    <span class="modal-product">PonderSEC</span>
+                    <span class="modal-title">Adicionar Questão</span>
+                </div>
+                <button type="button" class="modal-close" onclick="fecharModalFormQuestao()">✕</button>
+            </div>
 
             <form method="POST" action="{% url 'add_questoes' %}" onsubmit="bloquearBotao()">
                 {% csrf_token %}
                 
-                <label class="form-label" for="pergunta">Texto da pergunta</label>
-                <textarea name="pergunta" id="pergunta" required placeholder="Digite aqui a pergunta sobre cibersegurança..."></textarea>
+                <div class="field-group">
+                    <label class="field-label" for="pergunta">Texto da pergunta</label>
+                    <textarea name="pergunta" id="pergunta" class="field-textarea" required placeholder="Digite aqui a pergunta sobre cibersegurança..."></textarea>
+                </div>
                 
-                <div class="ai-options">
-                    <h3>IAs que responderão</h3>
+                <div class="field-group" style="margin-top: 20px;">
+                    <label class="field-label" style="display: flex; justify-content: space-between; align-items: center;">
+                        IAs que responderão
+                        <a href="javascript:void(0)" onclick="abrirModalCategoria()" style="color: #4ecf9a; text-decoration: none; font-size: 10px; display: flex; align-items: center; gap: 4px;">
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> Nova Categoria
+                        </a>
+                    </label>
+                    
                     <div class="checkbox-grid">
                         {% if llms %}
                             {% for llm in llms %}
-                            <label><input type="checkbox" name="llms_selecionados" value="{{ llm.id }}"> {{ llm.nome }}</label>
+                            <div class="tipo-option">
+                                <label>
+                                    <input type="checkbox" name="llms_selecionados" value="{{ llm.id }}"> 
+                                    {{ llm.nome }}
+                                </label>
+                            </div>
                             {% endfor %}
                         {% else %}
-                            <p>Nenhuma IA configurada. Vá em Setup para adicionar.</p>
+                            <p style="color: #8ba1b0; font-size: 13px;">Nenhuma IA configurada no sistema.</p>
                         {% endif %}
                     </div>
                 </div>
 
-                <div class="modal-buttons">
-                    <button type="button" class="btn-modal btn-cancel" onclick="fecharModalFormQuestao()">Cancelar</button>
-                    <button type="reset" class="btn-modal btn-cancel" style="flex: 0.5;">Limpar</button>
-                    <button type="submit" id="btnSalvarQuestao" class="btn-modal btn-back">Salvar</button>
+                <div class="modal-footer">
+                    <button type="reset" class="btn-modal-cancel" style="margin-right: auto;">Limpar</button>
+                    <button type="button" class="btn-modal-cancel" onclick="fecharModalFormQuestao()">Cancelar</button>
+                    <button type="submit" id="btnSalvarQuestao" class="btn-modal-save">Salvar Questão</button>
                 </div>
             </form>
         </div>
     </div>
 
     <div class="modal-overlay" id="categoriaModal">
-        <div class="modal-box" style="max-width: 400px;">
-            <div class="modal-title">Nova Categoria</div>
-            <div class="modal-desc">Crie um novo grupo para suas questões</div>
+        <div class="modal" style="max-width: 440px;">
+            <div class="modal-header">
+                <div class="modal-title-wrap">
+                    <span class="modal-product">Classificação</span>
+                    <span class="modal-title">Nova Categoria</span>
+                </div>
+                <button type="button" class="modal-close" onclick="fecharModalCategoria()">✕</button>
+            </div>
 
             <form method="POST" action="{% url 'questoes_cadastro_categoria' %}">
                 {% csrf_token %}
 
-                <label class="form-label">Nome da Categoria</label>
-                <input type="text" name="nome" class="search-box" style="width: 100%; margin-bottom: 16px; box-sizing: border-box;" placeholder="Ex: Redes, Banco de Dados..." required>
+                <div class="field-group">
+                    <label class="field-label">Nome da Categoria</label>
+                    <input type="text" name="nome" class="field-input" placeholder="Ex: Redes, Criptografia..." required>
+                </div>
 
-                <label class="form-label">Descrição (Opcional)</label>
-                <textarea name="descricao" placeholder="Breve descrição..." style="min-height: 80px;"></textarea>
+                <div class="field-group">
+                    <label class="field-label">Descrição (Opcional)</label>
+                    <textarea name="descricao" class="field-textarea" style="min-height: 80px;" placeholder="Breve descrição da categoria..."></textarea>
+                </div>
 
-                <div class="modal-buttons">
-                    <button type="button" class="btn-modal btn-cancel" onclick="fecharModalCategoria()">Cancelar</button>
-                    <button type="submit" class="btn-modal btn-back" onclick="fecharModalCategoria()">Salvar</button>
+                <div class="modal-footer">
+                    <button type="button" class="btn-modal-cancel" onclick="fecharModalCategoria()">Voltar</button>
+                    <button type="submit" class="btn-modal-save">Salvar</button>
                 </div>
             </form>
         </div>
     </div>
 
     <div class="modal-overlay" id="detalhesModal">
-        <div class="modal-box" style="max-width: 800px; text-align: left;">
-            <div class="modal-title" style="text-align: center;">Detalhes da Interação</div>
-            <div class="modal-desc" id="detalhesData" style="text-align: center;"></div>
+        <div class="modal" style="max-width: 800px;">
+            <div class="modal-header">
+                <div class="modal-title-wrap">
+                    <span class="modal-product">PonderSEC</span>
+                    <span class="modal-title">Detalhes da Interação</span>
+                </div>
+                <button type="button" class="modal-close" onclick="fecharModalDetalhes()">✕</button>
+            </div>
 
-            <div style="margin-bottom: 24px;">
-                <label class="form-label">Pergunta Realizada</label>
-                <div id="detalhesPergunta" style="background: #050a11; padding: 16px; border-radius: 10px; border: 1px solid #1b2635; color: #e5fef6; font-size: 16px; line-height: 1.6; max-height: 150px; overflow-y: auto;">
+            <div class="field-group" style="margin-bottom: 24px;">
+                <label class="field-label">Pergunta Realizada</label>
+                <div id="detalhesPergunta" style="background: rgba(5,10,17,0.9); padding: 18px; border-radius: 10px; border: 1px solid #1b2635; color: #e5fef6; font-size: 15px; line-height: 1.6; max-height: 150px; overflow-y: auto;">
                     Carregando...
                 </div>
             </div>
 
             <div id="respostasContainer" style="display: flex; gap: 20px; flex-wrap: wrap;"></div>
 
-            <div class="modal-buttons" style="margin-top: 30px;">
-                <button type="button" class="btn-modal btn-cancel" onclick="fecharModalDetalhes()" style="max-width: 200px;">Fechar</button>
+            <div class="modal-footer" style="justify-content: center;">
+                <button type="button" class="btn-modal-cancel" onclick="fecharModalDetalhes()" style="padding-left: 40px; padding-right: 40px;">Fechar Visualização</button>
             </div>
         </div>
     </div>
 
     <script>
-
         function bloquearBotao() {
             var btn = document.getElementById("btnSalvarQuestao");
             setTimeout(function() {
                 btn.disabled = true;
-                btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processando...';
+                btn.innerHTML = 'Processando...';
+                btn.style.opacity = '0.7';
             }, 10);
-            
             return true;
         }
 
@@ -740,6 +721,7 @@
             });
         }
         
+        /* Modal Universal Confirmação */
         function configurarModal(btn) {
             const modal = document.getElementById('modalUniversal');
             document.getElementById('modalForm').action = btn.getAttribute('data-action');
@@ -748,10 +730,10 @@
             document.getElementById('modalConfirmBtn').innerText = btn.getAttribute('data-btn-text');
             modal.classList.add('active');
         }
-        window.configurarModal = configurarModal;
-        function fecharModal() { document.getElementById('modalUniversal').classList.remove('active'); }
-        document.getElementById('modalUniversal').addEventListener('click', function(e) { if (e.target === this) fecharModal(); });
+        function fecharModalUniversal() { document.getElementById('modalUniversal').classList.remove('active'); }
+        document.getElementById('modalUniversal').addEventListener('click', e => { if (e.target === e.currentTarget) fecharModalUniversal(); });
 
+        /* Modal Upload */
         const uploadModal = document.getElementById('uploadModal');
         const fileInput = document.getElementById("fileInput");
         const fileName = document.getElementById("fileName");
@@ -759,7 +741,7 @@
 
         function abrirModalUpload() { uploadModal.classList.add('active'); }
         function fecharModalUpload() { uploadModal.classList.remove('active'); fileInput.value = ""; fileName.textContent = ""; }
-        uploadModal.addEventListener('click', function(e) { if (e.target === this) fecharModalUpload(); });
+        uploadModal.addEventListener('click', e => { if (e.target === e.currentTarget) fecharModalUpload(); });
 
         dropZone.addEventListener("click", () => fileInput.click());
         fileInput.addEventListener("change", () => showFile(fileInput.files[0]));
@@ -783,27 +765,29 @@
             document.getElementById("uploadForm").submit();
         }
 
+        /* Modal Questão & Categoria */
         const formQuestaoModal = document.getElementById('formQuestaoModal');
         function abrirModalFormQuestao() { formQuestaoModal.classList.add('active'); }
         function fecharModalFormQuestao() { formQuestaoModal.classList.remove('active'); }
-        formQuestaoModal.addEventListener('click', function(e) { if (e.target === this) fecharModalFormQuestao(); });
+        formQuestaoModal.addEventListener('click', e => { if (e.target === e.currentTarget) fecharModalFormQuestao(); });
 
         const categoriaModal = document.getElementById('categoriaModal');
         function abrirModalCategoria() { fecharModalFormQuestao(); categoriaModal.classList.add('active'); }
         function fecharModalCategoria() { categoriaModal.classList.remove('active'); abrirModalFormQuestao(); }
-        categoriaModal.addEventListener('click', function(e) { if (e.target === this) fecharModalCategoria(); });
+        categoriaModal.addEventListener('click', e => { if (e.target === e.currentTarget) fecharModalCategoria(); });
 
+        /* Modal Detalhes */
         const detalhesModal = document.getElementById('detalhesModal');
         function abrirModalDetalhes(btn) {
             const url = btn.getAttribute('data-url');
             const respostasContainer = document.getElementById('respostasContainer');
             detalhesModal.classList.add('active');
             document.getElementById('detalhesPergunta').innerText = "Carregando detalhes do servidor...";
-            respostasContainer.innerHTML = '<p style="color: #8ba1b0; text-align: center; width: 100%;">Buscando respostas...</p>';
+            respostasContainer.innerHTML = '<p style="color: #8ba1b0; text-align: center; width: 100%; font-size: 13px;">Buscando respostas no banco de dados...</p>';
+            
             fetch(url)
                 .then(response => response.json())
                 .then(data => {
-                    document.getElementById('detalhesData').innerText = data.data;
                     document.getElementById('detalhesPergunta').innerText = data.pergunta;
                     respostasContainer.innerHTML = '';
                     if (data.respostas.length === 0) {
@@ -815,39 +799,33 @@
                         div.style.flex = "1";
                         div.style.minWidth = "300px";
                         div.innerHTML = `
-                            <label class="form-label" style="color: ${resp.cor}; text-shadow: 0 0 8px ${resp.cor}66;">
+                            <label class="field-label" style="color: ${resp.cor}; text-shadow: 0 0 8px ${resp.cor}40;">
                                 ✦ Resposta ${resp.ia}
                             </label>
-                            <div style="background: ${resp.cor}0D; padding: 16px; border-radius: 10px; border: 1px solid ${resp.cor}4D; color: #e5fef6; font-size: 14px; line-height: 1.6; max-height: 350px; overflow-y: auto; white-space: pre-wrap;">
-                                ${resp.texto}
-                            </div>
+                            <div style="background: ${resp.cor}08; padding: 16px; border-radius: 10px; border: 1px solid ${resp.cor}40; color: #e5fef6; font-size: 14px; line-height: 1.6; max-height: 350px; overflow-y: auto; white-space: pre-wrap;">${resp.texto}</div>
                         `;
                         respostasContainer.appendChild(div);
                     });
                 })
                 .catch(error => {
-                    console.error("Erro na requisição:", error);
                     document.getElementById('detalhesPergunta').innerText = "Houve um erro ao carregar os dados.";
                     respostasContainer.innerHTML = '';
                 });
         }
+        function fecharModalDetalhes() { detalhesModal.classList.remove('active'); }
+        detalhesModal.addEventListener('click', e => { if (e.target === e.currentTarget) fecharModalDetalhes(); });
 
+        /* Toasts Auto-destruição */
         document.addEventListener('DOMContentLoaded', function() {
             const toasts = document.querySelectorAll('.toast-message');
-            
             toasts.forEach(toast => {
                 setTimeout(() => {
                     toast.style.opacity = '0';
                     toast.style.transform = 'translateX(50px)';
-
-                    setTimeout(() => {
-                        toast.remove();
-                    }, 500); 
+                    setTimeout(() => toast.remove(), 500); 
                 }, 6000);
             });
         });
-        function fecharModalDetalhes() { detalhesModal.classList.remove('active'); }
-        detalhesModal.addEventListener('click', function(e) { if (e.target === this) fecharModalDetalhes(); });
     </script>
 </body>
 </html>
