@@ -533,6 +533,16 @@
                         <input type="number" name="pontuacao_maxima" id="fPontuacaoMax"
                             class="field-input" placeholder="Ex: 5" value="5" min="1">
                     </div>
+                    <div id="labelsBinarios" style="display: none; gap: 12px; margin-top: 16px;">
+                        <div style="flex: 1;">
+                            <label class="field-label">Rótulo para Nota 1</label>
+                            <input type="text" name="opcao_1" id="fOpcao1" class="field-input" placeholder="Ex: Ruim, Não, Falhou">
+                        </div>
+                        <div style="flex: 1;">
+                            <label class="field-label">Rótulo para Nota 2</label>
+                            <input type="text" name="opcao_2" id="fOpcao2" class="field-input" placeholder="Ex: Bom, Sim, Passou">
+                        </div>
+                    </div>
                 </div>
 
                 <div class="field-group" style="margin-top: 4px;">
@@ -634,11 +644,33 @@
             });
         }
 
+        document.getElementById('fPontuacaoMax').addEventListener('input', function() {
+            const boxLabels = document.getElementById('labelsBinarios');
+            
+            // Se ele digitar 2, mostra os campos personalizados. Se não, esconde!
+            if (this.value === '2') {
+                boxLabels.style.display = 'flex';
+            } else {
+                boxLabels.style.display = 'none';
+            }
+        });
+
         // Fechar clicando fora
         overlay.addEventListener('click', e => { if (e.target === overlay) fecharModal(); });
 
         // Inicializa visibilidade dos campos quanti
         toggleQuantiFields();
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const toasts = document.querySelectorAll('.toast-message');
+            toasts.forEach(toast => {
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateX(50px)';
+                    setTimeout(() => toast.remove(), 500); 
+                }, 6000);
+            });
+        });
     </script>
 </body>
 </html>
