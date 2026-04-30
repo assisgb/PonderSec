@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PonderSEC — Avaliação</title>
+    <title>PonderSEC — Formulários de Avaliação</title>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -13,7 +13,7 @@
             font-family: "Space Grotesk", system-ui, sans-serif;
             background: radial-gradient(circle at top, #051015 0, #02060b 45%, #000000 100%);
             color: #e5fef6; min-height: 100vh;
-            display: flex; align-items: center; justify-content: center; padding: 20px;
+            display: flex; align-items: flex-start; justify-content: center; padding: 20px;
         }
 
         .background-grid {
@@ -21,198 +21,275 @@
             background-image:
                 linear-gradient(90deg, rgba(0, 255, 160, 0.06) 1px, transparent 1px),
                 linear-gradient(180deg, rgba(0, 255, 160, 0.06) 1px, transparent 1px);
-            background-size: 40px 40px; opacity: 0.4; pointer-events: none;
+            background-size: 40px 40px; opacity: 0.4; pointer-events: none; z-index: 0;
         }
 
         .scanline {
             position: fixed; inset: 0;
             background: linear-gradient(to bottom, rgba(0,0,0,0.7), rgba(0,0,0,0.15), rgba(0,0,0,0.7));
-            background-size: 100% 4px; opacity: 0.25; pointer-events: none;
+            background-size: 100% 4px; opacity: 0.25; pointer-events: none; z-index: 0;
         }
 
         .glow-orb {
             position: fixed; width: 500px; height: 500px; border-radius: 50%;
             background: radial-gradient(circle, rgba(0, 255, 160, 0.25), transparent 70%);
-            top: -10%; right: -5%; filter: blur(80px); opacity: 0.6; pointer-events: none;
+            top: -10%; right: -5%; filter: blur(80px); opacity: 0.6; pointer-events: none; z-index: 0;
         }
 
-        .container { position: relative; max-width: 1200px; width: 100%; z-index: 2; }
+        .container { position: relative; max-width: 1000px; width: 100%; z-index: 2; }
 
+        /* HEADER */
         .header {
             display: flex; align-items: center; justify-content: space-between;
-            margin-bottom: 35px; padding: 30px 35px;
-            background: rgba(11, 20, 29, 0.6); border-radius: 16px;
+            margin-bottom: 28px; padding: 28px 35px;
+            background: radial-gradient(circle at top, #0b141d 0, #050a11 55%, #020509 100%);
+            border-radius: 18px;
             border: 1px solid rgba(0, 255, 160, 0.15);
             box-shadow: 0 4px 20px rgba(0,0,0,0.3);
         }
 
-        .logo-section { display: flex; align-items: center; gap: 22px; }
-        .logo-section img { width: 85px; height: 85px; border-radius: 12px; filter: drop-shadow(0 0 8px rgba(0, 255, 160, 0.4)); }
-        .header-title { display: flex; flex-direction: column; gap: 6px; }
-        .product-name { color: #7df6c2; text-transform: uppercase; letter-spacing: 0.25em; font-size: 12px; font-weight: 600; }
-        .page-title { color: #00ff9f; font-size: 28px; font-weight: 600; }
+        .logo-section { display: flex; align-items: center; gap: 20px; }
+        .logo-section img { width: 68px; border-radius: 10px; filter: drop-shadow(0 0 10px rgba(0,255,160,0.8)) drop-shadow(0 0 30px rgba(0,255,160,0.5)); }
+        
+        .header-title { display: flex; flex-direction: column; gap: 4px; }
+        .product-name { color: #7df6c2; text-transform: uppercase; letter-spacing: 0.28em; font-size: 12px; font-weight: 700; margin-bottom: 4px; }
+        .page-title { color: #00ff9f; font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+        .subtitle { font-size: 13px; color: #8ba1b0; }
 
-        .btn-back {
-            padding: 14px 32px; background: rgba(0, 255, 160, 0.1);
-            border: 1px solid rgba(0, 255, 160, 0.3); border-radius: 8px;
-            cursor: pointer; font-size: 15px; font-weight: 600; color: #00ff9f;
-            text-decoration: none; text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.2s;
+        .btn-back-header {
+            padding: 12px 24px; background: rgba(0,255,160,0.08);
+            border: 1px solid rgba(0,255,160,0.25); border-radius: 10px;
+            cursor: pointer; font-size: 13px; font-weight: 700; color: #00ff9f;
+            text-decoration: none; text-transform: uppercase; letter-spacing: 0.08em;
+            transition: all 0.2s; display: flex; align-items: center; gap: 8px;
         }
-        .btn-back:hover { background: rgba(0, 255, 160, 0.15); border-color: #00ff9f; transform: translateY(-1px); }
+        .btn-back-header:hover {
+            background: rgba(0,255,160,0.15); border-color: rgba(0,255,160,0.5);
+            box-shadow: 0 0 20px rgba(0,255,160,0.15); transform: translateY(-1px);
+        }
 
-        .toolbar { display: flex; gap: 18px; margin-bottom: 30px; }
-        .search-bar { position: relative; flex: 1; }
+        /* TOOLBAR */
+        .toolbar { display: flex; gap: 14px; margin-bottom: 24px; flex-wrap: wrap; }
+        
+        .search-bar { position: relative; flex: 1; min-width: 250px; }
         .search-input {
-            width: 100%; padding: 16px 20px 16px 50px;
-            background: #050a11; border: 1px solid #1b2635;
-            border-radius: 10px; color: #e5fef6; font-size: 16px;
+            width: 100%; padding: 13px 18px 13px 46px;
+            background: rgba(5,10,17,0.9); border: 1px solid #1b2635;
+            border-radius: 10px; color: #e5fef6; font-size: 14px;
             font-family: "Space Grotesk", system-ui, sans-serif;
             outline: none; transition: all 0.2s;
         }
-        .search-input::placeholder { color: #6b7b8d; }
-        .search-input:focus { border-color: #00ff9f; box-shadow: 0 0 8px rgba(0, 255, 160, 0.3); }
-        .search-icon { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: #7df6c2; font-size: 20px; }
+        .search-input::placeholder { color: #3a5062; }
+        .search-input:focus { border-color: rgba(0,255,160,0.4); box-shadow: 0 0 10px rgba(0,255,160,0.08); }
+        .search-icon {
+            position: absolute; left: 15px; top: 50%;
+            transform: translateY(-50%); display: flex; align-items: center;
+        }
 
         .btn-add {
-            padding: 16px 32px; background: rgba(0, 255, 160, 0.1);
-            border: 1px solid rgba(0, 255, 160, 0.3); border-radius: 8px;
-            cursor: pointer; font-size: 16px; font-weight: 600; color: #00ff9f;
-            text-transform: uppercase; letter-spacing: 0.05em;
-            transition: all 0.2s; white-space: nowrap;
-            font-family: "Space Grotesk", system-ui, sans-serif;
+            padding: 13px 24px; background: rgba(0,255,160,0.1); border: 1px solid rgba(0,255,160,0.25);
+            border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 700; color: #00ff9f;
+            text-transform: uppercase; letter-spacing: 0.08em; transition: all 0.2s;
+            display: flex; align-items: center; gap: 8px; white-space: nowrap; font-family: "Space Grotesk", system-ui, sans-serif;
         }
-        .btn-add:hover { background: rgba(0, 255, 160, 0.15); border-color: #00ff9f; transform: translateY(-1px); }
+        .btn-add:hover { background: rgba(0,255,160,0.16); border-color: rgba(0,255,160,0.5); box-shadow: 0 0 20px rgba(0,255,160,0.1); }
 
-        .forms-list { display: flex; flex-direction: column; gap: 16px; }
+        .section-label {
+            font-size: 10px; color: #4ecf9a; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.25em;
+            margin-bottom: 16px; display: flex; align-items: center; gap: 12px;
+        }
+        .section-label::after { content: ''; flex: 1; height: 1px; background: linear-gradient(to right, rgba(0,255,160,0.2), transparent); }
 
-        .form-card {
+        /* CARDS */
+        .forms-list { display: flex; flex-direction: column; gap: 16px; margin-bottom: 40px; }
+
+        .metric-card {
             display: flex; align-items: center; justify-content: space-between;
-            padding: 24px 30px;
-            background: rgba(11, 20, 29, 0.4);
-            border: 1px solid rgba(0, 255, 160, 0.15);
-            border-radius: 12px; transition: all 0.2s;
+            padding: 22px 24px;
+            background: linear-gradient(135deg, rgba(11,20,29,0.9) 0%, rgba(5,10,17,0.95) 100%);
+            border: 1px solid rgba(0,255,160,0.1); border-radius: 16px; transition: all 0.3s;
+            position: relative; overflow: visible;
         }
-        .form-card:hover { border-color: rgba(0, 255, 160, 0.3); background: rgba(11, 20, 29, 0.6); transform: translateX(4px); }
-
-        .form-info { display: flex; align-items: center; gap: 20px; flex: 1; }
-        .form-icon { font-size: 32px; min-width: 45px; text-align: center; }
-        .form-name { font-size: 18px; font-weight: 500; color: #e5fef6; }
-        .form-meta { font-size: 13px; color: #6b7b8d; margin-top: 4px; }
-        .form-actions { display: flex; gap: 10px; align-items: center; }
-
-        .btn-action {
-            padding: 10px 20px; background: rgba(0, 255, 160, 0.08);
-            border: 1px solid rgba(0, 255, 160, 0.2); border-radius: 7px;
-            cursor: pointer; font-size: 14px; font-weight: 600; color: #00ff9f;
-            text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.2s;
-            white-space: nowrap; font-family: "Space Grotesk", system-ui, sans-serif;
-            text-decoration: none; display: inline-flex; align-items: center;
+        .metric-card::before {
+            content: ''; position: absolute; inset: 0; border-radius: 16px;
+            background: radial-gradient(circle at 0% 0%, rgba(0,255,160,0.05) 0%, transparent 60%);
+            opacity: 0; transition: opacity 0.3s; pointer-events: none;
         }
-        .btn-action:hover { background: rgba(0, 255, 160, 0.15); border-color: #00ff9f; box-shadow: 0 0 10px rgba(0, 255, 160, 0.25); }
-        .btn-action.del { color: #ff5566; border-color: rgba(255, 85, 102, 0.2); background: rgba(255, 85, 102, 0.08); }
-        .btn-action.del:hover { background: rgba(255, 85, 102, 0.15); border-color: #ff5566; box-shadow: 0 0 10px rgba(255, 85, 102, 0.25); }
-        .btn-action.enviar { color: #00cfff; border-color: rgba(0, 207, 255, 0.2); background: rgba(0, 207, 255, 0.08); }
-        .btn-action.enviar:hover { background: rgba(0, 207, 255, 0.15); border-color: #00cfff; box-shadow: 0 0 10px rgba(0, 207, 255, 0.25); }
+        .metric-card:hover::before { opacity: 1; }
+        .metric-card:hover {
+            border-color: rgba(0,255,160,0.3); transform: translateY(-2px);
+            box-shadow: 0 0 24px rgba(0,0,0,0.4), 0 0 20px rgba(0,255,160,0.06);
+        }
 
-        .empty-state { text-align: center; padding: 60px 20px; color: #6b7b8d; font-size: 16px; }
-        .empty-state .empty-icon { font-size: 48px; margin-bottom: 16px; }
+        .metric-info { display: flex; align-items: center; gap: 16px; flex: 1; min-width: 0; }
 
-        /* ===== MODAIS ===== */
+        .metric-icon-box {
+            width: 48px; height: 48px; flex-shrink: 0;
+            background: rgba(0,255,160,0.06); border: 1px solid rgba(0,255,160,0.15);
+            border-radius: 12px; display: flex; align-items: center; justify-content: center;
+            transition: all 0.3s;
+        }
+        .metric-card:hover .metric-icon-box {
+            background: rgba(0,255,160,0.1); border-color: rgba(0,255,160,0.3);
+            box-shadow: 0 0 16px rgba(0,255,160,0.12);
+        }
+        .metric-icon-box svg { filter: drop-shadow(0 0 5px rgba(0,255,160,0.35)); transition: filter 0.3s; }
+        .metric-card:hover .metric-icon-box svg { filter: drop-shadow(0 0 10px rgba(0,255,160,0.6)); }
+
+        .metric-details { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+        .metric-name { font-size: 16px; font-weight: 700; color: #e5fef6; }
+        
+        .metric-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .badge-tipo {
+            font-size: 10px; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 0.08em; padding: 3px 10px; border-radius: 20px;
+            background: rgba(0,255,160,0.05); border: 1px solid rgba(0,255,160,0.15); color: #4ecf9a;
+        }
+        .badge-highlight {
+            font-size: 10px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.08em; padding: 3px 10px; border-radius: 20px;
+            background: rgba(0,255,160,0.1); border: 1px solid rgba(0,255,160,0.3); color: #00ff9f;
+        }
+
+        .metric-actions { display: flex; gap: 8px; flex-shrink: 0; margin-left: 12px; }
+
+        .btn-icon {
+            width: 38px; height: 38px; border-radius: 8px; border: 1px solid;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s; background: none;
+        }
+        .btn-edit { border-color: rgba(0,255,160,0.2); color: #4ecf9a; }
+        .btn-edit:hover { background: rgba(0,255,160,0.08); border-color: rgba(0,255,160,0.4); color: #00ff9f; box-shadow: 0 0 12px rgba(0,255,160,0.12); }
+        .btn-delete { border-color: rgba(255,80,80,0.2); color: #cc5555; }
+        .btn-delete:hover { background: rgba(255,80,80,0.1); border-color: rgba(255,80,80,0.4); color: #ff6b6b; box-shadow: 0 0 12px rgba(255,80,80,0.15); }
+        .btn-share { border-color: rgba(0,207,255,0.2); color: #00cfff; }
+        .btn-share:hover { background: rgba(0,207,255,0.1); border-color: rgba(0,207,255,0.4); color: #00cfff; box-shadow: 0 0 12px rgba(0,207,255,0.15); }
+
+        .empty-state { text-align: center; padding: 60px 20px; color: #6b7b8d; font-size: 15px; }
+        .empty-state svg { margin-bottom: 16px; opacity: 0.4; }
+
+        /* ===== MODAIS PADRONIZADOS ===== */
         .modal-overlay {
-            position: fixed; inset: 0; z-index: 100;
-            background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(4px);
-            display: none; align-items: center; justify-content: center; padding: 20px;
+            position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,0.8);
+            display: none; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(5px);
         }
         .modal-overlay.active { display: flex; }
 
         .modal {
-            position: relative; width: 100%; max-width: 680px; max-height: 90vh; overflow-y: auto;
+            position: relative; width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto;
             background: radial-gradient(circle at top, #0b141d 0, #050a11 55%, #020509 100%);
-            border: 1px solid rgba(0, 255, 160, 0.25); border-radius: 16px; padding: 40px;
-            box-shadow: 0 0 60px rgba(0, 0, 0, 0.9), 0 0 40px rgba(0, 255, 160, 0.1);
+            border: 1px solid rgba(0,255,160,0.25); border-radius: 18px; padding: 36px;
+            box-shadow: 0 0 0 1px rgba(0,255,160,0.08), 0 18px 60px rgba(0,0,0,0.9), 0 0 20px rgba(0,255,160,0.06);
         }
-        .modal::-webkit-scrollbar { width: 6px; }
-        .modal::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 3px; }
-        .modal::-webkit-scrollbar-thumb { background: rgba(0,255,160,0.3); border-radius: 3px; }
+        .modal::-webkit-scrollbar { width: 4px; }
+        .modal::-webkit-scrollbar-thumb { background: rgba(0,255,160,0.2); border-radius: 2px; }
 
-        .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
-        .modal-title { color: #00ff9f; font-size: 22px; font-weight: 700; }
-        .modal-close { background: none; border: none; color: #6b7b8d; font-size: 22px; cursor: pointer; transition: color 0.2s; line-height: 1; }
-        .modal-close:hover { color: #ff5566; }
+        .modal-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid rgba(0,255,160,0.12);
+        }
 
-        .field-label { color: #7df6c2; text-transform: uppercase; letter-spacing: 0.15em; font-size: 13px; font-weight: 600; margin-bottom: 10px; display: block; }
+        .modal-title-wrap { display: flex; flex-direction: column; gap: 2px; }
+        .modal-product { color: #7df6c2; text-transform: uppercase; letter-spacing: 0.28em; font-size: 10px; font-weight: 700; }
+        .modal-title   { color: #00ff9f; font-size: 20px; font-weight: 700; }
+
+        .modal-close {
+            background: none; border: 1px solid rgba(255,80,80,0.2); border-radius: 8px;
+            color: #cc5555; font-size: 16px; cursor: pointer; width: 34px; height: 34px;
+            display: flex; align-items: center; justify-content: center; transition: all 0.2s; line-height: 1;
+        }
+        .modal-close:hover { background: rgba(255,80,80,0.1); border-color: rgba(255,80,80,0.4); color: #ff6b6b; }
+
+        .modal-section-label {
+            font-size: 10px; color: #4ecf9a; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.25em;
+            margin-bottom: 16px; display: flex; align-items: center; gap: 10px;
+        }
+        .modal-section-label::after { content: ''; flex: 1; height: 1px; background: linear-gradient(to right, rgba(0,255,160,0.2), transparent); }
+
+        .field-group { margin-bottom: 16px; }
+        .field-label {
+            display: block; color: #c5d9e3; font-size: 11px; font-weight: 700;
+            margin-bottom: 7px; text-transform: uppercase; letter-spacing: 0.08em;
+        }
+
         .field-input {
-            width: 100%; padding: 14px 18px; background: #050a11; border: 1px solid #1b2635;
-            border-radius: 10px; color: #e5fef6; font-size: 15px;
-            font-family: "Space Grotesk", system-ui, sans-serif;
-            outline: none; transition: all 0.2s; margin-bottom: 22px;
+            width: 100%; padding: 12px 14px; background: #050a11; border: 1px solid #1b2635;
+            border-radius: 10px; color: #e5fef6; font-size: 14px; font-family: "Space Grotesk", sans-serif;
+            outline: none; transition: all 0.2s;
         }
-        .field-input:focus { border-color: #00ff9f; box-shadow: 0 0 8px rgba(0, 255, 160, 0.3); }
-        .field-input::placeholder { color: #6b7b8d; }
-
-        .questions-label { color: #7df6c2; text-transform: uppercase; letter-spacing: 0.15em; font-size: 13px; font-weight: 600; margin-bottom: 14px; display: block; }
+        .field-input:focus { border-color: rgba(0,255,160,0.4); box-shadow: 0 0 10px rgba(0,255,160,0.08); }
+        .field-input::placeholder { color: #3a5062; }
 
         .questions-select {
             display: flex; flex-direction: column; gap: 10px;
-            max-height: 280px; overflow-y: auto; padding-right: 6px; margin-bottom: 26px;
+            max-height: 280px; overflow-y: auto; padding-right: 6px; margin-bottom: 10px;
         }
-        .questions-select::-webkit-scrollbar { width: 6px; }
-        .questions-select::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 3px; }
-        .questions-select::-webkit-scrollbar-thumb { background: rgba(0,255,160,0.3); border-radius: 3px; }
+        .questions-select::-webkit-scrollbar { width: 4px; }
+        .questions-select::-webkit-scrollbar-thumb { background: rgba(0,255,160,0.2); border-radius: 2px; }
 
         .question-option {
-            display: flex; align-items: center; gap: 14px; padding: 14px 18px;
-            background: rgba(11, 20, 29, 0.4); border: 1px solid rgba(0, 255, 160, 0.1);
+            display: flex; align-items: center; gap: 14px; padding: 12px 16px;
+            background: #050a11; border: 1px solid #1b2635;
             border-radius: 10px; cursor: pointer; transition: all 0.2s;
         }
-        .question-option:hover { border-color: rgba(0, 255, 160, 0.3); background: rgba(11, 20, 29, 0.7); }
-        .question-option.selected { border-color: rgba(0, 255, 160, 0.5); background: rgba(0, 255, 160, 0.07); }
+        .question-option:hover { border-color: rgba(0, 255, 160, 0.25); background: rgba(0, 255, 160, 0.05); }
+        .question-option.selected { border-color: #00ff9f; background: rgba(0, 255, 160, 0.08); box-shadow: 0 0 10px rgba(0,255,160,0.1); }
 
         .custom-checkbox {
-            width: 20px; height: 20px; border-radius: 5px;
-            border: 2px solid rgba(0, 255, 160, 0.3);
+            width: 18px; height: 18px; border-radius: 4px;
+            border: 2px solid #1b2635;
             display: flex; align-items: center; justify-content: center;
             flex-shrink: 0; transition: all 0.2s;
         }
+        .question-option:hover .custom-checkbox { border-color: rgba(0, 255, 160, 0.3); }
         .question-option.selected .custom-checkbox { background: rgba(0, 255, 160, 0.2); border-color: #00ff9f; }
         .checkmark { color: #00ff9f; font-size: 13px; display: none; }
         .question-option.selected .checkmark { display: block; }
+        
         .question-option-text { font-size: 14px; color: #e5fef6; line-height: 1.4; }
-        .question-option-meta { font-size: 12px; color: #6b7b8d; margin-top: 2px; }
+        .question-option-meta { font-size: 11px; color: #6b7b8d; margin-top: 4px; font-weight: 600; text-transform: uppercase; }
 
-        .modal-footer { display: flex; justify-content: flex-end; gap: 12px; }
+        .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
 
         .btn-modal-cancel {
-            padding: 12px 28px; background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.15); border-radius: 8px;
-            cursor: pointer; font-size: 14px; font-weight: 600; color: #c5d9e3;
-            text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.2s;
-            font-family: "Space Grotesk", system-ui, sans-serif;
+            padding: 11px 24px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 700; color: #8ba1b0;
+            text-transform: uppercase; letter-spacing: 0.06em; transition: all 0.2s; font-family: "Space Grotesk", sans-serif;
         }
-        .btn-modal-cancel:hover { background: rgba(255,255,255,0.1); }
+        .btn-modal-cancel:hover { background: rgba(255,255,255,0.08); color: #e5fef6; }
 
         .btn-modal-save {
-            padding: 12px 28px; background: rgba(0, 255, 160, 0.15);
-            border: 1px solid rgba(0, 255, 160, 0.4); border-radius: 8px;
-            cursor: pointer; font-size: 14px; font-weight: 600; color: #00ff9f;
-            text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.2s;
-            font-family: "Space Grotesk", system-ui, sans-serif;
+            padding: 11px 28px; background: rgba(0,255,160,0.12); border: 1px solid rgba(0,255,160,0.4);
+            border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 700; color: #00ff9f;
+            text-transform: uppercase; letter-spacing: 0.06em; transition: all 0.2s; font-family: "Space Grotesk", sans-serif;
+            display: flex; align-items: center; gap: 8px; justify-content: center;
         }
-        .btn-modal-save:hover { background: rgba(0, 255, 160, 0.25); border-color: #00ff9f; box-shadow: 0 0 16px rgba(0, 255, 160, 0.35); }
-
-        .btn-modal-del {
-            padding: 12px 28px; background: rgba(255, 85, 102, 0.15);
-            border: 1px solid rgba(255, 85, 102, 0.4); border-radius: 8px;
-            cursor: pointer; font-size: 14px; font-weight: 600; color: #ff5566;
-            text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.2s;
-            font-family: "Space Grotesk", system-ui, sans-serif;
+        .btn-modal-save:hover { background: rgba(0,255,160,0.2); border-color: #00ff9f; box-shadow: 0 0 20px rgba(0,255,160,0.2); }
+        
+        .btn-modal-danger {
+            background: rgba(255,80,80,0.1); border-color: rgba(255,80,80,0.4); color: #ff6b6b;
         }
-        .btn-modal-del:hover { background: rgba(255, 85, 102, 0.25); border-color: #ff5566; box-shadow: 0 0 16px rgba(255, 85, 102, 0.35); }
+        .btn-modal-danger:hover { background: rgba(255,80,80,0.2); border-color: #ff6b6b; box-shadow: 0 0 20px rgba(255,80,80,0.2); color: #fff;}
 
-        .del-warning { text-align: center; padding: 16px 0 24px; }
-        .del-warning .del-icon { font-size: 48px; margin-bottom: 16px; }
-        .del-warning p { color: #c5d9e3; font-size: 16px; line-height: 1.7; }
-        .del-warning strong { color: #ff5566; }
+        /* Compartilhar Link Box */
+        .share-box {
+            display: flex; align-items: center; gap: 10px; margin-bottom: 24px;
+            background: rgba(0, 255, 160, 0.05); padding: 6px; border-radius: 10px; border: 1px solid rgba(0, 255, 160, 0.2);
+        }
+        .share-input {
+            flex: 1; background: transparent; border: none; color: #00ff9f; font-family: "Space Grotesk", monospace;
+            font-size: 13px; outline: none; padding: 0 10px;
+        }
+
+        @media (max-width: 768px) {
+            .header { flex-direction: column; text-align: center; }
+            .toolbar { flex-direction: column; align-items: stretch; }
+            .search-bar { width: 100%; }
+            .metric-card { flex-direction: column; align-items: stretch; gap: 16px; }
+            .metric-actions { margin-left: 0; justify-content: flex-end; }
+        }
     </style>
 </head>
 <body>
@@ -226,72 +303,119 @@
                 <img src="{% static 'pondersec_logo.jpg' %}" alt="PonderSEC Logo">
                 <div class="header-title">
                     <div class="product-name">PONDERSEC</div>
-                    <div class="page-title">Avaliação</div>
+                    <div class="page-title">Formulários de Avaliação</div>
+                    <div class="subtitle">Agrupe questões e colete feedback profissional</div>
                 </div>
             </div>
-            <a href="{% url 'menu' %}" class="btn-back">Voltar</a>
+            <a href="{% url 'menu_avaliacao' %}" class="btn-back-header">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                    <path d="M19 12H5M11 6l-6 6 6 6"/>
+                </svg>
+                Voltar
+            </a>
         </div>
+
+        {% if messages %}
+            <div id="toast-container" style="position: fixed; top: 30px; right: 30px; z-index: 999999; display: flex; flex-direction: column; gap: 12px; pointer-events: none;">
+            {% for message in messages %}
+                <div class="toast-message" style="
+                            background: {% if message.tags == 'error' %}rgba(255, 80, 54, 0.15){% else %}rgba(0, 255, 160, 0.15){% endif %}; 
+                            border: 1px solid {% if message.tags == 'error' %}#f55036{% else %}#00ff9f{% endif %}; 
+                            color: {% if message.tags == 'error' %}#f55036{% else %}#00ff9f{% endif %}; 
+                            padding: 16px 24px; border-radius: 12px; font-size: 14px; font-weight: 600; text-align: center;
+                            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5); backdrop-filter: blur(5px);
+                            transition: opacity 0.5s ease, transform 0.5s ease;
+                            transform: translateX(0); opacity: 1;">
+                    {{ message }}
+                </div>
+            {% endfor %}
+            </div>
+        {% endif %}
 
         <div class="toolbar">
             <div class="search-bar">
-                <span class="search-icon">🔎</span>
-                <input type="text" class="search-input" id="searchInput"
-                    placeholder="Buscar formulário..." onkeyup="filterForms()">
+                <span class="search-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ecf9a" stroke-width="2" stroke-linecap="round">
+                        <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+                    </svg>
+                </span>
+                <input type="text" class="search-input" id="searchInput" placeholder="Buscar formulário..." onkeyup="filterForms()">
             </div>
-            <button class="btn-add" onclick="abrirModal('modalAdicionar')">+ Adicionar Formulário</button>
+            <button class="btn-add" onclick="abrirModal('modalAdicionar')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                    <path d="M12 5v14M5 12h14"/>
+                </svg>
+                Criar Formulário
+            </button>
         </div>
+
+        <div class="section-label">Formulários Criados</div>
 
         <div class="forms-list" id="formsList">
             {% for formulario in formularios %}
-            <div class="form-card" data-text="{{ formulario.nome|lower }}">
-                <div class="form-info">
-                    <div class="form-icon">📋</div>
-                    <div>
-                        <div class="form-name">{{ formulario.nome }}</div>
-                        <div class="form-meta">
-                            {{ formulario.questoes.count }} pergunta(s) • 
-                            <span style="color: #00ff9f; font-weight: 500;">{{ formulario.avaliadores.count }} avaliador(es)</span>
+            <div class="metric-card" data-text="{{ formulario.nome|lower }}">
+                <div class="metric-info">
+                    <div class="metric-icon-box">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00ff9f" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                    </div>
+                    <div class="metric-details">
+                        <div class="metric-name">{{ formulario.nome }}</div>
+                        <div class="metric-meta">
+                            <span class="badge-tipo">{{ formulario.questoes.count }} pergunta(s) vinculadas</span>
+                            <span class="badge-highlight">{{ formulario.avaliadores.count }} avaliação(ões) coletada(s)</span>
                         </div>
                     </div>
                 </div>
-                <div class="form-actions">
-                    <button class="btn-action"
-                        onclick="abrirModalEditar({{ formulario.id }}, '{{ formulario.nome|escapejs }}', [{% for q in formulario.questoes.all %}{{ q.id }}{% if not forloop.last %},{% endif %}{% endfor %}])">
-                        Edit
+                <div class="metric-actions">
+                    <button class="btn-icon btn-edit" title="Editar" onclick="abrirModalEditar({{ formulario.id }}, '{{ formulario.nome|escapejs }}', [{% for q in formulario.questoes.all %}{{ q.id }}{% if not forloop.last %},{% endif %}{% endfor %}])">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
                     </button>
-                    <button class="btn-action del"
-                        onclick="abrirModalDeletar({{ formulario.id }}, '{{ formulario.nome|escapejs }}')">
-                        Del
+                    <button class="btn-icon btn-delete" title="Deletar" onclick="abrirModalDeletar({{ formulario.id }}, '{{ formulario.nome|escapejs }}')">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>
+                        </svg>
                     </button>
                     {% if formulario.questoes.count > 0 %}
-                    <button type="button" class="btn-action enviar" onclick="abrirModalCompartilhar('{{ formulario.id }}')">
-                        Compartilhar
+                    <button type="button" class="btn-icon btn-share" title="Compartilhar Link" onclick="abrirModalCompartilhar('{{ formulario.id }}')">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                        </svg>
                     </button>
                     {% endif %}
                 </div>
             </div>
             {% empty %}
             <div class="empty-state">
-                <div class="empty-icon">📭</div>
-                Nenhum formulário cadastrado ainda.
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#4ecf9a" stroke-width="1.5" stroke-linecap="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line>
+                </svg>
+                <p>Nenhum formulário de coleta criado ainda.</p>
             </div>
             {% endfor %}
         </div>
     </div>
 
-    <!-- MODAL ADICIONAR -->
     <div class="modal-overlay" id="modalAdicionar">
         <div class="modal">
             <div class="modal-header">
-                <span class="modal-title">Adicionar Formulário</span>
+                <div class="modal-title-wrap">
+                    <span class="modal-product">Coleta de Dados</span>
+                    <span class="modal-title">Novo Formulário</span>
+                </div>
                 <button class="modal-close" onclick="fecharModal('modalAdicionar')">✕</button>
             </div>
             <form method="POST" action="{% url 'avaliacao_adicionar_formulario' %}" id="formAdicionar">
                 {% csrf_token %}
-                <label class="field-label">Nome do Formulário</label>
-                <input type="text" name="nome" class="field-input" placeholder="Ex: Formulário de Enumeração">
+                <div class="field-group">
+                    <label class="field-label">Nome do Formulário</label>
+                    <input type="text" name="nome" class="field-input" placeholder="Ex: Formulário de Enumeração (NMAP)">
+                </div>
 
-                <span class="questions-label">Selecionar Perguntas</span>
+                <div class="modal-section-label">Questões Vinculadas</div>
                 <div class="questions-select">
                     {% for questao in questoes %}
                     <div class="question-option" onclick="toggleQuestao(this)">
@@ -303,31 +427,35 @@
                         <input type="checkbox" name="questoes" value="{{ questao.id }}" style="display:none;">
                     </div>
                     {% empty %}
-                    <div style="color: #6b7b8d; font-size: 14px; padding: 16px 0;">Nenhuma pergunta cadastrada ainda.</div>
+                    <div style="color: #6b7b8d; font-size: 13px; padding: 16px 0;">Nenhuma questão registrada no sistema ainda.</div>
                     {% endfor %}
                 </div>
 
                 <div class="modal-footer">
                     <button type="button" class="btn-modal-cancel" onclick="fecharModal('modalAdicionar')">Cancelar</button>
-                    <button type="button" class="btn-modal-save" onclick="submitForm('formAdicionar')">Adicionar</button>
+                    <button type="button" class="btn-modal-save" onclick="submitForm('formAdicionar')">Criar Formulário</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- MODAL EDITAR -->
     <div class="modal-overlay" id="modalEditar">
         <div class="modal">
             <div class="modal-header">
-                <span class="modal-title">Editar Formulário</span>
+                <div class="modal-title-wrap">
+                    <span class="modal-product">Configuração</span>
+                    <span class="modal-title">Editar Formulário</span>
+                </div>
                 <button class="modal-close" onclick="fecharModal('modalEditar')">✕</button>
             </div>
             <form method="POST" id="formEditar">
                 {% csrf_token %}
-                <label class="field-label">Nome do Formulário</label>
-                <input type="text" name="nome" class="field-input" id="nomeEditar" placeholder="Nome do formulário">
+                <div class="field-group">
+                    <label class="field-label">Nome do Formulário</label>
+                    <input type="text" name="nome" class="field-input" id="nomeEditar" placeholder="Nome do formulário">
+                </div>
 
-                <span class="questions-label">Selecionar Perguntas</span>
+                <div class="modal-section-label">Questões Vinculadas</div>
                 <div class="questions-select">
                     {% for questao in questoes %}
                     <div class="question-option" onclick="toggleQuestao(this)" data-id="{{ questao.id }}">
@@ -339,92 +467,93 @@
                         <input type="checkbox" name="questoes" value="{{ questao.id }}" style="display:none;">
                     </div>
                     {% empty %}
-                    <div style="color: #6b7b8d; font-size: 14px; padding: 16px 0;">Nenhuma pergunta cadastrada ainda.</div>
+                    <div style="color: #6b7b8d; font-size: 13px; padding: 16px 0;">Nenhuma pergunta cadastrada.</div>
                     {% endfor %}
                 </div>
 
                 <div class="modal-footer">
                     <button type="button" class="btn-modal-cancel" onclick="fecharModal('modalEditar')">Cancelar</button>
-                    <button type="button" class="btn-modal-save" onclick="submitForm('formEditar')">Salvar</button>
+                    <button type="button" class="btn-modal-save" onclick="submitForm('formEditar')">Salvar Alterações</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- MODAL DELETAR -->
     <div class="modal-overlay" id="modalDeletar">
-        <div class="modal" style="max-width: 480px;">
-            <div class="modal-header">
-                <span class="modal-title">Confirmar Exclusão</span>
-                <button class="modal-close" onclick="fecharModal('modalDeletar')">✕</button>
-            </div>
-            <div class="del-warning">
-                <div class="del-icon">⚠️</div>
-                <p>Tem certeza que deseja excluir o formulário<br><strong id="nomeFormularioDeletar"></strong>?<br><br>Esta ação não pode ser desfeita.</p>
-            </div>
-            <form method="POST" id="formDeletar">
-                {% csrf_token %}
-                <div class="modal-footer">
-                    <button type="button" class="btn-modal-cancel" onclick="fecharModal('modalDeletar')">Cancelar</button>
-                    <button type="submit" class="btn-modal-del">Excluir</button>
+        <div class="modal" style="max-width: 440px; text-align: center;">
+            <div class="modal-header" style="justify-content: center; border-bottom: none; padding-bottom: 0;">
+                <div class="modal-title-wrap">
+                    <span class="modal-product">Atenção</span>
+                    <span class="modal-title" style="color: #ff6b6b;">Excluir Formulário</span>
                 </div>
+            </div>
+            <div style="margin-bottom: 24px;">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ff6b6b" stroke-width="1.5" stroke-linecap="round" style="margin-bottom:12px;">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+                <p style="color: #c5d9e3; font-size: 14px; line-height: 1.6;">
+                    Tem certeza que deseja excluir o formulário <br><strong style="color:#ff6b6b;" id="nomeFormularioDeletar"></strong>?<br>Esta ação apagará todas as respostas vinculadas e não pode ser desfeita.
+                </p>
+            </div>
+            <form method="POST" id="formDeletar" style="display:flex; justify-content:center; gap:10px;">
+                {% csrf_token %}
+                <button type="button" class="btn-modal-cancel" onclick="fecharModal('modalDeletar')">Cancelar</button>
+                <button type="submit" class="btn-modal-save btn-modal-danger">Sim, Excluir</button>
             </form>
         </div>
     </div>
 
     <div class="modal-overlay" id="modalCompartilhar">
-        <div class="modal" style="max-width: 500px; text-align: center;">
+        <div class="modal" style="max-width: 500px;">
             <div class="modal-header">
-                <span class="modal-title">Compartilhar Formulário</span>
+                <div class="modal-title-wrap">
+                    <span class="modal-product">Distribuição</span>
+                    <span class="modal-title">Compartilhar Formulário</span>
+                </div>
                 <button class="modal-close" onclick="fecharModal('modalCompartilhar')">✕</button>
             </div>
             
-            <p style="color: #8ba1b0; margin-bottom: 24px; font-size: 15px; line-height: 1.6;">
-                Copie o link abaixo e envie para os avaliadores.<br>Eles não precisam de senha para responder.
+            <p style="color: #8ba1b0; margin-bottom: 24px; font-size: 14px; line-height: 1.6;">
+                Copie o link abaixo e envie para os profissionais encarregados da avaliação.<br>Eles <b>não precisam</b> de senha ou conta no PonderSec para responder.
             </p>
 
-            <label style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 24px; cursor: pointer; color: #e5fef6; font-size: 15px; background: rgba(0, 255, 160, 0.05); padding: 12px; border-radius: 8px; border: 1px dashed rgba(0, 255, 160, 0.3);">
-                <input type="checkbox" id="blindTestToggle" onchange="atualizarLinkCompartilhamento()" style="width: 18px; height: 18px; accent-color: #00ff9f;">
-                <strong>Ativar Blind Test</strong> (Ocultar nomes das IAs)
-            </label>
+            <div class="question-option" style="margin-bottom: 24px; cursor: default;">
+                <label style="display: flex; align-items: center; gap: 14px; cursor: pointer; width: 100%;">
+                    <input type="checkbox" id="blindTestToggle" onchange="atualizarLinkCompartilhamento()" style="width: 18px; height: 18px; accent-color: #00ff9f;">
+                    <div>
+                        <div style="font-size: 14px; color: #e5fef6; font-weight: 600;">Ativar Blind Test</div>
+                        <div style="font-size: 12px; color: #8ba1b0; margin-top: 2px;">Oculta os nomes das IAs para o avaliador</div>
+                    </div>
+                </label>
+            </div>
             
-            <div style="display: flex; gap: 10px; margin-bottom: 16px;">
-                <input type="text" id="linkCompartilhamento" class="field-input" style="margin-bottom: 0; color: #00ff9f; background: rgba(0, 255, 160, 0.05);" readonly>
-                
-                <button type="button" class="btn-action" onclick="copiarLink()" style="margin: 0; padding: 0 16px; font-size: 20px;" title="Copiar Link">
-                    📋
+            <div class="share-box">
+                <input type="text" id="linkCompartilhamento" class="share-input" readonly>
+                <button type="button" class="btn-icon" onclick="copiarLink()" style="border-color: rgba(0,255,160,0.3); color: #00ff9f;" title="Copiar Link">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
                 </button>
             </div>
             
-            <div id="copyToast" style="color: #00ff9f; font-size: 14px; display: none; margin-bottom: 24px; font-weight: 600;">
-                ✓ Link copiado para a área de transferência!
-            </div>
-            
             <div class="modal-footer" style="justify-content: center;">
-                <button type="button" class="btn-modal-cancel" onclick="fecharModal('modalCompartilhar')">Fechar</button>
+                <button type="button" class="btn-modal-cancel" onclick="fecharModal('modalCompartilhar')" style="min-width: 150px;">Fechar</button>
             </div>
         </div>
     </div>
 
     <script>
-
         let formIdAtual = null;
 
         function abrirModalCompartilhar(id) {
             formIdAtual = id;
-            const linkInput = document.getElementById('linkCompartilhamento');
-            
-            const urlBase = window.location.origin; // => Monta a URL dinâmica: ex: http://0.0.0.0:8000/avaliacao/responder/5/
-            linkInput.value = `${urlBase}/avaliacao/responder/${formIdAtual}/`;
-            
-            document.getElementById('copyToast').style.display = 'none';
-            
+            document.getElementById('blindTestToggle').checked = false;
+            atualizarLinkCompartilhamento();
             abrirModal('modalCompartilhar');
         }
 
         function atualizarLinkCompartilhamento() {
             if (!formIdAtual) return;
-            
             const linkInput = document.getElementById('linkCompartilhamento');
             const urlBase = window.location.origin;
             let linkFinal = `${urlBase}/avaliacao/responder/${formIdAtual}/`;
@@ -432,26 +561,48 @@
             if (document.getElementById('blindTestToggle').checked) {
                 linkFinal += "?blind=true";
             }
-            
             linkInput.value = linkFinal;
         }
 
         function copiarLink() {
             const linkInput = document.getElementById('linkCompartilhamento');
-            
             linkInput.select();
             linkInput.setSelectionRange(0, 99999); 
             
-            navigator.clipboard.writeText(linkInput.value).then(() => { // => Copia para a área de transferência nativa do navegador
-                const toast = document.getElementById('copyToast');
-                toast.style.display = 'block';
-                setTimeout(() => {
-                    toast.style.display = 'none';
-                }, 3000);
+            navigator.clipboard.writeText(linkInput.value).then(() => {
+                const toastContainer = document.getElementById('toast-container') || criarToastContainer();
+                mostrarToast(toastContainer, "Link copiado para a área de transferência!");
             }).catch(err => {
-                console.error('Erro ao copiar: ', err);
                 alert("Não foi possível copiar o link automaticamente.");
             });
+        }
+
+        function criarToastContainer() {
+            const container = document.createElement('div');
+            container.id = 'toast-container';
+            container.style.cssText = 'position: fixed; top: 30px; right: 30px; z-index: 999999; display: flex; flex-direction: column; gap: 12px; pointer-events: none;';
+            document.body.appendChild(container);
+            return container;
+        }
+
+        function mostrarToast(container, mensagem) {
+            const toast = document.createElement('div');
+            toast.className = 'toast-message';
+            toast.style.cssText = `
+                background: rgba(0, 255, 160, 0.15); border: 1px solid #00ff9f; color: #00ff9f; 
+                padding: 16px 24px; border-radius: 12px; font-size: 14px; font-weight: 600; text-align: center;
+                box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5); backdrop-filter: blur(5px);
+                transition: opacity 0.5s ease, transform 0.5s ease;
+                transform: translateX(0); opacity: 1;
+            `;
+            toast.innerText = mensagem;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(50px)';
+                setTimeout(() => toast.remove(), 500); 
+            }, 4000);
         }
         
         function toggleQuestao(el) {
@@ -460,13 +611,8 @@
             cb.checked = !cb.checked;
         }
 
-        function abrirModal(id) {
-            document.getElementById(id).classList.add('active');
-        }
-
-        function fecharModal(id) {
-            document.getElementById(id).classList.remove('active');
-        }
+        function abrirModal(id) { document.getElementById(id).classList.add('active'); }
+        function fecharModal(id) { document.getElementById(id).classList.remove('active'); }
 
         function abrirModalEditar(id, nome, questoesIds) {
             document.getElementById('nomeEditar').value = nome;
@@ -512,10 +658,21 @@
 
         function filterForms() {
             const filter = document.getElementById('searchInput').value.toLowerCase();
-            document.querySelectorAll('.form-card').forEach(card => {
+            document.querySelectorAll('.metric-card').forEach(card => {
                 card.style.display = card.getAttribute('data-text').includes(filter) ? '' : 'none';
             });
         }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const toasts = document.querySelectorAll('.toast-message');
+            toasts.forEach(toast => {
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateX(50px)';
+                    setTimeout(() => toast.remove(), 500); 
+                }, 6000);
+            });
+        });
     </script>
 </body>
 </html>
