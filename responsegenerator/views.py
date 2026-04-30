@@ -17,7 +17,6 @@ from collections import defaultdict
 
 
 def salvar_no_historico(user, pergunta, resposta):
-    # BLINDADO: Garante que a Questao pertence ao usuário na criação automática
     q_obj = Questao.objects.create(conteudo=pergunta, usuario=user)  
     resp_obj = Resposta.objects.create(conteudo_resposta=resposta, questao=q_obj)
 
@@ -213,13 +212,41 @@ def upload_perguntas(request):
                     return redirect('questoes')
 
             else:
-                for linha in conteudo_texto.split("\n"):
-                    match = re.search(r'PERGUNTA\s*:\s*"?(.+?)"?$', linha, re.IGNORECASE)
+                categoria_atual = categoria_geral
+                
+                # splitlines() é melhor aqui para evitar problemas com quebras de linha
+                for linha in conteudo_texto.splitlines():
+                    linha = linha.strip()
 
-                    if match:
-                        texto_pergunta = match.group(1).strip()
+                    # Ignora linhas em branco
+                    if not linha:
+                        continue
+
+                    # Se a linha for um Eixo, extrai o nome, corta antes dos parênteses e cria a categoria
+                    if linha.lower().startswith("eixo"):
+                        # Separa a string no primeiro parêntese '(' e pega apenas a primeira parte
+                        nome_cru = linha.split('(')[0].strip()
+
+                        if ":" in nome_cru:
+                            # Pega a parte da direita, ex: "Segurança de Aplicações e Sistemas"
+                            nome_cru = nome_cru.split(':', 1)[1].strip()
+                        
+                        # Por garantia extra (caso a linha antes do parêntese ainda passe de 100 caracteres)
+                        nome_categoria = nome_cru[:100] 
+                        
+                        categoria_atual, _ = Categoria.objects.get_or_create(
+                            nome_categoria=nome_categoria,
+                            usuario=request.user,
+                            defaults={'descricao_categoria': 'Categoria extraída do arquivo .txt'}
+                        )
+                        continue
+
+                    # Se chegou aqui, é uma pergunta. Remove números, pontos e parênteses do início.
+                    texto_pergunta = re.sub(r'^\d+[\.\)]\s*', '', linha).strip()
+
+                    if texto_pergunta:
                         perguntas.append(texto_pergunta)
-                        Questao.objects.create(conteudo=texto_pergunta, usuario=request.user, categoria=categoria_geral)
+                        Questao.objects.create(conteudo=texto_pergunta, usuario=request.user, categoria=categoria_atual)
 
             if perguntas:
                 django_messages.success(request, f"{len(perguntas)} perguntas importadas com sucesso!")
@@ -247,6 +274,25 @@ def questoes_cadastro_categoria(request):
         else:
             django_messages.error(request, "O nome da categoria é obrigatório.")
 
+    return redirect('questoes')
+
+@login_required
+def editar_categoria(request, id):
+    # BLINDADO: Garante que o usuário só edite categorias criadas por ele
+    categoria = get_object_or_404(Categoria, id=id, usuario=request.user)
+    
+    if request.method == "POST":
+        nome = request.POST.get("nome")
+        descricao = request.POST.get("descricao")
+        
+        if nome:
+            categoria.nome_categoria = nome
+            categoria.descricao_categoria = descricao
+            categoria.save()
+            django_messages.success(request, f"Categoria '{nome}' atualizada com sucesso!")
+        else:
+            django_messages.error(request, "O nome da categoria não pode ficar vazio.")
+            
     return redirect('questoes')
 
 @login_required
@@ -394,18 +440,35 @@ def setup_adicionar_metrica(request):
         pontuacao_maxima = request.POST.get('pontuacao_maxima')
         criterio_texto   = request.POST.get('criterio_texto', '').strip()
 
+        try:
+            pts = int(pontuacao_maxima)
+            if pts > 5:
+                pts = 5  
+            elif pts < 2:
+                pts = 2  
+        except (ValueError, TypeError):
+            pts = 5 
+
+        label_opcao_1 = ""
+        label_opcao_2 = ""
+        if pts == 2:
+            label_opcao_1 = request.POST.get('opcao_1', 'Ruim').strip()
+            label_opcao_2 = request.POST.get('opcao_2', 'Bom').strip()
+
         if not nome:
             django_messages.error(request, 'O nome da métrica é obrigatório.')
             return redirect('setup_avaliacao')
         
         else:
             Metrica.objects.create(
-                usuario          = request.user, # BLINDADO: Amarra a nova métrica ao usuário
+                usuario          = request.user,
                 nome             = nome,
                 descricao        = descricao,
                 tipo             = tipo,
-                pontuacao_maxima = int(pontuacao_maxima) if pontuacao_maxima else None,
+                pontuacao_maxima = pts, # Salva o número blindado!
                 criterio_texto   = criterio_texto,
+                label_opcao_1    = label_opcao_1,
+                label_opcao_2    = label_opcao_2,
                 ativa            = True,
             )
             django_messages.success(request, f"Métrica '{nome}' adicionada com sucesso!")
@@ -551,15 +614,31 @@ def avaliacao_deletar_formulario(request, id):
 def responder_avaliacao_publica(request, formulario_id):
     # Aqui não vai request.user pois é uma rota pública para avaliadores externos (blind test)
     formulario = get_object_or_404(Formulario, id=formulario_id)
-    metricas = Metrica.objects.filter(usuario=formulario.usuario, ativa=True)
+    
+    # 1. Busca as métricas e transforma em uma lista iterável
+    metricas = list(Metrica.objects.filter(usuario=formulario.usuario, ativa=True))
 
-    likert_options = [
-        (1, '😞', 'Muito Ruim'),
-        (2, '😕', 'Ruim'),
-        (3, '😐', 'Regular'),
-        (4, '🙂', 'Bom'),
-        (5, '😄', 'Excelente'),
-    ]
+    # 2. Avalia MÉTRICA POR MÉTRICA para montar as opções
+    for metrica in metricas:
+        if metrica.pontuacao_maxima == 2:
+            # Captura o que o usuário configurou (se estiver vazio, usa Ruim/Bom como segurança)
+            label_1 = getattr(metrica, 'label_opcao_1', 'Ruim') or 'Ruim'
+            label_2 = getattr(metrica, 'label_opcao_2', 'Bom')  or 'Bom'
+            
+            # Injeta as opções específicas DESTA métrica
+            metrica.opcoes_likert = [
+                (1, '👎', label_1),
+                (2, '👍', label_2),
+            ]
+        else:
+            # Escala padrão de 5 pontos
+            metrica.opcoes_likert = [
+                (1, '😞', 'Muito Ruim'),
+                (2, '😕', 'Ruim'),
+                (3, '😐', 'Regular'),
+                (4, '🙂', 'Bom'),
+                (5, '😄', 'Excelente'),
+            ]
 
     if request.method == 'POST':
         nome = request.POST.get('nome')
@@ -601,8 +680,7 @@ def responder_avaliacao_publica(request, formulario_id):
 
     contexto = {
         'formulario': formulario,
-        'metricas': metricas,
-        'likert_options': likert_options,
+        'metricas': metricas, # Agora as métricas já levam as opções dentro delas!
         'blind_mode': modo_cego,
     }
     return render(request, 'avaliacao/avaliacao_publica.html', contexto)

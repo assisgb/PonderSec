@@ -1,4 +1,5 @@
 import random
+from django.contrib import messages
 from django.shortcuts import redirect, render
 from django.core.mail import send_mail
 from usuarios.models import CodigoVerificacao
@@ -23,11 +24,10 @@ def cadastro(request):
                 
                 registro.delete()
                 del request.session['usuario_inativo_id']
+
+                messages.success(request, 'Conta ativada com sucesso! Faça login para acessar.')
                 
-                
-                return redirect('login', {
-                    'sucesso': 'Conta ativada com sucesso! Faça login para acessar.'
-                })
+                return redirect('login')
                 
             except CodigoVerificacao.DoesNotExist:
                 return render(request, 'cadastro.html', {
@@ -44,8 +44,11 @@ def cadastro(request):
             if senha != senha_confirm:
                 return render(request, 'cadastro.html', {'erro': 'As senhas não coincidem!'})
         
-            if User.objects.filter(username=username, email=email).exists():
-                return render(request, 'cadastro.html', {'erro': 'Usuário já existe!'})
+            if User.objects.filter(email=email).exists():
+                return render(request, 'cadastro.html', {'erro': 'E-mail já cadastrado!'})
+            
+            if User.objects.filter(username=username).exists():
+                return render(request, 'cadastro.html', {'erro': 'Nome de usuário já existe!'})
 
             user = User.objects.create_user(username=username, email=email, password=senha)
             user.is_active = False 
@@ -98,6 +101,39 @@ def verificar_codigo(request):
             return HttpResponse("Código inválido ou expirado. Tente novamente.")
 
     return render(request, 'verificar_codigo.html')
+
+
+def reenviar_codigo(request):
+    user_id = request.session.get('usuario_inativo_id')
+    
+    if not user_id:
+        messages.error(request, 'Sessão expirada. Por favor, inicie o cadastro novamente.')
+        return redirect('cadastro')
+        
+    try:
+        user = User.objects.get(id=user_id)
+        
+        CodigoVerificacao.objects.filter(usuario=user).delete()
+
+        codigo_secreto = str(random.randint(100000, 999999))
+        CodigoVerificacao.objects.create(usuario=user, codigo=codigo_secreto)
+        
+        send_mail(
+            "Novo Código de Verificação - PonderSec",
+            f"Seu novo código de ativação é: {codigo_secreto}\n\nSe você não solicitou este código, ignore este e-mail.",
+            None,
+            [user.email],
+            fail_silently=False,
+        )
+        
+        messages.success(request, 'Um novo código foi enviado para o seu e-mail!')
+        
+    except User.DoesNotExist:
+        messages.error(request, 'Usuário não encontrado no sistema.')
+        del request.session['usuario_inativo_id']
+        return redirect('cadastro')
+
+    return redirect('cadastro')
 
 
 def login_view(request):

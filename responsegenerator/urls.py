@@ -12,6 +12,7 @@ urlpatterns = [
     path('questoes/limpar/', views.limpar_questoes, name='limpar_questoes'),
     path('menu_consulta/', views.menu_consulta, name="menu-consulta"),
     path('consulta_comparacao/', views.consulta_comparacao, name="consulta_comparacao"),
+    path('categoria/editar/<int:id>/', views.editar_categoria, name='editar_categoria'),
     path('executar_consulta/', views.executar_consulta, name="executar_consulta"),
     path("respostas/<int:questao_id>/", views.get_respostas, name="get_respostas"),
     path("gerar_resposta/<int:questao_id>/", views.gerar_respostas, name="gerar_respostas"),

@@ -13,6 +13,8 @@ class Metrica(models.Model):
     tipo = models.CharField(max_length=20, choices=TIPO_CHOICES)
     pontuacao_maxima = models.IntegerField(null=True, blank=True)
     criterio_texto = models.TextField(null=True, blank=True)
+    label_opcao_1 = models.CharField(max_length=50, blank=True, null=True)
+    label_opcao_2 = models.CharField(max_length=50, blank=True, null=True)
     ativa = models.BooleanField(default=True)
 
     def __str__(self):

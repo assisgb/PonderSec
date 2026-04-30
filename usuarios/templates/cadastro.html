@@ -230,6 +230,21 @@
                 <button type="submit" class="button-primary">Autenticar Sistema</button>
             </form>
 
+            <div style="margin-top: 16px; text-align: center;">
+                <span style="color: #8ba1b0; font-size: 13px;">Não recebeu o e-mail?</span>
+                <br>
+                <a href="{% url 'reenviar_codigo' %}" style="
+                    display: inline-block;
+                    margin-top: 8px;
+                    color: #00cfff; 
+                    font-size: 13px; 
+                    font-weight: 600; 
+                    text-decoration: none; 
+                    transition: color 0.2s;">
+                    Reenviar código
+                </a>
+            </div>
+
         {% else %}
             <div class="headline">Criar Conta</div>
 

@@ -392,13 +392,24 @@
         </div>
 
         {% if historico %}
-        <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: flex-end; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
+            
+            <button class="btn-add" onclick="abrirGerenciarCategorias()" style="background: rgba(0, 207, 255, 0.08); border-color: rgba(0, 207, 255, 0.3); color: #00cfff;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                    <line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line>
+                </svg>
+                Categorias
+            </button>
+
+            {% if historico %}
             <button class="btn-clear-all" data-action="{% url 'limpar_questoes' %}" data-title="LIMPAR TUDO?" data-desc="Você tem certeza? Todas as questões serão apagadas para sempre." data-btn-text="Sim, limpar tudo" onclick="configurarModal(this)">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
                     <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>
                 </svg>
                 Apagar Tudo
             </button>
+            {% endif %}
+            
         </div>
         {% endif %}
 
@@ -599,12 +610,7 @@
                 </div>
                 
                 <div class="field-group" style="margin-top: 20px;">
-                    <label class="field-label" style="display: flex; justify-content: space-between; align-items: center;">
-                        IAs que responderão
-                        <a href="javascript:void(0)" onclick="abrirModalCategoria()" style="color: #4ecf9a; text-decoration: none; font-size: 10px; display: flex; align-items: center; gap: 4px;">
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> Nova Categoria
-                        </a>
-                    </label>
+                    <label class="field-label">IAs que responderão</label>
                     
                     <div class="checkbox-grid">
                         {% if llms %}
@@ -626,37 +632,6 @@
                     <button type="reset" class="btn-modal-cancel" style="margin-right: auto;">Limpar</button>
                     <button type="button" class="btn-modal-cancel" onclick="fecharModalFormQuestao()">Cancelar</button>
                     <button type="submit" id="btnSalvarQuestao" class="btn-modal-save">Salvar Questão</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="categoriaModal">
-        <div class="modal" style="max-width: 440px;">
-            <div class="modal-header">
-                <div class="modal-title-wrap">
-                    <span class="modal-product">Classificação</span>
-                    <span class="modal-title">Nova Categoria</span>
-                </div>
-                <button type="button" class="modal-close" onclick="fecharModalCategoria()">✕</button>
-            </div>
-
-            <form method="POST" action="{% url 'questoes_cadastro_categoria' %}">
-                {% csrf_token %}
-
-                <div class="field-group">
-                    <label class="field-label">Nome da Categoria</label>
-                    <input type="text" name="nome" class="field-input" placeholder="Ex: Redes, Criptografia..." required>
-                </div>
-
-                <div class="field-group">
-                    <label class="field-label">Descrição (Opcional)</label>
-                    <textarea name="descricao" class="field-textarea" style="min-height: 80px;" placeholder="Breve descrição da categoria..."></textarea>
-                </div>
-
-                <div class="modal-footer">
-                    <button type="button" class="btn-modal-cancel" onclick="fecharModalCategoria()">Voltar</button>
-                    <button type="submit" class="btn-modal-save">Salvar</button>
                 </div>
             </form>
         </div>
@@ -684,6 +659,77 @@
             <div class="modal-footer" style="justify-content: center;">
                 <button type="button" class="btn-modal-cancel" onclick="fecharModalDetalhes()" style="padding-left: 40px; padding-right: 40px;">Fechar Visualização</button>
             </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════
+         MODAL GERENCIAR CATEGORIAS
+    ═══════════════════════════ -->
+    <div class="modal-overlay" id="modalGerenciarCategorias">
+        <div class="modal" style="max-width: 550px;">
+            <div class="modal-header">
+                <div class="modal-title-wrap">
+                    <span class="modal-product">Organização</span>
+                    <span class="modal-title">Gerenciar Categorias</span>
+                </div>
+                <button type="button" class="modal-close" onclick="fecharGerenciarCategorias()">✕</button>
+            </div>
+
+            <button type="button" class="btn-add" style="width: 100%; justify-content: center; margin-bottom: 20px;" onclick="fecharGerenciarCategorias(); abrirModalCategoria();">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                Criar Nova Categoria
+            </button>
+
+            <div class="questions-select" style="max-height: 350px; overflow-y: auto;">
+                {% for cat in categorias %}
+                <div class="question-option" style="cursor: default; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div class="question-option-text" style="font-weight: 700; color: #00ff9f;">{{ cat.nome_categoria }}</div>
+                        <div class="question-option-meta" style="color: #6b7b8d; text-transform: none;">{{ cat.descricao_categoria|default:"Sem descrição" }}</div>
+                    </div>
+                    <button type="button" class="btn-icon btn-edit" title="Editar" onclick="abrirEditarCategoria('{{ cat.id }}', '{{ cat.nome_categoria|escapejs }}', '{{ cat.descricao_categoria|escapejs }}')">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                    </button>
+                </div>
+                {% empty %}
+                <p style="text-align: center; color: #6b7b8d; font-size: 13px; padding: 20px 0;">Nenhuma categoria registrada.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════
+         MODAL EDITAR CATEGORIA
+    ═══════════════════════════ -->
+    <div class="modal-overlay" id="modalEditarCategoria">
+        <div class="modal" style="max-width: 440px;">
+            <div class="modal-header">
+                <div class="modal-title-wrap">
+                    <span class="modal-product">Classificação</span>
+                    <span class="modal-title">Editar Categoria</span>
+                </div>
+                <button type="button" class="modal-close" onclick="fecharEditarCategoria()">✕</button>
+            </div>
+
+            <form method="POST" id="formEditarCategoria">
+                {% csrf_token %}
+                <div class="field-group">
+                    <label class="field-label">Nome da Categoria</label>
+                    <input type="text" name="nome" id="editCatNome" class="field-input" required>
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label">Descrição</label>
+                    <textarea name="descricao" id="editCatDesc" class="field-textarea" style="min-height: 80px;"></textarea>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-modal-cancel" onclick="fecharEditarCategoria()">Voltar</button>
+                    <button type="submit" class="btn-modal-save">Salvar</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -772,9 +818,31 @@
         formQuestaoModal.addEventListener('click', e => { if (e.target === e.currentTarget) fecharModalFormQuestao(); });
 
         const categoriaModal = document.getElementById('categoriaModal');
-        function abrirModalCategoria() { fecharModalFormQuestao(); categoriaModal.classList.add('active'); }
-        function fecharModalCategoria() { categoriaModal.classList.remove('active'); abrirModalFormQuestao(); }
+        const gerenciarCategoriasModal = document.getElementById('modalGerenciarCategorias');
+        const editarCategoriaModal = document.getElementById('modalEditarCategoria');
+
+        function abrirGerenciarCategorias() { gerenciarCategoriasModal.classList.add('active'); }
+        function fecharGerenciarCategorias() { gerenciarCategoriasModal.classList.remove('active'); }
+        
+        function abrirModalCategoria() { categoriaModal.classList.add('active'); }
+        function fecharModalCategoria() { categoriaModal.classList.remove('active'); abrirGerenciarCategorias(); }
+
+        function abrirEditarCategoria(id, nome, desc) {
+            fecharGerenciarCategorias();
+            document.getElementById('editCatNome').value = nome;
+            document.getElementById('editCatDesc').value = desc;
+            document.getElementById('formEditarCategoria').action = `/categoria/editar/${id}/`;
+            editarCategoriaModal.classList.add('active');
+        }
+        function fecharEditarCategoria() {
+            editarCategoriaModal.classList.remove('active');
+            abrirGerenciarCategorias(); // Retorna para a lista elegantemente
+        }
+
+        // Fecha os modais ao clicar no fundo preto
+        gerenciarCategoriasModal.addEventListener('click', e => { if (e.target === e.currentTarget) fecharGerenciarCategorias(); });
         categoriaModal.addEventListener('click', e => { if (e.target === e.currentTarget) fecharModalCategoria(); });
+        editarCategoriaModal.addEventListener('click', e => { if (e.target === e.currentTarget) fecharEditarCategoria(); });
 
         /* Modal Detalhes */
         const detalhesModal = document.getElementById('detalhesModal');
