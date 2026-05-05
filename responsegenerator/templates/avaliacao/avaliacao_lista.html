@@ -458,15 +458,15 @@
                 <div class="modal-section-label">Questões Vinculadas</div>
                 <div class="questions-select">
                     {% for questao in questoes %}
-                    <div class="question-option" onclick="toggleQuestao(this)" data-id="{{ questao.id }}">
-                        <div class="custom-checkbox"><span class="checkmark">✓</span></div>
-                        <div>
-                            <div class="question-option-text">{{ questao.conteudo }}</div>
-                            <div class="question-option-meta">{{ questao.categoria.nome_categoria }}</div>
+                        <div class="question-option" onclick="toggleQuestao(this)" data-id="{{ questao.id }}">
+                            <div class="custom-checkbox"><span class="checkmark">✓</span></div>
+                            <div>
+                                <div class="question-option-text">{{ questao.conteudo }}</div>
+                                <div class="question-option-meta">{{ questao.categoria.nome_categoria }}</div>
+                            </div>
+                            <input type="checkbox" name="questoes" value="{{ questao.id }}" style="display:none;">
                         </div>
-                        <input type="checkbox" name="questoes" value="{{ questao.id }}" style="display:none;">
-                    </div>
-                    {% empty %}
+                        {% empty %}
                     <div style="color: #6b7b8d; font-size: 13px; padding: 16px 0;">Nenhuma pergunta cadastrada.</div>
                     {% endfor %}
                 </div>

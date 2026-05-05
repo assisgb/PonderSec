@@ -81,7 +81,8 @@ def ver_detalhes_questao(request, id):
 def limpar_questoes(request):
     if request.method == 'POST':   
         Questao.objects.filter(usuario=request.user).delete()
-        django_messages.success(request, "Todas as questões do seu histórico foram deletadas.")
+        Categoria.objects.filter(usuario=request.user).delete()
+        django_messages.success(request, "O histórico de questões e categorias foi limpo!")
     return redirect('questoes')
  
 @login_required(login_url='/login/')
@@ -278,7 +279,6 @@ def questoes_cadastro_categoria(request):
 
 @login_required
 def editar_categoria(request, id):
-    # BLINDADO: Garante que o usuário só edite categorias criadas por ele
     categoria = get_object_or_404(Categoria, id=id, usuario=request.user)
     
     if request.method == "POST":
@@ -323,7 +323,6 @@ def get_respostas(request, questao_id):
 
 @login_required
 def gerar_respostas(request, questao_id):
-    # BLINDADO
     questao = get_object_or_404(Questao, id=questao_id, usuario=request.user)
     llms_ativos = LLM.objects.filter(usuario=request.user, ativo=True)
     
@@ -536,10 +535,10 @@ def consulta_comparacao(request):
 @login_required
 def avaliacao(request):
     formularios = Formulario.objects.filter(usuario=request.user)
-    questoes = Questao.objects.filter(usuario=request.user)
+    questoes_respondidas = Questao.objects.filter(usuario=request.user, respostas__isnull=False).distinct()
     return render(request, 'avaliacao/avaliacao_lista.html', {
         'formularios': formularios,
-        'questoes': questoes
+        'questoes': questoes_respondidas
     })
 
 @login_required
@@ -579,10 +578,8 @@ def avaliacao_adicionar_formulario(request):
         formulario.questoes.set(questoes_ids)
         formulario.save()
         django_messages.success(request, f"Formulário '{nome}' criado com sucesso!")
-        return redirect('avaliacao')
-
-    questoes = Questao.objects.filter(usuario=request.user).order_by('-id')
-    return render(request, 'avaliacao/avaliacao_adicionar_formulario.html', {'questoes': questoes})
+    
+    return redirect('avaliacao')
 
 
 @login_required
@@ -595,13 +592,10 @@ def avaliacao_editar_formulario(request, id):
         formulario.nome = nome
         formulario.questoes.set(questoes_ids)
         formulario.save()
-        return redirect('avaliacao')
+        django_messages.success(request, f"Formulário '{nome}' atualizado com sucesso!")
+    
+    return redirect('avaliacao')
 
-    questoes = Questao.objects.filter(usuario=request.user).order_by('-id')
-    return render(request, 'avaliacao/avaliacao_editar_formulario.html', {
-        'formulario': formulario,
-        'questoes': questoes
-    })
 
 @login_required
 def avaliacao_deletar_formulario(request, id):
@@ -612,26 +606,20 @@ def avaliacao_deletar_formulario(request, id):
     return redirect('avaliacao')
 
 def responder_avaliacao_publica(request, formulario_id):
-    # Aqui não vai request.user pois é uma rota pública para avaliadores externos (blind test)
     formulario = get_object_or_404(Formulario, id=formulario_id)
     
-    # 1. Busca as métricas e transforma em uma lista iterável
     metricas = list(Metrica.objects.filter(usuario=formulario.usuario, ativa=True))
 
-    # 2. Avalia MÉTRICA POR MÉTRICA para montar as opções
     for metrica in metricas:
         if metrica.pontuacao_maxima == 2:
-            # Captura o que o usuário configurou (se estiver vazio, usa Ruim/Bom como segurança)
             label_1 = getattr(metrica, 'label_opcao_1', 'Ruim') or 'Ruim'
             label_2 = getattr(metrica, 'label_opcao_2', 'Bom')  or 'Bom'
             
-            # Injeta as opções específicas DESTA métrica
             metrica.opcoes_likert = [
                 (1, '👎', label_1),
                 (2, '👍', label_2),
             ]
         else:
-            # Escala padrão de 5 pontos
             metrica.opcoes_likert = [
                 (1, '😞', 'Muito Ruim'),
                 (2, '😕', 'Ruim'),
