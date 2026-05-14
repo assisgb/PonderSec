@@ -110,64 +110,18 @@ def add_questoes(request):
         pergunta_texto = request.POST.get('pergunta')
         
         if pergunta_texto:
-            nome_categoria = "Geral"
-            llm_ativo = LLM.objects.filter(usuario=request.user, ativo=True).first()
-            
-            if llm_ativo:
-                prompt_classificacao = (
-                    "Você é um classificador de dados estrito. Leia a pergunta abaixo "
-                    "e responda APENAS com o nome de uma categoria de cibersegurança "
-                    "(ex: Criptografia, Redes, Phishing, Engenharia Social). "
-                    "NÃO use pontos finais, NÃO explique, NÃO escreva frases. "
-                    "Apenas 1 ou 2 palavras definindo o tema.\n\n"
-                    f"Pergunta: {pergunta_texto}"
+            categoria_id = request.POST.get('categoria_id')
+            categoria_obj = None
+
+            if categoria_id:
+                categoria_obj = Categoria.objects.filter(id=categoria_id, usuario=request.user).first()
+
+            if not categoria_obj:
+                categoria_obj, _ = Categoria.objects.get_or_create(
+                    nome_categoria="Geral",
+                    usuario=request.user,
+                    defaults={'descricao_categoria': 'Categoria padrão'}
                 )
-
-                provedor = llm_ativo.descricao.lower() if llm_ativo.descricao else ""
-
-                try:
-                    if "gemini" in provedor or "google" in provedor:
-                        client = genai.Client(api_key=llm_ativo.api_key)
-                        resp = client.models.generate_content(model=llm_ativo.nome, contents=prompt_classificacao)
-                        nome_categoria = resp.text.strip().title()
-
-                    elif "groq" in provedor:
-                        client = Groq(api_key=llm_ativo.api_key)
-                        chat_completion = client.chat.completions.create(
-                            messages=[{"role": "user", "content": prompt_classificacao}],
-                            model=llm_ativo.nome,
-                        )
-                        nome_categoria = chat_completion.choices[0].message.content.strip().title()
-
-                    elif "openai" in provedor or "OpenAI" in provedor or "openAI" in provedor:
-                        client = openai.OpenAI(api_key=llm_ativo.api_key)
-                        response = client.chat.completions.create(
-                            model=llm_ativo.nome,
-                            messages=[{"role": "user", "content": prompt_classificacao}]
-                        )
-                        nome_categoria = response.choices[0].message.content.strip().title()
-
-                    elif "deepseek" in provedor:
-                        client = openai.OpenAI(
-                            api_key=llm_ativo.api_key, 
-                            base_url="https://api.deepseek.com"
-                        )
-                        response = client.chat.completions.create(
-                            model=llm_ativo.nome, # Ex: "deepseek-chat" ou "deepseek-reasoner"
-                            messages=[{"role": "user", "content": prompt_classificacao}]
-                        )
-                        nome_categoria = response.choices[0].message.content.strip().title()
-
-                except Exception as e:
-                    print(f"Erro ao classificar categoria com IA: {str(e)}")
-                    nome_categoria = "Geral"
-
-            nome_categoria = re.sub(r'[^\w\s]', '', nome_categoria)[:50]  
-            categoria_obj, created = Categoria.objects.get_or_create(
-                nome_categoria=nome_categoria,
-                usuario=request.user,
-                defaults={'descricao_categoria': f'Categoria gerada automaticamente: {nome_categoria}'}
-            )
 
             Questao.objects.create(
                 conteudo=pergunta_texto,
@@ -175,7 +129,7 @@ def add_questoes(request):
                 categoria=categoria_obj,
             )
 
-            django_messages.success(request, f"Questão adicionada com sucesso e classificada automaticamente como '{nome_categoria}'!")
+            django_messages.success(request, f"Questão adicionada na categoria '{categoria_obj.nome_categoria}'!")
         
     return redirect('questoes')
     
@@ -183,17 +137,23 @@ def add_questoes(request):
 def upload_perguntas(request):
     if request.method == "POST":
         arquivo = request.FILES.get("arquivo_upload")
+        categoria_id = request.POST.get("categoria_id")
 
         if arquivo:
             perguntas = []
             conteudo_texto = arquivo.read().decode("utf-8")
             nome_arquivo = arquivo.name.lower()
 
-            categoria_geral, _ = Categoria.objects.get_or_create(
-                nome_categoria="Geral",
-                usuario=request.user,
-                defaults={'descricao_categoria': 'Categoria importada via arquivo'}
-            )
+            categoria_padrao = None
+            if categoria_id:
+                categoria_padrao = Categoria.objects.filter(id=categoria_id, usuario=request.user).first()
+
+            if not categoria_padrao:
+                categoria_padrao, _ = Categoria.objects.get_or_create(
+                    nome_categoria="Geral",
+                    usuario=request.user,
+                    defaults={'descricao_categoria': 'Categoria padrão para importação'}
+                )
 
             if nome_arquivo.endswith(".json"):
                 try:
@@ -206,15 +166,13 @@ def upload_perguntas(request):
                         texto_pergunta = item.get("pergunta", "").strip()
                         if texto_pergunta:
                             perguntas.append(texto_pergunta)
-                            Questao.objects.create(conteudo=texto_pergunta, usuario=request.user, categoria=categoria_geral)
+                            Questao.objects.create(conteudo=texto_pergunta, usuario=request.user, categoria=categoria_padrao)
 
                 except (json.JSONDecodeError, AttributeError):
                     django_messages.error(request, "Arquivo JSON inválido ou mal formatado.")
                     return redirect('questoes')
 
             else:
-                categoria_atual = categoria_geral
-                
                 # splitlines() é melhor aqui para evitar problemas com quebras de linha
                 for linha in conteudo_texto.splitlines():
                     linha = linha.strip()
@@ -223,23 +181,8 @@ def upload_perguntas(request):
                     if not linha:
                         continue
 
-                    # Se a linha for um Eixo, extrai o nome, corta antes dos parênteses e cria a categoria
+                    # Se a linha for um Eixo, trata como cabeçalho e mantém a categoria escolhida.
                     if linha.lower().startswith("eixo"):
-                        # Separa a string no primeiro parêntese '(' e pega apenas a primeira parte
-                        nome_cru = linha.split('(')[0].strip()
-
-                        if ":" in nome_cru:
-                            # Pega a parte da direita, ex: "Segurança de Aplicações e Sistemas"
-                            nome_cru = nome_cru.split(':', 1)[1].strip()
-                        
-                        # Por garantia extra (caso a linha antes do parêntese ainda passe de 100 caracteres)
-                        nome_categoria = nome_cru[:100] 
-                        
-                        categoria_atual, _ = Categoria.objects.get_or_create(
-                            nome_categoria=nome_categoria,
-                            usuario=request.user,
-                            defaults={'descricao_categoria': 'Categoria extraída do arquivo .txt'}
-                        )
                         continue
 
                     # Se chegou aqui, é uma pergunta. Remove números, pontos e parênteses do início.
@@ -247,10 +190,10 @@ def upload_perguntas(request):
 
                     if texto_pergunta:
                         perguntas.append(texto_pergunta)
-                        Questao.objects.create(conteudo=texto_pergunta, usuario=request.user, categoria=categoria_atual)
+                        Questao.objects.create(conteudo=texto_pergunta, usuario=request.user, categoria=categoria_padrao)
 
             if perguntas:
-                django_messages.success(request, f"{len(perguntas)} perguntas importadas com sucesso!")
+                django_messages.success(request, f"{len(perguntas)} perguntas importadas na categoria '{categoria_padrao.nome_categoria}'!")
             else:
                 django_messages.error(request, "Nenhuma pergunta encontrada no arquivo.")
         else:

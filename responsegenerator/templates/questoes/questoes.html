@@ -2,922 +2,1634 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PonderSEC — Questões</title>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PonderSEC | Questões</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
-        body {
-            font-family: "Space Grotesk", system-ui, sans-serif;
-            background: radial-gradient(circle at top, #051015 0, #02060b 45%, #000000 100%);
-            color: #e5fef6;
-            min-height: 100vh;
-            padding: 20px;
-        }
+:root {
+  --bg: #050c14;
+  --surface: rgba(10, 20, 33, 0.72);
+  --surface-strong: rgba(5, 12, 22, 0.92);
+  --surface-soft: rgba(0, 220, 130, 0.05);
+  --border: rgba(0, 220, 130, 0.18);
+  --border-strong: rgba(0, 220, 130, 0.36);
+  --accent: #00dc82;
+  --accent-bright: #00ff9f;
+  --accent-blue: #0ea5e9;
+  --accent-violet: #8b5cf6;
+  --danger: #ef4444;
+  --warn: #f59e0b;
+  --text: #d4f5e9;
+  --text-strong: #f0fff9;
+  --muted: #7a968c;
+  --muted-deep: #476458;
+  --mono: "IBM Plex Mono", monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
 
-        .background-grid {
-            position: fixed; inset: 0;
-            background-image:
-                linear-gradient(90deg, rgba(0, 255, 160, 0.06) 1px, transparent 1px),
-                linear-gradient(180deg, rgba(0, 255, 160, 0.06) 1px, transparent 1px);
-            background-size: 40px 40px; opacity: 0.4; pointer-events: none; z-index: 0;
-        }
+html { scroll-behavior: smooth; }
 
-        .scanline {
-            position: fixed; inset: 0;
-            background-image: repeating-linear-gradient(
-                to bottom,
-                transparent 0px, transparent 3px,
-                rgba(0,0,0,0.12) 3px, rgba(0,0,0,0.12) 4px
-            );
-            opacity: 0.6; pointer-events: none; z-index: 0;
-        }
+body {
+  min-height: 100vh;
+  padding: 20px;
+  overflow-x: hidden;
+  background: radial-gradient(circle at top, #020806 0, #010305 42%, #000000 100%);
+  color: var(--text);
+  font-family: var(--sans);
+}
 
-        .glow-orb {
-            position: fixed; width: 500px; height: 500px; border-radius: 50%;
-            background: radial-gradient(circle, rgba(0, 255, 160, 0.12), transparent 65%);
-            top: 10%; right: 10%; filter: blur(100px); opacity: 0.5; pointer-events: none; z-index: 0;
-        }
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(90deg, rgba(0, 255, 160, 0.035) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(0, 255, 160, 0.035) 1px, transparent 1px);
+  background-size: 40px 40px;
+  opacity: 0.16;
+}
 
-        .container { position: relative; max-width: 1200px; margin: 0 auto; z-index: 2; }
+button,
+input,
+select,
+textarea { font: inherit; }
 
-        /* HEADER */
-        .header {
-            display: flex; align-items: center; gap: 20px;
-            margin-bottom: 28px; padding: 28px 35px;
-            background: radial-gradient(circle at top, #0b141d 0, #050a11 55%, #020509 100%);
-            border-radius: 18px;
-            box-shadow: 0 0 0 1px rgba(0,255,160,0.12), 0 18px 60px rgba(0,0,0,0.9), 0 0 30px rgba(0,255,160,0.08);
-        }
+button { border: 0; }
 
-        .logo img {
-            width: 68px; border-radius: 10px;
-            filter: drop-shadow(0 0 10px rgba(0,255,160,0.8)) drop-shadow(0 0 30px rgba(0,255,160,0.5));
-        }
+.wrap {
+  position: relative;
+  z-index: 1;
+  width: min(1400px, 100%);
+  margin: 0 auto;
+}
 
-        .header-text { flex: 1; }
+.hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 20px;
+  padding: 22px 28px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(5, 10, 17, 0.99), rgba(2, 5, 9, 0.99));
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.34);
+}
 
-        .product-name {
-            color: #7df6c2; text-transform: uppercase;
-            letter-spacing: 0.28em; font-size: 12px; font-weight: 700; margin-bottom: 4px;
-        }
+.hdr-left {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-width: 0;
+}
 
-        .page-title { color: #00ff9f; font-size: 24px; font-weight: 700; margin-bottom: 4px; }
-        .subtitle   { font-size: 13px; color: #8ba1b0; }
+.logo-box {
+  width: 54px;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+  border: 1px solid rgba(0, 220, 130, 0.34);
+  border-radius: 14px;
+  background: rgba(0, 220, 130, 0.06);
+  box-shadow: inset 0 0 24px rgba(0, 220, 130, 0.05), 0 0 18px rgba(0, 220, 130, 0.1);
+}
 
-        .btn-back-header {
-            padding: 12px 24px; background: rgba(0,255,160,0.08);
-            border: 1px solid rgba(0,255,160,0.25); border-radius: 10px;
-            cursor: pointer; font-size: 13px; font-weight: 700; color: #00ff9f;
-            text-decoration: none; text-transform: uppercase; letter-spacing: 0.08em;
-            transition: all 0.2s; display: flex; align-items: center; gap: 8px;
-        }
-        .btn-back-header:hover {
-            background: rgba(0,255,160,0.15); border-color: rgba(0,255,160,0.5);
-            box-shadow: 0 0 20px rgba(0,255,160,0.15); transform: translateY(-1px);
-        }
+.logo-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 
-        /* TOOLBAR */
-        .toolbar {
-            display: flex; gap: 14px; margin-bottom: 24px; flex-wrap: wrap; align-items: center;
-        }
+.hdr-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
 
-        .search-bar { position: relative; flex: 1; min-width: 250px; }
+.hdr-tag,
+.section-kicker,
+.field-label,
+.stat-label,
+.status-badge,
+.badge-categoria,
+.tag {
+  font-family: var(--mono);
+}
 
-        .search-input, .filter-select {
-            width: 100%; padding: 13px 18px;
-            background: rgba(5,10,17,0.9); border: 1px solid #1b2635;
-            border-radius: 10px; color: #e5fef6; font-size: 14px;
-            font-family: "Space Grotesk", system-ui, sans-serif;
-            outline: none; transition: all 0.2s;
-        }
-        .search-input { padding-left: 46px; }
-        .search-input::placeholder { color: #3a5062; }
-        .search-input:focus, .filter-select:focus { border-color: rgba(0,255,160,0.4); box-shadow: 0 0 10px rgba(0,255,160,0.08); }
+.hdr-tag,
+.section-kicker,
+.stat-label,
+.status-badge,
+.badge-categoria,
+.tag {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
 
-        .filter-select { width: auto; min-width: 160px; cursor: pointer; padding: 13px 18px; appearance: none; }
-        .filter-select option { background: #050a11; }
+.hdr-tag {
+  color: rgba(0, 220, 130, 0.76);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
 
-        .search-icon {
-            position: absolute; left: 15px; top: 50%;
-            transform: translateY(-50%); display: flex; align-items: center;
-        }
+.hdr-title {
+  color: var(--accent-bright);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.18;
+}
 
-        .btn-add {
-            padding: 13px 24px; background: rgba(0,255,160,0.1); border: 1px solid rgba(0,255,160,0.25);
-            border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 700; color: #00ff9f;
-            text-decoration: none; text-transform: uppercase; letter-spacing: 0.08em; transition: all 0.2s;
-            display: flex; align-items: center; gap: 8px; white-space: nowrap;
-        }
-        .btn-add:hover {
-            background: rgba(0,255,160,0.16); border-color: rgba(0,255,160,0.5);
-            box-shadow: 0 0 20px rgba(0,255,160,0.1);
-        }
+.hdr-sub {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.4;
+}
 
-        .btn-clear-all {
-            padding: 13px 24px; background: rgba(255,80,80,0.08); border: 1px solid rgba(255,80,80,0.25);
-            border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 700; color: #cc5555;
-            text-transform: uppercase; letter-spacing: 0.08em; transition: all 0.2s;
-            display: flex; align-items: center; gap: 8px; white-space: nowrap;
-        }
-        .btn-clear-all:hover {
-            background: rgba(255,80,80,0.15); border-color: rgba(255,80,80,0.5);
-            box-shadow: 0 0 20px rgba(255,80,80,0.15); color: #ff6b6b;
-        }
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 42px;
+  padding: 11px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease, color 0.18s ease;
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
 
-        /* CARDS DE HISTÓRICO */
-        .section-label {
-            font-size: 10px; color: #4ecf9a; font-weight: 700;
-            text-transform: uppercase; letter-spacing: 0.25em;
-            margin-bottom: 16px; display: flex; align-items: center; gap: 12px;
-        }
-        .section-label::after {
-            content: ''; flex: 1; height: 1px; background: linear-gradient(to right, rgba(0,255,160,0.2), transparent);
-        }
+.btn:hover { transform: translateY(-1px); }
+.btn:disabled { cursor: not-allowed; opacity: 0.62; transform: none; }
 
-        .history-grid { display: grid; gap: 16px; margin-bottom: 40px; }
+.btn-primary {
+  border: 1px solid rgba(0, 220, 130, 0.44);
+  background: rgba(0, 220, 130, 0.12);
+  color: var(--accent-bright);
+  box-shadow: 0 0 20px rgba(0, 220, 130, 0.08);
+}
 
-        .history-card {
-            display: flex; flex-direction: column; padding: 24px 28px;
-            background: linear-gradient(135deg, rgba(11,20,29,0.9) 0%, rgba(5,10,17,0.95) 100%);
-            border: 1px solid rgba(0,255,160,0.1); border-radius: 16px; transition: all 0.3s;
-            position: relative; overflow: hidden;
-        }
-        .history-card::before {
-            content: ''; position: absolute; inset: 0;
-            background: radial-gradient(circle at 0% 0%, rgba(0,255,160,0.05) 0%, transparent 60%);
-            opacity: 0; transition: opacity 0.3s; pointer-events: none; border-radius: 16px;
-        }
-        .history-card:hover::before { opacity: 1; }
-        .history-card:hover {
-            border-color: rgba(0,255,160,0.3);
-            box-shadow: 0 0 24px rgba(0,0,0,0.4), 0 0 20px rgba(0,255,160,0.06); transform: translateY(-2px);
-        }
+.btn-primary:hover {
+  border-color: var(--accent-bright);
+  background: rgba(0, 220, 130, 0.2);
+  box-shadow: 0 0 26px rgba(0, 220, 130, 0.14);
+}
 
-        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; position: relative; z-index: 2; }
-        .card-question { font-size: 18px; font-weight: 700; color: #e5fef6; margin-bottom: 12px; line-height: 1.5; position: relative; z-index: 2; }
-        .card-preview { font-size: 13px; color: #8ba1b0; line-height: 1.6; margin-bottom: 16px; position: relative; z-index: 2; }
-        .card-footer { display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px solid rgba(0, 255, 160, 0.12); padding-top: 16px; position: relative; z-index: 2; }
+.btn-secondary {
+  border: 1px solid rgba(0, 220, 130, 0.26);
+  background: rgba(0, 220, 130, 0.06);
+  color: var(--accent);
+}
 
-        /* Badges */
-        .status-badge, .badge-categoria, .tag {
-            font-size: 9px; font-weight: 700; text-transform: uppercase;
-            letter-spacing: 0.08em; padding: 4px 10px; border-radius: 20px;
-            display: inline-flex; align-items: center; gap: 6px;
-        }
-        .status-answered { background: rgba(0,255,160,0.1); border: 1px solid rgba(0,255,160,0.25); color: #00ff9f; }
-        .status-pending { background: rgba(255,170,0,0.1); border: 1px solid rgba(255,170,0,0.25); color: #ffaa00; }
-        .badge-categoria { background: rgba(0,255,160,0.05); border: 1px solid rgba(0,255,160,0.12); color: #4ecf9a; }
-        .tag { background: rgba(5,10,17,0.8); border: 1px solid #1b2635; color: #c5d9e3; }
-        .tag img { width: 14px; height: 14px; filter: brightness(0.8) drop-shadow(0 0 2px rgba(255,255,255,0.2)); }
+.btn-secondary:hover {
+  border-color: rgba(0, 220, 130, 0.52);
+  background: rgba(0, 220, 130, 0.13);
+}
 
-        /* Ações do Card */
-        .card-actions { display: flex; gap: 8px; }
-        .btn-icon {
-            width: 36px; height: 36px; border-radius: 8px; border: 1px solid;
-            cursor: pointer; display: flex; align-items: center; justify-content: center;
-            transition: all 0.2s; background: none;
-        }
-        .btn-view { border-color: rgba(0,255,160,0.2); color: #4ecf9a; }
-        .btn-view:hover {
-            background: rgba(0,255,160,0.08); border-color: rgba(0,255,160,0.4);
-            color: #00ff9f; box-shadow: 0 0 12px rgba(0,255,160,0.12);
-        }
-        .btn-icon-danger { border-color: rgba(255,80,80,0.2); color: #cc5555; }
-        .btn-icon-danger:hover {
-            background: rgba(255,80,80,0.1); border-color: rgba(255,80,80,0.4);
-            color: #ff6b6b; box-shadow: 0 0 12px rgba(255,80,80,0.15);
-        }
+.btn-upload {
+  border: 1px solid rgba(14, 165, 233, 0.42);
+  background: rgba(14, 165, 233, 0.12);
+  color: #7dd3fc;
+  box-shadow: 0 0 24px rgba(14, 165, 233, 0.08);
+}
 
-        .empty-state { text-align: center; color: #3a5062; padding: 60px 20px; font-size: 14px; }
-        .empty-state svg { margin-bottom: 14px; opacity: 0.3; }
+.btn-upload:hover {
+  border-color: #38bdf8;
+  background: rgba(14, 165, 233, 0.2);
+}
 
-        /* MODAIS */
-        .modal-overlay {
-            position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.8);
-            display: none; align-items: center; justify-content: center; padding: 20px;
-            backdrop-filter: blur(5px);
-        }
-        .modal-overlay.active { display: flex; }
+.btn-ghost {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.035);
+  color: var(--muted);
+}
 
-        .modal {
-            position: relative; width: 100%; max-width: 580px; max-height: 90vh; overflow-y: auto;
-            background: radial-gradient(circle at top, #0b141d 0, #050a11 55%, #020509 100%);
-            border: 1px solid rgba(0,255,160,0.25); border-radius: 18px; padding: 36px;
-            box-shadow: 0 0 0 1px rgba(0,255,160,0.08), 0 18px 60px rgba(0,0,0,0.9), 0 0 20px rgba(0,255,160,0.06);
-        }
-        .modal::-webkit-scrollbar { width: 4px; }
-        .modal::-webkit-scrollbar-thumb { background: rgba(0,255,160,0.2); border-radius: 2px; }
+.btn-ghost:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.065);
+}
 
-        .modal-header {
-            display: flex; align-items: center; justify-content: space-between;
-            margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid rgba(0,255,160,0.12);
-        }
+.btn-danger {
+  border: 1px solid rgba(239, 68, 68, 0.34);
+  background: rgba(239, 68, 68, 0.08);
+  color: #f87171;
+}
 
-        .modal-title-wrap { display: flex; flex-direction: column; gap: 2px; }
-        .modal-product { color: #7df6c2; text-transform: uppercase; letter-spacing: 0.28em; font-size: 10px; font-weight: 700; }
-        .modal-title   { color: #00ff9f; font-size: 20px; font-weight: 700; }
-        .modal-desc    { color: #8ba1b0; font-size: 13px; margin-top: 4px; line-height: 1.5;}
+.btn-danger:hover {
+  border-color: rgba(239, 68, 68, 0.58);
+  background: rgba(239, 68, 68, 0.16);
+  color: #fecaca;
+}
 
-        .modal-close {
-            background: none; border: 1px solid rgba(255,80,80,0.2); border-radius: 8px;
-            color: #cc5555; font-size: 16px; cursor: pointer; width: 34px; height: 34px;
-            display: flex; align-items: center; justify-content: center; transition: all 0.2s; line-height: 1;
-        }
-        .modal-close:hover { background: rgba(255,80,80,0.1); border-color: rgba(255,80,80,0.4); color: #ff6b6b; }
+.main-card,
+.history-panel {
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(5, 10, 17, 0.99), rgba(2, 5, 9, 0.99));
+  box-shadow: 0 10px 38px rgba(0, 0, 0, 0.3);
+}
 
-        .field-group { margin-bottom: 16px; }
-        .field-label {
-            display: block; color: #c5d9e3; font-size: 11px; font-weight: 700;
-            margin-bottom: 7px; text-transform: uppercase; letter-spacing: 0.08em;
-        }
+.question-hub {
+  padding: 28px;
+}
 
-        .field-input, .field-textarea {
-            width: 100%; padding: 12px 14px; background: #050a11; border: 1px solid #1b2635;
-            border-radius: 10px; color: #e5fef6; font-size: 14px; font-family: "Space Grotesk", sans-serif;
-            outline: none; transition: all 0.2s;
-        }
-        .field-input:focus, .field-textarea:focus { border-color: rgba(0,255,160,0.4); box-shadow: 0 0 10px rgba(0,255,160,0.08); }
-        .field-textarea { resize: vertical; min-height: 100px; }
+.section-kicker {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 700;
+}
 
-        .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(0,255,160,0.12); }
+.section-kicker::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, rgba(0, 220, 130, 0.24), transparent);
+}
 
-        .btn-modal-cancel {
-            padding: 11px 24px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12);
-            border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 700; color: #8ba1b0;
-            text-transform: uppercase; letter-spacing: 0.06em; transition: all 0.2s; font-family: "Space Grotesk", sans-serif;
-        }
-        .btn-modal-cancel:hover { background: rgba(255,255,255,0.08); color: #e5fef6; }
+.question-intro {
+  max-width: 860px;
+  margin-bottom: 22px;
+}
 
-        .btn-modal-save {
-            padding: 11px 28px; background: rgba(0,255,160,0.12); border: 1px solid rgba(0,255,160,0.4);
-            border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 700; color: #00ff9f;
-            text-transform: uppercase; letter-spacing: 0.06em; transition: all 0.2s; font-family: "Space Grotesk", sans-serif;
-            display: flex; align-items: center; gap: 8px; flex: 1; justify-content: center;
-        }
-        .btn-modal-save:hover { background: rgba(0,255,160,0.2); border-color: #00ff9f; box-shadow: 0 0 20px rgba(0,255,160,0.2); }
-        
-        .btn-modal-danger {
-            background: rgba(255,80,80,0.1); border-color: rgba(255,80,80,0.4); color: #ff6b6b;
-        }
-        .btn-modal-danger:hover { background: rgba(255,80,80,0.2); border-color: #ff6b6b; box-shadow: 0 0 20px rgba(255,80,80,0.2); color: #fff;}
+.question-intro h1,
+.section-heading h2 {
+  color: var(--accent-bright);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: clamp(25px, 3vw, 36px);
+  line-height: 1.12;
+  font-weight: 800;
+}
 
-        /* Dropzone */
-        .drop-zone {
-            border: 2px dashed rgba(0,255,160,0.3); border-radius: 12px; padding: 40px 20px;
-            text-align: center; cursor: pointer; transition: all 0.2s; background: rgba(0,255,160,0.03); margin-bottom: 15px;
-        }
-        .drop-zone:hover, .drop-zone.dragover { background: rgba(0,255,160,0.08); border-color: #00ff9f; box-shadow: 0 0 20px rgba(0,255,160,0.15); }
-        .drop-zone p { color: #7df6c2; font-size: 15px; font-weight: 600; }
-        .drop-zone span { display: block; margin-top: 8px; color: #8ba1b0; font-size: 13px; }
-        .file-name { font-size: 13px; font-weight: 600; color: #00ff9f; text-align: center; min-height: 20px; }
+.question-intro p,
+.section-heading p {
+  max-width: 760px;
+  margin-top: 9px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.65;
+}
 
-        /* Checkboxes IAs */
-        .checkbox-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-        .tipo-option label {
-            display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 10px;
-            border: 1px solid #1b2635; background: #050a11; cursor: pointer; font-size: 13px; font-weight: 600;
-            color: #8ba1b0; transition: all 0.2s;
-        }
-        .tipo-option input[type="checkbox"] { accent-color: #00ff9f; width: 16px; height: 16px; cursor: pointer; }
-        .tipo-option label:hover { border-color: rgba(0,255,160,0.25); background: rgba(0,255,160,0.05); color: #c5d9e3;}
+.question-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
 
-        @media (max-width: 768px) {
-            .header { flex-direction: column; text-align: center; }
-            .toolbar { flex-direction: column; align-items: stretch; }
-            .search-bar, .filter-select { width: 100%; }
-            .checkbox-grid { grid-template-columns: 1fr; }
-        }
-    </style>
+.question-meta-grid {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.field-label {
+  display: block;
+  margin-bottom: 8px;
+  color: #c5d9e3;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+textarea,
+.field-input,
+.search-input,
+.filter-select {
+  width: 100%;
+  color: var(--text);
+  outline: none;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.42);
+  transition: border-color 0.16s ease, background 0.16s ease;
+}
+
+textarea {
+  min-height: 150px;
+  padding: 17px;
+  resize: vertical;
+  border-radius: 13px;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+textarea::placeholder,
+.search-input::placeholder,
+.field-input::placeholder { color: rgba(122, 150, 140, 0.68); }
+
+textarea:focus,
+.field-input:focus,
+.search-input:focus,
+.filter-select:focus {
+  border-color: rgba(0, 220, 130, 0.44);
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.upload-callout {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 16px;
+  padding: 18px;
+  border: 1px solid rgba(14, 165, 233, 0.26);
+  border-radius: 14px;
+  background:
+    linear-gradient(135deg, rgba(14, 165, 233, 0.1), rgba(0, 220, 130, 0.055)),
+    rgba(0, 0, 0, 0.18);
+}
+
+.upload-icon,
+.empty-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  border: 1px solid rgba(14, 165, 233, 0.34);
+  border-radius: 12px;
+  background: rgba(14, 165, 233, 0.1);
+  color: #7dd3fc;
+}
+
+.upload-title {
+  color: var(--text-strong);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.upload-desc {
+  margin-top: 4px;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-top: 2px;
+}
+
+.status-bar {
+  margin-top: 16px;
+  padding: 11px 14px;
+  border: 1px solid rgba(0, 220, 130, 0.14);
+  border-radius: 10px;
+  background: rgba(0, 220, 130, 0.045);
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.status-bar.erro {
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.26);
+  background: rgba(239, 68, 68, 0.055);
+}
+
+.status-bar.aviso {
+  color: #fbbf24;
+  border-color: rgba(245, 158, 11, 0.25);
+  background: rgba(245, 158, 11, 0.055);
+}
+
+.history-panel {
+  margin-top: 22px;
+  padding: 26px;
+}
+
+.section-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.section-heading .section-copy { min-width: 0; }
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.stat-card {
+  min-height: 78px;
+  padding: 14px 16px;
+  border: 1px solid rgba(0, 220, 130, 0.12);
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.stat-label {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.stat-value {
+  margin-top: 7px;
+  color: var(--text-strong);
+  font-family: var(--mono);
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.toolbar {
+  display: grid;
+  grid-template-columns: minmax(240px, 1.4fr) repeat(4, minmax(150px, 0.7fr));
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.search-bar {
+  position: relative;
+  min-width: 0;
+}
+
+.search-icon {
+  position: absolute;
+  top: 50%;
+  left: 15px;
+  display: flex;
+  color: var(--accent);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.search-input,
+.filter-select,
+.field-input {
+  height: 44px;
+  padding: 0 14px;
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.search-input { padding-left: 44px; }
+
+.filter-select {
+  cursor: pointer;
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+    linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) 18px,
+    calc(100% - 13px) 18px;
+  background-size: 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 32px;
+}
+
+.filter-select option {
+  background: #050c14;
+  color: var(--text);
+}
+
+.history-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.history-grid {
+  display: grid;
+  gap: 15px;
+}
+
+.history-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow: hidden;
+  padding: 22px 24px;
+  border: 1px solid rgba(0, 220, 130, 0.12);
+  border-radius: 16px;
+  background:
+    linear-gradient(135deg, rgba(11, 20, 29, 0.9) 0%, rgba(5, 10, 17, 0.96) 100%);
+  content-visibility: auto;
+  contain-intrinsic-size: 190px;
+  transition: border-color 0.16s ease, background 0.16s ease;
+}
+
+.history-card::before {
+  display: none;
+}
+
+.history-card:hover {
+  border-color: rgba(0, 220, 130, 0.34);
+  background: linear-gradient(135deg, rgba(12, 24, 33, 0.94) 0%, rgba(5, 10, 17, 0.98) 100%);
+}
+
+.history-card:hover::before { opacity: 0; }
+
+.card-header,
+.card-footer,
+.card-actions,
+.badge-row {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+}
+
+.card-header {
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.badge-row {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.card-actions {
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 38px;
+  height: 38px;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 9px;
+  background: rgba(0, 0, 0, 0.18);
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+}
+
+.btn-icon:hover { transform: translateY(-1px); }
+
+.btn-view {
+  border-color: rgba(0, 220, 130, 0.24);
+  color: var(--accent);
+}
+
+.btn-view:hover {
+  border-color: rgba(0, 220, 130, 0.52);
+  background: rgba(0, 220, 130, 0.09);
+  color: var(--accent-bright);
+}
+
+.btn-icon-danger {
+  border-color: rgba(239, 68, 68, 0.26);
+  color: #f87171;
+}
+
+.btn-icon-danger:hover {
+  border-color: rgba(239, 68, 68, 0.56);
+  background: rgba(239, 68, 68, 0.1);
+  color: #fecaca;
+}
+
+.status-badge,
+.badge-categoria,
+.tag {
+  min-height: 25px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.status-answered {
+  border: 1px solid rgba(0, 220, 130, 0.28);
+  background: rgba(0, 220, 130, 0.1);
+  color: var(--accent-bright);
+}
+
+.status-pending {
+  border: 1px solid rgba(245, 158, 11, 0.32);
+  background: rgba(245, 158, 11, 0.1);
+  color: #fbbf24;
+}
+
+.badge-categoria {
+  border: 1px solid rgba(0, 220, 130, 0.16);
+  background: rgba(0, 220, 130, 0.055);
+  color: #7df6c2;
+}
+
+.badge-form {
+  border-color: rgba(139, 92, 246, 0.32);
+  background: rgba(139, 92, 246, 0.1);
+  color: #c4b5fd;
+}
+
+.card-question {
+  position: relative;
+  z-index: 1;
+  color: var(--text-strong);
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.48;
+}
+
+.card-preview {
+  position: relative;
+  z-index: 1;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.card-footer {
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(0, 220, 130, 0.1);
+}
+
+.tag {
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: rgba(0, 0, 0, 0.24);
+  color: #c5d9e3;
+}
+
+.tag img {
+  width: 15px;
+  height: 15px;
+  object-fit: contain;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 220px;
+  padding: 34px 18px;
+  border: 1px dashed rgba(0, 220, 130, 0.18);
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.16);
+  text-align: center;
+  color: var(--muted);
+}
+
+.empty-state p {
+  margin-top: 12px;
+  font-size: 14px;
+}
+
+.filter-empty[hidden] { display: none; }
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.78);
+}
+
+.modal-overlay.active { display: flex; }
+
+.modal {
+  width: min(100%, 600px);
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 30px;
+  border: 1px solid rgba(0, 220, 130, 0.26);
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(11, 20, 29, 0.98), rgba(2, 5, 9, 0.98));
+  box-shadow: 0 22px 80px rgba(0, 0, 0, 0.72), 0 0 32px rgba(0, 220, 130, 0.08);
+}
+
+.modal::-webkit-scrollbar { width: 6px; }
+.modal::-webkit-scrollbar-thumb { background: rgba(0, 220, 130, 0.24); border-radius: 99px; }
+
+.modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid rgba(0, 220, 130, 0.12);
+}
+
+.modal-title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.modal-product {
+  color: rgba(0, 220, 130, 0.78);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.modal-title {
+  color: var(--accent-bright);
+  font-size: 21px;
+  font-weight: 800;
+}
+
+.modal-desc {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.modal-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border: 1px solid rgba(239, 68, 68, 0.26);
+  border-radius: 9px;
+  background: rgba(239, 68, 68, 0.055);
+  color: #f87171;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+
+.modal-close:hover {
+  border-color: rgba(239, 68, 68, 0.56);
+  background: rgba(239, 68, 68, 0.14);
+  color: #fecaca;
+}
+
+.field-group { margin-bottom: 16px; }
+
+.field-input { display: block; }
+
+.field-textarea {
+  min-height: 112px;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(0, 220, 130, 0.12);
+}
+
+.drop-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 190px;
+  padding: 30px 20px;
+  border: 2px dashed rgba(14, 165, 233, 0.34);
+  border-radius: 15px;
+  background:
+    linear-gradient(135deg, rgba(14, 165, 233, 0.075), rgba(0, 220, 130, 0.04)),
+    rgba(0, 0, 0, 0.18);
+  color: var(--text);
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+}
+
+.drop-zone:hover,
+.drop-zone.dragover {
+  border-color: #38bdf8;
+  background: rgba(14, 165, 233, 0.1);
+  box-shadow: 0 0 24px rgba(14, 165, 233, 0.12);
+}
+
+.drop-zone strong {
+  color: #7dd3fc;
+  font-size: 16px;
+}
+
+.drop-zone span {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.file-name {
+  min-height: 22px;
+  margin-top: 12px;
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: 12px;
+  text-align: center;
+}
+
+.details-question,
+.detail-response-body {
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.32);
+  color: var(--text);
+  line-height: 1.65;
+}
+
+.details-question {
+  max-height: 150px;
+  overflow-y: auto;
+  font-size: 14px;
+}
+
+.responses-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.detail-response-card {
+  min-width: 0;
+}
+
+.detail-response-body {
+  min-height: 150px;
+  max-height: 350px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  font-size: 13px;
+}
+
+.toast-stack {
+  position: fixed;
+  top: 28px;
+  right: 28px;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: min(380px, calc(100vw - 32px));
+  pointer-events: none;
+}
+
+.toast-message {
+  padding: 15px 18px;
+  border-radius: 12px;
+  background: rgba(0, 220, 130, 0.12);
+  border: 1px solid rgba(0, 220, 130, 0.42);
+  color: var(--accent-bright);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.38);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
+  transition: opacity 0.45s ease, transform 0.45s ease;
+}
+
+.toast-message.error {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #fca5a5;
+}
+
+@media (max-width: 1180px) {
+  .toolbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .search-bar { grid-column: 1 / -1; }
+}
+
+@media (max-width: 760px) {
+  body { padding: 12px; }
+
+  .hdr {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 18px;
+  }
+
+  .hdr .btn { width: 100%; }
+
+  .question-hub,
+  .history-panel,
+  .modal { padding: 20px; }
+
+  .upload-callout {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .upload-icon { width: 40px; height: 40px; }
+
+  .actions .btn,
+  .history-actions .btn,
+  .modal-footer .btn { width: 100%; }
+
+  .stats-grid,
+  .toolbar,
+  .question-meta-grid { grid-template-columns: 1fr; }
+
+  .section-heading,
+  .card-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .card-actions { justify-content: flex-end; }
+  .question-meta-grid .btn { width: 100%; }
+}
+
+@media (max-width: 480px) {
+  .hdr-left { align-items: flex-start; }
+  .logo-box { width: 48px; height: 48px; }
+  .hdr-title { font-size: 20px; }
+  .question-intro h1, .section-heading h2 { font-size: 25px; }
+  .history-card { padding: 18px; }
+}
+</style>
 </head>
 <body>
-    <div class="background-grid"></div>
-    <div class="scanline"></div>
-    <div class="glow-orb"></div>
+<div class="wrap">
+  <header class="hdr">
+    <div class="hdr-left">
+      <div class="logo-box" aria-hidden="true">
+        <img src="{% static 'pondersec_logo.jpg' %}" alt="">
+      </div>
+      <div class="hdr-info">
+        <span class="hdr-tag">PonderSEC</span>
+        <span class="hdr-title">Questões</span>
+        <span class="hdr-sub">Cadastre, importe, pesquise e acompanhe perguntas de cibersegurança.</span>
+      </div>
+    </div>
 
-    <div class="container">
-        <div class="header">
-            <div class="logo">
-                <img src="{% static 'pondersec_logo.jpg' %}" alt="PonderSEC Logo">
-            </div>
-            <div class="header-text">
-                <div class="product-name">PONDERSEC</div>
-                <div class="page-title">Questões</div>
-                <div class="subtitle">Cadastre e gerencie suas questões de cibersegurança</div>
-            </div>
-            
-            <a href="{% url 'menu' %}" class="btn-back-header">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-                    <path d="M19 12H5M11 6l-6 6 6 6"/>
-                </svg>
-                Voltar
-            </a>
+    <a href="{% url 'menu' %}" class="btn btn-secondary" aria-label="Voltar ao menu">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M19 12H5"></path>
+        <path d="M11 6l-6 6 6 6"></path>
+      </svg>
+      Voltar
+    </a>
+  </header>
+
+  {% if messages %}
+  <div class="toast-stack" id="toast-container">
+    {% for message in messages %}
+    <div class="toast-message {% if message.tags == 'error' %}error{% endif %}">
+      {{ message }}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <main>
+    <section class="main-card question-hub" aria-labelledby="questionTitle">
+      <div class="section-kicker">Cadastro rápido</div>
+      <div class="question-intro">
+        <h1 id="questionTitle">Digite uma pergunta para cadastrar</h1>
+        <p>Use o campo principal para uma pergunta individual ou envie TXT/JSON para cadastrar várias perguntas em lote.</p>
+      </div>
+
+      <form class="question-form" method="POST" action="{% url 'add_questoes' %}" onsubmit="return bloquearBotao('btnSalvarQuestaoPrincipal')">
+        {% csrf_token %}
+        <div>
+          <label class="field-label" for="question">Pergunta</label>
+          <textarea id="question" name="pergunta" required placeholder="Ex.: Quais controles reduzem o risco de phishing em uma organização?"></textarea>
         </div>
 
-        {% if messages %}
-            <div id="toast-container" style="position: fixed; top: 30px; right: 30px; z-index: 999999; display: flex; flex-direction: column; gap: 12px; pointer-events: none;">
-            {% for message in messages %}
-                <div class="toast-message" style="
-                            background: {% if message.tags == 'error' %}rgba(255, 80, 54, 0.15){% else %}rgba(0, 255, 160, 0.15){% endif %}; 
-                            border: 1px solid {% if message.tags == 'error' %}#f55036{% else %}#00ff9f{% endif %}; 
-                            color: {% if message.tags == 'error' %}#f55036{% else %}#00ff9f{% endif %}; 
-                            padding: 16px 24px; border-radius: 12px; font-size: 14px; font-weight: 600; text-align: center;
-                            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5); backdrop-filter: blur(5px);
-                            transition: opacity 0.5s ease, transform 0.5s ease;
-                            transform: translateX(0); opacity: 1;">
-                    {{ message }}
-                </div>
+        <div class="question-meta-grid">
+          <div class="field-group" style="margin-bottom: 0;">
+            <label class="field-label" for="categoriaQuestao">Categoria da questão</label>
+            <select class="filter-select" id="categoriaQuestao" name="categoria_id">
+              <option value="">Geral</option>
+              {% for cat in categorias %}
+              <option value="{{ cat.id }}">{{ cat.nome_categoria }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <button class="btn btn-secondary" type="button" onclick="abrirModalCategoria()">Cadastrar categoria</button>
+        </div>
+
+        <div class="upload-callout">
+          <div class="upload-icon" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <path d="M17 8l-5-5-5 5"></path>
+              <path d="M12 3v12"></path>
+            </svg>
+          </div>
+          <div>
+            <div class="upload-title">TXT/JSON = upload em lote de perguntas</div>
+            <div class="upload-desc">Use esta opção quando quiser importar várias perguntas de uma vez.</div>
+          </div>
+          <button class="btn btn-upload" type="button" onclick="abrirModalUpload()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 3v12"></path>
+              <path d="M17 8l-5-5-5 5"></path>
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            </svg>
+            Enviar TXT/JSON
+          </button>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-primary" type="submit" id="btnSalvarQuestaoPrincipal">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 5v14"></path>
+              <path d="M5 12h14"></path>
+            </svg>
+            Adicionar questão
+          </button>
+          <button class="btn btn-ghost" type="reset" onclick="setStatus('Campo limpo. Pronto para cadastrar outra pergunta.', 'aviso')">
+            Limpar
+          </button>
+          <button class="btn btn-ghost" type="button" onclick="scrollToHistory()">
+            Ver histórico
+          </button>
+        </div>
+      </form>
+
+      <div class="status-bar" id="status" role="status">Pronto para cadastrar perguntas.</div>
+    </section>
+
+    <section class="history-panel" id="historico" aria-labelledby="historyTitle">
+      <div class="section-heading">
+        <div class="section-copy">
+          <div class="section-kicker">Histórico de questões</div>
+          <h2 id="historyTitle">Perguntas cadastradas</h2>
+          <p>Pesquise por conteúdo e filtre por status, IA vinculada, formulário ou categoria.</p>
+        </div>
+      </div>
+
+      <div class="stats-grid" aria-label="Resumo do histórico">
+        <div class="stat-card">
+          <div class="stat-label">Total</div>
+          <div class="stat-value" id="statTotal">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Respondidas</div>
+          <div class="stat-value" id="statAnswered">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Pendentes</div>
+          <div class="stat-value" id="statPending">0</div>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <div class="search-bar">
+          <span class="search-icon" aria-hidden="true">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="M21 21l-4.35-4.35"></path>
+            </svg>
+          </span>
+          <input type="text" class="search-input" id="searchInput" placeholder="Buscar em perguntas..." oninput="queueFilterHistory()">
+        </div>
+
+        <select id="statusFilter" class="filter-select" onchange="queueFilterHistory()" aria-label="Filtrar por status">
+          <option value="all">Todos os status</option>
+          <option value="answered">Respondidas</option>
+          <option value="pending">Pendentes</option>
+        </select>
+
+        <select id="aiFilter" class="filter-select" onchange="queueFilterHistory()" aria-label="Filtrar por IA">
+          <option value="all">Todas as IAs</option>
+          {% if llms %}
+            {% for llm in llms %}
+              <option value="{{ llm.nome|lower }}">{{ llm.nome }}</option>
             {% endfor %}
-            </div>
-        {% endif %}
+          {% endif %}
+        </select>
 
-        <div class="toolbar">
-            <div class="search-bar">
-                <span class="search-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ecf9a" stroke-width="2" stroke-linecap="round">
-                        <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
-                    </svg>
-                </span>
-                <input type="text" class="search-input" id="searchInput" placeholder="Buscar em questões..." onkeyup="filterHistory()">
-            </div>
-            
-            <select id="statusFilter" class="filter-select" onchange="filterHistory()">
-                <option value="all">Todos os Status</option>
-                <option value="answered">Respondidas</option>
-                <option value="pending">Pendentes</option>
-            </select>
+        <select id="formFilter" class="filter-select" onchange="queueFilterHistory()" aria-label="Filtrar por formulário">
+          <option value="all">Todos os formulários</option>
+          {% if formularios %}
+            {% for form in formularios %}
+              <option value="{{ form.nome|lower }}">{{ form.nome }}</option>
+            {% endfor %}
+          {% endif %}
+        </select>
 
-            <select id="aiFilter" class="filter-select" onchange="filterHistory()">
-                <option value="all">Todas as IAs</option>
-                {% if llms %}
-                    {% for llm in llms %}
-                        <option value="{{ llm.nome|lower }}">{{ llm.nome }}</option>
-                    {% endfor %}
-                {% endif %}
-            </select>
+        <select id="categoryFilter" class="filter-select" onchange="queueFilterHistory()" aria-label="Filtrar por categoria">
+          <option value="all">Todas as categorias</option>
+          {% if categorias %}
+            {% for cat in categorias %}
+              <option value="{{ cat.nome_categoria|lower }}">{{ cat.nome_categoria }}</option>
+            {% endfor %}
+          {% endif %}
+        </select>
+      </div>
 
-            <select id="formFilter" class="filter-select" onchange="filterHistory()">
-                <option value="all">Todos os Formulários</option>
-                {% if formularios %}
-                    {% for form in formularios %}
-                        <option value="{{ form.nome|lower }}">{{ form.nome }}</option>
-                    {% endfor %}
-                {% endif %}
-            </select>
-            
-            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-                <button class="btn-add" onclick="abrirModalUpload()">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
-                    </svg>
-                    Upload
-                </button>
-                <button class="btn-add" onclick="abrirModalFormQuestao()">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-                        <path d="M12 5v14M5 12h14"/>
-                    </svg>
-                    Adicionar
-                </button>
-            </div>
-        </div>
-
+      <div class="history-actions">
+        <button class="btn btn-secondary" type="button" onclick="abrirModalCategoria()">
+          Cadastrar categoria
+        </button>
         {% if historico %}
-        <div style="display: flex; justify-content: flex-end; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
-            
-            <button class="btn-add" onclick="abrirGerenciarCategorias()" style="background: rgba(0, 207, 255, 0.08); border-color: rgba(0, 207, 255, 0.3); color: #00cfff;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-                    <line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line>
-                </svg>
-                Categorias
-            </button>
-
-            {% if historico %}
-            <button class="btn-clear-all" data-action="{% url 'limpar_questoes' %}" data-title="LIMPAR TUDO?" data-desc="Você tem certeza? Todas as questões serão apagadas para sempre." data-btn-text="Sim, limpar tudo" onclick="configurarModal(this)">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-                    <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>
-                </svg>
-                Apagar Tudo
-            </button>
-            {% endif %}
-            
-        </div>
+        <button class="btn btn-danger" type="button" data-action="{% url 'limpar_questoes' %}" data-title="Limpar histórico?" data-desc="Todas as questões cadastradas serão apagadas." data-btn-text="Sim, limpar tudo" onclick="configurarModal(this)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M3 6h18"></path>
+            <path d="M19 6l-1 14H6L5 6"></path>
+            <path d="M10 11v6"></path>
+            <path d="M14 11v6"></path>
+            <path d="M9 6V4h6v2"></path>
+          </svg>
+          Apagar tudo
+        </button>
         {% endif %}
+      </div>
 
-        <div class="section-label">Histórico de Questões</div>
-
-        <div class="history-grid" id="historyGrid">
-            {% if historico %}
-                {% for item in historico %}
-                    {% if item.respostas.exists %}
-                        <div class="history-card" 
-                            data-question="{{ item.conteudo|lower }}"
-                            data-status="answered"
-                            data-ias="{% for resp in item.respostas.all %}{{ resp.llm.nome|lower }} {% endfor %}"
-                            data-forms="{% for form in item.formularios.all %}{{ form.nome|lower }} {% endfor %}">
-                             
-                            <div class="card-header">
-                                <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
-                                    <span class="status-badge status-answered">
-                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
-                                        Respondida
-                                    </span>
-                                    <span class="badge-categoria">{{ item.categoria.nome_categoria|default:"Sem categoria" }}</span>
-                                    {% for form in item.formularios.all %}
-                                        <span class="status-badge" style="background: rgba(187, 134, 252, 0.1); color: #bb86fc; border: 1px solid rgba(187, 134, 252, 0.3);">
-                                            📄 {{ form.nome }}
-                                        </span>
-                                    {% endfor %}
-                                </div>
-                                
-                                <div class="card-actions">
-                                    <button type="button" class="btn-icon btn-view" title="Ver detalhes" data-url="{% url 'ver_detalhes_questao' item.id %}" onclick="abrirModalDetalhes(this)">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                            <circle cx="12" cy="12" r="3"></circle>
-                                        </svg>
-                                    </button>
-                                    <button type="button" class="btn-icon btn-icon-danger" title="Deletar" data-action="{% url 'deletar_questao_historico' item.id %}" data-title="Apagar Registro?" data-desc="Esta ação removerá esta questão permanentemente." data-btn-text="Sim, apagar" onclick="configurarModal(this)">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                                            <polyline points="3 6 5 6 21 6"/>
-                                            <path d="M19 6l-1 14H6L5 6"/>
-                                            <path d="M10 11v6M14 11v6"/>
-                                            <path d="M9 6V4h6v2"/>
-                                        </svg>
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            <div class="card-question">{{ item.conteudo }}</div>
-                            <div class="card-preview">
-                                {{ item.respostas.first.conteudo_resposta|truncatewords:15|default:"Resposta detalhada gerada." }}...
-                            </div>
-                            
-                            <div class="card-footer">
-                                {% for resp in item.respostas.all %}
-                                    <span class="tag">
-                                        {% if 'gpt' in resp.llm.nome|lower or 'openai' in resp.llm.nome|lower %}
-                                            <img src="{% static 'icons8-chatgpt-16.png' %}" alt="ChatGPT">
-                                        {% elif 'groq' in resp.llm.nome|lower or 'llama' in resp.llm.nome|lower %}
-                                            <img src="{% static 'icons8-llama-48.png' %}" alt="Groq">
-                                        {% elif 'gemini' in resp.llm.nome|lower %}
-                                            <img src="{% static 'icons8-gemini-ai-94.png' %}" alt="Gemini">
-                                        {% elif 'claude' in resp.llm.nome|lower %}
-                                            <img src="{% static 'icons8-3d-claude-ai-logo-94.png' %}" alt="Claude">
-                                        {% elif 'deepseek' in resp.llm.nome|lower %}
-                                            <img src="{% static 'icons8-deepseek-94.png' %}" alt="DeepSeek">
-                                        {% else %}⚙️{% endif %}
-                                        {{ resp.llm.nome|default:"IA Geral" }}
-                                    </span>
-                                {% endfor %}
-                            </div>
-                        </div>
-                    {% endif %}
+      <div class="history-grid" id="historyGrid">
+        {% if historico %}
+          {% for item in historico %}
+          <article class="history-card"
+            data-question="{{ item.conteudo|lower }}"
+            data-status="{% if item.respostas.exists %}answered{% else %}pending{% endif %}"
+            data-ias="{% for resp in item.respostas.all %}{{ resp.llm.nome|lower }} {% endfor %}"
+            data-forms="{% for form in item.formularios.all %}{{ form.nome|lower }} {% endfor %}"
+            data-category="{{ item.categoria.nome_categoria|default:'sem categoria'|lower }}">
+            <div class="card-header">
+              <div class="badge-row">
+                {% if item.respostas.exists %}
+                <span class="status-badge status-answered">Respondida</span>
+                {% else %}
+                <span class="status-badge status-pending">Pendente</span>
+                {% endif %}
+                <span class="badge-categoria">{{ item.categoria.nome_categoria|default:"Sem categoria" }}</span>
+                {% for form in item.formularios.all %}
+                <span class="status-badge badge-form">{{ form.nome }}</span>
                 {% endfor %}
+              </div>
 
-                {% for item in historico %}
-                    {% if not item.respostas.exists %}
-                        <div class="history-card" 
-                             data-question="{{ item.conteudo|lower }}"
-                             data-status="pending"
-                             data-ias=""
-                             data-forms="{% for form in item.formularios.all %}{{ form.nome|lower }} {% endfor %}"
-                             style="opacity: 0.85;">
-                             
-                            <div class="card-header">
-                                <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
-                                    <span class="status-badge status-pending">⏳ Pendente</span>
-                                    <span class="badge-categoria">{{ item.categoria.nome_categoria|default:"Sem categoria" }}</span>
-                                    {% for form in item.formularios.all %}
-                                        <span class="status-badge" style="background: rgba(187, 134, 252, 0.1); color: #bb86fc; border: 1px solid rgba(187, 134, 252, 0.3);">
-                                            📄 {{ form.nome }}
-                                        </span>
-                                    {% endfor %}
-                                </div>
-                                
-                                <div class="card-actions">
-                                    <button type="button" class="btn-icon btn-view" title="Ver detalhes" data-url="{% url 'ver_detalhes_questao' item.id %}" onclick="abrirModalDetalhes(this)">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                            <circle cx="12" cy="12" r="3"></circle>
-                                        </svg>
-                                    </button>
-                                    <button type="button" class="btn-icon btn-icon-danger" title="Deletar" data-action="{% url 'deletar_questao_historico' item.id %}" data-title="Apagar Registro?" data-desc="Esta ação removerá esta questão permanentemente." data-btn-text="Sim, apagar" onclick="configurarModal(this)">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                                            <polyline points="3 6 5 6 21 6"/>
-                                            <path d="M19 6l-1 14H6L5 6"/>
-                                            <path d="M10 11v6M14 11v6"/>
-                                            <path d="M9 6V4h6v2"/>
-                                        </svg>
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            <div class="card-question">{{ item.conteudo }}</div>
-                            <div class="card-preview" style="color: #6b7b8d; font-style: italic;">
-                                Aguardando execução de IAs no painel de consultas...
-                            </div>
-                        </div>
-                    {% endif %}
-                {% endfor %}
+              <div class="card-actions">
+                <button type="button" class="btn-icon btn-view" title="Ver detalhes" data-url="{% url 'ver_detalhes_questao' item.id %}" onclick="abrirModalDetalhes(this)">Ver</button>
+                <button type="button" class="btn-icon btn-icon-danger" title="Deletar" data-action="{% url 'deletar_questao_historico' item.id %}" data-title="Apagar questão?" data-desc="Esta questão será removida permanentemente." data-btn-text="Sim, apagar" onclick="configurarModal(this)">Del</button>
+              </div>
+            </div>
 
+            <div class="card-question">{{ item.conteudo }}</div>
+            {% if item.respostas.exists %}
+            <div class="card-preview">{{ item.respostas.first.conteudo_resposta|truncatewords:18|default:"Resposta detalhada registrada." }}...</div>
+            <div class="card-footer">
+              {% for resp in item.respostas.all %}
+              <span class="tag">{{ resp.llm.nome|default:"IA geral" }}</span>
+              {% endfor %}
+            </div>
             {% else %}
-                <div class="empty-state">
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#4ecf9a" stroke-width="1.5" stroke-linecap="round">
-                        <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
-                    </svg>
-                    <p>Nenhuma questão cadastrada ainda.</p>
-                </div>
+            <div class="card-preview">Ainda sem respostas vinculadas a esta questão.</div>
             {% endif %}
-        </div>
-    </div> 
+          </article>
+          {% endfor %}
+        {% else %}
+          <div class="empty-state"><p>Nenhuma questão cadastrada ainda.</p></div>
+        {% endif %}
+      </div>
 
-    <!-- MODAL UNIVERSAL -->
-    <div class="modal-overlay" id="modalUniversal">
-        <div class="modal" style="max-width: 440px; text-align: center;">
-            <div class="modal-header" style="justify-content: center; border-bottom: none; padding-bottom: 0;">
-                <div class="modal-title-wrap">
-                    <span class="modal-product">Atenção</span>
-                    <span class="modal-title" id="modalTitle" style="color: #ff6b6b;">Título</span>
-                </div>
-            </div>
-            <div class="modal-desc" id="modalDesc" style="margin-bottom: 24px;">Descrição</div>
-            
-            <div class="modal-footer" style="justify-content: center; border-top: none;">
-                <button type="button" class="btn-modal-cancel" onclick="fecharModalUniversal()">Cancelar</button>
-                <form id="modalForm" method="POST" action="" style="display: flex; flex: 1;">
-                    {% csrf_token %}
-                    <button type="submit" class="btn-modal-save btn-modal-danger" id="modalConfirmBtn">Confirmar</button>
-                </form>
-            </div>
-        </div>
+      <div class="empty-state filter-empty" id="filterEmpty" hidden>
+        <p>Nenhuma questão encontrada com os filtros atuais.</p>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="modal-overlay" id="modalUniversal">
+  <div class="modal" style="max-width: 440px; text-align: center;">
+    <div class="modal-header" style="justify-content: center; border-bottom: 0; padding-bottom: 0;">
+      <div class="modal-title-wrap">
+        <span class="modal-product">Atenção</span>
+        <span class="modal-title" id="modalTitle" style="color: #f87171;">Confirmação</span>
+      </div>
+    </div>
+    <div class="modal-desc" id="modalDesc" style="margin-bottom: 22px;">Confirme a ação.</div>
+
+    <div class="modal-footer" style="justify-content: center; border-top: 0;">
+      <button type="button" class="btn btn-ghost" onclick="fecharModalUniversal()">Cancelar</button>
+      <form id="modalForm" method="POST" action="" style="display: flex; flex: 1;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger" id="modalConfirmBtn" style="width: 100%;">Confirmar</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="categoriaModal">
+  <div class="modal" style="max-width: 520px;">
+    <div class="modal-header">
+      <div class="modal-title-wrap">
+        <span class="modal-product">Categorias</span>
+        <span class="modal-title">Cadastrar categoria</span>
+        <span class="modal-desc">Crie uma categoria para organizar as questões.</span>
+      </div>
+      <button type="button" class="modal-close" onclick="fecharModalCategoria()" aria-label="Fechar modal">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M18 6L6 18"></path>
+          <path d="M6 6l12 12"></path>
+        </svg>
+      </button>
     </div>
 
-    <!-- MODAL UPLOAD -->
-    <div class="modal-overlay" id="uploadModal">
-        <div class="modal" style="max-width: 500px;">
-            <div class="modal-header">
-                <div class="modal-title-wrap">
-                    <span class="modal-product">PonderSEC</span>
-                    <span class="modal-title">Upload de Arquivo</span>
-                </div>
-                <button type="button" class="modal-close" onclick="fecharModalUpload()">✕</button>
-            </div>
-            <div class="modal-desc" style="margin-bottom: 20px;">Envie um arquivo <b>.txt</b> ou <b>.json</b> com suas perguntas.</div>
-            
-            <form id="uploadForm" method="POST" action="{% url 'upload_perguntas' %}" enctype="multipart/form-data">
-                {% csrf_token %}
-                <div class="drop-zone" id="dropZone">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#00ff9f" stroke-width="1.5" stroke-linecap="round" style="margin-bottom: 12px;">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
-                    </svg>
-                    <p>Arraste o arquivo aqui</p>
-                    <span>ou clique para procurar</span>
-                    <input type="file" id="fileInput" name="arquivo_upload" accept=".txt,.json" style="display: none;">
-                </div>
-                <div class="file-name" id="fileName"></div>
-                
-                <div class="modal-footer">
-                    <button type="button" class="btn-modal-cancel" onclick="fecharModalUpload()">Cancelar</button>
-                    <button type="button" class="btn-modal-save" onclick="submitUpload()">Enviar Arquivo</button>
-                </div>
-            </form>
-        </div>
+    <form method="POST" action="{% url 'questoes_cadastro_categoria' %}">
+      {% csrf_token %}
+      <div class="field-group">
+        <label class="field-label" for="categoriaNome">Nome da categoria</label>
+        <input class="field-input" id="categoriaNome" name="nome" type="text" maxlength="100" required placeholder="Ex.: Redes, Criptografia, Phishing">
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="categoriaDescricao">Descrição</label>
+        <textarea class="field-textarea" id="categoriaDescricao" name="descricao" placeholder="Descrição curta da categoria..."></textarea>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" onclick="fecharModalCategoria()">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Salvar categoria</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="uploadModal">
+  <div class="modal" style="max-width: 520px;">
+    <div class="modal-header">
+      <div class="modal-title-wrap">
+        <span class="modal-product">Upload em lote</span>
+        <span class="modal-title">Enviar TXT/JSON</span>
+        <span class="modal-desc">TXT/JSON cadastra várias perguntas de uma vez.</span>
+      </div>
+      <button type="button" class="modal-close" onclick="fecharModalUpload()" aria-label="Fechar modal">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M18 6L6 18"></path>
+          <path d="M6 6l12 12"></path>
+        </svg>
+      </button>
     </div>
 
-    <!-- MODAL ADICIONAR QUESTÃO -->
-    <div class="modal-overlay" id="formQuestaoModal">
-        <div class="modal" style="max-width: 600px;">
-            <div class="modal-header">
-                <div class="modal-title-wrap">
-                    <span class="modal-product">PonderSEC</span>
-                    <span class="modal-title">Adicionar Questão</span>
-                </div>
-                <button type="button" class="modal-close" onclick="fecharModalFormQuestao()">✕</button>
-            </div>
+    <form id="uploadForm" method="POST" action="{% url 'upload_perguntas' %}" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="field-group">
+        <label class="field-label" for="categoriaUpload">Categoria para o lote</label>
+        <select class="filter-select" id="categoriaUpload" name="categoria_id">
+          <option value="">Geral</option>
+          {% for cat in categorias %}
+          <option value="{{ cat.id }}">{{ cat.nome_categoria }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="drop-zone" id="dropZone" role="button" tabindex="0">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#7dd3fc" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <path d="M17 8l-5-5-5 5"></path>
+          <path d="M12 3v12"></path>
+        </svg>
+        <strong>Enviar arquivo TXT/JSON</strong>
+        <span>Arraste o arquivo aqui ou clique para procurar.</span>
+        <input type="file" id="fileInput" name="arquivo_upload" accept=".txt,.json,text/plain,application/json" style="display: none;">
+      </div>
+      <div class="file-name" id="fileName"></div>
 
-            <form method="POST" action="{% url 'add_questoes' %}" onsubmit="bloquearBotao()">
-                {% csrf_token %}
-                
-                <div class="field-group">
-                    <label class="field-label" for="pergunta">Texto da pergunta</label>
-                    <textarea name="pergunta" id="pergunta" class="field-textarea" required placeholder="Digite aqui a pergunta sobre cibersegurança..."></textarea>
-                </div>
-                
-                <div class="field-group" style="margin-top: 20px;">
-                    <label class="field-label">IAs que responderão</label>
-                    
-                    <div class="checkbox-grid">
-                        {% if llms %}
-                            {% for llm in llms %}
-                            <div class="tipo-option">
-                                <label>
-                                    <input type="checkbox" name="llms_selecionados" value="{{ llm.id }}"> 
-                                    {{ llm.nome }}
-                                </label>
-                            </div>
-                            {% endfor %}
-                        {% else %}
-                            <p style="color: #8ba1b0; font-size: 13px;">Nenhuma IA configurada no sistema.</p>
-                        {% endif %}
-                    </div>
-                </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" onclick="fecharModalUpload()">Cancelar</button>
+        <button type="button" class="btn btn-upload" onclick="submitUpload()">Enviar TXT/JSON</button>
+      </div>
+    </form>
+  </div>
+</div>
 
-                <div class="modal-footer">
-                    <button type="reset" class="btn-modal-cancel" style="margin-right: auto;">Limpar</button>
-                    <button type="button" class="btn-modal-cancel" onclick="fecharModalFormQuestao()">Cancelar</button>
-                    <button type="submit" id="btnSalvarQuestao" class="btn-modal-save">Salvar Questão</button>
-                </div>
-            </form>
-        </div>
+<div class="modal-overlay" id="detalhesModal">
+  <div class="modal" style="max-width: 860px;">
+    <div class="modal-header">
+      <div class="modal-title-wrap">
+        <span class="modal-product">PonderSEC</span>
+        <span class="modal-title">Detalhes da questão</span>
+      </div>
+      <button type="button" class="modal-close" onclick="fecharModalDetalhes()" aria-label="Fechar modal">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M18 6L6 18"></path>
+          <path d="M6 6l12 12"></path>
+        </svg>
+      </button>
     </div>
 
-    <!-- MODAL DETALHES -->
-    <div class="modal-overlay" id="detalhesModal">
-        <div class="modal" style="max-width: 800px;">
-            <div class="modal-header">
-                <div class="modal-title-wrap">
-                    <span class="modal-product">PonderSEC</span>
-                    <span class="modal-title">Detalhes da Interação</span>
-                </div>
-                <button type="button" class="modal-close" onclick="fecharModalDetalhes()">✕</button>
-            </div>
-
-            <div class="field-group" style="margin-bottom: 24px;">
-                <label class="field-label">Pergunta Realizada</label>
-                <div id="detalhesPergunta" style="background: rgba(5,10,17,0.9); padding: 18px; border-radius: 10px; border: 1px solid #1b2635; color: #e5fef6; font-size: 15px; line-height: 1.6; max-height: 150px; overflow-y: auto;">
-                    Carregando...
-                </div>
-            </div>
-
-            <div id="respostasContainer" style="display: flex; gap: 20px; flex-wrap: wrap;"></div>
-
-            <div class="modal-footer" style="justify-content: center;">
-                <button type="button" class="btn-modal-cancel" onclick="fecharModalDetalhes()" style="padding-left: 40px; padding-right: 40px;">Fechar Visualização</button>
-            </div>
-        </div>
+    <div class="field-group">
+      <label class="field-label">Pergunta cadastrada</label>
+      <div id="detalhesPergunta" class="details-question">Carregando...</div>
     </div>
 
-    <!-- MODAL NOVA CATEGORIA (Restaurado) -->
-    <div class="modal-overlay" id="categoriaModal">
-        <div class="modal" style="max-width: 440px;">
-            <div class="modal-header">
-                <div class="modal-title-wrap">
-                    <span class="modal-product">Classificação</span>
-                    <span class="modal-title">Nova Categoria</span>
-                </div>
-                <button type="button" class="modal-close" onclick="fecharModalCategoria()">✕</button>
-            </div>
-            <!-- Coloque a URL correta caso a sua não seja essa! -->
-            <form method="POST" action="/categoria/adicionar/"> 
-                {% csrf_token %}
-                <div class="field-group">
-                    <label class="field-label">Nome da Categoria</label>
-                    <input type="text" name="nome_categoria" class="field-input" required>
-                </div>
-                <div class="field-group">
-                    <label class="field-label">Descrição</label>
-                    <textarea name="descricao_categoria" class="field-textarea" style="min-height: 80px;"></textarea>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn-modal-cancel" onclick="fecharModalCategoria()">Voltar</button>
-                    <button type="submit" class="btn-modal-save">Criar Categoria</button>
-                </div>
-            </form>
-        </div>
+    <div id="respostasContainer" class="responses-grid"></div>
+
+    <div class="modal-footer" style="justify-content: center;">
+      <button type="button" class="btn btn-ghost" onclick="fecharModalDetalhes()">Fechar visualização</button>
     </div>
+  </div>
+</div>
 
-    <!-- MODAL GERENCIAR CATEGORIAS -->
-    <div class="modal-overlay" id="modalGerenciarCategorias">
-        <div class="modal" style="max-width: 550px;">
-            <div class="modal-header">
-                <div class="modal-title-wrap">
-                    <span class="modal-product">Organização</span>
-                    <span class="modal-title">Gerenciar Categorias</span>
-                </div>
-                <button type="button" class="modal-close" onclick="fecharGerenciarCategorias()">✕</button>
-            </div>
+<script>
+function setStatus(msg, tipo) {
+  const el = document.getElementById("status");
+  if (!el) return;
+  el.textContent = msg;
+  el.className = "status-bar" + (tipo ? " " + tipo : "");
+}
 
-            <button type="button" class="btn-add" style="width: 100%; justify-content: center; margin-bottom: 20px;" onclick="fecharGerenciarCategorias(); abrirModalCategoria();">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-                Criar Nova Categoria
-            </button>
+function scrollToHistory() {
+  document.getElementById("historico")?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
 
-            <div class="questions-select" style="max-height: 350px; overflow-y: auto;">
-                {% for cat in categorias %}
-                <div class="question-option" style="cursor: default; display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #050a11; border: 1px solid #1b2635; border-radius: 10px; margin-bottom: 8px;">
-                    <div>
-                        <div class="question-option-text" style="font-weight: 700; color: #00ff9f;">{{ cat.nome_categoria }}</div>
-                        <div class="question-option-meta" style="color: #6b7b8d; text-transform: none; font-size: 11px;">{{ cat.descricao_categoria|default:"Sem descrição" }}</div>
-                    </div>
-                    <button type="button" class="btn-icon btn-edit" title="Editar" onclick="abrirEditarCategoria('{{ cat.id }}', '{{ cat.nome_categoria|escapejs }}', '{{ cat.descricao_categoria|escapejs }}')">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                        </svg>
-                    </button>
-                </div>
-                {% empty %}
-                <p style="text-align: center; color: #6b7b8d; font-size: 13px; padding: 20px 0;">Nenhuma categoria registrada.</p>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
+function bloquearBotao(btnId) {
+  const btn = document.getElementById(btnId || "btnSalvarQuestaoPrincipal");
+  if (!btn) return true;
+  setTimeout(function() {
+    btn.disabled = true;
+    btn.dataset.originalText = btn.dataset.originalText || btn.textContent;
+    btn.textContent = "Processando...";
+  }, 10);
+  return true;
+}
 
-    <!-- MODAL EDITAR CATEGORIA -->
-    <div class="modal-overlay" id="modalEditarCategoria">
-        <div class="modal" style="max-width: 440px;">
-            <div class="modal-header">
-                <div class="modal-title-wrap">
-                    <span class="modal-product">Classificação</span>
-                    <span class="modal-title">Editar Categoria</span>
-                </div>
-                <button type="button" class="modal-close" onclick="fecharEditarCategoria()">✕</button>
-            </div>
+let historyCardCache = [];
+let filterTimer = null;
 
-            <form method="POST" id="formEditarCategoria">
-                {% csrf_token %}
-                <div class="field-group">
-                    <label class="field-label">Nome da Categoria</label>
-                    <input type="text" name="nome" id="editCatNome" class="field-input" required>
-                </div>
+function initHistoryCache() {
+  historyCardCache = Array.from(document.querySelectorAll(".history-card")).map(card => ({
+    el: card,
+    question: card.getAttribute("data-question") || "",
+    status: card.getAttribute("data-status") || "",
+    ias: card.getAttribute("data-ias") || "",
+    forms: card.getAttribute("data-forms") || "",
+    category: card.getAttribute("data-category") || ""
+  }));
+}
 
-                <div class="field-group">
-                    <label class="field-label">Descrição</label>
-                    <textarea name="descricao" id="editCatDesc" class="field-textarea" style="min-height: 80px;"></textarea>
-                </div>
+function updateHistoryStats() {
+  const cards = historyCardCache.length ? historyCardCache : Array.from(document.querySelectorAll(".history-card")).map(el => ({ el }));
+  const answered = cards.filter(card => card.el.dataset.status === "answered").length;
+  const pending = cards.filter(card => card.el.dataset.status === "pending").length;
 
-                <div class="modal-footer">
-                    <button type="button" class="btn-modal-cancel" onclick="fecharEditarCategoria()">Voltar</button>
-                    <button type="submit" class="btn-modal-save">Salvar</button>
-                </div>
-            </form>
-        </div>
-    </div>
+  const totalEl = document.getElementById("statTotal");
+  const answeredEl = document.getElementById("statAnswered");
+  const pendingEl = document.getElementById("statPending");
 
-    <script>
-        // REGRA UNIVERSAL: Fecha qualquer modal ao clicar no fundo escuro
-        document.querySelectorAll('.modal-overlay').forEach(overlay => {
-            overlay.addEventListener('click', function(e) {
-                if (e.target === this) {
-                    this.classList.remove('active');
-                }
-            });
-        });
+  if (totalEl) totalEl.textContent = cards.length;
+  if (answeredEl) answeredEl.textContent = answered;
+  if (pendingEl) pendingEl.textContent = pending;
+}
 
-        function bloquearBotao() {
-            var btn = document.getElementById("btnSalvarQuestao");
-            setTimeout(function() {
-                btn.disabled = true;
-                btn.innerHTML = 'Processando...';
-                btn.style.opacity = '0.7';
-            }, 10);
-            return true;
-        }
+function queueFilterHistory() {
+  window.clearTimeout(filterTimer);
+  filterTimer = window.setTimeout(filterHistory, 90);
+}
 
-        function filterHistory() {
-            const searchText = document.getElementById('searchInput').value.toLowerCase();
-            const statusFilter = document.getElementById('statusFilter').value;
-            const aiFilter = document.getElementById('aiFilter').value.toLowerCase();
-            const formFilter = document.getElementById('formFilter').value.toLowerCase();
-            
-            const cards = document.querySelectorAll('.history-card');
+function filterHistory() {
+  const searchInput = document.getElementById("searchInput");
+  if (!searchInput) return;
 
-            cards.forEach(card => {
-                const question = card.getAttribute('data-question') || "";
-                const status = card.getAttribute('data-status') || "";
-                const ias = card.getAttribute('data-ias') || "";
-                const forms = card.getAttribute('data-forms') || "";
+  const searchText = searchInput.value.toLowerCase().trim();
+  const statusFilter = document.getElementById("statusFilter")?.value || "all";
+  const aiFilter = (document.getElementById("aiFilter")?.value || "all").toLowerCase();
+  const formFilter = (document.getElementById("formFilter")?.value || "all").toLowerCase();
+  const categoryFilter = (document.getElementById("categoryFilter")?.value || "all").toLowerCase();
+  const cards = historyCardCache;
+  let visibleCount = 0;
 
-                const matchSearch = question.includes(searchText);
-                const matchStatus = (statusFilter === 'all') || (status === statusFilter);
-                const matchAI = (aiFilter === 'all') || ias.includes(aiFilter);
-                const matchForm = (formFilter === 'all') || forms.includes(formFilter);
+  cards.forEach(card => {
+    const matchSearch = card.question.includes(searchText);
+    const matchStatus = statusFilter === "all" || card.status === statusFilter;
+    const matchAI = aiFilter === "all" || card.ias.includes(aiFilter);
+    const matchForm = formFilter === "all" || card.forms.includes(formFilter);
+    const matchCategory = categoryFilter === "all" || card.category.includes(categoryFilter);
+    const shouldShow = matchSearch && matchStatus && matchAI && matchForm && matchCategory;
 
-                card.style.display = (matchSearch && matchStatus && matchAI && matchForm) ? '' : 'none';
-            });
-        }
-        
-        /* Modal Universal Confirmação */
-        function configurarModal(btn) {
-            document.getElementById('modalForm').action = btn.getAttribute('data-action');
-            document.getElementById('modalTitle').innerText = btn.getAttribute('data-title');
-            document.getElementById('modalDesc').innerText = btn.getAttribute('data-desc');
-            document.getElementById('modalConfirmBtn').innerText = btn.getAttribute('data-btn-text');
-            document.getElementById('modalUniversal')?.classList.add('active');
-        }
-        function fecharModalUniversal() { document.getElementById('modalUniversal')?.classList.remove('active'); }
+    card.el.hidden = !shouldShow;
+    if (shouldShow) visibleCount += 1;
+  });
 
-        /* Modal Upload */
-        const fileInput = document.getElementById("fileInput");
-        const fileName = document.getElementById("fileName");
-        const dropZone = document.getElementById("dropZone");
+  const filterEmpty = document.getElementById("filterEmpty");
+  if (filterEmpty) filterEmpty.hidden = cards.length === 0 || visibleCount > 0;
+}
 
-        function abrirModalUpload() { document.getElementById('uploadModal')?.classList.add('active'); }
-        function fecharModalUpload() { 
-            document.getElementById('uploadModal')?.classList.remove('active'); 
-            if(fileInput) fileInput.value = ""; 
-            if(fileName) fileName.textContent = ""; 
-        }
+function configurarModal(btn) {
+  document.getElementById("modalForm").action = btn.getAttribute("data-action");
+  document.getElementById("modalTitle").innerText = btn.getAttribute("data-title");
+  document.getElementById("modalDesc").innerText = btn.getAttribute("data-desc");
+  document.getElementById("modalConfirmBtn").innerText = btn.getAttribute("data-btn-text");
+  document.getElementById("modalUniversal")?.classList.add("active");
+}
 
-        if(dropZone) {
-            dropZone.addEventListener("click", () => fileInput.click());
-            fileInput.addEventListener("change", () => showFile(fileInput.files[0]));
-            dropZone.addEventListener("dragover", e => { e.preventDefault(); dropZone.classList.add("dragover"); });
-            dropZone.addEventListener("dragleave", () => dropZone.classList.remove("dragover"));
-            dropZone.addEventListener("drop", e => {
-                e.preventDefault(); dropZone.classList.remove("dragover");
-                fileInput.files = e.dataTransfer.files; showFile(e.dataTransfer.files[0]);
-            });
-        }
+function fecharModalUniversal() {
+  document.getElementById("modalUniversal")?.classList.remove("active");
+}
 
-        function showFile(file) {
-            if (!file) return;
-            if (!(file.name.endsWith(".txt") || file.name.endsWith(".json"))) {
-                fileName.textContent = "Formato inválido. Use .txt ou .json"; fileName.style.color = "#ff4d4d"; fileInput.value = ""; return;
-            }
-            fileName.textContent = "Selecionado: " + file.name; fileName.style.color = "#00ff9f";
-        }
+function abrirModalCategoria() {
+  document.getElementById("categoriaModal")?.classList.add("active");
+  document.getElementById("categoriaNome")?.focus();
+}
 
-        function submitUpload() {
-            if (!fileInput.files.length) { fileName.textContent = "Selecione um arquivo."; fileName.style.color = "#ff4d4d"; return; }
-            document.getElementById("uploadForm").submit();
-        }
+function fecharModalCategoria() {
+  document.getElementById("categoriaModal")?.classList.remove("active");
+}
 
-        /* Modal Questão */
-        function abrirModalFormQuestao() { document.getElementById('formQuestaoModal')?.classList.add('active'); }
-        function fecharModalFormQuestao() { document.getElementById('formQuestaoModal')?.classList.remove('active'); }
+function abrirModalUpload() {
+  document.getElementById("uploadModal")?.classList.add("active");
+}
 
-        /* --- Gestão de Categorias Blindada --- */
-        function abrirGerenciarCategorias() { document.getElementById('modalGerenciarCategorias')?.classList.add('active'); }
-        function fecharGerenciarCategorias() { document.getElementById('modalGerenciarCategorias')?.classList.remove('active'); }
-        
-        function abrirModalCategoria() { document.getElementById('categoriaModal')?.classList.add('active'); }
-        function fecharModalCategoria() { 
-            document.getElementById('categoriaModal')?.classList.remove('active'); 
-            abrirGerenciarCategorias(); 
-        }
+function fecharModalUpload() {
+  const modal = document.getElementById("uploadModal");
+  const fileInput = document.getElementById("fileInput");
+  const fileName = document.getElementById("fileName");
+  modal?.classList.remove("active");
+  if (fileInput) fileInput.value = "";
+  if (fileName) {
+    fileName.textContent = "";
+    fileName.style.color = "";
+  }
+}
 
-        function abrirEditarCategoria(id, nome, desc) {
-            fecharGerenciarCategorias();
-            document.getElementById('editCatNome').value = nome;
-            document.getElementById('editCatDesc').value = desc;
-            document.getElementById('formEditarCategoria').action = `/categoria/editar/${id}/`;
-            document.getElementById('modalEditarCategoria')?.classList.add('active');
-        }
-        function fecharEditarCategoria() {
-            document.getElementById('modalEditarCategoria')?.classList.remove('active');
-            abrirGerenciarCategorias();
-        }
+function showFile(file) {
+  const fileInput = document.getElementById("fileInput");
+  const fileName = document.getElementById("fileName");
+  if (!file || !fileName) return;
 
-        /* Modal Detalhes */
-        function abrirModalDetalhes(btn) {
-            const url = btn.getAttribute('data-url');
-            const respostasContainer = document.getElementById('respostasContainer');
-            document.getElementById('detalhesModal')?.classList.add('active');
-            document.getElementById('detalhesPergunta').innerText = "Carregando detalhes do servidor...";
-            respostasContainer.innerHTML = '<p style="color: #8ba1b0; text-align: center; width: 100%; font-size: 13px;">Buscando respostas no banco de dados...</p>';
-            
-            fetch(url)
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('detalhesPergunta').innerText = data.pergunta;
-                    respostasContainer.innerHTML = '';
-                    if (data.respostas.length === 0) {
-                        respostasContainer.innerHTML = '<p style="color: #ff4d4d; width: 100%; text-align: center; padding: 20px;">Nenhuma IA respondeu a esta pergunta.</p>';
-                        return;
-                    }
-                    data.respostas.forEach(resp => {
-                        const div = document.createElement('div');
-                        div.style.flex = "1";
-                        div.style.minWidth = "300px";
-                        div.innerHTML = `
-                            <label class="field-label" style="color: ${resp.cor}; text-shadow: 0 0 8px ${resp.cor}40;">
-                                ✦ Resposta ${resp.ia}
-                            </label>
-                            <div style="background: ${resp.cor}08; padding: 16px; border-radius: 10px; border: 1px solid ${resp.cor}40; color: #e5fef6; font-size: 14px; line-height: 1.6; max-height: 350px; overflow-y: auto; white-space: pre-wrap;">${resp.texto}</div>
-                        `;
-                        respostasContainer.appendChild(div);
-                    });
-                })
-                .catch(error => {
-                    document.getElementById('detalhesPergunta').innerText = "Houve um erro ao carregar os dados.";
-                    respostasContainer.innerHTML = '';
-                });
-        }
-        function fecharModalDetalhes() { document.getElementById('detalhesModal')?.classList.remove('active'); }
+  if (!/\.(txt|json)$/i.test(file.name)) {
+    fileName.textContent = "Formato inválido. Use TXT ou JSON.";
+    fileName.style.color = "#f87171";
+    if (fileInput) fileInput.value = "";
+    return;
+  }
 
-        /* Toasts Auto-destruição */
-        document.addEventListener('DOMContentLoaded', function() {
-            const toasts = document.querySelectorAll('.toast-message');
-            toasts.forEach(toast => {
-                setTimeout(() => {
-                    toast.style.opacity = '0';
-                    toast.style.transform = 'translateX(50px)';
-                    setTimeout(() => toast.remove(), 500); 
-                }, 6000);
-            });
-        });
-    </script>
+  fileName.textContent = "Selecionado: " + file.name;
+  fileName.style.color = "#00ff9f";
+}
+
+function submitUpload() {
+  const fileInput = document.getElementById("fileInput");
+  const fileName = document.getElementById("fileName");
+
+  if (!fileInput?.files.length) {
+    if (fileName) {
+      fileName.textContent = "Selecione um arquivo TXT ou JSON.";
+      fileName.style.color = "#f87171";
+    }
+    return;
+  }
+
+  document.getElementById("uploadForm").submit();
+}
+
+function normalizeResponseText(text) {
+  return String(text || "").replace(/<br\s*\/?>/gi, "\n");
+}
+
+function abrirModalDetalhes(btn) {
+  const url = btn.getAttribute("data-url");
+  const detalhesPergunta = document.getElementById("detalhesPergunta");
+  const respostasContainer = document.getElementById("respostasContainer");
+
+  document.getElementById("detalhesModal")?.classList.add("active");
+  if (detalhesPergunta) detalhesPergunta.innerText = "Carregando detalhes...";
+  if (respostasContainer) {
+    respostasContainer.innerHTML = "";
+    const loading = document.createElement("p");
+    loading.className = "modal-desc";
+    loading.textContent = "Buscando respostas registradas...";
+    respostasContainer.appendChild(loading);
+  }
+
+  fetch(url)
+    .then(response => response.json())
+    .then(data => {
+      if (data.erro) throw new Error(data.erro);
+      detalhesPergunta.innerText = data.pergunta || "Pergunta indisponível.";
+      respostasContainer.innerHTML = "";
+
+      if (!data.respostas || data.respostas.length === 0) {
+        const empty = document.createElement("p");
+        empty.className = "modal-desc";
+        empty.textContent = "Nenhuma resposta vinculada a esta questão.";
+        respostasContainer.appendChild(empty);
+        return;
+      }
+
+      data.respostas.forEach(resp => {
+        const card = document.createElement("div");
+        card.className = "detail-response-card";
+
+        const label = document.createElement("label");
+        label.className = "field-label";
+        label.textContent = "Resposta " + (resp.ia || "");
+        label.style.color = resp.cor || "#00ff9f";
+
+        const body = document.createElement("div");
+        body.className = "detail-response-body";
+        body.style.borderColor = (resp.cor || "#00ff9f") + "66";
+        body.style.background = (resp.cor || "#00ff9f") + "10";
+        body.textContent = normalizeResponseText(resp.texto);
+
+        card.appendChild(label);
+        card.appendChild(body);
+        respostasContainer.appendChild(card);
+      });
+    })
+    .catch(() => {
+      if (detalhesPergunta) detalhesPergunta.innerText = "Houve um erro ao carregar os dados.";
+      if (respostasContainer) respostasContainer.innerHTML = "";
+    });
+}
+
+function fecharModalDetalhes() {
+  document.getElementById("detalhesModal")?.classList.remove("active");
+}
+
+function bindModalDismiss() {
+  document.querySelectorAll(".modal-overlay").forEach(overlay => {
+    overlay.addEventListener("click", function(e) {
+      if (e.target === this) this.classList.remove("active");
+    });
+  });
+
+  document.addEventListener("keydown", function(e) {
+    if (e.key === "Escape") {
+      document.querySelectorAll(".modal-overlay.active").forEach(modal => modal.classList.remove("active"));
+    }
+  });
+}
+
+function bindUploadZone() {
+  const fileInput = document.getElementById("fileInput");
+  const dropZone = document.getElementById("dropZone");
+  if (!fileInput || !dropZone) return;
+
+  dropZone.addEventListener("click", () => fileInput.click());
+  dropZone.addEventListener("keydown", event => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      fileInput.click();
+    }
+  });
+  fileInput.addEventListener("change", () => showFile(fileInput.files[0]));
+  dropZone.addEventListener("dragover", event => {
+    event.preventDefault();
+    dropZone.classList.add("dragover");
+  });
+  dropZone.addEventListener("dragleave", () => dropZone.classList.remove("dragover"));
+  dropZone.addEventListener("drop", event => {
+    event.preventDefault();
+    dropZone.classList.remove("dragover");
+    fileInput.files = event.dataTransfer.files;
+    showFile(event.dataTransfer.files[0]);
+  });
+}
+
+function bindToasts() {
+  document.querySelectorAll(".toast-message").forEach(toast => {
+    setTimeout(() => {
+      toast.style.opacity = "0";
+      toast.style.transform = "translateX(40px)";
+      setTimeout(() => toast.remove(), 500);
+    }, 6000);
+  });
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+  bindModalDismiss();
+  bindUploadZone();
+  bindToasts();
+  initHistoryCache();
+  updateHistoryStats();
+  filterHistory();
+});
+</script>
 </body>
 </html>
