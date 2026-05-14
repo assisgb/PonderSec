@@ -14,9 +14,6 @@
             background: radial-gradient(circle at top, #051015 0, #02060b 45%, #000000 100%);
             color: #e5fef6;
             min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             padding: 20px;
         }
 
@@ -28,30 +25,13 @@
             background-size: 40px 40px; opacity: 0.4; pointer-events: none; z-index: 0;
         }
 
-        .scanline {
-            position: fixed; inset: 0;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.7), rgba(0,0,0,0.15), rgba(0,0,0,0.7));
-            background-size: 100% 4px; opacity: 0.25; pointer-events: none; z-index: 0;
-        }
-
-        .glow-orb {
-            position: fixed; width: 600px; height: 600px; border-radius: 50%;
-            background: radial-gradient(circle, rgba(0, 255, 160, 0.15), transparent 70%);
-            top: -15%; right: -10%; filter: blur(100px); opacity: 0.8; pointer-events: none; z-index: 0;
-        }
-
-        .glow-orb-2 {
-            position: fixed; width: 400px; height: 400px; border-radius: 50%;
-            background: radial-gradient(circle, rgba(0, 180, 255, 0.08), transparent 70%);
-            bottom: -10%; left: -5%; filter: blur(80px); opacity: 0.6; pointer-events: none; z-index: 0;
-        }
-
         .container {
-            position: relative; width: 100%; max-width: 780px;
+            position: relative; width: 100%; max-width: 940px;
+            margin: 48px auto;
             background: radial-gradient(circle at top, #0b141d 0, #050a11 55%, #020509 100%);
             border: 1px solid rgba(0,255,160,0.25);
             border-radius: 18px; padding: 44px 50px;
-            box-shadow: 0 0 0 1px rgba(0,255,160,0.08), 0 18px 60px rgba(0,0,0,0.9), 0 0 30px rgba(0,255,160,0.06);
+            box-shadow: 0 0 0 1px rgba(0,255,160,0.08), 0 18px 54px rgba(0,0,0,0.82);
             z-index: 2;
         }
 
@@ -63,7 +43,7 @@
 
         .logo img {
             width: 72px; border-radius: 14px;
-            filter: drop-shadow(0 0 10px rgba(0,255,160,0.8)) drop-shadow(0 0 30px rgba(0,255,160,0.5));
+            filter: drop-shadow(0 0 10px rgba(0,255,160,0.55));
         }
 
         .header-text { flex: 1; }
@@ -79,7 +59,10 @@
             letter-spacing: -0.01em; margin-bottom: 5px;
         }
 
-        .subtitle { font-size: 13px; color: #8ba1b0; }
+        .subtitle { font-size: 13px; color: #8ba1b0; line-height: 1.5; }
+
+        .flow-section { margin-bottom: 30px; }
+        .flow-section:last-of-type { margin-bottom: 32px; }
 
         .section-label {
             font-size: 10px; color: #4ecf9a; font-weight: 700;
@@ -94,7 +77,11 @@
 
         .cards-grid {
             display: grid; grid-template-columns: 1fr 1fr;
-            gap: 18px; margin-bottom: 32px;
+            gap: 18px;
+        }
+
+        .cards-grid.single {
+            grid-template-columns: minmax(0, 1fr);
         }
 
         .card {
@@ -102,25 +89,16 @@
             background: linear-gradient(135deg, rgba(11,20,29,0.9) 0%, rgba(5,10,17,0.95) 100%);
             border: 1px solid rgba(0, 255, 160, 0.1);
             border-radius: 16px; cursor: pointer;
-            transition: all 0.3s;
+            transition: border-color 0.2s, background 0.2s;
             text-decoration: none;
             display: flex; flex-direction: column;
             align-items: flex-start; gap: 14px;
             position: relative; overflow: hidden;
         }
 
-        .card::before {
-            content: ''; position: absolute; inset: 0;
-            background: radial-gradient(circle at 0% 0%, rgba(0,255,160,0.05) 0%, transparent 60%);
-            opacity: 0; transition: opacity 0.3s; pointer-events: none; border-radius: 16px;
-        }
-
-        .card:hover::before { opacity: 1; }
-
         .card:hover {
             border-color: rgba(0, 255, 160, 0.3);
-            box-shadow: 0 0 24px rgba(0,0,0,0.4), 0 0 20px rgba(0,255,160,0.06);
-            transform: translateY(-2px);
+            background: linear-gradient(135deg, rgba(12,24,33,0.95) 0%, rgba(5,10,17,0.98) 100%);
         }
 
         .card-icon {
@@ -129,17 +107,12 @@
             border: 1px solid rgba(0, 255, 160, 0.15);
             border-radius: 12px;
             display: flex; align-items: center; justify-content: center;
-            transition: all 0.3s;
         }
 
         .card:hover .card-icon {
             background: rgba(0, 255, 160, 0.1);
             border-color: rgba(0, 255, 160, 0.3);
-            box-shadow: 0 0 16px rgba(0, 255, 160, 0.12);
         }
-
-        .card-icon svg { filter: drop-shadow(0 0 5px rgba(0, 255, 160, 0.35)); transition: filter 0.3s; }
-        .card:hover .card-icon svg { filter: drop-shadow(0 0 10px rgba(0, 255, 160, 0.6)); }
 
         .card-title {
             color: #e5fef6; font-size: 16px;
@@ -153,35 +126,30 @@
             display: flex; align-items: center; gap: 8px;
             color: rgba(0, 255, 160, 0.5); font-size: 12px;
             font-weight: 700; text-transform: uppercase;
-            letter-spacing: 0.1em; transition: all 0.3s;
+            letter-spacing: 0.1em;
         }
 
         .card:hover .card-footer { color: #00ff9f; gap: 12px; }
-
-        .card-footer svg { transition: transform 0.3s; }
-        .card:hover .card-footer svg { transform: translateX(3px); }
 
         .btn-back-bottom {
             width: 100%; margin-top: 24px; padding: 12px 28px;
             background: rgba(255,0,0,0.08); border: 1px solid rgba(255,0,0,0.25);
             border-radius: 12px; cursor: pointer; font-size: 13px; font-weight: 600; color: #ff6b6b;
-            text-decoration: none; text-transform: uppercase; letter-spacing: 0.08em; transition: all 0.2s;
+            text-decoration: none; text-transform: uppercase; letter-spacing: 0.08em; transition: background 0.2s, border-color 0.2s;
             display: flex; align-items: center; justify-content: center; gap: 8px;
         }
-        .btn-back-bottom:hover { background: rgba(255,0,0,0.15); border-color: #ff6b6b; transform: translateY(-2px); box-shadow: 0 0 20px rgba(255,0,0,0.2); }
+        .btn-back-bottom:hover { background: rgba(255,0,0,0.15); border-color: #ff6b6b; }
 
         @media (max-width: 600px) {
-            .cards-grid { grid-template-columns: 1fr; }
+            body { padding: 14px; }
+            .cards-grid, .cards-grid.single { grid-template-columns: 1fr; }
             .header { flex-direction: column; text-align: center; }
-            .container { padding: 30px 24px; }
+            .container { padding: 30px 24px; margin: 18px auto; }
         }
     </style>
 </head>
 <body>
     <div class="background-grid"></div>
-    <div class="scanline"></div>
-    <div class="glow-orb"></div>
-    <div class="glow-orb-2"></div>
 
     <div class="container">
         <div class="header">
@@ -191,45 +159,69 @@
             <div class="header-text">
                 <div class="product-name">PonderSEC</div>
                 <div class="headline">Avaliação de IA</div>
-                <div class="subtitle">Analise métricas e crie formulários de coleta</div>
+                <div class="subtitle">Escolha entre avaliação humana por especialistas ou avaliação automática com LLMs atuando como juízes.</div>
             </div>
         </div>
 
-        <div class="section-label">Configurações</div>
+        <section class="flow-section">
+            <div class="section-label">Avaliação com Especialistas</div>
 
-        <div class="cards-grid">
-            <a href="{% url 'dashboard_avaliacoes' %}" class="card">
-                <div class="card-icon">
-                     <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#00ff9f" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M3 20h18"/><path d="M5 20V14"/><path d="M8 20V10"/><path d="M11 20V6"/><path d="M14 20V9"/><path d="M17 20V13"/><path d="M20 20V16"/><path d="M5 14l3-4 3-4 3 3 3-6 3 4"/>
-                    </svg>
-                </div>
-                <div class="card-title">Dashboard</div>
-                <div class="card-desc">Visualize e analise os resultados das avaliações previamente concluídas.</div>
-                <div class="card-footer">
-                    Acessar
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-                        <path d="M5 12h14M13 6l6 6-6 6"/>
-                    </svg>
-                </div>
-            </a>
+            <div class="cards-grid">
+                <a href="{% url 'dashboard_avaliacoes' %}" class="card">
+                    <div class="card-icon">
+                         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#00ff9f" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 20h18"/><path d="M5 20V14"/><path d="M8 20V10"/><path d="M11 20V6"/><path d="M14 20V9"/><path d="M17 20V13"/><path d="M20 20V16"/><path d="M5 14l3-4 3-4 3 3 3-6 3 4"/>
+                        </svg>
+                    </div>
+                    <div class="card-title">Dashboard</div>
+                    <div class="card-desc">Visualize e analise os resultados das avaliações realizadas por profissionais.</div>
+                    <div class="card-footer">
+                        Acessar
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                            <path d="M5 12h14M13 6l6 6-6 6"/>
+                        </svg>
+                    </div>
+                </a>
 
-            <a href="{% url 'avaliacao' %}" class="card">
-                <div class="card-icon">
-                     <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#00ff9f" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2 2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><path d="M12 8v3"/><path d="M6.5 11a5.5 5.5 0 0 0 11 0"/><rect x="3" y="11" width="4" height="7" rx="1"/><rect x="17" y="11" width="4" height="7" rx="1"/><path d="M7 18h10"/><path d="M9 21h6"/>
-                    </svg>
-                </div>
-                <div class="card-title">Formulários</div>
-                <div class="card-desc">Gere formulários que serão usados para a coleta de avaliações em modo cego.</div>
-                <div class="card-footer">
-                    Acessar
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-                        <path d="M5 12h14M13 6l6 6-6 6"/>
-                    </svg>
-                </div>
-            </a>
-        </div>
+                <a href="{% url 'avaliacao' %}" class="card">
+                    <div class="card-icon">
+                         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#00ff9f" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2 2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><path d="M12 8v3"/><path d="M6.5 11a5.5 5.5 0 0 0 11 0"/><rect x="3" y="11" width="4" height="7" rx="1"/><rect x="17" y="11" width="4" height="7" rx="1"/><path d="M7 18h10"/><path d="M9 21h6"/>
+                        </svg>
+                    </div>
+                    <div class="card-title">Formulários</div>
+                    <div class="card-desc">Crie formulários para coleta de avaliações humanas, com suporte a modo cego.</div>
+                    <div class="card-footer">
+                        Acessar
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                            <path d="M5 12h14M13 6l6 6-6 6"/>
+                        </svg>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <section class="flow-section">
+            <div class="section-label">Avaliação com Juízes Online</div>
+
+            <div class="cards-grid single">
+                <a href="{% url 'juizes_comparador' %}" class="card">
+                    <div class="card-icon">
+                         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#00ff9f" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="8" width="18" height="10" rx="2"/><circle cx="8" cy="13" r="1.2"/><circle cx="16" cy="13" r="1.2"/><path d="M12 4v4M7 18v2M17 18v2"/>
+                        </svg>
+                    </div>
+                    <div class="card-title">Juízes Online</div>
+                    <div class="card-desc">Execute avaliações automáticas em que LLMs avaliam respostas geradas por outros modelos.</div>
+                    <div class="card-footer">
+                        Acessar
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                            <path d="M5 12h14M13 6l6 6-6 6"/>
+                        </svg>
+                    </div>
+                </a>
+            </div>
+        </section>
 
         <a href="{% url 'menu' %}" class="btn-back-bottom">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
