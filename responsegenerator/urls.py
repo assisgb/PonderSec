@@ -35,5 +35,7 @@ urlpatterns = [
     path("api/llm/<int:id>/edit/", views.edit_llm_api),
     path('avaliacao/dashboard/', views.dashboard_avaliacoes, name='dashboard_avaliacoes'),
     path('menu_avaliacao/', views.menu_avaliacao, name='menu_avaliacao'),
+    path('juizes/comparador/', views.juizes_comparador, name='juizes_comparador'),
+    path('juizes/avaliar/', views.juizes_executar_avaliacao, name='juizes_executar_avaliacao'),
     path('setup-configurar-metrica/', views.setup_configurar_metrica, name='setup_configurar_metrica'),
 ]

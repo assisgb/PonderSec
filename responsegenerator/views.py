@@ -2,11 +2,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.contrib import messages as django_messages
 from django.contrib.auth.decorators import login_required
-from google import genai
-import openai
 import os
 import re
-from groq import Groq
 from datetime import timedelta
 from django.http import JsonResponse, HttpResponse
 import json
@@ -14,6 +11,22 @@ from django.views.decorators.http import require_http_methods
 from responsegenerator.models import Historico, Categoria, LLM, Questao, Resposta, Avaliacao, Metrica, Formulario, Avaliador, AvaliacaoFormulario
 from django.db.models import Avg
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+try:
+    from google import genai
+except ImportError:
+    genai = None
+
+try:
+    import openai
+except ImportError:
+    openai = None
+
+try:
+    from groq import Groq
+except ImportError:
+    Groq = None
 
 
 def salvar_no_historico(user, pergunta, resposta):
@@ -475,6 +488,253 @@ def executar_consulta(request):
 def consulta_comparacao(request):
     return render(request, 'consulta/consulta-comparacao.html')
 
+def _text_preview(text, limit=320):
+    text = (text or "").strip()
+    return text if len(text) <= limit else f"{text[:limit].rstrip()}..."
+
+def _metric_max(metrica):
+    return metrica.pontuacao_maxima or 5
+
+def _judgeai_call_configured_llm(llm, prompt):
+    provider = f"{llm.descricao or ''} {llm.nome or ''}".lower()
+
+    if "gemini" in provider or "google" in provider:
+        if genai is None:
+            raise RuntimeError("Biblioteca google-genai não instalada.")
+        client = genai.Client(api_key=llm.api_key)
+        response = client.models.generate_content(model=llm.nome, contents=prompt)
+        return (getattr(response, "text", "") or "").strip()
+
+    if "groq" in provider or "llama" in provider or "mixtral" in provider:
+        if Groq is None:
+            raise RuntimeError("Biblioteca groq não instalada.")
+        client = Groq(api_key=llm.api_key)
+        completion = client.chat.completions.create(
+            messages=[{"role": "user", "content": prompt}],
+            model=llm.nome,
+        )
+        return completion.choices[0].message.content.strip()
+
+    if "deepseek" in provider:
+        if openai is None:
+            raise RuntimeError("Biblioteca openai não instalada.")
+        client = openai.OpenAI(
+            api_key=llm.api_key,
+            base_url="https://integrate.api.nvidia.com/v1"
+        )
+        response = client.chat.completions.create(
+            model=llm.nome,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        return response.choices[0].message.content.strip()
+
+    if "openai" in provider or "gpt" in provider or "chatgpt" in provider:
+        if openai is None:
+            raise RuntimeError("Biblioteca openai não instalada.")
+        client = openai.OpenAI(api_key=llm.api_key)
+        response = client.chat.completions.create(
+            model=llm.nome,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        return response.choices[0].message.content.strip()
+
+    raise RuntimeError(f"Provedor '{llm.descricao or llm.nome}' não reconhecido.")
+
+def _judgeai_prompt(questao, resposta, juiz, metricas):
+    metricas_txt = "\n".join(
+        f"- {m.nome} (0 a {_metric_max(m)}): {m.descricao or m.criterio_texto or 'Avalie este critério.'}"
+        for m in metricas
+    )
+    return (
+        "Você é uma LLM atuando como juiz técnico no PonderSec.\n"
+        "Avalie a resposta de outro modelo para uma pergunta de cibersegurança.\n"
+        "Use apenas as métricas informadas. Não crie métricas novas.\n"
+        "Retorne somente JSON válido, sem markdown, no formato:\n"
+        "{\n"
+        '  "notas": [\n'
+        '    {"metrica": "Nome da métrica", "nota": 0, "justificativa": "texto curto"}\n'
+        "  ],\n"
+        '  "justificativa": "síntese curta da avaliação"\n'
+        "}\n\n"
+        f"Juiz: {juiz.nome}\n\n"
+        f"Métricas:\n{metricas_txt}\n\n"
+        f"Pergunta:\n{questao.conteudo}\n\n"
+        f"Modelo respondente: {resposta.llm.nome if resposta.llm else 'IA desconhecida'}\n"
+        f"Resposta avaliada:\n{resposta.conteudo_resposta}"
+    )
+
+def _parse_judgeai_result(raw_text, metricas):
+    notas_por_nome = {}
+    justificativa = ""
+
+    json_match = re.search(r"\{[\s\S]*\}", raw_text or "")
+    if json_match:
+        try:
+            parsed = json.loads(json_match.group(0))
+            justificativa = (parsed.get("justificativa") or "").strip()
+            for item in parsed.get("notas", []):
+                nome = (item.get("metrica") or "").strip().lower()
+                notas_por_nome[nome] = {
+                    "nota": item.get("nota"),
+                    "justificativa": (item.get("justificativa") or "").strip()
+                }
+        except (json.JSONDecodeError, AttributeError):
+            notas_por_nome = {}
+
+    resultado = []
+    for metrica in metricas:
+        item = notas_por_nome.get(metrica.nome.lower(), {})
+        nota = item.get("nota")
+
+        if nota is None:
+            match = re.search(rf"{re.escape(metrica.nome)}\s*[:=-]\s*(\d+)", raw_text or "", re.IGNORECASE)
+            nota = int(match.group(1)) if match else None
+
+        try:
+            nota = int(nota) if nota is not None else None
+        except (TypeError, ValueError):
+            nota = None
+
+        maximo = _metric_max(metrica)
+        if nota is not None:
+            nota = max(0, min(nota, maximo))
+
+        resultado.append({
+            "metrica": metrica.nome,
+            "nota": nota,
+            "max": maximo,
+            "justificativa": item.get("justificativa") or ""
+        })
+
+    if not justificativa:
+        match = re.search(r"Justificativa\s*[:=-]\s*([\s\S]+)", raw_text or "", re.IGNORECASE)
+        justificativa = match.group(1).strip() if match else _text_preview(raw_text, 500)
+
+    return resultado, justificativa
+
+def _judgeai_error_result(questao, resposta, juiz, motivo):
+    return {
+        "questao_id": questao.id,
+        "pergunta": questao.conteudo,
+        "resposta_id": resposta.id,
+        "resposta_preview": _text_preview(resposta.conteudo_resposta),
+        "resposta_texto": resposta.conteudo_resposta,
+        "modelo_respondente": resposta.llm.nome if resposta.llm else "IA desconhecida",
+        "modelo_juiz": juiz.nome,
+        "notas": [],
+        "justificativa": motivo,
+        "erro": True,
+    }
+
+@login_required
+@require_http_methods(["POST"])
+def juizes_executar_avaliacao(request):
+    try:
+        data = json.loads(request.body.decode("utf-8") or "{}")
+    except json.JSONDecodeError:
+        return JsonResponse({"status": "erro", "mensagem": "JSON inválido."}, status=400)
+
+    question_ids = data.get("questao_ids") or []
+    judge_ids = data.get("juiz_ids") or []
+
+    try:
+        question_ids = [int(item) for item in question_ids]
+        judge_ids = [int(item) for item in judge_ids]
+    except (TypeError, ValueError):
+        return JsonResponse({"status": "erro", "mensagem": "Seleção inválida."}, status=400)
+
+    if not question_ids:
+        return JsonResponse({"status": "erro", "mensagem": "Selecione ao menos uma pergunta."}, status=400)
+
+    if not judge_ids:
+        return JsonResponse({"status": "erro", "mensagem": "Selecione ao menos um juiz online."}, status=400)
+
+    metricas = list(Metrica.objects.filter(usuario=request.user, ativa=True).order_by("id"))
+    if not metricas:
+        return JsonResponse({
+            "status": "erro",
+            "mensagem": "Nenhuma métrica ativa encontrada. Configure métricas no Setup antes de avaliar."
+        }, status=400)
+
+    respostas = list(
+        Resposta.objects
+        .select_related("questao", "llm")
+        .filter(questao__usuario=request.user, questao_id__in=question_ids, llm_id__in=judge_ids)
+        .order_by("questao_id", "id")
+    )
+    juizes = list(
+        LLM.objects
+        .filter(usuario=request.user, ativo=True, id__in=judge_ids)
+        .order_by("nome")
+    )
+
+    if not respostas:
+        return JsonResponse({
+            "status": "erro",
+            "mensagem": "As LLMs selecionadas ainda não possuem respostas nas perguntas escolhidas."
+        }, status=400)
+
+    if not juizes:
+        return JsonResponse({
+            "status": "erro",
+            "mensagem": "Nenhuma LLM avaliadora ativa foi encontrada."
+        }, status=400)
+
+    tarefas = []
+    for resposta in respostas:
+        for juiz in juizes:
+            if resposta.llm_id and resposta.llm_id == juiz.id:
+                continue
+            tarefas.append((resposta.questao, resposta, juiz))
+
+    if not tarefas:
+        return JsonResponse({
+            "status": "erro",
+            "mensagem": "Não há pares válidos. Selecione ao menos duas LLMs que tenham respostas nas perguntas escolhidas."
+        }, status=400)
+
+    if len(tarefas) > 40:
+        return JsonResponse({
+            "status": "erro",
+            "mensagem": "Seleção muito grande. Reduza a quantidade para até 40 avaliações por execução."
+        }, status=400)
+
+    resultados = []
+    with ThreadPoolExecutor(max_workers=min(4, len(tarefas))) as executor:
+        futures = {}
+        for questao, resposta, juiz in tarefas:
+            prompt = _judgeai_prompt(questao, resposta, juiz, metricas)
+            futures[executor.submit(_judgeai_call_configured_llm, juiz, prompt)] = (questao, resposta, juiz)
+
+        for future in as_completed(futures):
+            questao, resposta, juiz = futures[future]
+            try:
+                raw = future.result()
+                notas, justificativa = _parse_judgeai_result(raw, metricas)
+                resultados.append({
+                    "questao_id": questao.id,
+                    "pergunta": questao.conteudo,
+                    "resposta_id": resposta.id,
+                    "resposta_preview": _text_preview(resposta.conteudo_resposta),
+                    "resposta_texto": resposta.conteudo_resposta,
+                    "modelo_respondente": resposta.llm.nome if resposta.llm else "IA desconhecida",
+                    "modelo_juiz": juiz.nome,
+                    "notas": notas,
+                    "justificativa": justificativa,
+                    "erro": False,
+                })
+            except Exception as exc:
+                resultados.append(_judgeai_error_result(questao, resposta, juiz, str(exc)))
+
+    resultados.sort(key=lambda item: (item["questao_id"], item["modelo_respondente"], item["modelo_juiz"]))
+
+    return JsonResponse({
+        "status": "ok",
+        "total": len(resultados),
+        "notas_total": sum(len(item.get("notas", [])) for item in resultados if not item.get("erro")),
+        "resultados": resultados,
+    })
+
 @login_required
 def avaliacao(request):
     formularios = Formulario.objects.filter(usuario=request.user)
@@ -650,3 +910,66 @@ def dashboard_avaliacoes(request):
 @login_required
 def menu_avaliacao(request):
     return render(request,"avaliacao/menu_avaliacao.html")
+
+@login_required
+def juizes_comparador(request):
+    questoes = (
+        Questao.objects
+        .filter(usuario=request.user)
+        .select_related("categoria")
+        .prefetch_related("respostas__llm")
+        .order_by("-id")
+    )
+    llms = list(LLM.objects.filter(usuario=request.user, ativo=True).order_by("nome"))
+    metricas = list(Metrica.objects.filter(usuario=request.user, ativa=True).order_by("id"))
+    categorias = Categoria.objects.filter(usuario=request.user).order_by("nome_categoria")
+
+    questoes_data = []
+    for questao in questoes:
+        respostas_data = []
+        modelos_ids = []
+
+        for resposta in questao.respostas.all():
+            llm_nome = resposta.llm.nome if resposta.llm else "IA desconhecida"
+            llm_id = resposta.llm_id
+            if llm_id:
+                modelos_ids.append(llm_id)
+
+            respostas_data.append({
+                "id": resposta.id,
+                "llm_id": llm_id,
+                "llm": llm_nome,
+                "preview": _text_preview(resposta.conteudo_resposta, 420),
+            })
+
+        questoes_data.append({
+            "id": questao.id,
+            "conteudo": questao.conteudo,
+            "categoria_id": questao.categoria_id,
+            "categoria": questao.categoria.nome_categoria if questao.categoria else "Sem categoria",
+            "status": "respondida" if respostas_data else "sem_respostas",
+            "respostas_count": len(respostas_data),
+            "modelos_ids": modelos_ids,
+            "respostas": respostas_data,
+        })
+
+    return render(request, "juizes/comparador.html", {
+        "questoes_data": questoes_data,
+        "llms_data": [
+            {
+                "id": llm.id,
+                "nome": llm.nome,
+                "provedor": llm.descricao or "LLM",
+            }
+            for llm in llms
+        ],
+        "metricas_data": [
+            {
+                "id": metrica.id,
+                "nome": metrica.nome,
+                "max": _metric_max(metrica),
+            }
+            for metrica in metricas
+        ],
+        "categorias": categorias,
+    })

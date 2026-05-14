@@ -1,0 +1,1070 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PonderSEC — Juízes Online</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#02070d;
+  --panel:#07111c;
+  --panel-2:#091723;
+  --line:rgba(0,255,159,.16);
+  --line-strong:rgba(0,255,159,.32);
+  --accent:#00ff9f;
+  --accent-soft:rgba(0,255,159,.09);
+  --text:#e7fff7;
+  --muted:#8aa69d;
+  --muted-2:#5e766e;
+  --danger:#ef4444;
+  --warn:#f59e0b;
+  --blue:#38bdf8;
+  --mono:"IBM Plex Mono","SFMono-Regular",Consolas,monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+
+body{
+  min-height:100vh;
+  background:
+    radial-gradient(circle at 78% 0%,rgba(0,255,159,.09),transparent 30%),
+    radial-gradient(circle at 0% 65%,rgba(56,189,248,.05),transparent 28%),
+    var(--bg);
+  color:var(--text);
+  font-family:var(--sans);
+  padding:24px;
+}
+
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  background-image:
+    linear-gradient(rgba(0,255,159,.035) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,255,159,.035) 1px,transparent 1px);
+  background-size:44px 44px;
+  pointer-events:none;
+}
+
+button,input,select{font:inherit}
+button{cursor:pointer}
+a{color:inherit}
+
+.shell{
+  width:min(1280px,100%);
+  margin:0 auto;
+  position:relative;
+  z-index:1;
+}
+
+.topbar,.panel{
+  background:linear-gradient(135deg,rgba(9,23,35,.96),rgba(5,11,18,.98));
+  border:1px solid var(--line);
+  border-radius:16px;
+}
+
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:20px;
+  padding:18px 22px;
+  margin-bottom:18px;
+}
+
+.brand{display:flex;align-items:center;gap:16px;min-width:0}
+.brand-logo{
+  width:54px;
+  height:54px;
+  border-radius:13px;
+  object-fit:cover;
+  border:1px solid rgba(0,255,159,.25);
+}
+.eyebrow{
+  color:var(--accent);
+  font:700 10px/1.2 var(--mono);
+  letter-spacing:.2em;
+  text-transform:uppercase;
+  margin-bottom:5px;
+}
+h1{
+  color:var(--accent);
+  font-size:28px;
+  line-height:1.15;
+  letter-spacing:0;
+}
+.subtitle{
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.45;
+  margin-top:6px;
+}
+
+.step-number{
+  display:grid;
+  place-items:center;
+  width:28px;
+  height:28px;
+  border:1px solid var(--line-strong);
+  border-radius:9px;
+  color:var(--accent);
+  font:800 12px/1 var(--mono);
+  background:var(--accent-soft);
+}
+
+.top-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  min-height:38px;
+  padding:10px 14px;
+  border-radius:10px;
+  border:1px solid var(--line-strong);
+  background:var(--accent-soft);
+  color:var(--accent);
+  font:700 12px/1 var(--mono);
+  text-transform:uppercase;
+  letter-spacing:.05em;
+  text-decoration:none;
+  transition:background .2s,border-color .2s,color .2s;
+}
+.btn:hover{background:rgba(0,255,159,.14);border-color:var(--accent)}
+.btn.secondary{
+  background:rgba(255,255,255,.03);
+  border-color:rgba(255,255,255,.1);
+  color:var(--muted);
+}
+.btn.secondary:hover{color:var(--accent);border-color:var(--line-strong)}
+.btn.danger{
+  background:rgba(239,68,68,.08);
+  border-color:rgba(239,68,68,.28);
+  color:#f87171;
+}
+.btn:disabled{
+  opacity:.45;
+  cursor:not-allowed;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 340px;
+  gap:18px;
+  align-items:start;
+}
+
+.panel{padding:20px;margin-bottom:18px}
+.section-title{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  margin-bottom:14px;
+}
+.section-title h2{
+  color:var(--text);
+  font-size:17px;
+  letter-spacing:0;
+}
+.section-title span{
+  color:var(--muted-2);
+  font:700 10px/1 var(--mono);
+  letter-spacing:.14em;
+  text-transform:uppercase;
+}
+.title-copy p{
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.5;
+  margin-top:5px;
+}
+.step-title{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+}
+
+.side-flow{
+  position:sticky;
+  top:18px;
+}
+
+.summary-grid{
+  display:grid;
+  gap:10px;
+}
+.summary-card{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:12px;
+  padding:12px;
+  background:rgba(0,0,0,.18);
+}
+.summary-label{
+  color:var(--muted-2);
+  font:700 10px/1 var(--mono);
+  text-transform:uppercase;
+  letter-spacing:.1em;
+}
+.summary-value{
+  color:var(--text);
+  font-size:20px;
+  font-weight:800;
+}
+
+.filters{
+  display:grid;
+  grid-template-columns:1.5fr repeat(3,1fr);
+  gap:10px;
+  margin-bottom:14px;
+}
+.field{
+  min-height:40px;
+  width:100%;
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:10px;
+  background:rgba(0,0,0,.28);
+  color:var(--text);
+  padding:10px 12px;
+  outline:none;
+}
+.field:focus{border-color:var(--line-strong)}
+.field::placeholder{color:var(--muted-2)}
+select.field option{background:#07111c;color:var(--text)}
+
+.question-tools{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-bottom:14px;
+}
+.question-tools .hint{
+  color:var(--muted-2);
+  font-size:12px;
+}
+
+.question-list{
+  display:grid;
+  gap:10px;
+  max-height:560px;
+  overflow:auto;
+  padding-right:4px;
+}
+.question-card{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:12px;
+  padding:14px;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:13px;
+  background:rgba(2,7,13,.72);
+}
+.question-card:hover{border-color:var(--line-strong)}
+.question-card.is-selected{
+  border-color:var(--accent);
+  background:rgba(0,255,159,.07);
+}
+.question-card.is-disabled{opacity:.58}
+.question-card input{margin-top:3px;accent-color:var(--accent)}
+.question-text{
+  color:var(--text);
+  font-size:14px;
+  line-height:1.45;
+}
+.meta-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:10px;
+}
+.chip{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:999px;
+  padding:5px 8px;
+  background:rgba(255,255,255,.03);
+  color:var(--muted);
+  font:700 10px/1 var(--mono);
+  text-transform:uppercase;
+  letter-spacing:.05em;
+}
+.chip.good{border-color:rgba(0,255,159,.22);color:var(--accent)}
+.chip.warn{border-color:rgba(245,158,11,.25);color:var(--warn)}
+.chip.blue{border-color:rgba(56,189,248,.25);color:var(--blue)}
+
+.empty{
+  padding:18px;
+  border:1px dashed rgba(255,255,255,.12);
+  border-radius:12px;
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.5;
+  background:rgba(0,0,0,.16);
+}
+
+.responses{
+  display:grid;
+  gap:12px;
+}
+.response-group{
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:13px;
+  background:rgba(2,7,13,.55);
+  padding:14px;
+}
+.response-question{
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.45;
+  margin-bottom:12px;
+}
+.response-list{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:10px;
+}
+.response-card{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:12px;
+  padding:12px;
+  background:rgba(0,0,0,.2);
+}
+.response-card.is-participant{
+  border-color:rgba(0,255,159,.34);
+  background:rgba(0,255,159,.06);
+}
+.response-card.is-muted{
+  opacity:.52;
+}
+.response-card h3{
+  color:var(--accent);
+  font-size:13px;
+  margin:0;
+}
+
+.judge-list{
+  display:grid;
+  gap:10px;
+  max-height:310px;
+  overflow:auto;
+  padding-right:3px;
+}
+.judge-card{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:12px;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:12px;
+  background:rgba(0,0,0,.18);
+}
+.judge-card.is-selected{
+  border-color:var(--accent);
+  background:rgba(0,255,159,.07);
+}
+.judge-card input{accent-color:var(--accent)}
+.judge-name{font-weight:700;color:var(--text);font-size:14px}
+.judge-provider{color:var(--muted-2);font:700 10px/1.4 var(--mono);text-transform:uppercase;letter-spacing:.08em}
+
+.metric-list{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+.status{
+  margin-top:12px;
+  padding:11px 12px;
+  border:1px solid rgba(0,255,159,.14);
+  border-radius:10px;
+  background:rgba(0,255,159,.05);
+  color:var(--accent);
+  font:700 12px/1.4 var(--mono);
+}
+.status.error{
+  border-color:rgba(239,68,68,.25);
+  background:rgba(239,68,68,.07);
+  color:#f87171;
+}
+.status.warn{
+  border-color:rgba(245,158,11,.25);
+  background:rgba(245,158,11,.07);
+  color:var(--warn);
+}
+
+.results-shell{
+  display:grid;
+  grid-template-columns:minmax(280px,.8fr) minmax(0,1.2fr);
+  gap:14px;
+}
+.results-list{
+  display:grid;
+  gap:8px;
+  max-height:620px;
+  overflow:auto;
+  padding-right:3px;
+}
+.result-row{
+  width:100%;
+  text-align:left;
+  border:1px solid rgba(255,255,255,.06);
+  border-radius:12px;
+  background:rgba(0,0,0,.18);
+  padding:11px 12px;
+}
+.result-row:hover,
+.result-row.is-active{
+  border-color:var(--line-strong);
+  background:rgba(0,255,159,.06);
+}
+.result-route{
+  color:var(--text);
+  font-size:13px;
+  font-weight:800;
+  line-height:1.35;
+}
+.result-question{
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.4;
+  margin-top:5px;
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+}
+.result-score-chips{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  margin-top:9px;
+}
+.result-detail{
+  min-height:420px;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:14px;
+  background:rgba(2,7,13,.76);
+  padding:16px;
+}
+.detail-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:14px;
+}
+.detail-title{
+  color:var(--text);
+  font-size:15px;
+  font-weight:800;
+  line-height:1.35;
+}
+.detail-sub{
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.45;
+  margin-top:5px;
+}
+.detail-block{
+  margin-top:14px;
+}
+.detail-label{
+  color:var(--accent);
+  font:800 10px/1 var(--mono);
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  margin-bottom:8px;
+}
+.detail-text{
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.6;
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:10px;
+  background:rgba(0,0,0,.2);
+  padding:12px;
+  white-space:pre-wrap;
+}
+.detail-response{
+  max-height:230px;
+  overflow:auto;
+}
+.detail-table{
+  width:100%;
+  border-collapse:collapse;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.06);
+  border-radius:10px;
+}
+.detail-table th,
+.detail-table td{
+  padding:10px 12px;
+  border-bottom:1px solid rgba(255,255,255,.05);
+  text-align:left;
+  font-size:12px;
+}
+.detail-table th{
+  color:var(--accent);
+  background:rgba(0,255,159,.08);
+  font:800 10px/1.3 var(--mono);
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+.detail-table tr:last-child td{border-bottom:0}
+.detail-score{
+  color:var(--accent);
+  font:800 13px/1.2 var(--mono);
+  white-space:nowrap;
+}
+
+.csrf-holder{display:none}
+.execution-actions{
+  display:grid;
+  gap:10px;
+  margin-top:14px;
+}
+.execution-actions .btn{width:100%}
+
+@media (max-width:980px){
+  body{padding:14px}
+  .grid{grid-template-columns:1fr}
+  .side-flow{position:static}
+  .results-shell{grid-template-columns:1fr}
+  .filters{grid-template-columns:1fr 1fr}
+}
+
+@media (max-width:620px){
+  .topbar{align-items:flex-start;flex-direction:column}
+  .top-actions,.btn{width:100%}
+  .filters{grid-template-columns:1fr}
+  h1{font-size:24px}
+}
+</style>
+</head>
+<body>
+{{ questoes_data|json_script:"questoes-data" }}
+{{ llms_data|json_script:"llms-data" }}
+{{ metricas_data|json_script:"metricas-data" }}
+
+<form class="csrf-holder">{% csrf_token %}</form>
+
+<main class="shell">
+  <header class="topbar">
+    <div class="brand">
+      <img class="brand-logo" src="{% static 'pondersec_logo.jpg' %}" alt="PonderSEC">
+      <div>
+        <div class="eyebrow">PonderSEC · Avaliação</div>
+        <h1>Juízes Online</h1>
+        <p class="subtitle">Selecione perguntas já cadastradas e use LLMs como avaliadoras das respostas geradas por outros modelos.</p>
+      </div>
+    </div>
+    <div class="top-actions">
+      <a class="btn secondary" href="{% url 'menu_avaliacao' %}">&larr; Voltar</a>
+      <a class="btn secondary" href="{% url 'setup_llm' %}">LLMs</a>
+    </div>
+  </header>
+
+  <div class="grid">
+    <div>
+      <section class="panel">
+        <div class="section-title">
+          <div class="step-title">
+            <div class="step-number">1</div>
+            <div class="title-copy">
+              <h2>Selecionar perguntas</h2>
+              <p>As perguntas vêm do banco de Questões. Itens sem respostas aparecem apenas para contexto.</p>
+            </div>
+          </div>
+          <span>Banco de questões</span>
+        </div>
+
+        <div class="filters">
+          <input class="field" id="searchInput" type="search" placeholder="Pesquisar pergunta cadastrada">
+          <select class="field" id="statusFilter">
+            <option value="">Todos os status</option>
+            <option value="respondida">Com respostas</option>
+            <option value="sem_respostas">Sem respostas</option>
+          </select>
+          <select class="field" id="categoryFilter">
+            <option value="">Todas as categorias</option>
+            {% for categoria in categorias %}
+              <option value="{{ categoria.id }}">{{ categoria.nome_categoria }}</option>
+            {% endfor %}
+          </select>
+          <select class="field" id="modelFilter">
+            <option value="">Todos os respondentes</option>
+          </select>
+        </div>
+
+        <div class="question-tools">
+          <span class="hint">Marque uma ou mais perguntas com respostas.</span>
+          <div class="top-actions">
+            <button class="btn secondary" type="button" id="selectAnsweredBtn">Selecionar respondidas</button>
+            <button class="btn secondary" type="button" id="clearQuestionsBtn">Limpar seleção</button>
+          </div>
+        </div>
+
+        <div class="question-list" id="questionList"></div>
+      </section>
+
+      <section class="panel">
+        <div class="section-title">
+          <div class="step-title">
+            <div class="step-number">2</div>
+            <div class="title-copy">
+              <h2>Modelos respondentes</h2>
+              <p>Resumo das respostas existentes por pergunta, sem repetir o texto da resposta.</p>
+            </div>
+          </div>
+          <span>LLMs respondentes</span>
+        </div>
+        <div class="responses" id="responsesList"></div>
+      </section>
+    </div>
+
+    <aside class="side-flow">
+      <section class="panel">
+        <div class="section-title">
+          <div class="step-title">
+            <div class="step-number">3</div>
+            <div class="title-copy">
+              <h2>Selecionar LLMs participantes</h2>
+              <p>As selecionadas entram na avaliação cruzada: uma avalia a resposta da outra. Nenhuma chave é pedida aqui.</p>
+            </div>
+          </div>
+          <span>Setup de LLMs</span>
+        </div>
+        <div class="judge-list" id="judgeList"></div>
+      </section>
+
+      <section class="panel">
+        <div class="section-title">
+          <div class="title-copy">
+            <h2>Métricas usadas</h2>
+            <p>A avaliação usa somente métricas ativas já configuradas.</p>
+          </div>
+          <span>Ativas no Setup</span>
+        </div>
+        <div class="metric-list" id="metricList"></div>
+      </section>
+
+      <section class="panel">
+        <div class="section-title">
+          <div class="step-title">
+            <div class="step-number">4</div>
+            <div class="title-copy">
+              <h2>Resumo e execução</h2>
+              <p>Confira a seleção antes de iniciar a avaliação automática.</p>
+            </div>
+          </div>
+          <span>Juízes online</span>
+        </div>
+        <div class="summary-grid">
+          <div class="summary-card">
+            <div class="summary-label">Perguntas selecionadas</div>
+            <div class="summary-value" id="statSelecionadas">0</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-label">LLMs selecionadas</div>
+            <div class="summary-value" id="statJuizes">0</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-label">Notas previstas</div>
+            <div class="summary-value" id="statNotas">0</div>
+          </div>
+        </div>
+        <div class="execution-actions">
+          <button class="btn" type="button" id="runBtn">Executar avaliação automática</button>
+          <button class="btn danger" type="button" id="clearResultsBtn">Limpar resultados</button>
+        </div>
+        <div class="status" id="statusBox">Selecione perguntas com respostas e ao menos duas LLMs participantes.</div>
+      </section>
+    </aside>
+  </div>
+
+  <section class="panel">
+    <div class="section-title">
+      <h2>Resultados</h2>
+      <span id="resultCount">0 pares · 0 notas</span>
+    </div>
+    <div class="results-grid" id="resultsGrid">
+      <div class="empty">A tabela de notas aparecerá aqui após a execução da avaliação automática.</div>
+    </div>
+  </section>
+</main>
+
+<script>
+const questoes = JSON.parse(document.getElementById("questoes-data").textContent);
+const llms = JSON.parse(document.getElementById("llms-data").textContent);
+const metricas = JSON.parse(document.getElementById("metricas-data").textContent);
+
+const state = {
+  selectedQuestions: new Set(),
+  selectedJudges: new Set(),
+  results: [],
+  activeResult: 0,
+};
+
+const els = {
+  questionList: document.getElementById("questionList"),
+  responsesList: document.getElementById("responsesList"),
+  judgeList: document.getElementById("judgeList"),
+  metricList: document.getElementById("metricList"),
+  resultsGrid: document.getElementById("resultsGrid"),
+  resultCount: document.getElementById("resultCount"),
+  statusBox: document.getElementById("statusBox"),
+  searchInput: document.getElementById("searchInput"),
+  statusFilter: document.getElementById("statusFilter"),
+  categoryFilter: document.getElementById("categoryFilter"),
+  modelFilter: document.getElementById("modelFilter"),
+  runBtn: document.getElementById("runBtn"),
+};
+
+function escapeHtml(value){
+  return String(value ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function getCSRFToken(){
+  const field = document.querySelector("[name=csrfmiddlewaretoken]");
+  if(field?.value) return field.value;
+  const item = document.cookie.split(";").map(c => c.trim()).find(c => c.startsWith("csrftoken="));
+  return item ? item.split("=")[1] : "";
+}
+
+function setStatus(text,type){
+  els.statusBox.textContent = text;
+  els.statusBox.className = "status" + (type ? " " + type : "");
+}
+
+function filteredQuestions(){
+  const term = els.searchInput.value.trim().toLowerCase();
+  const status = els.statusFilter.value;
+  const category = Number(els.categoryFilter.value || 0);
+  const model = Number(els.modelFilter.value || 0);
+
+  return questoes.filter(q => {
+    if(term && !q.conteudo.toLowerCase().includes(term)) return false;
+    if(status && q.status !== status) return false;
+    if(category && q.categoria_id !== category) return false;
+    if(model && !q.modelos_ids.includes(model)) return false;
+    return true;
+  });
+}
+
+function renderStats(){
+  document.getElementById("statSelecionadas").textContent = state.selectedQuestions.size;
+  document.getElementById("statJuizes").textContent = state.selectedJudges.size;
+  document.getElementById("statNotas").textContent = estimatePairs() * metricas.length;
+}
+
+function estimatePairs(){
+  const judgesCount = state.selectedJudges.size;
+  if(judgesCount < 2) return 0;
+
+  return questoes
+    .filter(q => state.selectedQuestions.has(q.id))
+    .reduce((total,q) => {
+      const selectedResponses = q.respostas.filter(r => state.selectedJudges.has(r.llm_id));
+      return total + selectedResponses.length * (judgesCount - 1);
+    },0);
+}
+
+function renderModelFilter(){
+  const used = new Set();
+  questoes.forEach(q => q.modelos_ids.forEach(id => used.add(id)));
+  const options = llms
+    .filter(llm => used.has(llm.id))
+    .map(llm => `<option value="${llm.id}">${escapeHtml(llm.nome)}</option>`)
+    .join("");
+  els.modelFilter.insertAdjacentHTML("beforeend", options);
+}
+
+function renderQuestions(){
+  const items = filteredQuestions();
+  if(!items.length){
+    els.questionList.innerHTML = '<div class="empty">Nenhuma pergunta encontrada para os filtros atuais.</div>';
+    return;
+  }
+
+  els.questionList.innerHTML = items.map(q => {
+    const disabled = q.respostas_count === 0;
+    const selected = state.selectedQuestions.has(q.id);
+    return `
+      <label class="question-card ${selected ? "is-selected" : ""} ${disabled ? "is-disabled" : ""}">
+        <input type="checkbox" data-question-id="${q.id}" ${selected ? "checked" : ""} ${disabled ? "disabled" : ""}>
+        <div>
+          <div class="question-text">${escapeHtml(q.conteudo)}</div>
+          <div class="meta-row">
+            <span class="chip">${escapeHtml(q.categoria)}</span>
+            <span class="chip ${disabled ? "warn" : "good"}">${disabled ? "sem respostas" : q.respostas_count + " respostas"}</span>
+            ${q.respostas.map(r => `<span class="chip blue">${escapeHtml(r.llm)}</span>`).join("")}
+          </div>
+        </div>
+      </label>
+    `;
+  }).join("");
+
+  els.questionList.querySelectorAll("[data-question-id]").forEach(input => {
+    input.addEventListener("change", () => {
+      const id = Number(input.dataset.questionId);
+      input.checked ? state.selectedQuestions.add(id) : state.selectedQuestions.delete(id);
+      renderAll();
+    });
+  });
+}
+
+function renderResponses(){
+  const selected = questoes.filter(q => state.selectedQuestions.has(q.id));
+  if(!selected.length){
+    els.responsesList.innerHTML = '<div class="empty">Selecione uma pergunta com respostas para ver quais modelos podem participar da avaliação.</div>';
+    return;
+  }
+
+  els.responsesList.innerHTML = selected.map(q => `
+    <article class="response-group">
+      <div class="response-question">Pergunta #${q.id} · ${q.respostas_count} respostas disponíveis</div>
+      <div class="response-list">
+        ${q.respostas.map(r => {
+          const participating = state.selectedJudges.has(r.llm_id);
+          return `
+          <div class="response-card ${state.selectedJudges.size ? (participating ? "is-participant" : "is-muted") : ""}">
+            <h3>${escapeHtml(r.llm)}</h3>
+            <span class="chip ${participating ? "good" : ""}">${participating ? "incluída" : "disponível"}</span>
+          </div>
+        `}).join("")}
+      </div>
+    </article>
+  `).join("");
+}
+
+function renderJudges(){
+  if(!llms.length){
+    els.judgeList.innerHTML = '<div class="empty">Nenhuma LLM ativa encontrada. Configure as LLMs no Setup para usar juízes online.</div>';
+    return;
+  }
+
+  els.judgeList.innerHTML = llms.map(llm => {
+    const selected = state.selectedJudges.has(llm.id);
+    return `
+      <label class="judge-card ${selected ? "is-selected" : ""}">
+        <input type="checkbox" data-judge-id="${llm.id}" ${selected ? "checked" : ""}>
+        <div>
+          <div class="judge-name">${escapeHtml(llm.nome)}</div>
+          <div class="judge-provider">${escapeHtml(llm.provedor)}</div>
+        </div>
+      </label>
+    `;
+  }).join("");
+
+  els.judgeList.querySelectorAll("[data-judge-id]").forEach(input => {
+    input.addEventListener("change", () => {
+      const id = Number(input.dataset.judgeId);
+      input.checked ? state.selectedJudges.add(id) : state.selectedJudges.delete(id);
+      renderJudges();
+      renderResponses();
+      renderStats();
+    });
+  });
+}
+
+function renderMetrics(){
+  if(!metricas.length){
+    els.metricList.innerHTML = '<div class="empty">Nenhuma métrica ativa encontrada. A avaliação online usa as métricas já configuradas no Setup.</div>';
+    return;
+  }
+  els.metricList.innerHTML = metricas.map(m => `
+    <span class="chip good">${escapeHtml(m.nome)} · 0-${m.max}</span>
+  `).join("");
+}
+
+function renderAll(){
+  renderStats();
+  renderQuestions();
+  renderResponses();
+}
+
+function renderResults(results){
+  state.results = results;
+  state.activeResult = 0;
+  const scoreCount = results.reduce((total,item) => total + ((item.notas || []).length),0);
+  els.resultCount.textContent = `${results.length} pares · ${scoreCount} notas`;
+  if(!results.length){
+    els.resultsGrid.innerHTML = '<div class="empty">Nenhuma avaliação foi retornada.</div>';
+    return;
+  }
+
+  els.resultsGrid.innerHTML = `
+    <div class="results-shell">
+      <div class="results-list" id="resultsList"></div>
+      <div class="result-detail" id="resultDetail"></div>
+    </div>
+  `;
+  renderResultList();
+  renderResultDetail(0);
+}
+
+function renderResultList(){
+  const list = document.getElementById("resultsList");
+  if(!list) return;
+
+  list.innerHTML = state.results.map((item,index) => {
+    const chips = (item.notas || []).map(n => `
+      <span class="chip good">${escapeHtml(n.metrica)} ${n.nota ?? "-"} / ${n.max}</span>
+    `).join("");
+
+    return `
+      <button class="result-row ${index === state.activeResult ? "is-active" : ""}" type="button" data-result-index="${index}">
+        <div class="result-route">${escapeHtml(item.modelo_juiz)} avalia ${escapeHtml(item.modelo_respondente)}</div>
+        <div class="result-question">${escapeHtml(item.pergunta)}</div>
+        <div class="result-score-chips">${chips}</div>
+      </button>
+    `;
+  }).join("");
+
+  list.querySelectorAll("[data-result-index]").forEach(button => {
+    button.addEventListener("click", () => renderResultDetail(Number(button.dataset.resultIndex)));
+  });
+}
+
+function renderResultDetail(index){
+  state.activeResult = index;
+  renderResultList();
+
+  const detail = document.getElementById("resultDetail");
+  const item = state.results[index];
+  if(!detail || !item) return;
+
+  const notesRows = (item.notas || []).map(n => `
+    <tr>
+      <td>${escapeHtml(n.metrica)}</td>
+      <td class="detail-score">${n.nota ?? "-"} / ${n.max}</td>
+      <td>${escapeHtml(n.justificativa || "-")}</td>
+    </tr>
+  `).join("");
+
+  detail.innerHTML = `
+    <div class="detail-head">
+      <div>
+        <div class="detail-title">${escapeHtml(item.modelo_juiz)} avalia ${escapeHtml(item.modelo_respondente)}</div>
+        <div class="detail-sub">${escapeHtml(item.pergunta)}</div>
+      </div>
+      <span class="chip ${item.erro ? "warn" : "good"}">${item.erro ? "erro" : "avaliado"}</span>
+    </div>
+
+    <div class="detail-block">
+      <div class="detail-label">Resposta avaliada</div>
+      <div class="detail-text detail-response">${escapeHtml(item.resposta_texto || item.resposta_preview || "Resposta não retornada.")}</div>
+    </div>
+
+    <div class="detail-block">
+      <div class="detail-label">Notas por métrica</div>
+      <table class="detail-table">
+        <thead>
+          <tr>
+            <th>Métrica</th>
+            <th>Nota</th>
+            <th>Observação</th>
+          </tr>
+        </thead>
+        <tbody>${notesRows}</tbody>
+      </table>
+    </div>
+
+    <div class="detail-block">
+      <div class="detail-label">Justificativa geral</div>
+      <div class="detail-text">${escapeHtml(item.justificativa || "Sem justificativa retornada.")}</div>
+    </div>
+  `;
+}
+
+async function runEvaluation(){
+  if(!state.selectedQuestions.size){
+    setStatus("Selecione ao menos uma pergunta com respostas.", "warn");
+    return;
+  }
+  if(state.selectedJudges.size < 2){
+    setStatus("Selecione ao menos duas LLMs participantes para avaliação cruzada.", "warn");
+    return;
+  }
+  if(!metricas.length){
+    setStatus("Nenhuma métrica ativa encontrada no Setup.", "warn");
+    return;
+  }
+
+  els.runBtn.disabled = true;
+  setStatus("Executando avaliação automática. Isso pode levar alguns instantes.");
+
+  try{
+    const response = await fetch("{% url 'juizes_executar_avaliacao' %}", {
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "X-CSRFToken":getCSRFToken(),
+      },
+      body:JSON.stringify({
+        questao_ids:Array.from(state.selectedQuestions),
+        juiz_ids:Array.from(state.selectedJudges),
+      })
+    });
+    const data = await response.json();
+    if(!response.ok || data.status !== "ok"){
+      throw new Error(data.mensagem || "Erro ao executar avaliação.");
+    }
+    renderResults(data.resultados || []);
+    setStatus(`${data.total || 0} pares avaliados · ${data.notas_total || 0} notas geradas.`);
+  }catch(error){
+    setStatus(error.message, "error");
+  }finally{
+    els.runBtn.disabled = false;
+  }
+}
+
+document.getElementById("selectAnsweredBtn").addEventListener("click", () => {
+  filteredQuestions().forEach(q => {
+    if(q.respostas_count > 0) state.selectedQuestions.add(q.id);
+  });
+  renderAll();
+});
+
+document.getElementById("clearQuestionsBtn").addEventListener("click", () => {
+  state.selectedQuestions.clear();
+  renderAll();
+});
+
+document.getElementById("clearResultsBtn").addEventListener("click", () => {
+  renderResults([]);
+  els.resultCount.textContent = "0 pares · 0 notas";
+  setStatus("Resultados limpos.");
+});
+
+els.runBtn.addEventListener("click", runEvaluation);
+[els.searchInput,els.statusFilter,els.categoryFilter,els.modelFilter].forEach(el => {
+  el.addEventListener("input", renderQuestions);
+  el.addEventListener("change", renderQuestions);
+});
+
+renderModelFilter();
+renderJudges();
+renderMetrics();
+renderAll();
+</script>
+</body>
+</html>
