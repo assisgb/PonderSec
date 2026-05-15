@@ -131,3 +131,24 @@ class AvaliacaoFormulario(models.Model):
     def __str__(self):
         nome_valiador = self.usuario.username if self.usuario else self.avaliador.nome
         return f"{nome_valiador} - {self.resposta}"
+
+
+class AvaliacaoJuiz(models.Model):
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
+    juiz = models.ForeignKey(LLM, on_delete=models.SET_NULL, null=True, blank=True, related_name='avaliacoes_como_juiz')
+    resposta = models.ForeignKey(Resposta, on_delete=models.CASCADE, related_name='avaliacoes_juizes')
+    metrica = models.ForeignKey(Metrica, on_delete=models.SET_NULL, null=True)
+    avaliacao_quali = models.TextField(blank=True, null=True)
+    avaliacao_quanti = models.IntegerField(blank=True, null=True)
+    justificativa_geral = models.TextField(blank=True, null=True)
+    erro = models.BooleanField(default=False)
+    criado_em = models.DateTimeField(auto_now_add=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-atualizado_em']
+        unique_together = ('usuario', 'juiz', 'resposta', 'metrica')
+
+    def __str__(self):
+        nome_juiz = self.juiz.nome if self.juiz else 'Juiz removido'
+        return f"{nome_juiz} avaliou {self.resposta}"

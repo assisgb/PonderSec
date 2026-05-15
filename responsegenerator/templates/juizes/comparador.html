@@ -573,6 +573,7 @@ select.field option{background:#07111c;color:var(--text)}
     </div>
     <div class="top-actions">
       <a class="btn secondary" href="{% url 'menu_avaliacao' %}">&larr; Voltar</a>
+      <a class="btn secondary" href="{% url 'dashboard_comparativo_avaliacoes' %}">Dashboard</a>
       <a class="btn secondary" href="{% url 'setup_llm' %}">LLMs</a>
     </div>
   </header>
@@ -1029,7 +1030,7 @@ async function runEvaluation(){
       throw new Error(data.mensagem || "Erro ao executar avaliação.");
     }
     renderResults(data.resultados || []);
-    setStatus(`${data.total || 0} pares avaliados · ${data.notas_total || 0} notas geradas.`);
+    setStatus(`${data.total || 0} pares avaliados · ${data.notas_total || 0} notas geradas · dashboard comparativo atualizado.`);
   }catch(error){
     setStatus(error.message, "error");
   }finally{

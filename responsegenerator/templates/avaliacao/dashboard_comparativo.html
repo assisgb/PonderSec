@@ -1,0 +1,799 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PonderSEC — Comparativo de Avaliações</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #02070d;
+            --panel: rgba(9, 18, 27, 0.88);
+            --panel-strong: rgba(11, 20, 29, 0.96);
+            --line: rgba(0, 255, 160, 0.16);
+            --line-strong: rgba(0, 255, 160, 0.32);
+            --green: #00ff9f;
+            --green-soft: rgba(0, 255, 160, 0.08);
+            --cyan: #38bdf8;
+            --purple: #bb86fc;
+            --warn: #f59e0b;
+            --danger: #ff5566;
+            --text: #e5fef6;
+            --muted: #8ba1b0;
+            --muted-2: #5e7280;
+            --mono: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+        }
+
+        body {
+            min-height: 100vh;
+            background:
+                radial-gradient(circle at 75% 0%, rgba(0, 255, 160, 0.08), transparent 30%),
+                radial-gradient(circle at 0% 70%, rgba(56, 189, 248, 0.05), transparent 30%),
+                var(--bg);
+            color: var(--text);
+            font-family: "Space Grotesk", system-ui, sans-serif;
+            padding: 22px;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(0, 255, 160, 0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 160, 0.04) 1px, transparent 1px);
+            background-size: 42px 42px;
+            pointer-events: none;
+        }
+
+        button { font: inherit; cursor: pointer; }
+        a { color: inherit; }
+
+        .shell {
+            width: min(1280px, 100%);
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .topbar,
+        .panel,
+        .stat-card {
+            background: linear-gradient(135deg, rgba(9, 18, 27, 0.96), rgba(4, 9, 15, 0.98));
+            border: 1px solid var(--line);
+            border-radius: 14px;
+        }
+
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            padding: 22px 26px;
+            margin-bottom: 18px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            min-width: 0;
+        }
+
+        .brand img {
+            width: 58px;
+            height: 58px;
+            object-fit: cover;
+            border-radius: 12px;
+            filter: drop-shadow(0 0 10px rgba(0,255,160,.45));
+            flex-shrink: 0;
+        }
+
+        .eyebrow {
+            color: #7df6c2;
+            font: 700 10px/1.2 var(--mono);
+            letter-spacing: .2em;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        h1 {
+            color: var(--green);
+            font-size: 27px;
+            line-height: 1.15;
+        }
+
+        .subtitle {
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.5;
+            margin-top: 6px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 40px;
+            padding: 11px 16px;
+            border: 1px solid var(--line-strong);
+            border-radius: 10px;
+            background: var(--green-soft);
+            color: var(--green);
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: .07em;
+            font: 700 12px/1 var(--mono);
+            transition: background .2s, border-color .2s, transform .2s;
+        }
+
+        .btn:hover {
+            background: rgba(0, 255, 160, 0.14);
+            border-color: var(--green);
+            transform: translateY(-1px);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .stat-card {
+            padding: 16px;
+            min-height: 104px;
+        }
+
+        .stat-label {
+            color: var(--muted-2);
+            font: 700 10px/1.2 var(--mono);
+            text-transform: uppercase;
+            letter-spacing: .12em;
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            color: var(--text);
+            font-size: 28px;
+            font-weight: 800;
+            line-height: 1.1;
+        }
+
+        .stat-sub {
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.35;
+            margin-top: 8px;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 360px;
+            gap: 18px;
+            align-items: start;
+        }
+
+        .panel {
+            padding: 22px;
+            margin-bottom: 18px;
+        }
+
+        .panel-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+
+        .panel-title {
+            color: var(--text);
+            font-size: 18px;
+            font-weight: 800;
+        }
+
+        .panel-copy {
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.5;
+            margin-top: 5px;
+        }
+
+        .metric-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .pill {
+            border: 1px solid rgba(0,255,160,.18);
+            border-radius: 999px;
+            background: rgba(0,255,160,.05);
+            color: #7df6c2;
+            padding: 8px 12px;
+            font-size: 12px;
+            font-weight: 700;
+            transition: background .2s, border-color .2s, color .2s;
+        }
+
+        .pill:hover,
+        .pill.active {
+            background: rgba(0,255,160,.14);
+            border-color: var(--green);
+            color: var(--green);
+        }
+
+        .chart-shell {
+            height: 430px;
+            border: 1px solid rgba(255,255,255,.07);
+            border-radius: 12px;
+            background: rgba(0,0,0,.18);
+            padding: 16px;
+        }
+
+        .summary-strip {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .mini-card {
+            border: 1px solid rgba(255,255,255,.07);
+            border-radius: 10px;
+            background: rgba(0,0,0,.18);
+            padding: 12px;
+        }
+
+        .mini-label {
+            color: var(--muted-2);
+            font: 700 10px/1.2 var(--mono);
+            text-transform: uppercase;
+            letter-spacing: .1em;
+        }
+
+        .mini-value {
+            margin-top: 6px;
+            color: var(--text);
+            font-size: 17px;
+            font-weight: 800;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+            border: 1px solid rgba(255,255,255,.07);
+            border-radius: 12px;
+            background: rgba(0,0,0,.16);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 760px;
+        }
+
+        th,
+        td {
+            padding: 12px 14px;
+            border-bottom: 1px solid rgba(255,255,255,.06);
+            text-align: left;
+            font-size: 13px;
+        }
+
+        th {
+            color: var(--green);
+            background: rgba(0,255,160,.07);
+            font: 800 10px/1.25 var(--mono);
+            text-transform: uppercase;
+            letter-spacing: .09em;
+        }
+
+        tr:last-child td { border-bottom: 0; }
+        .score-muted { color: var(--muted-2); }
+        .score-good { color: var(--green); font-weight: 800; }
+        .score-cyan { color: var(--cyan); font-weight: 800; }
+        .delta-pos { color: var(--warn); font-weight: 800; }
+        .delta-neg { color: var(--purple); font-weight: 800; }
+        .delta-zero { color: var(--green); font-weight: 800; }
+
+        .side-stack {
+            position: sticky;
+            top: 18px;
+        }
+
+        .divergence-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .divergence-card {
+            border: 1px solid rgba(255,255,255,.08);
+            border-radius: 11px;
+            background: rgba(0,0,0,.18);
+            padding: 13px;
+        }
+
+        .divergence-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+
+        .divergence-title {
+            color: var(--text);
+            font-size: 13px;
+            font-weight: 800;
+            line-height: 1.35;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            border: 1px solid rgba(0,255,160,.2);
+            background: rgba(0,255,160,.07);
+            color: var(--green);
+            padding: 5px 8px;
+            font: 800 10px/1 var(--mono);
+            white-space: nowrap;
+        }
+
+        .divergence-meta {
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
+        .empty {
+            min-height: 260px;
+            display: grid;
+            place-items: center;
+            border: 1px dashed rgba(255,255,255,.14);
+            border-radius: 12px;
+            color: var(--muted);
+            text-align: center;
+            padding: 24px;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 1100px) {
+            .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .layout { grid-template-columns: 1fr; }
+            .side-stack { position: static; }
+        }
+
+        @media (max-width: 700px) {
+            body { padding: 14px; }
+            .topbar { flex-direction: column; align-items: flex-start; padding: 20px; }
+            .actions, .btn { width: 100%; }
+            .brand { align-items: flex-start; }
+            .brand img { width: 48px; height: 48px; }
+            h1 { font-size: 23px; }
+            .stats-grid, .summary-strip { grid-template-columns: 1fr; }
+            .panel { padding: 18px; }
+            .panel-head { flex-direction: column; }
+            .chart-shell { height: 360px; padding: 10px; }
+        }
+    </style>
+</head>
+<body>
+<main class="shell">
+    <header class="topbar">
+        <div class="brand">
+            <img src="{% static 'pondersec_logo.jpg' %}" alt="PonderSEC">
+            <div>
+                <div class="eyebrow">PonderSEC · Analytics</div>
+                <h1>Comparativo de Avaliações</h1>
+                <p class="subtitle">Compare a média dos especialistas com a média dos juízes online para cada modelo, métrica e resposta avaliada.</p>
+            </div>
+        </div>
+        <div class="actions">
+            <a href="{% url 'juizes_comparador' %}" class="btn">Executar Juízes</a>
+            <a href="{% url 'menu_avaliacao' %}" class="btn">Voltar</a>
+        </div>
+    </header>
+
+    <section class="stats-grid">
+        <article class="stat-card">
+            <div class="stat-label">Notas especialistas</div>
+            <div class="stat-value" id="statEspecialistas">0</div>
+            <div class="stat-sub" id="statAvaliadores">0 avaliadores humanos</div>
+        </article>
+        <article class="stat-card">
+            <div class="stat-label">Notas juízes</div>
+            <div class="stat-value" id="statJuizes">0</div>
+            <div class="stat-sub" id="statJuizesOnline">0 LLMs atuando como juízes</div>
+        </article>
+        <article class="stat-card">
+            <div class="stat-label">Modelos</div>
+            <div class="stat-value" id="statModelos">0</div>
+            <div class="stat-sub">LLMs respondentes no comparativo</div>
+        </article>
+        <article class="stat-card">
+            <div class="stat-label">Métricas</div>
+            <div class="stat-value" id="statMetricas">0</div>
+            <div class="stat-sub">critérios ativos avaliados</div>
+        </article>
+        <article class="stat-card">
+            <div class="stat-label">Desvio médio</div>
+            <div class="stat-value" id="statDesvio">—</div>
+            <div class="stat-sub" id="statAlinhamento">pontos comparáveis</div>
+        </article>
+    </section>
+
+    <div class="layout">
+        <section>
+            <article class="panel">
+                <div class="panel-head">
+                    <div>
+                        <div class="panel-title">Especialistas vs Juízes Online</div>
+                        <p class="panel-copy">Barras agrupadas por modelo respondente. A diferença é calculada como média dos juízes menos média dos especialistas.</p>
+                    </div>
+                    <div class="metric-pills" id="metricPills"></div>
+                </div>
+
+                <div id="chartArea">
+                    <div class="chart-shell">
+                        <canvas id="comparisonChart"></canvas>
+                    </div>
+                    <div class="summary-strip">
+                        <div class="mini-card">
+                            <div class="mini-label">Métrica atual</div>
+                            <div class="mini-value" id="miniMetric">—</div>
+                        </div>
+                        <div class="mini-card">
+                            <div class="mini-label">Maior média especialistas</div>
+                            <div class="mini-value" id="miniTopHuman">—</div>
+                        </div>
+                        <div class="mini-card">
+                            <div class="mini-label">Maior média juízes</div>
+                            <div class="mini-value" id="miniTopJudge">—</div>
+                        </div>
+                    </div>
+                </div>
+            </article>
+
+            <article class="panel">
+                <div class="panel-head">
+                    <div>
+                        <div class="panel-title">Tabela da Métrica</div>
+                        <p class="panel-copy">Detalhamento por modelo com volume de notas usado em cada média.</p>
+                    </div>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Modelo respondente</th>
+                                <th>Especialistas</th>
+                                <th>Notas humanas</th>
+                                <th>Juízes online</th>
+                                <th>Notas juízes</th>
+                                <th>Diferença</th>
+                            </tr>
+                        </thead>
+                        <tbody id="metricTable"></tbody>
+                    </table>
+                </div>
+            </article>
+        </section>
+
+        <aside class="side-stack">
+            <article class="panel">
+                <div class="panel-head">
+                    <div>
+                        <div class="panel-title">Maiores Divergências</div>
+                        <p class="panel-copy">Casos em que juízes e especialistas mais discordaram.</p>
+                    </div>
+                </div>
+                <div class="divergence-list" id="divergenceList"></div>
+            </article>
+        </aside>
+    </div>
+</main>
+
+<script>
+const DASHBOARD_DATA = {{ comparativo_json|safe }};
+const metricas = DASHBOARD_DATA.metricas || [];
+const llms = DASHBOARD_DATA.llms || [];
+let currentMetricIndex = 0;
+let comparisonChart = null;
+
+const els = {
+    statEspecialistas: document.getElementById("statEspecialistas"),
+    statAvaliadores: document.getElementById("statAvaliadores"),
+    statJuizes: document.getElementById("statJuizes"),
+    statJuizesOnline: document.getElementById("statJuizesOnline"),
+    statModelos: document.getElementById("statModelos"),
+    statMetricas: document.getElementById("statMetricas"),
+    statDesvio: document.getElementById("statDesvio"),
+    statAlinhamento: document.getElementById("statAlinhamento"),
+    metricPills: document.getElementById("metricPills"),
+    metricTable: document.getElementById("metricTable"),
+    miniMetric: document.getElementById("miniMetric"),
+    miniTopHuman: document.getElementById("miniTopHuman"),
+    miniTopJudge: document.getElementById("miniTopJudge"),
+    divergenceList: document.getElementById("divergenceList"),
+    chartArea: document.getElementById("chartArea"),
+};
+
+const palette = {
+    especialistas: "rgba(0, 255, 160, 0.72)",
+    especialistasBorder: "#00ff9f",
+    juizes: "rgba(187, 134, 252, 0.72)",
+    juizesBorder: "#bb86fc",
+    grid: "rgba(0, 255, 160, 0.07)",
+    text: "#c5d9e3",
+};
+
+function escapeHtml(value) {
+    return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+function fmt(value, max) {
+    if (value === null || value === undefined) return "Sem dados";
+    return `${Number(value).toFixed(2)} / ${max}`;
+}
+
+function fmtDelta(value) {
+    if (value === null || value === undefined) return "—";
+    const prefix = value > 0 ? "+" : "";
+    return `${prefix}${Number(value).toFixed(2)}`;
+}
+
+function deltaClass(value) {
+    if (value === null || value === undefined) return "score-muted";
+    if (Math.abs(value) < 0.01) return "delta-zero";
+    return value > 0 ? "delta-pos" : "delta-neg";
+}
+
+function alignmentLabel(value) {
+    if (value === null || value === undefined) return "sem pares comparáveis";
+    if (value <= 0.5) return "alta convergência";
+    if (value <= 1) return "convergência moderada";
+    return "divergência relevante";
+}
+
+function setStats() {
+    const resumo = DASHBOARD_DATA.resumo || {};
+    els.statEspecialistas.textContent = resumo.notas_especialistas || 0;
+    els.statAvaliadores.textContent = `${resumo.avaliadores_humanos || 0} avaliadores humanos`;
+    els.statJuizes.textContent = resumo.notas_juizes || 0;
+    els.statJuizesOnline.textContent = `${resumo.juizes_online || 0} LLMs atuando como juízes`;
+    els.statModelos.textContent = resumo.modelos || 0;
+    els.statMetricas.textContent = resumo.metricas || 0;
+    els.statDesvio.textContent = resumo.desvio_medio === null || resumo.desvio_medio === undefined
+        ? "—"
+        : resumo.desvio_medio.toFixed(2);
+    els.statAlinhamento.textContent = `${resumo.pontos_comparaveis || 0} pontos · ${alignmentLabel(resumo.desvio_medio)}`;
+}
+
+function renderPills() {
+    els.metricPills.innerHTML = "";
+    metricas.forEach((metrica, index) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = `pill ${index === currentMetricIndex ? "active" : ""}`;
+        button.textContent = metrica.nome;
+        button.addEventListener("click", () => {
+            currentMetricIndex = index;
+            renderAll();
+        });
+        els.metricPills.appendChild(button);
+    });
+}
+
+function currentMetricData() {
+    const metrica = metricas[currentMetricIndex];
+    if (!metrica) return null;
+    return {
+        meta: metrica,
+        data: DASHBOARD_DATA.por_metrica[metrica.nome],
+    };
+}
+
+function bestModel(rows, key) {
+    const valid = rows.filter(row => row[key] !== null && row[key] !== undefined);
+    if (!valid.length) return "—";
+    valid.sort((a, b) => b[key] - a[key]);
+    return `${valid[0].nome} (${valid[0][key].toFixed(2)})`;
+}
+
+function rowsForCurrentMetric() {
+    const metric = currentMetricData();
+    if (!metric || !metric.data) return [];
+    return llms.map(llm => {
+        const row = metric.data.modelos[llm.nome] || {};
+        return {
+            nome: llm.nome,
+            especialistas: row.especialistas,
+            juizes: row.juizes,
+            diferenca: row.diferenca,
+            especialistas_count: row.especialistas_count || 0,
+            juizes_count: row.juizes_count || 0,
+        };
+    });
+}
+
+function renderChart() {
+    const metric = currentMetricData();
+    const canvas = document.getElementById("comparisonChart");
+    const rows = rowsForCurrentMetric();
+
+    if (!metric || !rows.length) {
+        els.chartArea.innerHTML = '<div class="empty">Sem dados suficientes para montar o gráfico comparativo. Execute avaliações com especialistas e juízes online para popular esta área.</div>';
+        return;
+    }
+
+    const labels = rows.map(row => row.nome);
+    const humanValues = rows.map(row => row.especialistas);
+    const judgeValues = rows.map(row => row.juizes);
+    const maxScore = metric.data.pontuacao_maxima || metric.meta.pontuacao_maxima || 5;
+
+    if (comparisonChart) comparisonChart.destroy();
+    comparisonChart = new Chart(canvas.getContext("2d"), {
+        type: "bar",
+        data: {
+            labels,
+            datasets: [
+                {
+                    label: "Especialistas",
+                    data: humanValues,
+                    backgroundColor: palette.especialistas,
+                    borderColor: palette.especialistasBorder,
+                    borderWidth: 2,
+                    borderRadius: 8,
+                    borderSkipped: false,
+                },
+                {
+                    label: "Juízes online",
+                    data: judgeValues,
+                    backgroundColor: palette.juizes,
+                    borderColor: palette.juizesBorder,
+                    borderWidth: 2,
+                    borderRadius: 8,
+                    borderSkipped: false,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: palette.text,
+                        font: { family: "Space Grotesk", size: 12, weight: "700" },
+                    }
+                },
+                tooltip: {
+                    backgroundColor: "rgba(5, 10, 17, 0.96)",
+                    borderColor: "rgba(0, 255, 160, 0.32)",
+                    borderWidth: 1,
+                    padding: 12,
+                    titleColor: "#7df6c2",
+                    bodyColor: "#e5fef6",
+                    callbacks: {
+                        label: item => {
+                            const value = item.raw;
+                            if (value === null || value === undefined) return `${item.dataset.label}: sem dados`;
+                            return `${item.dataset.label}: ${Number(value).toFixed(2)} / ${maxScore}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { color: "rgba(0, 255, 160, 0.04)" },
+                    ticks: { color: "#7df6c2", font: { family: "Space Grotesk", size: 12 } },
+                },
+                y: {
+                    min: 0,
+                    max: maxScore,
+                    grid: { color: palette.grid },
+                    ticks: { color: "#8ba1b0", stepSize: maxScore <= 5 ? 1 : 2 },
+                    title: {
+                        display: true,
+                        text: "Nota média",
+                        color: "#7df6c2",
+                        font: { family: "Space Grotesk", weight: "700" },
+                    }
+                }
+            }
+        }
+    });
+
+    els.miniMetric.textContent = metric.meta.nome;
+    els.miniTopHuman.textContent = bestModel(rows, "especialistas");
+    els.miniTopJudge.textContent = bestModel(rows, "juizes");
+}
+
+function renderTable() {
+    const metric = currentMetricData();
+    const maxScore = metric?.data?.pontuacao_maxima || metric?.meta?.pontuacao_maxima || 5;
+    const rows = rowsForCurrentMetric();
+
+    if (!rows.length) {
+        els.metricTable.innerHTML = '<tr><td colspan="6" class="score-muted">Nenhum dado disponível.</td></tr>';
+        return;
+    }
+
+    els.metricTable.innerHTML = rows.map(row => `
+        <tr>
+            <td><strong>${escapeHtml(row.nome)}</strong></td>
+            <td class="${row.especialistas === null || row.especialistas === undefined ? "score-muted" : "score-good"}">${fmt(row.especialistas, maxScore)}</td>
+            <td>${row.especialistas_count}</td>
+            <td class="${row.juizes === null || row.juizes === undefined ? "score-muted" : "score-cyan"}">${fmt(row.juizes, maxScore)}</td>
+            <td>${row.juizes_count}</td>
+            <td class="${deltaClass(row.diferenca)}">${fmtDelta(row.diferenca)}</td>
+        </tr>
+    `).join("");
+}
+
+function renderDivergences() {
+    const items = DASHBOARD_DATA.maiores_divergencias || [];
+    if (!items.length) {
+        els.divergenceList.innerHTML = '<div class="empty">Ainda não há pares com notas dos dois lados para comparar.</div>';
+        return;
+    }
+
+    els.divergenceList.innerHTML = items.map(item => {
+        const direction = item.diferenca > 0
+            ? "juízes foram mais generosos"
+            : item.diferenca < 0
+                ? "juízes foram mais rigorosos"
+                : "mesma média";
+        return `
+            <article class="divergence-card">
+                <div class="divergence-top">
+                    <div class="divergence-title">${escapeHtml(item.llm)}</div>
+                    <span class="badge">Δ ${Math.abs(item.diferenca).toFixed(2)}</span>
+                </div>
+                <div class="divergence-meta">
+                    ${escapeHtml(item.metrica)}<br>
+                    Especialistas ${item.especialistas.toFixed(2)} / ${item.max} · Juízes ${item.juizes.toFixed(2)} / ${item.max}<br>
+                    ${direction}
+                </div>
+            </article>
+        `;
+    }).join("");
+}
+
+function renderAll() {
+    renderPills();
+    renderChart();
+    renderTable();
+}
+
+setStats();
+renderDivergences();
+
+if (!metricas.length || !llms.length) {
+    els.chartArea.innerHTML = '<div class="empty">Cadastre métricas e modelos, gere respostas, colete avaliações dos especialistas e execute os juízes online.</div>';
+    els.metricTable.innerHTML = '<tr><td colspan="6" class="score-muted">Nenhum dado disponível.</td></tr>';
+} else {
+    renderAll();
+}
+</script>
+</body>
+</html>

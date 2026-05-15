@@ -8,6 +8,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        button, input, textarea, select { font: inherit; min-width: 0; }
+        img { max-width: 100%; }
 
         :root {
             --green: #00ff9f;
@@ -108,6 +110,7 @@
             position: fixed; inset: 0; z-index: 2;
             flex-direction: column;
             padding: 14px 20px 10px;
+            overflow-x: hidden;
         }
         .screen-eval.active { display: flex; }
 
@@ -115,16 +118,19 @@
             display: flex; flex-direction: column;
             height: 100%; max-width: 1100px;
             margin: 0 auto; width: 100%;
+            min-width: 0;
         }
 
         .eval-topbar {
             display: flex; align-items: center; gap: 12px;
             margin-bottom: 10px; flex-shrink: 0;
+            min-width: 0;
         }
         .eval-logo { width: 32px; height: 32px; border-radius: 8px; filter: drop-shadow(0 0 6px var(--green-glow)); }
-        .eval-title { color: var(--green); font-size: 14px; font-weight: 700; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .eval-title { color: var(--green); font-size: 14px; font-weight: 700; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .eval-counter { color: var(--text-muted); font-size: 12px; font-weight: 600; white-space: nowrap; }
         .eval-counter span { color: var(--green); }
+        .eval-counter .counter-label { color: var(--text-muted); margin-right: 3px; }
 
         .progress-track {
             flex-shrink: 0;
@@ -158,6 +164,61 @@
         .dot.active { background: var(--green); box-shadow: 0 0 7px var(--green-glow); transform: scale(1.5); }
         .dot.done   { background: rgba(0,255,160,0.35); }
 
+        .question-map {
+            flex-shrink: 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(142px, 100%), 1fr));
+            gap: 7px;
+            max-height: 82px;
+            overflow-y: auto;
+            margin-bottom: 8px;
+            min-width: 0;
+        }
+        .question-map::-webkit-scrollbar { width: 4px; }
+        .question-map::-webkit-scrollbar-thumb { background: #1b2635; border-radius: 2px; }
+        .question-chip {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            min-height: 36px;
+            padding: 7px 10px;
+            border: 1px solid var(--input-border);
+            border-radius: 8px;
+            background: rgba(5,10,18,0.78);
+            color: var(--text-muted);
+            font-family: "Space Grotesk", sans-serif;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s, color 0.2s, transform 0.2s;
+            min-width: 0;
+        }
+        .question-chip:hover { border-color: rgba(0,255,160,0.35); color: var(--text); }
+        .question-chip.active {
+            border-color: rgba(0,255,160,0.65);
+            background: rgba(0,255,160,0.08);
+            color: var(--green);
+            box-shadow: 0 0 14px rgba(0,255,160,0.10);
+        }
+        .question-chip.done { border-color: rgba(0,255,160,0.28); color: rgba(0,255,160,0.72); }
+        .question-chip span {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .question-chip strong {
+            color: inherit;
+            font-size: 10px;
+            font-weight: 600;
+            text-align: right;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
         .carousel-shell {
             flex: 1; min-height: 0;
             overflow: hidden;
@@ -177,6 +238,7 @@
             display: flex; height: 100%;
             transition: transform 0.42s cubic-bezier(0.4,0,0.2,1);
             will-change: transform;
+            min-width: 0;
         }
 
         .slide {
@@ -188,15 +250,20 @@
             flex-shrink: 0;
             padding: 18px 22px 0;
             height: 42%;
-            width: 1098px;
+            width: 100%;
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            min-width: 0;
         }
 
         .slide-meta {
             display: flex; gap: 8px; align-items: center;
             margin-bottom: 12px; flex-wrap: wrap;
+        }
+        .slide-meta > span {
+            max-width: 100%;
+            overflow-wrap: anywhere;
         }
         .badge-q {
             background: var(--green-dim); color: var(--green);
@@ -210,27 +277,36 @@
             padding: 4px 10px; border-radius: 20px; font-size: 10px;
             font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
         }
+        .badge-answer {
+            background: rgba(255,255,255,0.04); color: var(--text-label);
+            border: 1px solid rgba(255,255,255,0.10);
+            padding: 4px 10px; border-radius: 20px; font-size: 10px;
+            font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+        }
         .question-text {
             font-size: 14px; font-weight: 600; color: var(--text);
             line-height: 1.5; margin-bottom: 10px;
             padding-bottom: 10px;
             border-bottom: 1px solid rgba(255,255,255,0.06);
             flex-shrink: 0;
+            overflow-wrap: anywhere;
         }
         .response-box {
             flex: 1;
             min-height: 0;
             overflow-y: auto;
+            overflow-x: hidden;
             background: #020509;
             border: 1px solid var(--input-border);
             border-left: 3px solid var(--purple);
             border-radius: 8px;
             padding: 10px 13px;
             margin-bottom: 12px;
+            max-width: 100%;
         }
         .response-box::-webkit-scrollbar { width: 4px; }
         .response-box::-webkit-scrollbar-thumb { background: #1b2635; border-radius: 2px; }
-        .response-text { color: var(--text-label); font-size: 13px; line-height: 1.7; white-space: pre-wrap; }
+        .response-text { color: var(--text-label); font-size: 13px; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }
 
         .divider { flex-shrink: 0; height: 1px; background: rgba(0,255,160,0.08); margin: 0 22px; }
 
@@ -244,13 +320,14 @@
             flex-wrap: wrap;
             gap: 12px;
             align-content: flex-start;
+            overflow-x: hidden;
         }
         .slide-metrics::-webkit-scrollbar { width: 4px; }
         .slide-metrics::-webkit-scrollbar-thumb { background: #1b2635; border-radius: 2px; }
 
         .metric-block {
             flex: 0 0 calc((100% - 36px) / 4);
-            min-width: 180px;
+            min-width: min(180px, 100%);
             background: rgba(0,255,160,0.03);
             border: 1px solid var(--border);
             border-radius: 12px;
@@ -258,10 +335,11 @@
             display: flex;
             flex-direction: column;
             transition: 0.2s;
+            overflow-wrap: anywhere;
         }
         .metric-block:hover { border-color: var(--green); box-shadow: 0 0 10px var(--green-dim); }
         .metric-label { font-size: 10px; font-weight: 700; color: var(--green); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 2px; }
-        .metric-desc { font-size: 10px; color: var(--text-muted); margin-bottom: 10px; line-height: 1.4; }
+        .metric-desc { font-size: 10px; color: var(--text-muted); margin-bottom: 10px; line-height: 1.4; overflow-wrap: anywhere; }
 
         .likert-drag { margin-bottom: 10px; user-select: none; }
         .likert-track-wrap { position: relative; height: 36px; display: flex; align-items: center; cursor: grab; margin-bottom: 4px; }
@@ -336,7 +414,41 @@
         .kbd { display: inline-block; background: #0d1a24; border: 1px solid #1b2635; border-radius: 3px; padding: 1px 5px; font-size: 9px; color: #3a5062; }
 
         @media (max-width: 700px) {
-            .metric-block { flex: 0 0 calc((100% - 12px) / 2); }
+            .screen-eval { padding: 10px 12px 8px; }
+            .question-map { grid-template-columns: 1fr; }
+            .metric-block { flex: 1 1 calc((100% - 12px) / 2); min-width: min(190px, 100%); }
+            .slide-top { padding: 14px 14px 0; }
+            .slide-metrics { padding: 12px 14px 16px; }
+            .divider { margin: 0 14px; }
+        }
+
+        @media (max-width: 520px) {
+            .screen-eval { padding: 8px; }
+            .eval-topbar { gap: 8px; }
+            .eval-logo { width: 28px; height: 28px; }
+            .eval-title { font-size: 13px; }
+            .eval-counter { font-size: 11px; }
+            .question-map { max-height: 112px; gap: 6px; }
+            .dots-row { max-height: 34px; overflow-y: auto; padding: 3px 0; }
+            .carousel-shell { border-radius: 10px; }
+            .slide-top { height: auto; min-height: 225px; max-height: 48%; padding: 12px 12px 0; }
+            .question-text { font-size: 13px; }
+            .response-box { min-height: 128px; }
+            .response-text { font-size: 12px; line-height: 1.65; }
+            .slide-metrics { display: grid; grid-template-columns: 1fr; gap: 10px; padding: 12px; }
+            .metric-block { width: 100%; min-width: 0; flex-basis: auto; }
+            .eval-nav { flex-wrap: wrap; }
+            .btn-prev { flex: 1 1 calc(50% - 4px); min-width: 0; }
+            .btn-next,
+            .btn-submit-final { flex: 1 1 100%; }
+        }
+
+        @media (max-height: 620px) and (min-width: 701px) {
+            .screen-eval { padding: 10px 16px 8px; }
+            .question-map { max-height: 46px; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); }
+            .slide-top { height: 48%; }
+            .metric-block { flex: 1 1 calc((100% - 24px) / 3); min-width: min(170px, 100%); }
+            .kbd-hint { display: none; }
         }
     </style>
 </head>
@@ -377,12 +489,14 @@
                 <div class="eval-topbar">
                     <img src="{% static 'pondersec_logo.jpg' %}" alt="" class="eval-logo">
                     <span class="eval-title">{{ formulario.nome }}</span>
-                    <span class="eval-counter"><span id="counterCurr">1</span> / <span id="counterTotal">1</span></span>
+                    <span class="eval-counter"><span class="counter-label">Item</span><span id="counterCurr">1</span> de <span id="counterTotal">1</span></span>
                 </div>
 
                 <div class="progress-track" id="progressTrack">
                     <div class="progress-fill" id="progressFill" style="width:0%"></div>
                 </div>
+
+                <div class="question-map" id="questionMap" aria-label="Navegação por perguntas"></div>
 
                 <div class="dots-row" id="dotsRow"></div>
 
@@ -390,12 +504,19 @@
                     <div class="carousel-track" id="carouselTrack">
 
                         {% for questao in formulario.questoes.all %}
+                        {% with question_number=forloop.counter question_index=forloop.counter0 question_total=formulario.questoes.count response_total=questao.respostas.count %}
                         {% for resp in questao.respostas.all %}
-                        <div class="slide">
+                        <div class="slide"
+                             data-question-index="{{ question_index }}"
+                             data-question-number="{{ question_number }}"
+                             data-question-total="{{ question_total }}"
+                             data-response-number="{{ forloop.counter }}"
+                             data-response-total="{{ response_total }}">
 
                             <div class="slide-top">
                                 <div class="slide-meta">
-                                    <span class="badge-q">Q{{ forloop.parentloop.counter }} / {{ formulario.questoes.count }}</span>
+                                    <span class="badge-q">Pergunta {{ question_number }} de {{ question_total }}</span>
+                                    <span class="badge-answer">Resposta {{ forloop.counter }} de {{ response_total }}</span>
                                     <span class="badge-ai">
                                         ✦
                                         {% if blind_mode %}
@@ -471,12 +592,18 @@
 
                         </div>
                         {% empty %}
-                        <div class="slide">
+                        <div class="slide slide-empty"
+                             data-question-index="{{ question_index }}"
+                             data-question-number="{{ question_number }}"
+                             data-question-total="{{ question_total }}"
+                             data-response-number="0"
+                             data-response-total="0">
                             <div class="slide-top">
-                                <p style="color:#ff5566;padding:20px;">Nenhuma IA respondeu à Q{{ forloop.counter }}.</p>
+                                <p style="color:#ff5566;padding:20px;">Nenhuma IA respondeu à Pergunta {{ question_number }}.</p>
                             </div>
                         </div>
                         {% endfor %}
+                        {% endwith %}
                         {% endfor %}
 
                     </div>
@@ -590,6 +717,7 @@
         var fill          = document.getElementById('progressFill');
         var counterCurr   = document.getElementById('counterCurr');
         var counterTotal  = document.getElementById('counterTotal');
+        var questionMap   = document.getElementById('questionMap');
         var dotsRow       = document.getElementById('dotsRow');
         var btnPrev       = document.getElementById('btnPrev');
         var btnNext       = document.getElementById('btnNext');
@@ -610,18 +738,79 @@
             if (!ok) return;
             screenIdent.style.display = 'none';
             screenEval.classList.add('active');
+            buildQuestionMap();
             buildDots();
             render();
         });
 
         /* Dots */
         function buildDots() {
-            slides.forEach(function(_, i) {
+            dotsRow.innerHTML = '';
+            slides.forEach(function(slide, i) {
                 var d = document.createElement('button');
                 d.type = 'button';
                 d.className = 'dot';
+                d.title = slideLabel(slide, i);
+                d.setAttribute('aria-label', slideLabel(slide, i));
                 d.addEventListener('click', function() { goTo(i); });
                 dotsRow.appendChild(d);
+            });
+        }
+
+        function slideLabel(slide, index) {
+            var question = slide.getAttribute('data-question-number') || '?';
+            var response = slide.getAttribute('data-response-number') || '?';
+            var responseTotal = slide.getAttribute('data-response-total') || '?';
+
+            if (responseTotal === '0') {
+                return 'Item ' + (index + 1) + ': Pergunta ' + question + ' sem respostas';
+            }
+
+            return 'Item ' + (index + 1) + ': Pergunta ' + question + ', resposta ' + response + ' de ' + responseTotal;
+        }
+
+        function buildQuestionMap() {
+            var groups = [];
+            questionMap.innerHTML = '';
+
+            slides.forEach(function(slide, slideIndex) {
+                var qIndex = Number(slide.getAttribute('data-question-index'));
+                if (!groups[qIndex]) {
+                    groups[qIndex] = {
+                        index: qIndex,
+                        number: slide.getAttribute('data-question-number'),
+                        responsesTotal: Number(slide.getAttribute('data-response-total')),
+                        firstSlide: slideIndex,
+                        lastSlide: slideIndex
+                    };
+                }
+                groups[qIndex].lastSlide = slideIndex;
+                groups[qIndex].responsesTotal = Math.max(
+                    groups[qIndex].responsesTotal,
+                    Number(slide.getAttribute('data-response-total'))
+                );
+            });
+
+            groups.filter(Boolean).forEach(function(group) {
+                var btn = document.createElement('button');
+                var label = document.createElement('span');
+                var count = document.createElement('strong');
+
+                btn.type = 'button';
+                btn.className = 'question-chip';
+                btn.setAttribute('data-question-index', group.index);
+                btn.setAttribute('data-last-slide', group.lastSlide);
+                btn.title = 'Ir para a pergunta ' + group.number;
+
+                label.textContent = 'Pergunta ' + group.number;
+                count.textContent = group.responsesTotal === 0
+                    ? 'sem respostas'
+                    : group.responsesTotal + (group.responsesTotal === 1 ? ' resposta' : ' respostas');
+
+                btn.appendChild(label);
+                btn.appendChild(count);
+                btn.addEventListener('click', function() { goTo(group.firstSlide); });
+                questionMap.appendChild(btn);
             });
         }
 
@@ -650,6 +839,13 @@
             dotsRow.querySelectorAll('.dot').forEach(function(d, i) {
                 d.classList.toggle('active', i === current);
                 d.classList.toggle('done',   i < current);
+            });
+            var activeQuestion = slides[current] ? Number(slides[current].getAttribute('data-question-index')) : -1;
+            questionMap.querySelectorAll('.question-chip').forEach(function(btn) {
+                var questionIndex = Number(btn.getAttribute('data-question-index'));
+                var lastSlide = Number(btn.getAttribute('data-last-slide'));
+                btn.classList.toggle('active', questionIndex === activeQuestion);
+                btn.classList.toggle('done', lastSlide < current);
             });
             btnPrev.disabled = current === 0;
             var last = current === total - 1;
