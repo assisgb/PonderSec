@@ -204,7 +204,7 @@
         <section class="flow-section">
             <div class="section-label">Avaliação com Juízes Online</div>
 
-            <div class="cards-grid single">
+            <div class="cards-grid">
                 <a href="{% url 'juizes_comparador' %}" class="card">
                     <div class="card-icon">
                          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#00ff9f" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -213,6 +213,22 @@
                     </div>
                     <div class="card-title">Juízes Online</div>
                     <div class="card-desc">Execute avaliações automáticas em que LLMs avaliam respostas geradas por outros modelos.</div>
+                    <div class="card-footer">
+                        Acessar
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                            <path d="M5 12h14M13 6l6 6-6 6"/>
+                        </svg>
+                    </div>
+                </a>
+
+                <a href="{% url 'dashboard_comparativo_avaliacoes' %}" class="card">
+                    <div class="card-icon">
+                         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#00ff9f" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 16V9"/><path d="M12 16V6"/><path d="M16 16v-4"/><path d="M7 8h2"/><path d="M11 5h2"/><path d="M15 11h2"/>
+                        </svg>
+                    </div>
+                    <div class="card-title">Dashboard Comparativo</div>
+                    <div class="card-desc">Compare médias dos juízes online com avaliações feitas por especialistas humanos.</div>
                     <div class="card-footer">
                         Acessar
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">

@@ -34,6 +34,7 @@ urlpatterns = [
     path("api/llm/<int:id>/delete/", views.deletar_llm, name="delete_llm"),
     path("api/llm/<int:id>/edit/", views.edit_llm_api),
     path('avaliacao/dashboard/', views.dashboard_avaliacoes, name='dashboard_avaliacoes'),
+    path('avaliacao/dashboard-comparativo/', views.dashboard_comparativo_avaliacoes, name='dashboard_comparativo_avaliacoes'),
     path('menu_avaliacao/', views.menu_avaliacao, name='menu_avaliacao'),
     path('juizes/comparador/', views.juizes_comparador, name='juizes_comparador'),
     path('juizes/avaliar/', views.juizes_executar_avaliacao, name='juizes_executar_avaliacao'),

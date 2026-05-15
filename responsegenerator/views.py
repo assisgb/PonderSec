@@ -8,8 +8,8 @@ from datetime import timedelta
 from django.http import JsonResponse, HttpResponse
 import json
 from django.views.decorators.http import require_http_methods
-from responsegenerator.models import Historico, Categoria, LLM, Questao, Resposta, Avaliacao, Metrica, Formulario, Avaliador, AvaliacaoFormulario
-from django.db.models import Avg
+from responsegenerator.models import Historico, Categoria, LLM, Questao, Resposta, Avaliacao, Metrica, Formulario, Avaliador, AvaliacaoFormulario, AvaliacaoJuiz
+from django.db.models import Avg, Count
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -612,6 +612,35 @@ def _parse_judgeai_result(raw_text, metricas):
 
     return resultado, justificativa
 
+def _salvar_avaliacoes_juiz(usuario, resposta, juiz, metricas, notas, justificativa):
+    metricas_por_nome = {metrica.nome.lower(): metrica for metrica in metricas}
+    AvaliacaoJuiz.objects.filter(
+        usuario=usuario,
+        juiz=juiz,
+        resposta=resposta,
+        metrica__in=metricas
+    ).delete()
+
+    for item in notas:
+        metrica = metricas_por_nome.get((item.get("metrica") or "").lower())
+        nota = item.get("nota")
+
+        if not metrica or nota is None:
+            continue
+
+        AvaliacaoJuiz.objects.update_or_create(
+            usuario=usuario,
+            juiz=juiz,
+            resposta=resposta,
+            metrica=metrica,
+            defaults={
+                "avaliacao_quanti": nota,
+                "avaliacao_quali": item.get("justificativa") or "",
+                "justificativa_geral": justificativa,
+                "erro": False,
+            }
+        )
+
 def _judgeai_error_result(questao, resposta, juiz, motivo):
     return {
         "questao_id": questao.id,
@@ -711,6 +740,7 @@ def juizes_executar_avaliacao(request):
             try:
                 raw = future.result()
                 notas, justificativa = _parse_judgeai_result(raw, metricas)
+                _salvar_avaliacoes_juiz(request.user, resposta, juiz, metricas, notas, justificativa)
                 resultados.append({
                     "questao_id": questao.id,
                     "pergunta": questao.conteudo,
@@ -809,7 +839,10 @@ def avaliacao_deletar_formulario(request, id):
     return redirect('avaliacao')
 
 def responder_avaliacao_publica(request, formulario_id):
-    formulario = get_object_or_404(Formulario, id=formulario_id)
+    formulario = get_object_or_404(
+        Formulario.objects.prefetch_related('questoes__respostas__llm'),
+        id=formulario_id
+    )
     
     metricas = list(Metrica.objects.filter(usuario=formulario.usuario, ativa=True))
 
@@ -888,6 +921,7 @@ def dashboard_avaliacoes(request):
         dados_metrica = {}
         for llm in llms:
             media = AvaliacaoFormulario.objects.filter(
+                usuario=request.user,
                 metrica_id=metrica['id'],
                 resposta__llm_id=llm['id'],
                 avaliacao_quanti__isnull=False
@@ -905,6 +939,125 @@ def dashboard_avaliacoes(request):
         'metricas_json': json.dumps(dados),
         'llms_json': json.dumps([l['nome'] for l in llms]),
         'metricas_lista': metricas,
+    })
+
+@login_required
+def dashboard_comparativo_avaliacoes(request):
+    metricas = list(
+        Metrica.objects
+        .filter(usuario=request.user, ativa=True)
+        .order_by("id")
+        .values("id", "nome", "pontuacao_maxima")
+    )
+    llms = list(
+        LLM.objects
+        .filter(usuario=request.user)
+        .order_by("nome")
+        .values("id", "nome")
+    )
+
+    por_metrica = {}
+    divergencias = []
+
+    for metrica in metricas:
+        modelos = {}
+        maximo = metrica["pontuacao_maxima"] or 5
+
+        for llm in llms:
+            especialistas = AvaliacaoFormulario.objects.filter(
+                usuario=request.user,
+                metrica_id=metrica["id"],
+                resposta__llm_id=llm["id"],
+                avaliacao_quanti__isnull=False
+            ).aggregate(media=Avg("avaliacao_quanti"), total=Count("id"))
+
+            juizes = AvaliacaoJuiz.objects.filter(
+                usuario=request.user,
+                metrica_id=metrica["id"],
+                resposta__llm_id=llm["id"],
+                avaliacao_quanti__isnull=False,
+                erro=False
+            ).aggregate(media=Avg("avaliacao_quanti"), total=Count("id"))
+
+            media_especialistas = especialistas["media"]
+            media_juizes = juizes["media"]
+            diferenca = None
+
+            if media_especialistas is not None and media_juizes is not None:
+                diferenca = round(media_juizes - media_especialistas, 2)
+                divergencias.append({
+                    "metrica": metrica["nome"],
+                    "llm": llm["nome"],
+                    "diferenca": diferenca,
+                    "desvio": abs(diferenca),
+                    "especialistas": round(media_especialistas, 2),
+                    "juizes": round(media_juizes, 2),
+                    "max": maximo,
+                })
+
+            modelos[llm["nome"]] = {
+                "especialistas": round(media_especialistas, 2) if media_especialistas is not None else None,
+                "juizes": round(media_juizes, 2) if media_juizes is not None else None,
+                "diferenca": diferenca,
+                "especialistas_count": especialistas["total"],
+                "juizes_count": juizes["total"],
+            }
+
+        por_metrica[metrica["nome"]] = {
+            "id": metrica["id"],
+            "pontuacao_maxima": maximo,
+            "modelos": modelos,
+        }
+
+    desvios = [item["desvio"] for item in divergencias]
+    desvio_medio = round(sum(desvios) / len(desvios), 2) if desvios else None
+    maiores_divergencias = sorted(divergencias, key=lambda item: item["desvio"], reverse=True)[:8]
+
+    total_especialistas = AvaliacaoFormulario.objects.filter(
+        usuario=request.user,
+        avaliacao_quanti__isnull=False
+    ).count()
+    total_juizes = AvaliacaoJuiz.objects.filter(
+        usuario=request.user,
+        erro=False,
+        avaliacao_quanti__isnull=False
+    ).count()
+    avaliadores_humanos = Avaliador.objects.filter(
+        formulario__usuario=request.user,
+        avaliacoes__avaliacao_quanti__isnull=False
+    ).distinct().count()
+    juizes_online = AvaliacaoJuiz.objects.filter(
+        usuario=request.user,
+        erro=False,
+        avaliacao_quanti__isnull=False
+    ).values("juiz_id").distinct().count()
+
+    payload = {
+        "metricas": [
+            {
+                "id": metrica["id"],
+                "nome": metrica["nome"],
+                "pontuacao_maxima": metrica["pontuacao_maxima"] or 5,
+            }
+            for metrica in metricas
+        ],
+        "llms": [{"id": llm["id"], "nome": llm["nome"]} for llm in llms],
+        "por_metrica": por_metrica,
+        "resumo": {
+            "modelos": len(llms),
+            "metricas": len(metricas),
+            "notas_especialistas": total_especialistas,
+            "notas_juizes": total_juizes,
+            "avaliadores_humanos": avaliadores_humanos,
+            "juizes_online": juizes_online,
+            "pontos_comparaveis": len(divergencias),
+            "desvio_medio": desvio_medio,
+        },
+        "maiores_divergencias": maiores_divergencias,
+    }
+
+    return render(request, "avaliacao/dashboard_comparativo.html", {
+        "comparativo_json": json.dumps(payload, ensure_ascii=False),
     })
 
 @login_required
