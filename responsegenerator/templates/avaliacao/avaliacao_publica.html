@@ -10,7 +10,6 @@
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         button, input, textarea, select { font: inherit; min-width: 0; }
         img { max-width: 100%; }
-
         :root {
             --green: #00ff9f;
             --green-dim: rgba(0,255,160,0.13);
@@ -24,8 +23,8 @@
             --text-label: #c5d9e3;
             --input-bg: #050a11;
             --input-border: #1b2635;
+            --slide-pad-x: 22px;
         }
-
         html, body {
             height: 100%;
             font-family: "Space Grotesk", system-ui, sans-serif;
@@ -33,7 +32,6 @@
             color: var(--text);
             overflow-x: hidden;
         }
-
         .bg-grid {
             position: fixed; inset: 0; z-index: 0; pointer-events: none;
             background-image:
@@ -41,13 +39,11 @@
                 linear-gradient(180deg, rgba(0,255,160,0.05) 1px, transparent 1px);
             background-size: 40px 40px;
         }
-
         .scanline {
             position: fixed; inset: 0; z-index: 0; pointer-events: none;
             background-image: repeating-linear-gradient(to bottom, transparent 0px, transparent 3px, rgba(0,0,0,0.12) 3px, rgba(0,0,0,0.12) 4px);
             opacity: 0.6;
         }
-
         .bg-orb {
             position: fixed; z-index: 0; pointer-events: none;
             width: 700px; height: 700px; border-radius: 50%;
@@ -55,7 +51,6 @@
             top: -15%; left: 50%; transform: translateX(-50%);
             filter: blur(90px);
         }
-
         /* ══ SCREEN 1 — IDENTIFICATION ══ */
         .screen-ident {
             position: relative; z-index: 2;
@@ -79,7 +74,6 @@
         }
         .ident-header h1 { color: var(--green); font-size: 20px; font-weight: 700; margin-bottom: 5px; }
         .ident-header p  { color: var(--text-muted); font-size: 13px; }
-
         .field-group { margin-bottom: 16px; }
         .field-label {
             display: block; color: var(--text-label); font-size: 11px;
@@ -93,7 +87,6 @@
             font-family: "Space Grotesk", sans-serif; outline: none; transition: all 0.2s;
         }
         .field-input:focus { border-color: var(--green); box-shadow: 0 0 12px var(--green-dim); }
-
         .btn-start {
             width: 100%; margin-top: 8px; padding: 14px;
             background: linear-gradient(90deg, #00ff9f, #00e87a);
@@ -103,7 +96,6 @@
             cursor: pointer; font-family: "Space Grotesk", sans-serif; transition: all 0.2s;
         }
         .btn-start:hover { box-shadow: 0 0 28px rgba(0,255,160,0.4); transform: translateY(-1px); }
-
         /* ══ SCREEN 2 — EVALUATION ══ */
         .screen-eval {
             display: none;
@@ -113,14 +105,12 @@
             overflow-x: hidden;
         }
         .screen-eval.active { display: flex; }
-
         .eval-inner {
             display: flex; flex-direction: column;
             height: 100%; max-width: 1100px;
             margin: 0 auto; width: 100%;
             min-width: 0;
         }
-
         .eval-topbar {
             display: flex; align-items: center; gap: 12px;
             margin-bottom: 10px; flex-shrink: 0;
@@ -131,7 +121,6 @@
         .eval-counter { color: var(--text-muted); font-size: 12px; font-weight: 600; white-space: nowrap; }
         .eval-counter span { color: var(--green); }
         .eval-counter .counter-label { color: var(--text-muted); margin-right: 3px; }
-
         .progress-track {
             flex-shrink: 0;
             width: 100%; height: 4px;
@@ -150,7 +139,6 @@
             width: 10px; height: 10px; border-radius: 50%;
             background: var(--green); box-shadow: 0 0 8px var(--green-glow);
         }
-
         .dots-row {
             flex-shrink: 0;
             display: flex; flex-wrap: wrap; gap: 5px;
@@ -163,7 +151,6 @@
         }
         .dot.active { background: var(--green); box-shadow: 0 0 7px var(--green-glow); transform: scale(1.5); }
         .dot.done   { background: rgba(0,255,160,0.35); }
-
         .question-map {
             flex-shrink: 0;
             display: grid;
@@ -218,7 +205,6 @@
             white-space: nowrap;
             flex-shrink: 0;
         }
-
         .carousel-shell {
             flex: 1; min-height: 0;
             overflow: hidden;
@@ -240,15 +226,13 @@
             will-change: transform;
             min-width: 0;
         }
-
         .slide {
             min-width: 100%; height: 100%; flex-shrink: 0;
             display: flex; flex-direction: column; overflow: hidden;
         }
-
         .slide-top {
             flex-shrink: 0;
-            padding: 18px 22px 0;
+            padding: 18px var(--slide-pad-x) 0;
             height: 42%;
             width: 100%;
             display: flex;
@@ -256,7 +240,6 @@
             overflow: hidden;
             min-width: 0;
         }
-
         .slide-meta {
             display: flex; gap: 8px; align-items: center;
             margin-bottom: 12px; flex-wrap: wrap;
@@ -299,23 +282,21 @@
             background: #020509;
             border: 1px solid var(--input-border);
             border-left: 3px solid var(--purple);
-            border-radius: 8px;
-            padding: 10px 13px;
-            margin-bottom: 12px;
-            max-width: 100%;
+            border-radius: 0;
+            padding: 10px var(--slide-pad-x);
+            margin-left: calc(-1 * var(--slide-pad-x));
+            margin-right: calc(-1 * var(--slide-pad-x));
+            max-width: 1100px;
         }
         .response-box::-webkit-scrollbar { width: 4px; }
         .response-box::-webkit-scrollbar-thumb { background: #1b2635; border-radius: 2px; }
         .response-text { color: var(--text-label); font-size: 13px; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }
-
-        .divider { flex-shrink: 0; height: 1px; background: rgba(0,255,160,0.08); margin: 0 22px; }
-
+        .divider { flex-shrink: 0; height: 1px; background: rgba(0,255,160,0.08); margin: 0 var(--slide-pad-x); }
         .slide-metrics {
             flex: 1;
             min-height: 0;
             overflow-y: auto;
-            padding: 14px 22px 18px;
-
+            padding: 14px var(--slide-pad-x) 18px;
             display: flex;
             flex-wrap: wrap;
             gap: 12px;
@@ -324,7 +305,6 @@
         }
         .slide-metrics::-webkit-scrollbar { width: 4px; }
         .slide-metrics::-webkit-scrollbar-thumb { background: #1b2635; border-radius: 2px; }
-
         .metric-block {
             flex: 0 0 calc((100% - 36px) / 4);
             min-width: min(180px, 100%);
@@ -340,7 +320,6 @@
         .metric-block:hover { border-color: var(--green); box-shadow: 0 0 10px var(--green-dim); }
         .metric-label { font-size: 10px; font-weight: 700; color: var(--green); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 2px; }
         .metric-desc { font-size: 10px; color: var(--text-muted); margin-bottom: 10px; line-height: 1.4; overflow-wrap: anywhere; }
-
         .likert-drag { margin-bottom: 10px; user-select: none; }
         .likert-track-wrap { position: relative; height: 36px; display: flex; align-items: center; cursor: grab; margin-bottom: 4px; }
         .likert-track-wrap:active { cursor: grabbing; }
@@ -366,7 +345,6 @@
         .likert-emoji-row { display: flex; justify-content: space-between; padding: 0 2px; margin-bottom: 6px; }
         .likert-emo { font-size: 14px; flex: 1; text-align: center; transition: transform 0.15s, opacity 0.15s; opacity: 0.4; }
         .likert-emo.active { transform: scale(1.3); opacity: 1; }
-
         .comment-field {
             width: 100%; padding: 7px 10px;
             background: var(--input-bg); border: 1px solid var(--input-border);
@@ -377,7 +355,6 @@
         }
         .comment-field:focus { border-color: rgba(0,255,160,0.5); }
         .comment-field::placeholder { color: #2a3848; }
-
         .eval-nav { flex-shrink: 0; display: flex; gap: 8px; align-items: center; }
         .btn-nav {
             display: flex; align-items: center; justify-content: center;
@@ -390,7 +367,6 @@
         .btn-prev:disabled { opacity: 0.3; cursor: not-allowed; }
         .btn-next { flex: 1; background: linear-gradient(90deg, #00ff9f, #00e87a); color: #000; }
         .btn-next:hover { box-shadow: 0 0 20px rgba(0,255,160,0.4); transform: translateY(-1px); }
-
         .btn-submit-final {
             flex: 1; padding: 11px 18px;
             background: linear-gradient(90deg, #00ff9f, #00ff57);
@@ -400,7 +376,6 @@
         }
         .btn-submit-final.visible { display: block; }
         .btn-submit-final:hover { box-shadow: 0 0 22px rgba(0,255,160,0.45); transform: translateY(-1px); }
-
         .completion-msg {
             display: none; flex-shrink: 0; text-align: center;
             background: var(--green-dim); border: 1px solid rgba(0,255,160,0.22);
@@ -409,20 +384,16 @@
         .completion-msg.visible { display: block; }
         .completion-msg h3 { color: var(--green); font-size: 13px; margin-bottom: 1px; }
         .completion-msg p  { color: var(--text-muted); font-size: 11px; }
-
         .kbd-hint { flex-shrink: 0; font-size: 10px; color: #2a3848; text-align: center; margin-top: 4px; }
         .kbd { display: inline-block; background: #0d1a24; border: 1px solid #1b2635; border-radius: 3px; padding: 1px 5px; font-size: 9px; color: #3a5062; }
-
         @media (max-width: 700px) {
+            :root { --slide-pad-x: 14px; }
             .screen-eval { padding: 10px 12px 8px; }
             .question-map { grid-template-columns: 1fr; }
             .metric-block { flex: 1 1 calc((100% - 12px) / 2); min-width: min(190px, 100%); }
-            .slide-top { padding: 14px 14px 0; }
-            .slide-metrics { padding: 12px 14px 16px; }
-            .divider { margin: 0 14px; }
         }
-
         @media (max-width: 520px) {
+            :root { --slide-pad-x: 12px; }
             .screen-eval { padding: 8px; }
             .eval-topbar { gap: 8px; }
             .eval-logo { width: 28px; height: 28px; }
@@ -431,18 +402,17 @@
             .question-map { max-height: 112px; gap: 6px; }
             .dots-row { max-height: 34px; overflow-y: auto; padding: 3px 0; }
             .carousel-shell { border-radius: 10px; }
-            .slide-top { height: auto; min-height: 225px; max-height: 48%; padding: 12px 12px 0; }
+            .slide-top { height: auto; min-height: 225px; max-height: 48%; }
             .question-text { font-size: 13px; }
             .response-box { min-height: 128px; }
             .response-text { font-size: 12px; line-height: 1.65; }
-            .slide-metrics { display: grid; grid-template-columns: 1fr; gap: 10px; padding: 12px; }
+            .slide-metrics { display: grid; grid-template-columns: 1fr; gap: 10px; }
             .metric-block { width: 100%; min-width: 0; flex-basis: auto; }
             .eval-nav { flex-wrap: wrap; }
             .btn-prev { flex: 1 1 calc(50% - 4px); min-width: 0; }
             .btn-next,
             .btn-submit-final { flex: 1 1 100%; }
         }
-
         @media (max-height: 620px) and (min-width: 701px) {
             .screen-eval { padding: 10px 16px 8px; }
             .question-map { max-height: 46px; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); }
@@ -456,10 +426,8 @@
     <div class="bg-grid"></div>
     <div class="scanline"></div>
     <div class="bg-orb"></div>
-
     <form method="POST" id="evalForm">
         {% csrf_token %}
-
         <div class="screen-ident" id="screenIdent">
             <div class="ident-card">
                 <div class="ident-header">
@@ -482,27 +450,20 @@
                 <button type="button" class="btn-start" id="btnStart">Iniciar Avaliação →</button>
             </div>
         </div>
-
         <div class="screen-eval" id="screenEval">
             <div class="eval-inner">
-
                 <div class="eval-topbar">
                     <img src="{% static 'pondersec_logo.jpg' %}" alt="" class="eval-logo">
                     <span class="eval-title">{{ formulario.nome }}</span>
                     <span class="eval-counter"><span class="counter-label">Item</span><span id="counterCurr">1</span> de <span id="counterTotal">1</span></span>
                 </div>
-
                 <div class="progress-track" id="progressTrack">
                     <div class="progress-fill" id="progressFill" style="width:0%"></div>
                 </div>
-
                 <div class="question-map" id="questionMap" aria-label="Navegação por perguntas"></div>
-
                 <div class="dots-row" id="dotsRow"></div>
-
                 <div class="carousel-shell">
                     <div class="carousel-track" id="carouselTrack">
-
                         {% for questao in formulario.questoes.all %}
                         {% with question_number=forloop.counter question_index=forloop.counter0 question_total=formulario.questoes.count response_total=questao.respostas.count %}
                         {% for resp in questao.respostas.all %}
@@ -512,7 +473,6 @@
                              data-question-total="{{ question_total }}"
                              data-response-number="{{ forloop.counter }}"
                              data-response-total="{{ response_total }}">
-
                             <div class="slide-top">
                                 <div class="slide-meta">
                                     <span class="badge-q">Pergunta {{ question_number }} de {{ question_total }}</span>
@@ -531,21 +491,17 @@
                                     <div class="response-text">{{ resp.conteudo_resposta }}</div>
                                 </div>
                             </div>
-
                             <div class="divider"></div>
-
                             <div class="slide-metrics">
                                 {% for metrica in metricas %}
                                 <div class="metric-block">
                                     <div class="metric-label">{{ metrica.nome }}</div>
                                     <div class="metric-desc">{{ metrica.descricao }}</div>
-
                                     {% if metrica.tipo == 'quantitativa' %}
                                     <div class="likert-drag"
                                          data-resp="{{ resp.id }}"
                                          data-metrica="{{ metrica.id }}"
                                          data-val="3">
-
                                         <div class="likert-emoji-row">
                                             <span class="likert-emo" data-pos="1">😡</span>
                                             <span class="likert-emo" data-pos="2">😕</span>
@@ -553,7 +509,6 @@
                                             <span class="likert-emo" data-pos="4">🙂</span>
                                             <span class="likert-emo" data-pos="5">😄</span>
                                         </div>
-
                                         <div class="likert-track-wrap">
                                             <div class="likert-rail">
                                                 <div class="likert-fill" style="width:50%"></div>
@@ -567,7 +522,6 @@
                                             </div>
                                             <div class="likert-thumb" style="left:50%">3</div>
                                         </div>
-
                                         <div class="likert-labels">
                                             <span class="likert-lbl" data-pos="1">Muito<br>ruim</span>
                                             <span class="likert-lbl" data-pos="2">Ruim</span>
@@ -581,7 +535,6 @@
                                            id="likert_{{ resp.id }}_{{ metrica.id }}"
                                            value="3">
                                     {% endif %}
-
                                     <textarea
                                         name="quali_{{ resp.id }}_{{ metrica.id }}"
                                         class="comment-field"
@@ -589,7 +542,6 @@
                                 </div>
                                 {% endfor %}
                             </div>
-
                         </div>
                         {% empty %}
                         <div class="slide slide-empty"
@@ -605,47 +557,36 @@
                         {% endfor %}
                         {% endwith %}
                         {% endfor %}
-
                     </div>
                 </div>
-
                 <div class="completion-msg" id="completionMsg">
                     <h3>✦ Todas as respostas avaliadas</h3>
                     <p>Revise e clique em Enviar abaixo.</p>
                 </div>
-
                 <div class="eval-nav">
                     <button type="button" class="btn-nav btn-prev" id="btnPrev" disabled>← Anterior</button>
                     <button type="button" class="btn-nav btn-next" id="btnNext">Próximo →</button>
                     <button type="submit" class="btn-submit-final" id="btnSubmit">Enviar Avaliação ✓</button>
                 </div>
-
                 <div class="kbd-hint">
                     Navegue com <span class="kbd">←</span> <span class="kbd">→</span> do teclado
                 </div>
-
             </div>
         </div>
-
     </form>
-
     <script>
     /* ── Likert drag slider ── */
     (function () {
         var STEPS = [1, 2, 3, 4, 5];
-
-        function pctFromVal(val) { return (val - 1) / 4; }   /* 1→0%, 5→100% */
-
+        function pctFromVal(val) { return (val - 1) / 4; }
         function updateDrag(widget, val) {
             var pct = pctFromVal(val);
             widget.setAttribute('data-val', val);
-
             var thumb = widget.querySelector('.likert-thumb');
             var fill  = widget.querySelector('.likert-fill');
             thumb.style.left = (pct * 100) + '%';
             thumb.textContent = val;
             fill.style.width  = (pct * 100) + '%';
-
             widget.querySelectorAll('.likert-emo').forEach(function(e) {
                 e.classList.toggle('active', +e.getAttribute('data-pos') === val);
             });
@@ -655,31 +596,24 @@
             widget.querySelectorAll('.likert-tick').forEach(function(t, i) {
                 t.style.background = (i < val) ? 'var(--green)' : '';
             });
-
             var resp    = widget.getAttribute('data-resp');
             var metrica = widget.getAttribute('data-metrica');
             var hidden  = document.getElementById('likert_' + resp + '_' + metrica);
             if (hidden) hidden.value = val;
         }
-
         function valFromEvent(widget, clientX) {
             var rail = widget.querySelector('.likert-rail');
             var rect = rail.getBoundingClientRect();
             var pct  = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-            return Math.round(pct * 4) + 1;   /* snap to 1–5 */
+            return Math.round(pct * 4) + 1;
         }
-
         function initWidget(widget) {
-            updateDrag(widget, 3);   /* default value */
-
+            updateDrag(widget, 3);
             var dragging = false;
-
             function onMove(clientX) {
                 if (!dragging) return;
                 updateDrag(widget, valFromEvent(widget, clientX));
             }
-
-            /* mouse */
             widget.querySelector('.likert-track-wrap').addEventListener('mousedown', function(e) {
                 dragging = true;
                 updateDrag(widget, valFromEvent(widget, e.clientX));
@@ -687,8 +621,6 @@
             });
             document.addEventListener('mousemove', function(e) { onMove(e.clientX); });
             document.addEventListener('mouseup',   function()  { dragging = false; });
-
-            /* touch */
             widget.querySelector('.likert-track-wrap').addEventListener('touchstart', function(e) {
                 dragging = true;
                 updateDrag(widget, valFromEvent(widget, e.touches[0].clientX));
@@ -698,16 +630,12 @@
                 if (dragging) onMove(e.touches[0].clientX);
             }, { passive: true });
             document.addEventListener('touchend', function() { dragging = false; });
-
-            /* click anywhere on the rail also snaps */
             widget.querySelector('.likert-rail').addEventListener('click', function(e) {
                 updateDrag(widget, valFromEvent(widget, e.clientX));
             });
         }
-
         document.querySelectorAll('.likert-drag').forEach(initWidget);
     })();
-
     /* ── App principal ── */
     (function () {
         var btnStart      = document.getElementById('btnStart');
@@ -724,13 +652,10 @@
         var btnSubmit     = document.getElementById('btnSubmit');
         var completionMsg = document.getElementById('completionMsg');
         var progressTrack = document.getElementById('progressTrack');
-
         var slides  = Array.from(track.querySelectorAll('.slide'));
         var total   = slides.length;
         var current = 0;
         counterTotal.textContent = total;
-
-        /* Start */
         btnStart.addEventListener('click', function() {
             var inputs = screenIdent.querySelectorAll('input[required]');
             var ok = true;
@@ -742,8 +667,6 @@
             buildDots();
             render();
         });
-
-        /* Dots */
         function buildDots() {
             dotsRow.innerHTML = '';
             slides.forEach(function(slide, i) {
@@ -756,23 +679,18 @@
                 dotsRow.appendChild(d);
             });
         }
-
         function slideLabel(slide, index) {
             var question = slide.getAttribute('data-question-number') || '?';
             var response = slide.getAttribute('data-response-number') || '?';
             var responseTotal = slide.getAttribute('data-response-total') || '?';
-
             if (responseTotal === '0') {
                 return 'Item ' + (index + 1) + ': Pergunta ' + question + ' sem respostas';
             }
-
             return 'Item ' + (index + 1) + ': Pergunta ' + question + ', resposta ' + response + ' de ' + responseTotal;
         }
-
         function buildQuestionMap() {
             var groups = [];
             questionMap.innerHTML = '';
-
             slides.forEach(function(slide, slideIndex) {
                 var qIndex = Number(slide.getAttribute('data-question-index'));
                 if (!groups[qIndex]) {
@@ -790,38 +708,30 @@
                     Number(slide.getAttribute('data-response-total'))
                 );
             });
-
             groups.filter(Boolean).forEach(function(group) {
                 var btn = document.createElement('button');
                 var label = document.createElement('span');
                 var count = document.createElement('strong');
-
                 btn.type = 'button';
                 btn.className = 'question-chip';
                 btn.setAttribute('data-question-index', group.index);
                 btn.setAttribute('data-last-slide', group.lastSlide);
                 btn.title = 'Ir para a pergunta ' + group.number;
-
                 label.textContent = 'Pergunta ' + group.number;
                 count.textContent = group.responsesTotal === 0
                     ? 'sem respostas'
                     : group.responsesTotal + (group.responsesTotal === 1 ? ' resposta' : ' respostas');
-
                 btn.appendChild(label);
                 btn.appendChild(count);
                 btn.addEventListener('click', function() { goTo(group.firstSlide); });
                 questionMap.appendChild(btn);
             });
         }
-
-        /* Progress click */
         progressTrack.addEventListener('click', function(e) {
             var r = progressTrack.getBoundingClientRect();
             var pct = (e.clientX - r.left) / r.width;
             goTo(Math.round(Math.max(0, Math.min(total - 1, pct * (total - 1)))));
         });
-
-        /* Navigation */
         function goTo(i) { current = Math.max(0, Math.min(total - 1, i)); render(); }
         btnPrev.addEventListener('click', function() { goTo(current - 1); });
         btnNext.addEventListener('click', function() { goTo(current + 1); });
@@ -830,8 +740,6 @@
             if (e.key === 'ArrowRight') goTo(current + 1);
             if (e.key === 'ArrowLeft')  goTo(current - 1);
         });
-
-        /* Render */
         function render() {
             track.style.transform = 'translateX(-' + (current * 100) + '%)';
             counterCurr.textContent = current + 1;
