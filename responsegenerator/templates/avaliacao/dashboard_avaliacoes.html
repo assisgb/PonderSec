@@ -273,6 +273,168 @@
             .controls-row { align-items: flex-start; }
             .type-btn { font-size: 12px; padding: 8px 12px; }
         }
+
+        /* ── SELETOR DE MODO ── */
+        .mode-bar {
+            display: flex; flex-direction: column; gap: 14px;
+            margin-bottom: 28px; padding: 20px 26px;
+            background: rgba(11, 20, 29, 0.72);
+            border: 1px solid rgba(0, 255, 160, 0.12);
+            border-radius: 14px;
+        }
+        .mode-switcher {
+            display: inline-flex; gap: 4px; align-self: flex-start;
+            padding: 5px;
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid rgba(0, 255, 160, 0.15);
+            border-radius: 12px;
+        }
+        .mode-btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 10px 18px;
+            background: transparent; border: 1px solid transparent; border-radius: 8px;
+            cursor: pointer; font: 600 13px "Space Grotesk", system-ui, sans-serif;
+            color: #6b7b8d; transition: all 0.2s; white-space: nowrap;
+        }
+        .mode-btn:hover { color: #7df6c2; background: rgba(0, 255, 160, 0.05); }
+        .mode-btn.active {
+            background: rgba(0, 255, 160, 0.16); border-color: rgba(0, 255, 160, 0.45);
+            color: #00ff9f; box-shadow: 0 0 14px rgba(0, 255, 160, 0.15);
+        }
+        .mode-btn .mode-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: currentColor; opacity: 0.7;
+        }
+        .mode-context {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 16px; flex-wrap: wrap;
+        }
+        .mode-desc { font-size: 13px; color: #8ba1b0; line-height: 1.5; max-width: 720px; }
+        .mode-desc strong { color: #7df6c2; }
+        .btn-mode-action {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 9px 16px;
+            background: rgba(0, 207, 255, 0.08);
+            border: 1px solid rgba(0, 207, 255, 0.3);
+            border-radius: 8px;
+            cursor: pointer; font: 700 12px "Space Grotesk", system-ui, sans-serif;
+            color: #00cfff; text-decoration: none;
+            text-transform: uppercase; letter-spacing: 0.05em;
+            transition: all 0.2s; white-space: nowrap;
+        }
+        .btn-mode-action:hover {
+            background: rgba(0, 207, 255, 0.16); border-color: #00cfff;
+            transform: translateY(-1px);
+        }
+
+        /* ── LAYOUT COMPARATIVO ── */
+        .comparativo-layout {
+            display: grid; grid-template-columns: minmax(0, 1fr) 340px;
+            gap: 18px; align-items: start;
+        }
+        .comp-panel {
+            background: rgba(11, 20, 29, 0.6);
+            border: 1px solid rgba(0, 255, 160, 0.15);
+            border-radius: 14px; padding: 26px 28px;
+            margin-bottom: 18px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+        }
+        .comp-head {
+            display: flex; align-items: flex-start; justify-content: space-between;
+            gap: 16px; margin-bottom: 18px; flex-wrap: wrap;
+        }
+        .comp-title { font-size: 18px; font-weight: 700; color: #00ff9f; }
+        .comp-copy  { font-size: 13px; color: #8ba1b0; line-height: 1.5; margin-top: 5px; }
+        .comp-chart-wrap { position: relative; height: 380px; margin-bottom: 16px; }
+        .comp-mini-strip {
+            display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+        }
+        .mini-card {
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            background: rgba(0,0,0,0.22);
+            padding: 12px 14px;
+        }
+        .mini-label {
+            font: 700 10px/1.2 "Space Grotesk", monospace;
+            color: #5e7280; letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+        .mini-value { margin-top: 6px; color: #e5fef6; font-size: 16px; font-weight: 700; }
+
+        .comp-table-wrap {
+            overflow-x: auto;
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 12px;
+            background: rgba(0,0,0,0.18);
+        }
+        .comp-table { width: 100%; border-collapse: collapse; min-width: 720px; }
+        .comp-table th, .comp-table td {
+            padding: 12px 14px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            text-align: left; font-size: 13px;
+        }
+        .comp-table th {
+            color: #00ff9f; background: rgba(0,255,160,0.07);
+            font: 700 10px/1.25 "Space Grotesk", monospace;
+            text-transform: uppercase; letter-spacing: 0.08em;
+        }
+        .comp-table tr:last-child td { border-bottom: 0; }
+        .score-muted { color: #5e7280; }
+        .score-esp   { color: #00ff9f; font-weight: 700; }
+        .score-jud   { color: #bb86fc; font-weight: 700; }
+        .delta-pos   { color: #ffb400; font-weight: 700; }
+        .delta-neg   { color: #00cfff; font-weight: 700; }
+        .delta-zero  { color: #7df6c2; font-weight: 700; }
+
+        .divergence-list { display: grid; gap: 10px; }
+        .divergence-card {
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 11px;
+            background: rgba(0,0,0,0.22);
+            padding: 13px 14px;
+        }
+        .divergence-top {
+            display: flex; justify-content: space-between;
+            gap: 10px; align-items: flex-start; margin-bottom: 8px;
+        }
+        .divergence-title { color: #e5fef6; font-size: 13px; font-weight: 700; line-height: 1.35; }
+        .divergence-meta  { color: #8ba1b0; font-size: 12px; line-height: 1.5; }
+        .delta-badge {
+            display: inline-flex; align-items: center; justify-content: center;
+            border-radius: 999px;
+            border: 1px solid rgba(255,180,0,0.3);
+            background: rgba(255,180,0,0.08);
+            color: #ffb400;
+            padding: 5px 10px;
+            font: 700 10px/1 "Space Grotesk", monospace;
+            white-space: nowrap;
+        }
+
+        .comp-empty {
+            min-height: 240px;
+            display: grid; place-items: center;
+            border: 1px dashed rgba(255,255,255,0.14);
+            border-radius: 12px;
+            color: #8ba1b0;
+            text-align: center; padding: 24px; line-height: 1.6;
+        }
+        .comp-empty .comp-empty-icon { font-size: 36px; margin-bottom: 12px; opacity: 0.7; }
+        .comp-empty a { color: #00cfff; text-decoration: underline; }
+
+        @media (max-width: 1100px) {
+            .comparativo-layout { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 768px) {
+            .mode-bar { padding: 16px; }
+            .mode-switcher { width: 100%; }
+            .mode-btn { flex: 1; justify-content: center; padding: 9px 10px; font-size: 12px; }
+            .mode-context { flex-direction: column; align-items: flex-start; }
+            .btn-mode-action { width: 100%; justify-content: center; }
+            .comp-panel { padding: 20px 18px; }
+            .comp-mini-strip { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
@@ -332,34 +494,32 @@
         </div>
     </div>
 
-    <div class="stats-row">
-        <div class="stat-card">
-            <div class="stat-label">LLMs Avaliados</div>
-            <div class="stat-value" id="statLLMs">—</div>
-            <div class="stat-sub">modelos no comparativo</div>
+    <div class="mode-bar">
+        <div class="mode-switcher" role="tablist" aria-label="Modo de visualização">
+            <button type="button" class="mode-btn" data-mode="especialistas" onclick="setMode('especialistas')">
+                <span class="mode-dot"></span> Especialistas
+            </button>
+            <button type="button" class="mode-btn" data-mode="juizes" onclick="setMode('juizes')">
+                <span class="mode-dot"></span> Juízes Online
+            </button>
+            <button type="button" class="mode-btn" data-mode="comparativo" onclick="setMode('comparativo')">
+                <span class="mode-dot"></span> Comparativo
+            </button>
         </div>
-        <div class="stat-card">
-            <div class="stat-label">Métricas Ativas</div>
-            <div class="stat-value" id="statMetricas">—</div>
-            <div class="stat-sub">critérios de avaliação</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-label">Métrica Atual</div>
-            <div class="stat-value" id="statAtual" style="font-size:18px;margin-top:4px;">—</div>
-            <div class="stat-sub">em visualização</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-label">Melhor Desempenho</div>
-            <div class="stat-value" id="statMelhor" style="font-size:18px;margin-top:4px;">—</div>
-            <div class="stat-sub">nesta métrica</div>
+        <div class="mode-context">
+            <div class="mode-desc" id="modeDesc">—</div>
+            <a class="btn-mode-action" id="modeAction" href="#" style="display:none;"></a>
         </div>
     </div>
 
+    <div class="stats-row" id="statsRow"></div>
+
+    <div id="viewSingle">
     <div class="chart-card">
         <div class="chart-top">
             <div class="chart-heading">
-                <div class="chart-title">Comparativo de LLMs por Métrica</div>
-                <div class="chart-subtitle">Média das avaliações quantitativas por modelo de linguagem</div>
+                <div class="chart-title" id="chartTitle">Comparativo de LLMs por Métrica</div>
+                <div class="chart-subtitle" id="chartSubtitle">Média das avaliações quantitativas por modelo de linguagem</div>
             </div>
 
             <div class="controls-row">
@@ -403,18 +563,148 @@
 
         <div class="chart-legend" id="chartLegend"></div>
     </div>
+    </div>
+
+    <div id="viewComparativo" hidden>
+        <div class="comparativo-layout">
+            <section>
+                <article class="comp-panel">
+                    <div class="comp-head">
+                        <div>
+                            <div class="comp-title">Especialistas vs Juízes Online</div>
+                            <div class="comp-copy">Barras agrupadas por modelo respondente · diferença = média dos juízes − média dos especialistas.</div>
+                        </div>
+                        <div class="metrica-pills" id="compPills"></div>
+                    </div>
+                    <div id="compChartArea">
+                        <div class="comp-chart-wrap">
+                            <canvas id="compChart"></canvas>
+                        </div>
+                        <div class="comp-mini-strip">
+                            <div class="mini-card">
+                                <div class="mini-label">Métrica atual</div>
+                                <div class="mini-value" id="compMiniMetric">—</div>
+                            </div>
+                            <div class="mini-card">
+                                <div class="mini-label">Top especialistas</div>
+                                <div class="mini-value" id="compMiniTopEsp">—</div>
+                            </div>
+                            <div class="mini-card">
+                                <div class="mini-label">Top juízes</div>
+                                <div class="mini-value" id="compMiniTopJud">—</div>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="comp-panel">
+                    <div class="comp-head">
+                        <div>
+                            <div class="comp-title">Detalhes por Modelo</div>
+                            <div class="comp-copy">Médias da métrica selecionada e volume de notas em cada lado.</div>
+                        </div>
+                    </div>
+                    <div class="comp-table-wrap">
+                        <table class="comp-table">
+                            <thead>
+                                <tr>
+                                    <th>Modelo</th>
+                                    <th>Especialistas</th>
+                                    <th>Notas humanas</th>
+                                    <th>Juízes</th>
+                                    <th>Notas juízes</th>
+                                    <th>Diferença</th>
+                                </tr>
+                            </thead>
+                            <tbody id="compTable"></tbody>
+                        </table>
+                    </div>
+                </article>
+            </section>
+
+            <aside>
+                <article class="comp-panel">
+                    <div class="comp-head">
+                        <div>
+                            <div class="comp-title">Maiores Divergências</div>
+                            <div class="comp-copy">Pares (métrica × modelo) onde juízes e especialistas mais discordaram.</div>
+                        </div>
+                    </div>
+                    <div class="divergence-list" id="compDivergences"></div>
+                </article>
+            </aside>
+        </div>
+    </div>
 
 </div>
 
 <script>
     // ── DADOS DO DJANGO ──
-    const METRICAS_DATA = {{ metricas_json|safe }};
-    const LLMS          = {{ llms_json|safe }};
+    const DASHBOARD_PAYLOAD = {{ dashboard_json|safe }};
+    const MODO_INICIAL      = "{{ modo_inicial }}";
+    const URL_FORMULARIOS   = "{% url 'avaliacao' %}";
+    const URL_JUIZES        = "{% url 'juizes_comparador' %}";
 
-    const metricaNomes      = Object.keys(METRICAS_DATA);
-    let   indiceSelecionado = 0;
-    let   chartInstance     = null;
-    let   chartType         = 'bar';
+    const LLMS         = DASHBOARD_PAYLOAD.llms || [];
+    const POR_METRICA  = DASHBOARD_PAYLOAD.por_metrica || {};
+    const METRICAS_META = DASHBOARD_PAYLOAD.metricas || [];
+    const RESUMO       = DASHBOARD_PAYLOAD.resumo  || {};
+
+    // METRICAS_DATA tem o formato { nomeMetrica: { id, pontuacao_maxima, dados: { llm: valor } } }
+    // É reconstruído a cada troca de modo (especialistas | juízes) para reaproveitar todo o code path de barras/empilhadas/radar.
+    let METRICAS_DATA  = {};
+    let metricaNomes   = [];
+    let currentMode    = 'especialistas';
+
+    let indiceSelecionado = 0;
+    let chartInstance     = null;
+    let chartType         = 'bar';
+    let compChartInstance = null;
+
+    const MODE_CONFIG = {
+        especialistas: {
+            sourceKey:   'especialistas',
+            countKey:    'especialistas_count',
+            label:       'especialistas',
+            badge:       'Especialistas humanos',
+            desc:        '<strong>Especialistas:</strong> médias das avaliações coletadas via formulários com avaliadores humanos.',
+            chartTitle:  'Médias dos Especialistas por Modelo',
+            chartCopy:   'Notas médias atribuídas pelos avaliadores humanos para cada modelo de linguagem.',
+            actionLabel: 'Coletar mais avaliações →',
+            actionUrl:   URL_FORMULARIOS,
+            emptyIcon:   '🧑‍💼',
+            emptyMsg:    'Nenhuma avaliação humana registrada ainda. Crie um formulário e compartilhe o link com especialistas.',
+            emptyAction: { label: 'Ir para Formulários', url: URL_FORMULARIOS },
+        },
+        juizes: {
+            sourceKey:   'juizes',
+            countKey:    'juizes_count',
+            label:       'juízes online',
+            badge:       'LLMs como juízes',
+            desc:        '<strong>Juízes Online:</strong> médias das notas atribuídas por LLMs atuando como juízes nas respostas geradas.',
+            chartTitle:  'Médias dos Juízes Online por Modelo',
+            chartCopy:   'Notas médias atribuídas por LLMs avaliadoras para cada modelo de linguagem respondente.',
+            actionLabel: 'Executar juízes →',
+            actionUrl:   URL_JUIZES,
+            emptyIcon:   '🤖',
+            emptyMsg:    'Nenhuma avaliação por juízes online registrada. Execute o comparador de juízes para gerar dados.',
+            emptyAction: { label: 'Ir para Juízes Online', url: URL_JUIZES },
+        },
+        comparativo: {
+            sourceKey:   null,
+            countKey:    null,
+            label:       'comparativo',
+            badge:       'Especialistas × Juízes',
+            desc:        '<strong>Comparativo:</strong> médias dos especialistas vs juízes online lado a lado, com diferença, divergências e tabela detalhada.',
+            chartTitle:  null,
+            chartCopy:   null,
+            actionLabel: null,
+            actionUrl:   null,
+            emptyIcon:   '⚖️',
+            emptyMsg:    'Para comparar é preciso ter avaliações dos dois lados. Faltam dados de especialistas ou juízes.',
+            emptyAction: null,
+        },
+    };
 
     // ── PALETA ──
     const PALETTE = [
@@ -584,13 +874,201 @@
     Chart.register(radarRingLabelPlugin);
 
     // ════════════════════════════════════════════
+    // HELPERS GERAIS
+    // ════════════════════════════════════════════
+    function escapeHtml(value) {
+        return String(value ?? "")
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
+    }
+
+    function rebuildMetricasData(mode) {
+        const sourceKey = MODE_CONFIG[mode].sourceKey;
+        METRICAS_DATA = {};
+        METRICAS_META.forEach(metrica => {
+            const blocoMetrica = POR_METRICA[metrica.nome] || { modelos: {}, pontuacao_maxima: metrica.pontuacao_maxima };
+            const dados = {};
+            LLMS.forEach(llm => {
+                const row = blocoMetrica.modelos[llm] || {};
+                dados[llm] = row[sourceKey] !== undefined ? row[sourceKey] : null;
+            });
+            METRICAS_DATA[metrica.nome] = {
+                id: metrica.id,
+                pontuacao_maxima: blocoMetrica.pontuacao_maxima || metrica.pontuacao_maxima || 5,
+                dados,
+            };
+        });
+        metricaNomes = Object.keys(METRICAS_DATA);
+    }
+
+    function hasDataFor(mode) {
+        if (mode === 'comparativo') return (RESUMO.pontos_comparaveis || 0) > 0;
+        const sourceKey = MODE_CONFIG[mode].sourceKey;
+        return Object.values(POR_METRICA).some(bloco =>
+            Object.values(bloco.modelos || {}).some(row =>
+                row[sourceKey] !== null && row[sourceKey] !== undefined
+            )
+        );
+    }
+
+    // ════════════════════════════════════════════
+    // STATS ROW (CONTEÚDO DINÂMICO POR MODO)
+    // ════════════════════════════════════════════
+    function statCard(label, value, sub, opts = {}) {
+        const style = opts.small ? 'font-size:18px;margin-top:4px;' : '';
+        return `
+            <div class="stat-card">
+                <div class="stat-label">${escapeHtml(label)}</div>
+                <div class="stat-value"${opts.id ? ` id="${opts.id}"` : ''} style="${style}">${value}</div>
+                <div class="stat-sub">${escapeHtml(sub)}</div>
+            </div>
+        `;
+    }
+
+    function renderStatsRow(mode) {
+        const row = document.getElementById('statsRow');
+        const totalModelos  = RESUMO.modelos  ?? LLMS.length;
+        const totalMetricas = RESUMO.metricas ?? METRICAS_META.length;
+
+        if (mode === 'especialistas') {
+            row.innerHTML = [
+                statCard('Notas coletadas', RESUMO.notas_especialistas ?? 0, `${RESUMO.avaliadores_humanos ?? 0} avaliadores humanos`),
+                statCard('LLMs avaliados', totalModelos, 'modelos no comparativo'),
+                statCard('Métricas ativas', totalMetricas, 'critérios de avaliação'),
+                statCard('Métrica atual', '—', 'em visualização', { id: 'statAtual', small: true }),
+                statCard('Melhor desempenho', '—', 'nesta métrica', { id: 'statMelhor', small: true }),
+            ].join('');
+        } else if (mode === 'juizes') {
+            row.innerHTML = [
+                statCard('Notas dos juízes', RESUMO.notas_juizes ?? 0, `${RESUMO.juizes_online ?? 0} LLMs atuando como juízes`),
+                statCard('LLMs avaliados', totalModelos, 'modelos no comparativo'),
+                statCard('Métricas ativas', totalMetricas, 'critérios de avaliação'),
+                statCard('Métrica atual', '—', 'em visualização', { id: 'statAtual', small: true }),
+                statCard('Melhor desempenho', '—', 'nesta métrica', { id: 'statMelhor', small: true }),
+            ].join('');
+        } else {
+            const desvio = RESUMO.desvio_medio;
+            const desvioTxt = (desvio === null || desvio === undefined) ? '—' : Number(desvio).toFixed(2);
+            row.innerHTML = [
+                statCard('Notas especialistas', RESUMO.notas_especialistas ?? 0, `${RESUMO.avaliadores_humanos ?? 0} avaliadores humanos`),
+                statCard('Notas juízes', RESUMO.notas_juizes ?? 0, `${RESUMO.juizes_online ?? 0} LLMs como juízes`),
+                statCard('Modelos', totalModelos, 'LLMs respondentes'),
+                statCard('Métricas', totalMetricas, 'critérios ativos'),
+                statCard('Desvio médio', desvioTxt, `${RESUMO.pontos_comparaveis ?? 0} pontos · ${alignmentLabel(desvio)}`),
+            ].join('');
+        }
+    }
+
+    function alignmentLabel(value) {
+        if (value === null || value === undefined) return 'sem pares comparáveis';
+        if (value <= 0.5) return 'alta convergência';
+        if (value <= 1)   return 'convergência moderada';
+        return 'divergência relevante';
+    }
+
+    function updateModeBar(mode) {
+        const cfg = MODE_CONFIG[mode];
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.mode === mode);
+        });
+        document.getElementById('modeDesc').innerHTML = cfg.desc;
+        const action = document.getElementById('modeAction');
+        if (cfg.actionLabel && cfg.actionUrl) {
+            action.textContent = cfg.actionLabel;
+            action.href = cfg.actionUrl;
+            action.style.display = 'inline-flex';
+        } else {
+            action.style.display = 'none';
+        }
+    }
+
+    // ════════════════════════════════════════════
+    // SETMODE — troca o modo de visualização
+    // ════════════════════════════════════════════
+    function setMode(mode) {
+        if (!MODE_CONFIG[mode]) return;
+        currentMode = mode;
+        updateModeBar(mode);
+        renderStatsRow(mode);
+
+        const viewSingle = document.getElementById('viewSingle');
+        const viewComp   = document.getElementById('viewComparativo');
+        const btnPdf     = document.getElementById('btnExportPdf');
+
+        if (mode === 'comparativo') {
+            viewSingle.hidden = true;
+            viewComp.hidden   = false;
+            btnPdf.style.display = 'none';
+            if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+            renderComparativo();
+        } else {
+            viewSingle.hidden = false;
+            viewComp.hidden   = true;
+            btnPdf.style.display = 'inline-flex';
+            if (compChartInstance) { compChartInstance.destroy(); compChartInstance = null; }
+
+            rebuildMetricasData(mode);
+            const cfg = MODE_CONFIG[mode];
+            document.getElementById('chartTitle').textContent    = cfg.chartTitle;
+            document.getElementById('chartSubtitle').textContent = cfg.chartCopy;
+
+            const wrapper = document.getElementById('chartWrapper');
+
+            if (!hasDataFor(mode) || metricaNomes.length === 0 || LLMS.length === 0) {
+                if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+                wrapper.innerHTML = emptyStateHtml(cfg);
+                document.getElementById('chartLegend').innerHTML = '';
+                document.querySelectorAll('.type-btn').forEach(b => b.disabled = true);
+                document.getElementById('btnPrev').disabled = true;
+                document.getElementById('btnNext').disabled = true;
+                document.getElementById('metricaPills').innerHTML = '';
+                document.getElementById('metricaCounter').textContent = '';
+                btnPdf.disabled = true;
+                return;
+            }
+
+            // canvas pode ter sido substituído por mensagem de empty state — recoloca
+            if (!document.getElementById('barChart')) {
+                wrapper.innerHTML = '<canvas id="barChart"></canvas>';
+            }
+            document.querySelectorAll('.type-btn').forEach(b => b.disabled = false);
+            btnPdf.disabled = false;
+
+            indiceSelecionado = Math.min(indiceSelecionado, metricaNomes.length - 1);
+            if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+            chartType = 'bar';
+            document.getElementById('btnTypeBar').classList.add('active');
+            document.getElementById('btnTypeStacked').classList.remove('active');
+            document.getElementById('btnTypeRadar').classList.remove('active');
+            document.getElementById('hintBar').classList.add('visible');
+            document.getElementById('hintStacked').classList.remove('visible');
+            document.getElementById('hintRadar').classList.remove('visible');
+
+            renderChart(indiceSelecionado);
+        }
+    }
+
+    function emptyStateHtml(cfg) {
+        const action = cfg.emptyAction
+            ? `<a href="${cfg.emptyAction.url}" style="margin-top:14px;display:inline-block;">${escapeHtml(cfg.emptyAction.label)} →</a>`
+            : '';
+        return `
+            <div class="empty-state">
+                <div class="empty-icon">${cfg.emptyIcon}</div>
+                <p>${escapeHtml(cfg.emptyMsg)}</p>
+                ${action}
+            </div>
+        `;
+    }
+
+    // ════════════════════════════════════════════
     // INIT
     // ════════════════════════════════════════════
     function init() {
-        document.getElementById('statLLMs').textContent     = LLMS.length;
-        document.getElementById('statMetricas').textContent = metricaNomes.length;
-        renderPills();
-        renderChart(indiceSelecionado);
+        setMode(MODO_INICIAL || 'especialistas');
     }
 
     // ════════════════════════════════════════════
@@ -1261,6 +1739,8 @@
 
             drawPageBg();
 
+            const modeLabel = currentMode === 'juizes' ? 'Juizes Online' : 'Especialistas';
+
             text(GREEN.r, GREEN.g, GREEN.b);
             pdf.setFontSize(28);
             pdf.setFont('helvetica', 'bold');
@@ -1269,7 +1749,7 @@
             text(CYAN.r, CYAN.g, CYAN.b);
             pdf.setFontSize(11);
             pdf.setFont('helvetica', 'normal');
-            pdf.text('PonderSec - Relatorio Comparativo de LLMs', pageW / 2, 65, { align: 'center' });
+            pdf.text(`PonderSec - Relatorio de LLMs (Modo: ${modeLabel})`, pageW / 2, 65, { align: 'center' });
 
             draw(GREEN.r, GREEN.g, GREEN.b);
             pdf.setLineWidth(0.5);
@@ -1537,7 +2017,8 @@
             renderChart(0);
 
             const dataStr = new Date().toISOString().slice(0, 10);
-            pdf.save(`PonderSec_Dashboard_${dataStr}.pdf`);
+            const modoSlug = currentMode === 'juizes' ? 'juizes' : 'especialistas';
+            pdf.save(`PonderSec_Dashboard_${modoSlug}_${dataStr}.pdf`);
 
             setOverlayProgress(100, 'PDF gerado com sucesso!', '');
             await new Promise(r => setTimeout(r, 800));
@@ -1553,12 +2034,222 @@
         }
     }
 
-    if (metricaNomes.length === 0 || LLMS.length === 0) {
-        document.getElementById('chartWrapper').innerHTML = `
-            <div class="empty-state">
-                <div class="empty-icon">📭</div>
-                <p>Nenhuma avaliação encontrada. Gere respostas e avalie os formulários primeiro.</p>
+    // ════════════════════════════════════════════════════════
+    // MODO COMPARATIVO
+    // ════════════════════════════════════════════════════════
+    let compMetricIndex = 0;
+
+    function renderComparativo() {
+        if (!METRICAS_META.length || !LLMS.length || (RESUMO.pontos_comparaveis || 0) === 0) {
+            document.getElementById('compChartArea').innerHTML = `
+                <div class="comp-empty">
+                    <div class="comp-empty-icon">${MODE_CONFIG.comparativo.emptyIcon}</div>
+                    <p>${escapeHtml(MODE_CONFIG.comparativo.emptyMsg)}</p>
+                    <p style="margin-top:12px;font-size:12px;">
+                        <a href="${URL_FORMULARIOS}">Formulários</a> · <a href="${URL_JUIZES}">Juízes Online</a>
+                    </p>
+                </div>`;
+            document.getElementById('compTable').innerHTML       = '<tr><td colspan="6" class="score-muted">Sem dados.</td></tr>';
+            document.getElementById('compPills').innerHTML       = '';
+            document.getElementById('compDivergences').innerHTML = '<div class="comp-empty" style="min-height:120px;">Sem pares comparáveis.</div>';
+            return;
+        }
+
+        compMetricIndex = Math.min(compMetricIndex, METRICAS_META.length - 1);
+        renderComparativoPills();
+        renderComparativoChart();
+        renderComparativoTable();
+        renderComparativoDivergences();
+    }
+
+    function renderComparativoPills() {
+        const container = document.getElementById('compPills');
+        container.innerHTML = '';
+        METRICAS_META.forEach((metrica, i) => {
+            const btn = document.createElement('button');
+            btn.type      = 'button';
+            btn.className = 'pill' + (i === compMetricIndex ? ' active' : '');
+            btn.textContent = metrica.nome.length > 18 ? metrica.nome.slice(0, 16) + '…' : metrica.nome;
+            btn.title       = metrica.nome;
+            btn.onclick     = () => {
+                compMetricIndex = i;
+                renderComparativoPills();
+                renderComparativoChart();
+                renderComparativoTable();
+            };
+            container.appendChild(btn);
+        });
+    }
+
+    function comparativoRows() {
+        const metrica = METRICAS_META[compMetricIndex];
+        if (!metrica) return { rows: [], metrica: null, maxScore: 5 };
+        const bloco = POR_METRICA[metrica.nome] || { modelos: {} };
+        const maxScore = bloco.pontuacao_maxima || metrica.pontuacao_maxima || 5;
+        const rows = LLMS.map(llm => {
+            const r = bloco.modelos[llm] || {};
+            return {
+                llm,
+                especialistas: r.especialistas ?? null,
+                juizes:        r.juizes ?? null,
+                diferenca:     r.diferenca ?? null,
+                especialistas_count: r.especialistas_count || 0,
+                juizes_count:        r.juizes_count || 0,
+            };
+        });
+        return { rows, metrica, maxScore };
+    }
+
+    function bestModel(rows, key) {
+        const valid = rows.filter(r => r[key] !== null && r[key] !== undefined);
+        if (!valid.length) return '—';
+        valid.sort((a, b) => b[key] - a[key]);
+        return `${valid[0].llm} (${valid[0][key].toFixed(2)})`;
+    }
+
+    function renderComparativoChart() {
+        const { rows, metrica, maxScore } = comparativoRows();
+        if (!metrica) return;
+
+        const labels = rows.map(r => r.llm);
+        const esp    = rows.map(r => r.especialistas);
+        const jud    = rows.map(r => r.juizes);
+
+        if (compChartInstance) compChartInstance.destroy();
+        const ctx = document.getElementById('compChart').getContext('2d');
+        compChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [
+                    {
+                        label: 'Especialistas',
+                        data: esp,
+                        backgroundColor: 'rgba(0,255,160,0.72)',
+                        borderColor: '#00ff9f',
+                        borderWidth: 2, borderRadius: 8, borderSkipped: false,
+                    },
+                    {
+                        label: 'Juízes Online',
+                        data: jud,
+                        backgroundColor: 'rgba(187,134,252,0.72)',
+                        borderColor: '#bb86fc',
+                        borderWidth: 2, borderRadius: 8, borderSkipped: false,
+                    },
+                ],
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                animation: { duration: 500, easing: 'easeOutQuart' },
+                plugins: {
+                    legend: {
+                        labels: { color: '#c5d9e3', font: { family: 'Space Grotesk', size: 12, weight: '700' } },
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(5,10,17,0.96)',
+                        borderColor: 'rgba(0,255,160,0.3)', borderWidth: 1, padding: 12,
+                        titleColor: '#7df6c2', bodyColor: '#e5fef6',
+                        callbacks: {
+                            label: (item) => {
+                                const v = item.raw;
+                                if (v === null || v === undefined) return `${item.dataset.label}: sem dados`;
+                                return `${item.dataset.label}: ${Number(v).toFixed(2)} / ${maxScore}`;
+                            },
+                        },
+                    },
+                },
+                scales: {
+                    x: { ...xScaleDefaults() },
+                    y: { ...yScaleDefaults(maxScore), title: { display: true, text: 'Nota média', color: '#7df6c2', font: { family: 'Space Grotesk', size: 13, weight: '600' } } },
+                },
+            },
+        });
+
+        document.getElementById('compMiniMetric').textContent  = metrica.nome;
+        document.getElementById('compMiniTopEsp').textContent  = bestModel(rows, 'especialistas');
+        document.getElementById('compMiniTopJud').textContent  = bestModel(rows, 'juizes');
+    }
+
+    function fmtScore(v, max) {
+        if (v === null || v === undefined) return 'Sem dados';
+        return `${Number(v).toFixed(2)} / ${max}`;
+    }
+
+    function fmtDelta(v) {
+        if (v === null || v === undefined) return '—';
+        const prefix = v > 0 ? '+' : '';
+        return `${prefix}${Number(v).toFixed(2)}`;
+    }
+
+    function deltaClass(v) {
+        if (v === null || v === undefined) return 'score-muted';
+        if (Math.abs(v) < 0.01) return 'delta-zero';
+        return v > 0 ? 'delta-pos' : 'delta-neg';
+    }
+
+    function renderComparativoTable() {
+        const { rows, maxScore } = comparativoRows();
+        const tbody = document.getElementById('compTable');
+        if (!rows.length) {
+            tbody.innerHTML = '<tr><td colspan="6" class="score-muted">Nenhum dado disponível.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = rows.map(row => `
+            <tr>
+                <td><strong>${escapeHtml(row.llm)}</strong></td>
+                <td class="${row.especialistas === null || row.especialistas === undefined ? 'score-muted' : 'score-esp'}">${fmtScore(row.especialistas, maxScore)}</td>
+                <td>${row.especialistas_count}</td>
+                <td class="${row.juizes === null || row.juizes === undefined ? 'score-muted' : 'score-jud'}">${fmtScore(row.juizes, maxScore)}</td>
+                <td>${row.juizes_count}</td>
+                <td class="${deltaClass(row.diferenca)}">${fmtDelta(row.diferenca)}</td>
+            </tr>
+        `).join('');
+    }
+
+    function renderComparativoDivergences() {
+        const items = DASHBOARD_PAYLOAD.maiores_divergencias || [];
+        const container = document.getElementById('compDivergences');
+        if (!items.length) {
+            container.innerHTML = '<div class="comp-empty" style="min-height:120px;">Sem pares com notas dos dois lados ainda.</div>';
+            return;
+        }
+        container.innerHTML = items.map(item => {
+            const direction = item.diferenca > 0
+                ? 'juízes mais generosos'
+                : item.diferenca < 0
+                    ? 'juízes mais rigorosos'
+                    : 'mesma média';
+            return `
+                <article class="divergence-card">
+                    <div class="divergence-top">
+                        <div class="divergence-title">${escapeHtml(item.llm)}</div>
+                        <span class="delta-badge">Δ ${Math.abs(item.diferenca).toFixed(2)}</span>
+                    </div>
+                    <div class="divergence-meta">
+                        ${escapeHtml(item.metrica)}<br>
+                        Esp ${item.especialistas.toFixed(2)} · Juízes ${item.juizes.toFixed(2)} / ${item.max}<br>
+                        ${direction}
+                    </div>
+                </article>
+            `;
+        }).join('');
+    }
+
+    // ════════════════════════════════════════════
+    // BOOTSTRAP
+    // ════════════════════════════════════════════
+    if (!METRICAS_META.length || !LLMS.length) {
+        document.getElementById('statsRow').innerHTML = '';
+        document.getElementById('viewSingle').innerHTML = `
+            <div class="chart-card">
+                <div class="empty-state">
+                    <div class="empty-icon">📭</div>
+                    <p>Nenhuma métrica ou LLM cadastrada. Configure no <a href="{% url 'setup' %}" style="color:#00cfff;">Setup</a> antes de avaliar.</p>
+                </div>
             </div>`;
+        document.getElementById('viewComparativo').hidden = true;
+        document.querySelectorAll('.mode-btn').forEach(b => b.disabled = true);
+        document.getElementById('btnExportPdf').disabled = true;
     } else {
         init();
     }

@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from django.utils import timezone
 from django.contrib import messages as django_messages
 from django.contrib.auth.decorators import login_required
@@ -912,37 +913,6 @@ def responder_avaliacao_publica(request, formulario_id):
 
 @login_required
 def dashboard_avaliacoes(request):
-    metricas = list(Metrica.objects.filter(usuario=request.user, ativa=True).values('id', 'nome', 'pontuacao_maxima'))
-    
-    llms = list(LLM.objects.filter(usuario=request.user).values('id', 'nome').order_by('-id'))
-    
-    dados = {}
-    for metrica in metricas:
-        dados_metrica = {}
-        for llm in llms:
-            media = AvaliacaoFormulario.objects.filter(
-                usuario=request.user,
-                metrica_id=metrica['id'],
-                resposta__llm_id=llm['id'],
-                avaliacao_quanti__isnull=False
-            ).aggregate(media=Avg('avaliacao_quanti'))['media']
-            
-            dados_metrica[llm['nome']] = round(media, 2) if media is not None else None
-        
-        dados[metrica['nome']] = {
-            'id': metrica['id'],
-            'pontuacao_maxima': metrica['pontuacao_maxima'] or 5,
-            'dados': dados_metrica
-        }
-    
-    return render(request, 'avaliacao/dashboard_avaliacoes.html', {
-        'metricas_json': json.dumps(dados),
-        'llms_json': json.dumps([l['nome'] for l in llms]),
-        'metricas_lista': metricas,
-    })
-
-@login_required
-def dashboard_comparativo_avaliacoes(request):
     metricas = list(
         Metrica.objects
         .filter(usuario=request.user, ativa=True)
@@ -952,7 +922,7 @@ def dashboard_comparativo_avaliacoes(request):
     llms = list(
         LLM.objects
         .filter(usuario=request.user)
-        .order_by("nome")
+        .order_by("-id")
         .values("id", "nome")
     )
 
@@ -968,7 +938,7 @@ def dashboard_comparativo_avaliacoes(request):
                 usuario=request.user,
                 metrica_id=metrica["id"],
                 resposta__llm_id=llm["id"],
-                avaliacao_quanti__isnull=False
+                avaliacao_quanti__isnull=False,
             ).aggregate(media=Avg("avaliacao_quanti"), total=Count("id"))
 
             juizes = AvaliacaoJuiz.objects.filter(
@@ -976,7 +946,7 @@ def dashboard_comparativo_avaliacoes(request):
                 metrica_id=metrica["id"],
                 resposta__llm_id=llm["id"],
                 avaliacao_quanti__isnull=False,
-                erro=False
+                erro=False,
             ).aggregate(media=Avg("avaliacao_quanti"), total=Count("id"))
 
             media_especialistas = especialistas["media"]
@@ -1015,21 +985,21 @@ def dashboard_comparativo_avaliacoes(request):
 
     total_especialistas = AvaliacaoFormulario.objects.filter(
         usuario=request.user,
-        avaliacao_quanti__isnull=False
+        avaliacao_quanti__isnull=False,
     ).count()
     total_juizes = AvaliacaoJuiz.objects.filter(
         usuario=request.user,
         erro=False,
-        avaliacao_quanti__isnull=False
+        avaliacao_quanti__isnull=False,
     ).count()
     avaliadores_humanos = Avaliador.objects.filter(
         formulario__usuario=request.user,
-        avaliacoes__avaliacao_quanti__isnull=False
+        avaliacoes__avaliacao_quanti__isnull=False,
     ).distinct().count()
     juizes_online = AvaliacaoJuiz.objects.filter(
         usuario=request.user,
         erro=False,
-        avaliacao_quanti__isnull=False
+        avaliacao_quanti__isnull=False,
     ).values("juiz_id").distinct().count()
 
     payload = {
@@ -1041,8 +1011,9 @@ def dashboard_comparativo_avaliacoes(request):
             }
             for metrica in metricas
         ],
-        "llms": [{"id": llm["id"], "nome": llm["nome"]} for llm in llms],
+        "llms": [llm["nome"] for llm in llms],
         "por_metrica": por_metrica,
+        "maiores_divergencias": maiores_divergencias,
         "resumo": {
             "modelos": len(llms),
             "metricas": len(metricas),
@@ -1053,12 +1024,21 @@ def dashboard_comparativo_avaliacoes(request):
             "pontos_comparaveis": len(divergencias),
             "desvio_medio": desvio_medio,
         },
-        "maiores_divergencias": maiores_divergencias,
     }
 
-    return render(request, "avaliacao/dashboard_comparativo.html", {
-        "comparativo_json": json.dumps(payload, ensure_ascii=False),
+    modo_inicial = request.GET.get("mode", "especialistas")
+    if modo_inicial not in ("especialistas", "juizes", "comparativo"):
+        modo_inicial = "especialistas"
+
+    return render(request, "avaliacao/dashboard_avaliacoes.html", {
+        "dashboard_json": json.dumps(payload, ensure_ascii=False),
+        "modo_inicial": modo_inicial,
     })
+
+
+@login_required
+def dashboard_comparativo_avaliacoes(request):
+    return redirect(f"{reverse('dashboard_avaliacoes')}?mode=comparativo")
 
 @login_required
 def menu_avaliacao(request):
