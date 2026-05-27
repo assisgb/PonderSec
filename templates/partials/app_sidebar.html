@@ -1,0 +1,67 @@
+{% load static i18n %}
+<aside class="side-nav" aria-label="{% translate 'Navegação principal' %}">
+    <div class="side-brand">
+        <div class="side-logo" aria-hidden="true">
+            <img src="{% static 'pondersec_logo.jpg' %}" alt="">
+        </div>
+        <div class="side-brand-text">
+            <div class="side-kicker">PonderSEC</div>
+            <div class="side-title">Workspace</div>
+        </div>
+    </div>
+
+    <nav>
+        <div class="side-section">{% translate "Módulos" %}</div>
+        <div class="side-links">
+            <a href="{% url 'questoes' %}" class="side-link{% if active_nav == 'questoes' %} active{% endif %}"{% if active_nav == 'questoes' %} aria-current="page"{% endif %}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <path d="M14 2v6h6"></path>
+                    <path d="M9 15h6"></path>
+                    <path d="M9 11h3"></path>
+                </svg>
+                <span>{% translate "Questões" %}</span>
+            </a>
+
+            <a href="{% url 'menu-consulta' %}" class="side-link{% if active_nav == 'consulta' %} active{% endif %}"{% if active_nav == 'consulta' %} aria-current="page"{% endif %}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="11" cy="11" r="7"></circle>
+                    <path d="M21 21l-4.3-4.3"></path>
+                    <path d="M11 8v6"></path>
+                    <path d="M8 11h6"></path>
+                </svg>
+                <span>{% translate "Consulta" %}</span>
+            </a>
+
+            <a href="{% url 'setup' %}" class="side-link{% if active_nav == 'setup' %} active{% endif %}"{% if active_nav == 'setup' %} aria-current="page"{% endif %}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5z"></path>
+                    <path d="M19.4 15a1.8 1.8 0 0 0 .36 1.98l.04.04a2.1 2.1 0 0 1-2.98 2.98l-.04-.04a1.8 1.8 0 0 0-1.98-.36 1.8 1.8 0 0 0-1.1 1.66V21a2.1 2.1 0 0 1-4.2 0v-.06a1.8 1.8 0 0 0-1.1-1.66 1.8 1.8 0 0 0-1.98.36l-.04.04a2.1 2.1 0 0 1-2.98-2.98l.04-.04A1.8 1.8 0 0 0 4.6 15a1.8 1.8 0 0 0-1.66-1.1H3a2.1 2.1 0 0 1 0-4.2h.06A1.8 1.8 0 0 0 4.72 8.6a1.8 1.8 0 0 0-.36-1.98l-.04-.04A2.1 2.1 0 0 1 7.3 3.6l.04.04a1.8 1.8 0 0 0 1.98.36A1.8 1.8 0 0 0 10.42 2.34V2a2.1 2.1 0 0 1 4.2 0v.06a1.8 1.8 0 0 0 1.1 1.66 1.8 1.8 0 0 0 1.98-.36l.04-.04a2.1 2.1 0 0 1 2.98 2.98l-.04.04a1.8 1.8 0 0 0-.36 1.98 1.8 1.8 0 0 0 1.66 1.1H22a2.1 2.1 0 0 1 0 4.2h-.06A1.8 1.8 0 0 0 19.4 15z"></path>
+                </svg>
+                <span>Setup</span>
+            </a>
+
+            <a href="{% url 'menu_avaliacao' %}" class="side-link{% if active_nav == 'avaliacao' %} active{% endif %}"{% if active_nav == 'avaliacao' %} aria-current="page"{% endif %}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M4 19V5"></path>
+                    <path d="M4 19h16"></path>
+                    <path d="M8 16v-5"></path>
+                    <path d="M12 16V8"></path>
+                    <path d="M16 16v-9"></path>
+                </svg>
+                <span>{% translate "Avaliação" %}</span>
+            </a>
+        </div>
+    </nav>
+
+    <div class="side-footer">
+        <a href="{% url 'logout' %}" class="side-logout">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <path d="M16 17l5-5-5-5"></path>
+                <path d="M21 12H9"></path>
+            </svg>
+            <span>{% translate "Sair" %}</span>
+        </a>
+    </div>
+</aside>

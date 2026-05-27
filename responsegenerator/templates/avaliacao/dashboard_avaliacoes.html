@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard de Avaliações · PonderSec</title>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'app_sidebar.css' %}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -473,6 +474,9 @@
     </div>
 </div>
 
+<div class="app-shell">
+    {% include "partials/app_sidebar.html" with active_nav="avaliacao" %}
+    <main class="app-content">
 <div class="container">
 
     <div class="header">
@@ -637,6 +641,8 @@
         </div>
     </div>
 
+</div>
+    </main>
 </div>
 
 <script>

@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% translate "PonderSEC — Setup" %}</title>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'app_sidebar.css' %}">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -211,6 +212,9 @@
     <div class="glow-orb"></div>
     <div class="glow-orb-2"></div>
 
+    <div class="app-shell">
+        {% include "partials/app_sidebar.html" with active_nav="setup" %}
+        <main class="app-content app-content--center">
     <div class="container">
         <div class="header">
             <div class="logo">
@@ -278,6 +282,8 @@
             </svg>
             {% translate "Voltar ao Menu" %}
         </a>
+    </div>
+        </main>
     </div>
 </body>
 </html>
