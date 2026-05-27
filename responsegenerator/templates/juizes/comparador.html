@@ -1,6 +1,6 @@
-{% load static %}
+{% load static i18n %}
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="{{ LANGUAGE_CODE|default:'pt-br' }}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -555,6 +555,7 @@ select.field option{background:#07111c;color:var(--text)}
 </style>
 </head>
 <body>
+    {% include "partials/language_switcher.html" %}
 {{ questoes_data|json_script:"questoes-data" }}
 {{ llms_data|json_script:"llms-data" }}
 {{ metricas_data|json_script:"metricas-data" }}

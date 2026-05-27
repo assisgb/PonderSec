@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.translation import gettext as _
 from django.contrib import messages as django_messages
 from django.contrib.auth.decorators import login_required
 import os
@@ -10,7 +11,7 @@ from django.http import JsonResponse, HttpResponse
 import json
 from django.views.decorators.http import require_http_methods
 from responsegenerator.models import Historico, Categoria, LLM, Questao, Resposta, Avaliacao, Metrica, Formulario, Avaliador, AvaliacaoFormulario, AvaliacaoJuiz
-from django.db.models import Avg, Count
+from django.db.models import Avg, Count, Prefetch
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -96,7 +97,7 @@ def limpar_questoes(request):
     if request.method == 'POST':   
         Questao.objects.filter(usuario=request.user).delete()
         Categoria.objects.filter(usuario=request.user).delete()
-        django_messages.success(request, "O histórico de questões e categorias foi limpo!")
+        django_messages.success(request, _("O histórico de questões e categorias foi limpo!"))
     return redirect('questoes')
  
 @login_required(login_url='/login/')
@@ -106,10 +107,34 @@ def historico(request):
 
 @login_required
 def questoes(request):
-    lista_questoes = Questao.objects.filter(usuario=request.user).select_related('categoria').order_by('-id').distinct()
-    lista_categorias = Categoria.objects.filter(usuario=request.user)
-    llms = LLM.objects.filter(usuario=request.user)
-    formulario = Formulario.objects.filter(usuario=request.user)
+    respostas_prefetch = Prefetch(
+        "respostas",
+        queryset=Resposta.objects.select_related("llm").only(
+            "id",
+            "questao_id",
+            "llm_id",
+            "conteudo_resposta",
+            "llm__id",
+            "llm__nome",
+        ),
+        to_attr="respostas_cache",
+    )
+    formularios_prefetch = Prefetch(
+        "formularios",
+        queryset=Formulario.objects.only("id", "nome"),
+        to_attr="formularios_cache",
+    )
+    lista_questoes = (
+        Questao.objects
+        .filter(usuario=request.user)
+        .select_related("categoria")
+        .prefetch_related(respostas_prefetch, formularios_prefetch)
+        .only("id", "conteudo", "categoria_id", "categoria__id", "categoria__nome_categoria")
+        .order_by("-id")
+    )
+    lista_categorias = Categoria.objects.filter(usuario=request.user).only("id", "nome_categoria").order_by("nome_categoria")
+    llms = LLM.objects.filter(usuario=request.user).only("id", "nome").order_by("nome")
+    formulario = Formulario.objects.filter(usuario=request.user).only("id", "nome").order_by("nome")
     
     return render(request, 'questoes/questoes.html', {
         "historico": lista_questoes,
@@ -143,7 +168,9 @@ def add_questoes(request):
                 categoria=categoria_obj,
             )
 
-            django_messages.success(request, f"Questão adicionada na categoria '{categoria_obj.nome_categoria}'!")
+            django_messages.success(request, _("Questão adicionada na categoria '%(categoria)s'!") % {
+                "categoria": categoria_obj.nome_categoria,
+            })
         
     return redirect('questoes')
     
@@ -183,7 +210,7 @@ def upload_perguntas(request):
                             Questao.objects.create(conteudo=texto_pergunta, usuario=request.user, categoria=categoria_padrao)
 
                 except (json.JSONDecodeError, AttributeError):
-                    django_messages.error(request, "Arquivo JSON inválido ou mal formatado.")
+                    django_messages.error(request, _("Arquivo JSON inválido ou mal formatado."))
                     return redirect('questoes')
 
             else:
@@ -207,11 +234,14 @@ def upload_perguntas(request):
                         Questao.objects.create(conteudo=texto_pergunta, usuario=request.user, categoria=categoria_padrao)
 
             if perguntas:
-                django_messages.success(request, f"{len(perguntas)} perguntas importadas na categoria '{categoria_padrao.nome_categoria}'!")
+                django_messages.success(request, _("%(count)s perguntas importadas na categoria '%(categoria)s'!") % {
+                    "count": len(perguntas),
+                    "categoria": categoria_padrao.nome_categoria,
+                })
             else:
-                django_messages.error(request, "Nenhuma pergunta encontrada no arquivo.")
+                django_messages.error(request, _("Nenhuma pergunta encontrada no arquivo."))
         else:
-            django_messages.error(request, "Nenhum arquivo foi enviado.")
+            django_messages.error(request, _("Nenhum arquivo foi enviado."))
 
     return redirect('questoes')
 
@@ -228,9 +258,11 @@ def questoes_cadastro_categoria(request):
                 nome_categoria=nome_categoria,
                 descricao_categoria=descricao_categoria
             )
-            django_messages.success(request, f"Categoria '{nome_categoria}' criada!")
+            django_messages.success(request, _("Categoria '%(categoria)s' criada!") % {
+                "categoria": nome_categoria,
+            })
         else:
-            django_messages.error(request, "O nome da categoria é obrigatório.")
+            django_messages.error(request, _("O nome da categoria é obrigatório."))
 
     return redirect('questoes')
 
@@ -246,9 +278,11 @@ def editar_categoria(request, id):
             categoria.nome_categoria = nome
             categoria.descricao_categoria = descricao
             categoria.save()
-            django_messages.success(request, f"Categoria '{nome}' atualizada com sucesso!")
+            django_messages.success(request, _("Categoria '%(categoria)s' atualizada com sucesso!") % {
+                "categoria": nome,
+            })
         else:
-            django_messages.error(request, "O nome da categoria não pode ficar vazio.")
+            django_messages.error(request, _("O nome da categoria não pode ficar vazio."))
             
     return redirect('questoes')
 
@@ -357,7 +391,7 @@ def limpar_respostas(request):
         except Exception as e:
             return JsonResponse({"ok": False, "erro": str(e)}, status=500)
             
-    return JsonResponse({"ok": False, "erro": "Método não permitido"}, status=405)
+    return JsonResponse({"ok": False, "erro": _("Método não permitido")}, status=405)
     
 @login_required
 def setup_llm(request):
@@ -372,7 +406,9 @@ def setup_llm(request):
             descricao = provedor,
             api_key = api_key
         )
-        django_messages.success(request, f"IA '{nome}' configurada com sucesso!")
+        django_messages.success(request, _("IA '%(nome)s' configurada com sucesso!") % {
+            "nome": nome,
+        })
         return redirect('setup_llm')
 
     llms_cadastradas = LLM.objects.filter(usuario=request.user)
@@ -412,7 +448,7 @@ def setup_adicionar_metrica(request):
             label_opcao_2 = request.POST.get('opcao_2', 'Bom').strip()
 
         if not nome:
-            django_messages.error(request, 'O nome da métrica é obrigatório.')
+            django_messages.error(request, _('O nome da métrica é obrigatório.'))
             return redirect('setup_avaliacao')
         
         else:
@@ -427,7 +463,9 @@ def setup_adicionar_metrica(request):
                 label_opcao_2    = label_opcao_2,
                 ativa            = True,
             )
-            django_messages.success(request, f"Métrica '{nome}' adicionada com sucesso!")
+            django_messages.success(request, _("Métrica '%(nome)s' adicionada com sucesso!") % {
+                "nome": nome,
+            })
 
     return redirect('setup_avaliacao')
 
@@ -439,7 +477,7 @@ def setup_configurar_metrica(request):
         metrica = get_object_or_404(Metrica, id=metrica_id, usuario=request.user)
         metrica.nome = request.POST.get('nome')
         metrica.save()
-        django_messages.success(request, "Configurações da métrica atualizadas!")
+        django_messages.success(request, _("Configurações da métrica atualizadas!"))
     return redirect('setup_avaliacao')
 
 @login_required
@@ -448,7 +486,7 @@ def setup_deletar_metrica(request, id):
     try:
         metrica = get_object_or_404(Metrica, id=id, usuario=request.user)
         metrica.delete()
-        return JsonResponse({"status": "success", "message": "Métrica deletada com sucesso."})
+        return JsonResponse({"status": "success", "message": _("Métrica deletada com sucesso.")})
     except Exception as e:
         return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
@@ -456,8 +494,8 @@ def setup_deletar_metrica(request, id):
 def deletar_llm(request, id):
     if request.method == "DELETE":
         LLM.objects.filter(id=id, usuario=request.user).delete()
-        return JsonResponse({"status": "success", "message": "LLM deletada com sucesso."})
-    return JsonResponse({"status": "error", "message": "Erro ao deletar LLM."})
+        return JsonResponse({"status": "success", "message": _("LLM deletada com sucesso.")})
+    return JsonResponse({"status": "error", "message": _("Erro ao deletar LLM.")})
 
 @login_required
 def edit_llm_api(request, id):
@@ -471,7 +509,7 @@ def edit_llm_api(request, id):
         llm.nome = nome
         llm.api_key = api_key
         llm.save()
-        return JsonResponse({"status": "success", "message": "LLM atualizada com sucesso."})
+        return JsonResponse({"status": "success", "message": _("LLM atualizada com sucesso.")})
     return JsonResponse({"status": "error"})
 
 @login_required
@@ -480,7 +518,18 @@ def menu_consulta(request):
 
 @login_required
 def executar_consulta(request):
-    questoes = Questao.objects.prefetch_related('respostas').filter(usuario=request.user)
+    respostas_prefetch = Prefetch(
+        "respostas",
+        queryset=Resposta.objects.only("id", "questao_id"),
+        to_attr="respostas_cache",
+    )
+    questoes = (
+        Questao.objects
+        .filter(usuario=request.user)
+        .only("id", "conteudo")
+        .prefetch_related(respostas_prefetch)
+        .order_by("id")
+    )
     return render(request, 'consulta/executar-consulta.html', {
         "questoes": questoes
     })
@@ -662,7 +711,7 @@ def juizes_executar_avaliacao(request):
     try:
         data = json.loads(request.body.decode("utf-8") or "{}")
     except json.JSONDecodeError:
-        return JsonResponse({"status": "erro", "mensagem": "JSON inválido."}, status=400)
+        return JsonResponse({"status": "erro", "mensagem": _("JSON inválido.")}, status=400)
 
     question_ids = data.get("questao_ids") or []
     judge_ids = data.get("juiz_ids") or []
@@ -671,19 +720,19 @@ def juizes_executar_avaliacao(request):
         question_ids = [int(item) for item in question_ids]
         judge_ids = [int(item) for item in judge_ids]
     except (TypeError, ValueError):
-        return JsonResponse({"status": "erro", "mensagem": "Seleção inválida."}, status=400)
+        return JsonResponse({"status": "erro", "mensagem": _("Seleção inválida.")}, status=400)
 
     if not question_ids:
-        return JsonResponse({"status": "erro", "mensagem": "Selecione ao menos uma pergunta."}, status=400)
+        return JsonResponse({"status": "erro", "mensagem": _("Selecione ao menos uma pergunta.")}, status=400)
 
     if not judge_ids:
-        return JsonResponse({"status": "erro", "mensagem": "Selecione ao menos um juiz online."}, status=400)
+        return JsonResponse({"status": "erro", "mensagem": _("Selecione ao menos um juiz online.")}, status=400)
 
     metricas = list(Metrica.objects.filter(usuario=request.user, ativa=True).order_by("id"))
     if not metricas:
         return JsonResponse({
             "status": "erro",
-            "mensagem": "Nenhuma métrica ativa encontrada. Configure métricas no Setup antes de avaliar."
+            "mensagem": _("Nenhuma métrica ativa encontrada. Configure métricas no Setup antes de avaliar.")
         }, status=400)
 
     respostas = list(
@@ -701,13 +750,13 @@ def juizes_executar_avaliacao(request):
     if not respostas:
         return JsonResponse({
             "status": "erro",
-            "mensagem": "As LLMs selecionadas ainda não possuem respostas nas perguntas escolhidas."
+            "mensagem": _("As LLMs selecionadas ainda não possuem respostas nas perguntas escolhidas.")
         }, status=400)
 
     if not juizes:
         return JsonResponse({
             "status": "erro",
-            "mensagem": "Nenhuma LLM avaliadora ativa foi encontrada."
+            "mensagem": _("Nenhuma LLM avaliadora ativa foi encontrada.")
         }, status=400)
 
     tarefas = []
@@ -720,13 +769,13 @@ def juizes_executar_avaliacao(request):
     if not tarefas:
         return JsonResponse({
             "status": "erro",
-            "mensagem": "Não há pares válidos. Selecione ao menos duas LLMs que tenham respostas nas perguntas escolhidas."
+            "mensagem": _("Não há pares válidos. Selecione ao menos duas LLMs que tenham respostas nas perguntas escolhidas.")
         }, status=400)
 
     if len(tarefas) > 40:
         return JsonResponse({
             "status": "erro",
-            "mensagem": "Seleção muito grande. Reduza a quantidade para até 40 avaliações por execução."
+            "mensagem": _("Seleção muito grande. Reduza a quantidade para até 40 avaliações por execução.")
         }, status=400)
 
     resultados = []
@@ -768,8 +817,31 @@ def juizes_executar_avaliacao(request):
 
 @login_required
 def avaliacao(request):
-    formularios = Formulario.objects.filter(usuario=request.user)
-    questoes_respondidas = Questao.objects.filter(usuario=request.user, respostas__isnull=False).distinct()
+    formularios = (
+        Formulario.objects
+        .filter(usuario=request.user)
+        .annotate(
+            questoes_total=Count("questoes", distinct=True),
+            avaliadores_total=Count("avaliadores", distinct=True),
+        )
+        .prefetch_related(
+            Prefetch(
+                "questoes",
+                queryset=Questao.objects.only("id"),
+                to_attr="questoes_cache",
+            )
+        )
+        .only("id", "nome")
+        .order_by("-id")
+    )
+    questoes_respondidas = (
+        Questao.objects
+        .filter(usuario=request.user, respostas__isnull=False)
+        .select_related("categoria")
+        .only("id", "conteudo", "categoria_id", "categoria__id", "categoria__nome_categoria")
+        .distinct()
+        .order_by("-id")
+    )
     return render(request, 'avaliacao/avaliacao_lista.html', {
         'formularios': formularios,
         'questoes': questoes_respondidas
@@ -811,7 +883,9 @@ def avaliacao_adicionar_formulario(request):
         formulario = Formulario.objects.create(nome=nome,usuario=request.user)
         formulario.questoes.set(questoes_ids)
         formulario.save()
-        django_messages.success(request, f"Formulário '{nome}' criado com sucesso!")
+        django_messages.success(request, _("Formulário '%(nome)s' criado com sucesso!") % {
+            "nome": nome,
+        })
     
     return redirect('avaliacao')
 
@@ -826,7 +900,9 @@ def avaliacao_editar_formulario(request, id):
         formulario.nome = nome
         formulario.questoes.set(questoes_ids)
         formulario.save()
-        django_messages.success(request, f"Formulário '{nome}' atualizado com sucesso!")
+        django_messages.success(request, _("Formulário '%(nome)s' atualizado com sucesso!") % {
+            "nome": nome,
+        })
     
     return redirect('avaliacao')
 
@@ -836,16 +912,33 @@ def avaliacao_deletar_formulario(request, id):
     formulario = get_object_or_404(Formulario, id=id, usuario=request.user)
     if request.method == 'POST':
         formulario.delete()
-        django_messages.success(request, "Formulário removido!")
+        django_messages.success(request, _("Formulário removido!"))
     return redirect('avaliacao')
 
 def responder_avaliacao_publica(request, formulario_id):
+    respostas_prefetch = Prefetch(
+        "respostas",
+        queryset=Resposta.objects.select_related("llm").only(
+            "id",
+            "questao_id",
+            "llm_id",
+            "conteudo_resposta",
+            "llm__id",
+            "llm__nome",
+        ),
+        to_attr="respostas_cache",
+    )
+    questoes_prefetch = Prefetch(
+        "questoes",
+        queryset=Questao.objects.only("id", "conteudo").prefetch_related(respostas_prefetch),
+        to_attr="questoes_cache",
+    )
     formulario = get_object_or_404(
-        Formulario.objects.prefetch_related('questoes__respostas__llm'),
+        Formulario.objects.only("id", "nome", "usuario_id").prefetch_related(questoes_prefetch),
         id=formulario_id
     )
     
-    metricas = list(Metrica.objects.filter(usuario=formulario.usuario, ativa=True))
+    metricas = list(Metrica.objects.filter(usuario_id=formulario.usuario_id, ativa=True))
 
     for metrica in metricas:
         if metrica.pontuacao_maxima == 2:
@@ -883,6 +976,7 @@ def responder_avaliacao_publica(request, formulario_id):
             avaliador.formulario = formulario
             avaliador.save()
 
+        avaliacoes = []
         for chave, valor in request.POST.items():
             if chave.startswith('quanti_') and valor:
                 partes = chave.split('_')
@@ -890,14 +984,17 @@ def responder_avaliacao_publica(request, formulario_id):
                 metrica_id = partes[2]
                 texto_quali = request.POST.get(f'quali_{resposta_id}_{metrica_id}', '')
 
-                AvaliacaoFormulario.objects.create(
-                    usuario=formulario.usuario, # BLINDADO: Vincula a avaliação gerada ao dono do formulário
+                avaliacoes.append(AvaliacaoFormulario(
+                    usuario_id=formulario.usuario_id, # BLINDADO: Vincula a avaliação gerada ao dono do formulário
                     avaliador=avaliador,
                     resposta_id=resposta_id,
                     metrica_id=metrica_id,
                     avaliacao_quanti=valor,
                     avaliacao_quali=texto_quali
-                )
+                ))
+
+        if avaliacoes:
+            AvaliacaoFormulario.objects.bulk_create(avaliacoes)
 
         return render(request, 'avaliacao/avaliacao_sucesso.html')
     
@@ -928,26 +1025,38 @@ def dashboard_avaliacoes(request):
 
     por_metrica = {}
     divergencias = []
+    especialistas_agregados = {
+        (item["metrica_id"], item["resposta__llm_id"]): item
+        for item in (
+            AvaliacaoFormulario.objects
+            .filter(usuario=request.user, avaliacao_quanti__isnull=False)
+            .values("metrica_id", "resposta__llm_id")
+            .annotate(media=Avg("avaliacao_quanti"), total=Count("id"))
+        )
+    }
+    juizes_agregados = {
+        (item["metrica_id"], item["resposta__llm_id"]): item
+        for item in (
+            AvaliacaoJuiz.objects
+            .filter(usuario=request.user, avaliacao_quanti__isnull=False, erro=False)
+            .values("metrica_id", "resposta__llm_id")
+            .annotate(media=Avg("avaliacao_quanti"), total=Count("id"))
+        )
+    }
 
     for metrica in metricas:
         modelos = {}
         maximo = metrica["pontuacao_maxima"] or 5
 
         for llm in llms:
-            especialistas = AvaliacaoFormulario.objects.filter(
-                usuario=request.user,
-                metrica_id=metrica["id"],
-                resposta__llm_id=llm["id"],
-                avaliacao_quanti__isnull=False,
-            ).aggregate(media=Avg("avaliacao_quanti"), total=Count("id"))
-
-            juizes = AvaliacaoJuiz.objects.filter(
-                usuario=request.user,
-                metrica_id=metrica["id"],
-                resposta__llm_id=llm["id"],
-                avaliacao_quanti__isnull=False,
-                erro=False,
-            ).aggregate(media=Avg("avaliacao_quanti"), total=Count("id"))
+            especialistas = especialistas_agregados.get(
+                (metrica["id"], llm["id"]),
+                {"media": None, "total": 0},
+            )
+            juizes = juizes_agregados.get(
+                (metrica["id"], llm["id"]),
+                {"media": None, "total": 0},
+            )
 
             media_especialistas = especialistas["media"]
             media_juizes = juizes["media"]

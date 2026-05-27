@@ -1,0 +1,664 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PonderSEC\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-05-27 15:28+0000\n"
+"PO-Revision-Date: 2026-05-27 15:28+0000\n"
+"Last-Translator: PonderSEC Team\n"
+"Language-Team: English\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+#: pondersec/settings.py:148
+msgid "Português"
+msgstr "Portuguese"
+
+#: pondersec/settings.py:149
+msgid "English"
+msgstr "English"
+
+#: pondersec/settings.py:150
+msgid "Español"
+msgstr "Spanish"
+
+#: responsegenerator/templates/avaliacao/avaliacao_publica.html:7
+#, python-format
+msgid "%(nome)s — Avaliação PonderSEC"
+msgstr "%(nome)s — PonderSEC Evaluation"
+
+#: responsegenerator/templates/avaliacao/avaliacao_publica.html:437
+msgid "Painel de Avaliação de Inteligência Artificial"
+msgstr "Artificial Intelligence Evaluation Panel"
+
+#: responsegenerator/templates/avaliacao/avaliacao_publica.html:440
+msgid "Nome Completo"
+msgstr "Full Name"
+
+#: responsegenerator/templates/avaliacao/avaliacao_publica.html:441
+msgid "Digite seu nome completo"
+msgstr "Enter your full name"
+
+#: responsegenerator/templates/avaliacao/avaliacao_publica.html:444
+msgid "E-mail Profissional"
+msgstr "Professional Email"
+
+#: responsegenerator/templates/avaliacao/avaliacao_publica.html:448
+msgid "Profissão / Cargo"
+msgstr "Profession / Role"
+
+#: responsegenerator/templates/avaliacao/avaliacao_publica.html:449
+msgid "Ex: Engenheiro de Segurança, Dev..."
+msgstr "E.g.: Security Engineer, Developer..."
+
+#: responsegenerator/templates/avaliacao/avaliacao_publica.html:451
+msgid "Iniciar Avaliação"
+msgstr "Start Evaluation"
+
+#: responsegenerator/templates/avaliacao/avaliacao_publica.html:459
+#: responsegenerator/templates/avaliacao/avaliacao_publica.html:579
+msgid "Item"
+msgstr "Item"
+
+#: responsegenerator/templates/avaliacao/avaliacao_publica.html:459
+#: responsegenerator/templates/avaliacao/avaliacao_publica.html:585
+msgid "de"
+msgstr "of"
+
+#: responsegenerator/templates/avaliacao/avaliacao_publica.html:464
+msgid "Navegação por perguntas"
+msgstr "Question navigation"
+
+#: responsegenerator/templates/avaliacao/avaliacao_publica.html:479
+#, python-format
+msgid "Pergunta %(question_number)s de %(question_total)s"
+msgstr "Question %(question_number)s of %(question_total)s"
+
+#: responsegenerator/templates/avaliacao/avaliacao_publica.html:480
+#, python-format
+msgid "Resposta %(response_number)s de %(response_total)s"
+msgstr "Answer %(response_number)s of %(response_total)s"
+
+#: responsegenerator/templates/avaliacao/avaliacao_publica.html:484
+#, python-format
+msgid "Resposta IA #%(response_number)s"
+msgstr "AI Answer #%(response_number)s"
+
+#: responsegenerator/templates/avaliacao/avaliacao_publica.html:527
+msgid "Muito"
+msgstr "Very"
+
+#: responsegenerator/templates/avaliacao/avaliacao_publica.html:527
+msgid "ruim"
+msgstr "poor"
+
+#: responsegenerator/templates/avaliacao/avaliacao_publica.html:528
+msgid "Ruim"
+msgstr "Poor"
+
+#: responsegenerator/templates/avaliacao/avaliacao_publica.html:529
+msgid "Regular"
+msgstr "Fair"
+
+#: responsegenerator/templates/avaliacao/avaliacao_publica.html:530
+msgid "Bom"
+msgstr "Good"
+
+#: responsegenerator/templates/avaliacao/avaliacao_publica.html:531
+msgid "Excelente"
+msgstr "Excellent"
+
+#: responsegenerator/templates/avaliacao/avaliacao_publica.html:542
+msgid "Comentário (opcional)"
+msgstr "Comment (optional)"
+
+#: responsegenerator/templates/avaliacao/avaliacao_publica.html:555
+#, python-format
+msgid "Nenhuma IA respondeu à Pergunta %(question_number)s."
+msgstr "No AI answered Question %(question_number)s."
+
+#: responsegenerator/templates/avaliacao/avaliacao_publica.html:564
+msgid "Todas as respostas avaliadas"
+msgstr "All answers evaluated"
+
+#: responsegenerator/templates/avaliacao/avaliacao_publica.html:565
+msgid "Revise e clique em Enviar abaixo."
+msgstr "Review and click Send below."
+
+#: responsegenerator/templates/avaliacao/avaliacao_publica.html:568
+msgid "Anterior"
+msgstr "Previous"
+
+#: responsegenerator/templates/avaliacao/avaliacao_publica.html:569
+msgid "Próximo"
+msgstr "Next"
+
+#: responsegenerator/templates/avaliacao/avaliacao_publica.html:570
+msgid "Enviar Avaliação"
+msgstr "Send Evaluation"
+
+#: responsegenerator/templates/avaliacao/avaliacao_publica.html:573
+msgid ""
+"Navegue com <span class=\"kbd\">←</span> <span class=\"kbd\">→</span> do "
+"teclado"
+msgstr "Navigate with the keyboard <span class=\"kbd\">←</span> <span class=\"kbd\">→</span>"
+
+#: responsegenerator/templates/avaliacao/avaliacao_publica.html:580
+msgid "Pergunta"
+msgstr "Question"
+
+#: responsegenerator/templates/avaliacao/avaliacao_publica.html:581
+msgid "resposta"
+msgstr "answer"
+
+#: responsegenerator/templates/avaliacao/avaliacao_publica.html:582
+msgid "respostas"
+msgstr "answers"
+
+#: responsegenerator/templates/avaliacao/avaliacao_publica.html:583
+msgid "sem respostas"
+msgstr "no answers"
+
+#: responsegenerator/templates/avaliacao/avaliacao_publica.html:584
+msgid "Ir para a pergunta"
+msgstr "Go to question"
+
+#: responsegenerator/templates/avaliacao/avaliacao_sucesso.html:7
+msgid "Sucesso — PonderSEC"
+msgstr "Success — PonderSEC"
+
+#: responsegenerator/templates/avaliacao/avaliacao_sucesso.html:59
+msgid "Avaliação Enviada!"
+msgstr "Evaluation Sent!"
+
+#: responsegenerator/templates/avaliacao/avaliacao_sucesso.html:60
+msgid ""
+"Seus dados e notas foram computados com sucesso no banco de dados do "
+"PonderSEC. Muito obrigado pela sua contribuição profissional!"
+msgstr "Your data and scores were successfully saved in the PonderSEC database. Thank you for your professional contribution!"
+
+#: responsegenerator/templates/avaliacao/avaliacao_sucesso.html:61
+msgid "Você já pode fechar esta aba."
+msgstr "You may now close this tab."
+
+#: responsegenerator/templates/avaliacao/menu_avaliacao.html:7
+msgid "PonderSEC — Avaliação"
+msgstr "PonderSEC — Evaluation"
+
+#: responsegenerator/templates/avaliacao/menu_avaliacao.html:162
+msgid "Avaliação de IA"
+msgstr "AI Evaluation"
+
+#: responsegenerator/templates/avaliacao/menu_avaliacao.html:163
+msgid ""
+"Escolha entre avaliação humana por especialistas ou avaliação automática com "
+"LLMs atuando como juízes."
+msgstr "Choose between human expert evaluation or automatic evaluation with LLMs acting as judges."
+
+#: responsegenerator/templates/avaliacao/menu_avaliacao.html:168
+msgid "Coletar Avaliações"
+msgstr "Collect Evaluations"
+
+#: responsegenerator/templates/avaliacao/menu_avaliacao.html:226
+msgid "Módulos de Avaliação"
+msgstr "Evaluation Modules"
+
+#: responsegenerator/templates/avaliacao/menu_avaliacao.html:177
+msgid "Formulários"
+msgstr "Forms"
+
+#: responsegenerator/templates/avaliacao/menu_avaliacao.html:178
+msgid ""
+"Crie formulários para coleta de avaliações humanas, com suporte a modo cego."
+msgstr "Create forms to collect human evaluations, with blind mode support."
+
+#: responsegenerator/templates/avaliacao/menu_avaliacao.html:180
+#: responsegenerator/templates/avaliacao/menu_avaliacao.html:196
+#: responsegenerator/templates/avaliacao/menu_avaliacao.html:218
+#: responsegenerator/templates/consulta/menu-consulta.html:301
+#: responsegenerator/templates/consulta/menu-consulta.html:324
+#: responsegenerator/templates/menu.html:239
+#: responsegenerator/templates/menu.html:256
+#: responsegenerator/templates/menu.html:275
+#: responsegenerator/templates/menu.html:295
+#: responsegenerator/templates/setup/setup.html:244
+#: responsegenerator/templates/setup/setup.html:267
+msgid "Acessar"
+msgstr "Open"
+
+#: responsegenerator/templates/avaliacao/menu_avaliacao.html:193
+msgid "Juízes Online"
+msgstr "Online Judges"
+
+#: responsegenerator/templates/avaliacao/menu_avaliacao.html:194
+msgid ""
+"Execute avaliações automáticas em que LLMs atuam como juízes das respostas "
+"geradas."
+msgstr "Run automatic evaluations where LLMs act as judges of the generated answers."
+
+#: responsegenerator/templates/avaliacao/menu_avaliacao.html:206
+msgid "Analisar Resultados"
+msgstr "Analyze Results"
+
+#: responsegenerator/templates/avaliacao/menu_avaliacao.html:215
+msgid "Dashboard de Resultados"
+msgstr "Results Dashboard"
+
+#: responsegenerator/templates/avaliacao/menu_avaliacao.html:216
+msgid ""
+"Painel unificado: alterne entre <strong style=\"color:#00ff9f;"
+"\">Especialistas</strong>, <strong style=\"color:#bb86fc;\">Juízes Online</"
+"strong> ou <strong style=\"color:#00cfff;\">Comparativo</strong> e exporte "
+"relatórios em PDF."
+msgstr "Unified panel: switch between <strong style=\"color:#00ff9f;\">Experts</strong>, <strong style=\"color:#bb86fc;\">Online Judges</strong>, or <strong style=\"color:#00cfff;\">Comparison</strong> and export PDF reports."
+
+#: responsegenerator/templates/avaliacao/menu_avaliacao.html:231
+#: responsegenerator/templates/consulta/menu-consulta.html:337
+#: responsegenerator/templates/setup/setup.html:279
+msgid "Voltar ao Menu"
+msgstr "Back to Menu"
+
+#: responsegenerator/templates/consulta/menu-consulta.html:7
+msgid "PonderSEC — Consulta"
+msgstr "PonderSEC — Query"
+
+#: responsegenerator/templates/consulta/menu-consulta.html:283
+#: responsegenerator/templates/menu.html:272
+msgid "Consulta"
+msgstr "Query"
+
+#: responsegenerator/templates/consulta/menu-consulta.html:284
+msgid "Escolha uma opção para consultar informações do sistema"
+msgstr "Choose an option to query system information"
+
+#: responsegenerator/templates/consulta/menu-consulta.html:288
+msgid "Opções"
+msgstr "Options"
+
+#: responsegenerator/templates/consulta/menu-consulta.html:298
+msgid "Executar Consulta"
+msgstr "Run Query"
+
+#: responsegenerator/templates/consulta/menu-consulta.html:299
+msgid "Visualizar e executar perguntas cadastradas no sistema."
+msgstr "View and run questions registered in the system."
+
+#: responsegenerator/templates/consulta/menu-consulta.html:322
+msgid ""
+"Visualize e analise os resultados das avaliações previamente concluídas."
+msgstr "View and analyze results from previously completed evaluations."
+
+#: responsegenerator/templates/menu.html:7
+msgid "PonderSEC — Menu"
+msgstr "PonderSEC — Menu"
+
+#: responsegenerator/templates/menu.html:218
+msgid "Menu Principal"
+msgstr "Main Menu"
+
+#: responsegenerator/templates/menu.html:219
+msgid "Escolha uma das opções abaixo para continuar"
+msgstr "Choose one of the options below to continue"
+
+#: responsegenerator/templates/menu.html:223
+msgid "Módulos"
+msgstr "Modules"
+
+#: responsegenerator/templates/menu.html:236
+msgid "Questões"
+msgstr "Questions"
+
+#: responsegenerator/templates/menu.html:237
+msgid "Gerencie e organize as questões de cibersegurança do sistema."
+msgstr "Manage and organize the system's cybersecurity questions."
+
+#: responsegenerator/templates/menu.html:254
+msgid "Configure LLMs e métricas de avaliação da plataforma."
+msgstr "Configure LLMs and platform evaluation metrics."
+
+#: responsegenerator/templates/menu.html:273
+msgid "Execute as perguntas e obtenha respostas comparativas dos LLMs."
+msgstr "Run questions and obtain comparative answers from LLMs."
+
+#: responsegenerator/templates/menu.html:292
+msgid "Avaliação"
+msgstr "Evaluation"
+
+#: responsegenerator/templates/menu.html:293
+msgid "Gerencie seus formulários de avaliação e analise os resultados."
+msgstr "Manage your evaluation forms and analyze results."
+
+#: responsegenerator/templates/menu.html:311
+#: usuarios/templates/tela_inicial.html:165
+msgid "Sair"
+msgstr "Sign out"
+
+#: responsegenerator/templates/setup/setup.html:7
+msgid "PonderSEC — Setup"
+msgstr "PonderSEC — Setup"
+
+#: responsegenerator/templates/setup/setup.html:222
+msgid "Configure os parâmetros do sistema"
+msgstr "Configure system parameters"
+
+#: responsegenerator/templates/setup/setup.html:226
+msgid "Configurações"
+msgstr "Settings"
+
+#: responsegenerator/templates/setup/setup.html:242
+msgid ""
+"Gerencie e configure os modelos de linguagem integrados à plataforma de "
+"avaliação."
+msgstr "Manage and configure the language models integrated into the evaluation platform."
+
+#: responsegenerator/templates/setup/setup.html:264
+msgid "Métrica"
+msgstr "Metric"
+
+#: responsegenerator/templates/setup/setup.html:265
+msgid ""
+"Defina e ajuste as métricas de avaliação qualitativa e quantitativa das "
+"respostas."
+msgstr "Define and adjust qualitative and quantitative response evaluation metrics."
+
+#: responsegenerator/views.py:100
+msgid "O histórico de questões e categorias foi limpo!"
+msgstr "The question and category history was cleared!"
+
+#: responsegenerator/views.py:147
+#, python-format
+msgid "Questão adicionada na categoria '%(categoria)s'!"
+msgstr "Question added to category '%(categoria)s'!"
+
+#: responsegenerator/views.py:189
+msgid "Arquivo JSON inválido ou mal formatado."
+msgstr "Invalid or malformed JSON file."
+
+#: responsegenerator/views.py:213
+#, python-format
+msgid "%(count)s perguntas importadas na categoria '%(categoria)s'!"
+msgstr "%(count)s questions imported into category '%(categoria)s'!"
+
+#: responsegenerator/views.py:218
+msgid "Nenhuma pergunta encontrada no arquivo."
+msgstr "No questions found in the file."
+
+#: responsegenerator/views.py:220
+msgid "Nenhum arquivo foi enviado."
+msgstr "No file was uploaded."
+
+#: responsegenerator/views.py:237
+#, python-format
+msgid "Categoria '%(categoria)s' criada!"
+msgstr "Category '%(categoria)s' created!"
+
+#: responsegenerator/views.py:241
+msgid "O nome da categoria é obrigatório."
+msgstr "The category name is required."
+
+#: responsegenerator/views.py:257
+#, python-format
+msgid "Categoria '%(categoria)s' atualizada com sucesso!"
+msgstr "Category '%(categoria)s' updated successfully!"
+
+#: responsegenerator/views.py:261
+msgid "O nome da categoria não pode ficar vazio."
+msgstr "The category name cannot be empty."
+
+#: responsegenerator/views.py:370
+msgid "Método não permitido"
+msgstr "Method not allowed"
+
+#: responsegenerator/views.py:385
+#, python-format
+msgid "IA '%(nome)s' configurada com sucesso!"
+msgstr "AI '%(nome)s' configured successfully!"
+
+#: responsegenerator/views.py:427
+msgid "O nome da métrica é obrigatório."
+msgstr "The metric name is required."
+
+#: responsegenerator/views.py:442
+#, python-format
+msgid "Métrica '%(nome)s' adicionada com sucesso!"
+msgstr "Metric '%(nome)s' added successfully!"
+
+#: responsegenerator/views.py:456
+msgid "Configurações da métrica atualizadas!"
+msgstr "Metric settings updated!"
+
+#: responsegenerator/views.py:465
+msgid "Métrica deletada com sucesso."
+msgstr "Metric deleted successfully."
+
+#: responsegenerator/views.py:473
+msgid "LLM deletada com sucesso."
+msgstr "LLM deleted successfully."
+
+#: responsegenerator/views.py:474
+msgid "Erro ao deletar LLM."
+msgstr "Error deleting LLM."
+
+#: responsegenerator/views.py:488
+msgid "LLM atualizada com sucesso."
+msgstr "LLM updated successfully."
+
+#: responsegenerator/views.py:679
+msgid "JSON inválido."
+msgstr "Invalid JSON."
+
+#: responsegenerator/views.py:688
+msgid "Seleção inválida."
+msgstr "Invalid selection."
+
+#: responsegenerator/views.py:691
+msgid "Selecione ao menos uma pergunta."
+msgstr "Select at least one question."
+
+#: responsegenerator/views.py:694
+msgid "Selecione ao menos um juiz online."
+msgstr "Select at least one online judge."
+
+#: responsegenerator/views.py:700
+msgid ""
+"Nenhuma métrica ativa encontrada. Configure métricas no Setup antes de "
+"avaliar."
+msgstr "No active metric found. Configure metrics in Setup before evaluating."
+
+#: responsegenerator/views.py:718
+msgid ""
+"As LLMs selecionadas ainda não possuem respostas nas perguntas escolhidas."
+msgstr "The selected LLMs do not have answers for the chosen questions yet."
+
+#: responsegenerator/views.py:724
+msgid "Nenhuma LLM avaliadora ativa foi encontrada."
+msgstr "No active evaluator LLM was found."
+
+#: responsegenerator/views.py:737
+msgid ""
+"Não há pares válidos. Selecione ao menos duas LLMs que tenham respostas nas "
+"perguntas escolhidas."
+msgstr "There are no valid pairs. Select at least two LLMs that have answers for the chosen questions."
+
+#: responsegenerator/views.py:743
+msgid ""
+"Seleção muito grande. Reduza a quantidade para até 40 avaliações por "
+"execução."
+msgstr "Selection too large. Reduce it to up to 40 evaluations per run."
+
+#: responsegenerator/views.py:828
+#, python-format
+msgid "Formulário '%(nome)s' criado com sucesso!"
+msgstr "Form '%(nome)s' created successfully!"
+
+#: responsegenerator/views.py:845
+#, python-format
+msgid "Formulário '%(nome)s' atualizado com sucesso!"
+msgstr "Form '%(nome)s' updated successfully!"
+
+#: responsegenerator/views.py:857
+msgid "Formulário removido!"
+msgstr "Form removed!"
+
+#: templates/partials/language_switcher.html:59
+msgid "Selecionar idioma"
+msgstr "Select language"
+
+#: usuarios/templates/cadastro.html:8
+msgid "PonderSEC — Cadastro"
+msgstr "PonderSEC — Sign Up"
+
+#: usuarios/templates/cadastro.html:219
+msgid "Verificação de Segurança"
+msgstr "Security Verification"
+
+#: usuarios/templates/cadastro.html:222
+#, python-format
+msgid ""
+"O firewall exige autenticação. Enviamos um token para <span>%(email)s</span>."
+msgstr "The firewall requires authentication. We sent a token to <span>%(email)s</span>."
+
+#: usuarios/templates/cadastro.html:224
+msgid ""
+"O firewall exige autenticação. Enviamos um token para <span>seu e-mail</"
+"span>."
+msgstr "The firewall requires authentication. We sent a token to <span>your email</span>."
+
+#: usuarios/templates/cadastro.html:231
+msgid "Código de 6 dígitos"
+msgstr "6-digit code"
+
+#: usuarios/templates/cadastro.html:235
+msgid "Autenticar Sistema"
+msgstr "Authenticate System"
+
+#: usuarios/templates/cadastro.html:239
+msgid "Não recebeu o e-mail?"
+msgstr "Didn't receive the email?"
+
+#: usuarios/templates/cadastro.html:249
+msgid "Reenviar código"
+msgstr "Resend code"
+
+#: usuarios/templates/cadastro.html:254
+msgid "Criar Conta"
+msgstr "Create Account"
+
+#: usuarios/templates/cadastro.html:257
+msgid "Registre-se para acessar a <span>LLM ofensiva</span> da PonderSEC."
+msgstr "Sign up to access PonderSEC's <span>offensive LLM</span>."
+
+#: usuarios/templates/cadastro.html:263 usuarios/templates/login.html:234
+msgid "Nome de Usuário"
+msgstr "Username"
+
+#: usuarios/templates/cadastro.html:264 usuarios/templates/login.html:235
+msgid "ex: root.pentest"
+msgstr "e.g.: root.pentest"
+
+#: usuarios/templates/cadastro.html:268
+msgid "E-mail"
+msgstr "Email"
+
+#: usuarios/templates/cadastro.html:269
+msgid "voce@empresa.com"
+msgstr "you@company.com"
+
+#: usuarios/templates/cadastro.html:273 usuarios/templates/login.html:239
+msgid "Senha"
+msgstr "Password"
+
+#: usuarios/templates/cadastro.html:278
+msgid "Confirmar Senha"
+msgstr "Confirm Password"
+
+#: usuarios/templates/cadastro.html:282 usuarios/templates/login.html:246
+msgid "Cadastrar"
+msgstr "Sign Up"
+
+#: usuarios/templates/cadastro.html:286
+msgid "Já possui conta?"
+msgstr "Already have an account?"
+
+#: usuarios/templates/cadastro.html:286 usuarios/templates/login.html:210
+#: usuarios/templates/login.html:243
+msgid "Entrar"
+msgstr "Log In"
+
+#: usuarios/templates/login.html:7
+msgid "PonderSEC — Login"
+msgstr "PonderSEC — Login"
+
+#: usuarios/templates/login.html:211
+msgid "Bem-vindo! Por favor, <span>faça login</span> para continuar."
+msgstr "Welcome! Please <span>log in</span> to continue."
+
+#: usuarios/templates/login.html:246
+msgid "Não está cadastrado?"
+msgstr "Don't have an account?"
+
+#: usuarios/templates/tela_inicial.html:7
+msgid "PonderSEC — Início"
+msgstr "PonderSEC — Home"
+
+#: usuarios/templates/tela_inicial.html:160
+msgid "Escolha uma Ação"
+msgstr "Choose an Action"
+
+#: usuarios/templates/tela_inicial.html:163
+msgid "Realizar Avaliação"
+msgstr "Perform Evaluation"
+
+#: usuarios/templates/tela_inicial.html:164
+msgid "Ver Resultados"
+msgstr "View Results"
+
+#: usuarios/templates/tela_inicial.html:167
+msgid "PonderSEC © 2025 — Segurança Ofensiva"
+msgstr "PonderSEC © 2025 — Offensive Security"
+
+#: usuarios/views.py:29
+msgid "Conta ativada com sucesso! Faça login para acessar."
+msgstr "Account activated successfully! Log in to continue."
+
+#: usuarios/views.py:36
+msgid "Código inválido. Tente novamente."
+msgstr "Invalid code. Try again."
+
+#: usuarios/views.py:46
+msgid "As senhas não coincidem!"
+msgstr "Passwords do not match!"
+
+#: usuarios/views.py:49
+msgid "E-mail já cadastrado!"
+msgstr "Email already registered!"
+
+#: usuarios/views.py:52
+msgid "Nome de usuário já existe!"
+msgstr "Username already exists!"
+
+#: usuarios/views.py:102
+msgid "Código inválido ou expirado. Tente novamente."
+msgstr "Invalid or expired code. Try again."
+
+#: usuarios/views.py:111
+msgid "Sessão expirada. Por favor, inicie o cadastro novamente."
+msgstr "Session expired. Please start registration again."
+
+#: usuarios/views.py:130
+msgid "Um novo código foi enviado para o seu e-mail!"
+msgstr "A new code was sent to your email!"
+
+#: usuarios/views.py:133
+msgid "Usuário não encontrado no sistema."
+msgstr "User not found in the system."
+
+#: usuarios/views.py:159
+msgid "Usuário inválido ou conta não ativada"
+msgstr "Invalid user or inactive account"

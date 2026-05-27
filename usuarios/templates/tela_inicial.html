@@ -1,10 +1,10 @@
-{% load static %}
+{% load static i18n %}
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="{{ LANGUAGE_CODE|default:'pt-br' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PonderSEC — Início</title>
+    <title>{% translate "PonderSEC — Início" %}</title>
 
     <!-- Fonte futurista -->
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
@@ -145,6 +145,7 @@
 </head>
 
 <body>
+    {% include "partials/language_switcher.html" %}
 
     <div class="background-grid"></div>
     <div class="scanline"></div>
@@ -156,14 +157,14 @@
             <img src="{% static 'pondersec_logo.jpg' %}" alt="Logo">
         </div>
 
-        <div class="title">Escolha uma Ação</div>
+        <div class="title">{% translate "Escolha uma Ação" %}</div>
 
         <div class="options">
-            <button class="option-btn" >Realizar Avaliação</button>
-            <button class="option-btn" >Ver Resultados</button>
-            <button class="option-btn" >Sair</button>
+            <button class="option-btn" >{% translate "Realizar Avaliação" %}</button>
+            <button class="option-btn" >{% translate "Ver Resultados" %}</button>
+            <button class="option-btn" >{% translate "Sair" %}</button>
         <footer class="footer">
-            PonderSEC © 2025 — Segurança Ofensiva
+            {% translate "PonderSEC © 2025 — Segurança Ofensiva" %}
         </footer>
     </div>
 

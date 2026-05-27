@@ -1,10 +1,10 @@
-{% load static %}
+{% load static i18n %}
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="{{ LANGUAGE_CODE|default:'pt-br' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sucesso — PonderSEC</title>
+    <title>{% translate "Sucesso — PonderSEC" %}</title>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -49,15 +49,16 @@
     </style>
 </head>
 <body>
+    {% include "partials/language_switcher.html" %}
     <div class="background-grid"></div>
     <div class="scanline"></div>
     <div class="glow-orb"></div>
     
     <div class="box">
         <span class="icon">✨</span>
-        <h1>Avaliação Enviada!</h1>
-        <p>Seus dados e notas foram computados com sucesso no banco de dados do PonderSEC. Muito obrigado pela sua contribuição profissional!</p>
-        <p style="margin-top: 30px; font-size: 14px; color: #4ecf9a; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;">Você já pode fechar esta aba.</p>
+        <h1>{% translate "Avaliação Enviada!" %}</h1>
+        <p>{% translate "Seus dados e notas foram computados com sucesso no banco de dados do PonderSEC. Muito obrigado pela sua contribuição profissional!" %}</p>
+        <p style="margin-top: 30px; font-size: 14px; color: #4ecf9a; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;">{% translate "Você já pode fechar esta aba." %}</p>
     </div>
 </body>
 </html>
