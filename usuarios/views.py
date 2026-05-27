@@ -153,7 +153,7 @@ def login_view(request):
             if next_url:
                 return redirect(next_url)
 
-            return redirect('menu')
+            return redirect('questoes')
 
         return render(request, 'login.html', {
             'error': _('Usuário inválido ou conta não ativada')

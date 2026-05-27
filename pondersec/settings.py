@@ -176,7 +176,7 @@ STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 LOGIN_URL = '/'
-LOGIN_REDIRECT_URL = '/perguntar/'
+LOGIN_REDIRECT_URL = '/questoes/'
 LOGOUT_REDIRECT_URL = '/'
 
 

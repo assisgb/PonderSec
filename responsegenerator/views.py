@@ -42,7 +42,7 @@ def salvar_no_historico(user, pergunta, resposta):
 
 @login_required
 def menu(request):
-    return render(request, 'menu.html')
+    return redirect('questoes')
 
 @login_required
 def deletar_questao_historico(request, id):
