@@ -7,6 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PonderSEC — Executar Consulta</title>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'app_sidebar.css' %}">
 
     <style>
         * {
@@ -316,6 +317,9 @@
 
     <div class="background-grid"></div>
 
+    <div class="app-shell">
+        {% include "partials/app_sidebar.html" with active_nav="consulta" %}
+        <main class="app-content">
     <div class="container">
             <div class="progress-bar-container" id="progressBar">
                  <div class="progress-bar-fill"></div>
@@ -324,7 +328,7 @@
 
             
 
-            <a href="{% url 'menu' %}" class="btn-back-header">← Consulta</a>
+            <a href="{% url 'menu-consulta' %}" class="btn-back-header">← Consulta</a>
 
             <div class="search-container">
                 <input type="text" class="search-input" id="filterInput" placeholder="Filtro de pesquisa...">
@@ -391,6 +395,8 @@
 
         </div>
 
+    </div>
+        </main>
     </div>
 
     <div class="modal-overlay" id="modal-overlay">

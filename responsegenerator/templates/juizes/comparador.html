@@ -5,6 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PonderSEC — Juízes Online</title>
+<link rel="stylesheet" href="{% static 'app_sidebar.css' %}">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 
@@ -562,7 +563,10 @@ select.field option{background:#07111c;color:var(--text)}
 
 <form class="csrf-holder">{% csrf_token %}</form>
 
-<main class="shell">
+<div class="app-shell">
+  {% include "partials/app_sidebar.html" with active_nav="avaliacao" %}
+  <main class="app-content">
+<div class="shell">
   <header class="topbar">
     <div class="brand">
       <img class="brand-logo" src="{% static 'pondersec_logo.jpg' %}" alt="PonderSEC">
@@ -706,7 +710,9 @@ select.field option{background:#07111c;color:var(--text)}
       <div class="empty">A tabela de notas aparecerá aqui após a execução da avaliação automática.</div>
     </div>
   </section>
-</main>
+</div>
+  </main>
+</div>
 
 <script>
 const questoes = JSON.parse(document.getElementById("questoes-data").textContent);

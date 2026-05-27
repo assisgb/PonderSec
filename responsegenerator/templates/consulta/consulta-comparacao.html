@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PonderSEC — Respostas por LLM</title>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'app_sidebar.css' %}">
     <style>
         * {
             box-sizing: border-box;
@@ -372,9 +373,12 @@
     {% include "partials/language_switcher.html" %}
     <div class="background-grid"></div>
 
+    <div class="app-shell">
+        {% include "partials/app_sidebar.html" with active_nav="consulta" %}
+        <main class="app-content">
     <div class="container">
         <div class="header">
-            <a href="{% url 'menu' %}" class="btn-back-header">← Consulta</a>
+            <a href="{% url 'menu-consulta' %}" class="btn-back-header">← Consulta</a>
             <input 
                 type="text" 
                 class="search-input" 
@@ -426,6 +430,8 @@
                 </div>
             {% endif %}
         </div>
+    </div>
+        </main>
     </div>
 
     <div class="modal" id="responseModal">

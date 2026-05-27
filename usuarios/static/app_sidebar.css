@@ -1,0 +1,208 @@
+.app-shell {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    width: min(1680px, 100%);
+    min-height: calc(100vh - 40px);
+    margin: 0 auto;
+}
+
+.app-content {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+}
+
+.app-content--center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 40px);
+}
+
+.side-nav {
+    position: sticky;
+    top: 20px;
+    width: 246px;
+    min-height: calc(100vh - 40px);
+    display: flex;
+    flex: 0 0 246px;
+    flex-direction: column;
+    gap: 18px;
+    padding: 18px;
+    border: 1px solid rgba(0, 220, 130, 0.18);
+    border-radius: 18px;
+    background: linear-gradient(180deg, rgba(5, 10, 17, 0.99), rgba(2, 5, 9, 0.99));
+    box-shadow: 0 14px 42px rgba(0, 0, 0, 0.34);
+}
+
+.side-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(0, 220, 130, 0.12);
+}
+
+.side-logo {
+    width: 46px;
+    height: 46px;
+    flex-shrink: 0;
+    overflow: hidden;
+    border: 1px solid rgba(0, 220, 130, 0.34);
+    border-radius: 13px;
+    background: rgba(0, 220, 130, 0.06);
+    box-shadow: 0 0 18px rgba(0, 220, 130, 0.12);
+}
+
+.side-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.side-brand-text {
+    min-width: 0;
+}
+
+.side-kicker,
+.side-section,
+.side-link,
+.side-logout {
+    font-family: "IBM Plex Mono", "Space Grotesk", monospace;
+}
+
+.side-kicker,
+.side-section {
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.side-kicker {
+    color: rgba(0, 220, 130, 0.76);
+    font-size: 9px;
+    font-weight: 700;
+}
+
+.side-title {
+    margin-top: 3px;
+    color: #00ff9f;
+    font-size: 16px;
+    font-weight: 800;
+    line-height: 1.15;
+}
+
+.side-section {
+    margin-bottom: 8px;
+    color: #7a968c;
+    font-size: 9px;
+    font-weight: 700;
+}
+
+.side-links {
+    display: grid;
+    gap: 8px;
+}
+
+.side-link,
+.side-logout {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+    padding: 10px 12px;
+    border: 1px solid rgba(0, 220, 130, 0.12);
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.22);
+    color: #7a968c;
+    text-decoration: none;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.2;
+    transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.side-link:hover,
+.side-logout:hover {
+    transform: translateY(-1px);
+}
+
+.side-link svg,
+.side-logout svg {
+    flex-shrink: 0;
+    color: currentColor;
+}
+
+.side-link.active {
+    border-color: rgba(0, 220, 130, 0.44);
+    background: rgba(0, 220, 130, 0.12);
+    color: #00ff9f;
+    box-shadow: 0 0 22px rgba(0, 220, 130, 0.08);
+}
+
+.side-link:not(.active):hover {
+    border-color: rgba(0, 220, 130, 0.34);
+    background: rgba(0, 220, 130, 0.075);
+    color: #d4f5e9;
+}
+
+.side-footer {
+    margin-top: auto;
+    padding-top: 14px;
+    border-top: 1px solid rgba(0, 220, 130, 0.12);
+}
+
+.side-logout {
+    border-color: rgba(239, 68, 68, 0.28);
+    background: rgba(239, 68, 68, 0.06);
+    color: #f87171;
+}
+
+.side-logout:hover {
+    border-color: rgba(239, 68, 68, 0.5);
+    background: rgba(239, 68, 68, 0.12);
+    color: #fecaca;
+}
+
+@media (max-width: 980px) {
+    .app-shell {
+        display: block;
+        min-height: 0;
+    }
+
+    .app-content,
+    .app-content--center {
+        display: block;
+        min-height: 0;
+    }
+
+    .side-nav {
+        position: relative;
+        top: auto;
+        width: 100%;
+        min-height: 0;
+        margin-bottom: 18px;
+    }
+
+    .side-links {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .side-footer {
+        margin-top: 0;
+    }
+}
+
+@media (max-width: 620px) {
+    .side-links {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 420px) {
+    .side-links {
+        grid-template-columns: 1fr;
+    }
+}
