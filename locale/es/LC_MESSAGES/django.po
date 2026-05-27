@@ -268,6 +268,14 @@ msgstr "Volver al menú"
 msgid "PonderSEC — Consulta"
 msgstr "PonderSEC — Consulta"
 
+#: responsegenerator/templates/consulta/menu-consulta.html:207
+msgid "Módulos de Consulta"
+msgstr "Módulos de Consulta"
+
+#: responsegenerator/templates/consulta/menu-consulta.html:208
+msgid "Acesse o painel de execução de consultas ou visualize os dados gerados no dashboard analítico."
+msgstr "Acceda al panel de ejecución de consultas o vea los datos generados en el panel analítico."
+
 #: responsegenerator/templates/consulta/menu-consulta.html:283
 #: responsegenerator/templates/menu.html:272
 msgid "Consulta"
@@ -342,6 +350,14 @@ msgstr "Salir"
 #: responsegenerator/templates/setup/setup.html:7
 msgid "PonderSEC — Setup"
 msgstr "PonderSEC — Configuración"
+
+#: responsegenerator/templates/setup/setup.html:207
+msigd "Módulos de Configuração"
+msgstr "Módulos de Configuración"
+
+#: responsegenerator/templates/setup/setup.html:208
+msgid "Gerencie os modelos de linguagem integrados ou ajuste as métricas de avaliação do sistema."
+msgstr "Gestiona y configura los modelos de lenguaje ou ajusta las métricas de evalución del sistema"
 
 #: responsegenerator/templates/setup/setup.html:222
 msgid "Configure os parâmetros do sistema"

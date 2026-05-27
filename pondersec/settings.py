@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 import os
 from pathlib import Path
+import mimetypes
 from django.utils.translation import gettext_lazy as _
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -172,7 +173,7 @@ USE_TZ = True
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'usuarios', 'static'),
 ]
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 LOGIN_URL = '/'
@@ -198,3 +199,5 @@ if not DEBUG:
 
     # Proteção extra contra navegadores tentando "adivinhar" o tipo do arquivo
     SECURE_CONTENT_TYPE_NOSNIFF = True
+
+mimetypes.add_type("text/css", ".css", True)
