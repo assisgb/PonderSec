@@ -1,6 +1,6 @@
-{% load static %}
+{% load static i18n %}
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="{{ LANGUAGE_CODE|default:'pt-br' }}">
 
 <head>
     <meta charset="UTF-8">
@@ -312,6 +312,7 @@
 </head>
 
 <body>
+    {% include "partials/language_switcher.html" %}
 
     <div class="background-grid"></div>
 
@@ -344,7 +345,7 @@
 
             {% for questao in questoes %}
 
-            {% if questao.respostas.exists %}
+            {% if questao.respostas_cache %}
 
             <div class="question-item" data-id="{{questao.id}}">
 

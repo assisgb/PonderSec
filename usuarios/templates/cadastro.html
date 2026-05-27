@@ -1,11 +1,11 @@
-{% load static %}
+{% load static i18n %}
 <!DOCTYPE html>
 
-<html lang="pt-BR">
+<html lang="{{ LANGUAGE_CODE|default:'pt-br' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PonderSEC — Cadastro</title>
+    <title>{% translate "PonderSEC — Cadastro" %}</title>
 
     <!-- Fonte futurista -->
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
@@ -195,6 +195,7 @@
 </head>
 
 <body>
+    {% include "partials/language_switcher.html" %}
 
     <div class="background-grid"></div>
     <div class="scanline"></div>
@@ -215,23 +216,27 @@
         {% endif %}
 
         {% if precisa_verificar %}
-            <div class="headline">Verificação de Segurança</div>
+            <div class="headline">{% translate "Verificação de Segurança" %}</div>
             <p class="subtitle">
-                O firewall exige autenticação. Enviamos um token para <span>{{ email_user|default:"seu e-mail" }}</span>.
+                {% if email_user %}
+                    {% blocktranslate with email=email_user %}O firewall exige autenticação. Enviamos um token para <span>{{ email }}</span>.{% endblocktranslate %}
+                {% else %}
+                    {% blocktranslate %}O firewall exige autenticação. Enviamos um token para <span>seu e-mail</span>.{% endblocktranslate %}
+                {% endif %}
             </p>
 
             <form class="form" action="{% url 'cadastro' %}" method="POST">
                 {% csrf_token %}
                 <div class="form-group">
-                    <label style="text-align: center;">Código de 6 dígitos</label>
+                    <label style="text-align: center;">{% translate "Código de 6 dígitos" %}</label>
                     <input type="text" name="codigo_input" placeholder="000000" maxlength="6" style="text-align: center; font-size: 24px; letter-spacing: 0.2em; font-weight: bold;" required autocomplete="off">
                 </div>
 
-                <button type="submit" class="button-primary">Autenticar Sistema</button>
+                <button type="submit" class="button-primary">{% translate "Autenticar Sistema" %}</button>
             </form>
 
             <div style="margin-top: 16px; text-align: center;">
-                <span style="color: #8ba1b0; font-size: 13px;">Não recebeu o e-mail?</span>
+                <span style="color: #8ba1b0; font-size: 13px;">{% translate "Não recebeu o e-mail?" %}</span>
                 <br>
                 <a href="{% url 'reenviar_codigo' %}" style="
                     display: inline-block;
@@ -241,44 +246,44 @@
                     font-weight: 600; 
                     text-decoration: none; 
                     transition: color 0.2s;">
-                    Reenviar código
+                    {% translate "Reenviar código" %}
                 </a>
             </div>
 
         {% else %}
-            <div class="headline">Criar Conta</div>
+            <div class="headline">{% translate "Criar Conta" %}</div>
 
             <p class="subtitle">
-                Registre-se para acessar a <span>LLM ofensiva</span> da PonderSEC.
+                {% blocktranslate %}Registre-se para acessar a <span>LLM ofensiva</span> da PonderSEC.{% endblocktranslate %}
             </p>
 
             <form class="form" action="{% url 'cadastro' %}" method="POST">{% csrf_token %}
 
                 <div class="form-group">
-                    <label>Nome de Usuário</label>
-                    <input type="text" name="username" placeholder="ex: root.pentest">
+                    <label>{% translate "Nome de Usuário" %}</label>
+                    <input type="text" name="username" placeholder="{% translate 'ex: root.pentest' %}">
                 </div>
 
                 <div class="form-group">
-                    <label>E-mail</label>
-                    <input type="email" name="email" placeholder="voce@empresa.com">
+                    <label>{% translate "E-mail" %}</label>
+                    <input type="email" name="email" placeholder="{% translate 'voce@empresa.com' %}">
                 </div>
 
                 <div class="form-group">
-                    <label>Senha</label>
+                    <label>{% translate "Senha" %}</label>
                     <input type="password" name="password" placeholder="••••••••">
                 </div>
 
                 <div class="form-group">
-                    <label>Confirmar Senha</label>
+                    <label>{% translate "Confirmar Senha" %}</label>
                     <input type="password" name="password_confirm" placeholder="••••••••">
                 </div>
 
-                <button type="submit" class="button-primary">Cadastrar</button>
+                <button type="submit" class="button-primary">{% translate "Cadastrar" %}</button>
             </form>
 
             <div class="footer">
-                Já possui conta? <a href="{% url 'login' %}">Entrar</a>
+                {% translate "Já possui conta?" %} <a href="{% url 'login' %}">{% translate "Entrar" %}</a>
             </div>
         {% endif %}
 

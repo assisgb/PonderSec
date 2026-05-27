@@ -1,10 +1,10 @@
-{% load static %}
+{% load static i18n %}
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="{{ LANGUAGE_CODE|default:'pt-br' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ formulario.nome }} — Avaliação PonderSEC</title>
+    <title>{% blocktranslate with nome=formulario.nome %}{{ nome }} — Avaliação PonderSEC{% endblocktranslate %}</title>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -423,6 +423,7 @@
     </style>
 </head>
 <body>
+    {% include "partials/language_switcher.html" %}
     <div class="bg-grid"></div>
     <div class="scanline"></div>
     <div class="bg-orb"></div>
@@ -433,21 +434,21 @@
                 <div class="ident-header">
                     <img src="{% static 'pondersec_logo.jpg' %}" alt="PonderSEC">
                     <h1>{{ formulario.nome }}</h1>
-                    <p>Painel de Avaliação de Inteligência Artificial</p>
+                    <p>{% translate "Painel de Avaliação de Inteligência Artificial" %}</p>
                 </div>
                 <div class="field-group">
-                    <label class="field-label">Nome Completo</label>
-                    <input type="text" name="nome" class="field-input" required placeholder="Digite seu nome completo">
+                    <label class="field-label">{% translate "Nome Completo" %}</label>
+                    <input type="text" name="nome" class="field-input" required placeholder="{% translate 'Digite seu nome completo' %}">
                 </div>
                 <div class="field-group">
-                    <label class="field-label">E-mail Profissional</label>
+                    <label class="field-label">{% translate "E-mail Profissional" %}</label>
                     <input type="email" name="email" class="field-input" required placeholder="exemplo@empresa.com">
                 </div>
                 <div class="field-group">
-                    <label class="field-label">Profissão / Cargo</label>
-                    <input type="text" name="profissao" class="field-input" required placeholder="Ex: Engenheiro de Segurança, Dev...">
+                    <label class="field-label">{% translate "Profissão / Cargo" %}</label>
+                    <input type="text" name="profissao" class="field-input" required placeholder="{% translate 'Ex: Engenheiro de Segurança, Dev...' %}">
                 </div>
-                <button type="button" class="btn-start" id="btnStart">Iniciar Avaliação →</button>
+                <button type="button" class="btn-start" id="btnStart">{% translate "Iniciar Avaliação" %} →</button>
             </div>
         </div>
         <div class="screen-eval" id="screenEval">
@@ -455,18 +456,18 @@
                 <div class="eval-topbar">
                     <img src="{% static 'pondersec_logo.jpg' %}" alt="" class="eval-logo">
                     <span class="eval-title">{{ formulario.nome }}</span>
-                    <span class="eval-counter"><span class="counter-label">Item</span><span id="counterCurr">1</span> de <span id="counterTotal">1</span></span>
+                    <span class="eval-counter"><span class="counter-label">{% translate "Item" %}</span><span id="counterCurr">1</span> {% translate "de" %} <span id="counterTotal">1</span></span>
                 </div>
                 <div class="progress-track" id="progressTrack">
                     <div class="progress-fill" id="progressFill" style="width:0%"></div>
                 </div>
-                <div class="question-map" id="questionMap" aria-label="Navegação por perguntas"></div>
+                <div class="question-map" id="questionMap" aria-label="{% translate 'Navegação por perguntas' %}"></div>
                 <div class="dots-row" id="dotsRow"></div>
                 <div class="carousel-shell">
                     <div class="carousel-track" id="carouselTrack">
-                        {% for questao in formulario.questoes.all %}
-                        {% with question_number=forloop.counter question_index=forloop.counter0 question_total=formulario.questoes.count response_total=questao.respostas.count %}
-                        {% for resp in questao.respostas.all %}
+                        {% for questao in formulario.questoes_cache %}
+                        {% with question_number=forloop.counter question_index=forloop.counter0 question_total=formulario.questoes_cache|length response_total=questao.respostas_cache|length %}
+                        {% for resp in questao.respostas_cache %}
                         <div class="slide"
                              data-question-index="{{ question_index }}"
                              data-question-number="{{ question_number }}"
@@ -475,12 +476,12 @@
                              data-response-total="{{ response_total }}">
                             <div class="slide-top">
                                 <div class="slide-meta">
-                                    <span class="badge-q">Pergunta {{ question_number }} de {{ question_total }}</span>
-                                    <span class="badge-answer">Resposta {{ forloop.counter }} de {{ response_total }}</span>
+                                    <span class="badge-q">{% blocktranslate %}Pergunta {{ question_number }} de {{ question_total }}{% endblocktranslate %}</span>
+                                    <span class="badge-answer">{% blocktranslate with response_number=forloop.counter %}Resposta {{ response_number }} de {{ response_total }}{% endblocktranslate %}</span>
                                     <span class="badge-ai">
                                         ✦
                                         {% if blind_mode %}
-                                            Resposta IA #{{ forloop.counter }}
+                                            {% blocktranslate with response_number=forloop.counter %}Resposta IA #{{ response_number }}{% endblocktranslate %}
                                         {% else %}
                                             {{ resp.llm.nome }}
                                         {% endif %}
@@ -523,11 +524,11 @@
                                             <div class="likert-thumb" style="left:50%">3</div>
                                         </div>
                                         <div class="likert-labels">
-                                            <span class="likert-lbl" data-pos="1">Muito<br>ruim</span>
-                                            <span class="likert-lbl" data-pos="2">Ruim</span>
-                                            <span class="likert-lbl active" data-pos="3">Regular</span>
-                                            <span class="likert-lbl" data-pos="4">Bom</span>
-                                            <span class="likert-lbl" data-pos="5">Excelente</span>
+                                            <span class="likert-lbl" data-pos="1">{% translate "Muito" %}<br>{% translate "ruim" %}</span>
+                                            <span class="likert-lbl" data-pos="2">{% translate "Ruim" %}</span>
+                                            <span class="likert-lbl active" data-pos="3">{% translate "Regular" %}</span>
+                                            <span class="likert-lbl" data-pos="4">{% translate "Bom" %}</span>
+                                            <span class="likert-lbl" data-pos="5">{% translate "Excelente" %}</span>
                                         </div>
                                     </div>
                                     <input type="hidden"
@@ -538,7 +539,7 @@
                                     <textarea
                                         name="quali_{{ resp.id }}_{{ metrica.id }}"
                                         class="comment-field"
-                                        placeholder="Comentário (opcional)"></textarea>
+                                        placeholder="{% translate 'Comentário (opcional)' %}"></textarea>
                                 </div>
                                 {% endfor %}
                             </div>
@@ -551,7 +552,7 @@
                              data-response-number="0"
                              data-response-total="0">
                             <div class="slide-top">
-                                <p style="color:#ff5566;padding:20px;">Nenhuma IA respondeu à Pergunta {{ question_number }}.</p>
+                                <p style="color:#ff5566;padding:20px;">{% blocktranslate %}Nenhuma IA respondeu à Pergunta {{ question_number }}.{% endblocktranslate %}</p>
                             </div>
                         </div>
                         {% endfor %}
@@ -560,21 +561,38 @@
                     </div>
                 </div>
                 <div class="completion-msg" id="completionMsg">
-                    <h3>✦ Todas as respostas avaliadas</h3>
-                    <p>Revise e clique em Enviar abaixo.</p>
+                    <h3>✦ {% translate "Todas as respostas avaliadas" %}</h3>
+                    <p>{% translate "Revise e clique em Enviar abaixo." %}</p>
                 </div>
                 <div class="eval-nav">
-                    <button type="button" class="btn-nav btn-prev" id="btnPrev" disabled>← Anterior</button>
-                    <button type="button" class="btn-nav btn-next" id="btnNext">Próximo →</button>
-                    <button type="submit" class="btn-submit-final" id="btnSubmit">Enviar Avaliação ✓</button>
+                    <button type="button" class="btn-nav btn-prev" id="btnPrev" disabled>← {% translate "Anterior" %}</button>
+                    <button type="button" class="btn-nav btn-next" id="btnNext">{% translate "Próximo" %} →</button>
+                    <button type="submit" class="btn-submit-final" id="btnSubmit">{% translate "Enviar Avaliação" %} ✓</button>
                 </div>
                 <div class="kbd-hint">
-                    Navegue com <span class="kbd">←</span> <span class="kbd">→</span> do teclado
+                    {% blocktranslate %}Navegue com <span class="kbd">←</span> <span class="kbd">→</span> do teclado{% endblocktranslate %}
                 </div>
             </div>
         </div>
     </form>
     <script>
+    {% translate "Item" as txt_item %}
+    {% translate "Pergunta" as txt_question %}
+    {% translate "resposta" as txt_answer %}
+    {% translate "respostas" as txt_answers %}
+    {% translate "sem respostas" as txt_no_answers %}
+    {% translate "Ir para a pergunta" as txt_go_to_question %}
+    {% translate "de" as txt_of %}
+    var PONDERSEC_I18N = {
+        item: "{{ txt_item|escapejs }}",
+        question: "{{ txt_question|escapejs }}",
+        answer: "{{ txt_answer|escapejs }}",
+        answers: "{{ txt_answers|escapejs }}",
+        noAnswers: "{{ txt_no_answers|escapejs }}",
+        goToQuestion: "{{ txt_go_to_question|escapejs }}",
+        of: "{{ txt_of|escapejs }}"
+    };
+
     /* ── Likert drag slider ── */
     (function () {
         var STEPS = [1, 2, 3, 4, 5];
@@ -680,13 +698,14 @@
             });
         }
         function slideLabel(slide, index) {
+            var t = PONDERSEC_I18N;
             var question = slide.getAttribute('data-question-number') || '?';
             var response = slide.getAttribute('data-response-number') || '?';
             var responseTotal = slide.getAttribute('data-response-total') || '?';
             if (responseTotal === '0') {
-                return 'Item ' + (index + 1) + ': Pergunta ' + question + ' sem respostas';
+                return t.item + ' ' + (index + 1) + ': ' + t.question + ' ' + question + ' ' + t.noAnswers;
             }
-            return 'Item ' + (index + 1) + ': Pergunta ' + question + ', resposta ' + response + ' de ' + responseTotal;
+            return t.item + ' ' + (index + 1) + ': ' + t.question + ' ' + question + ', ' + t.answer + ' ' + response + ' ' + t.of + ' ' + responseTotal;
         }
         function buildQuestionMap() {
             var groups = [];
@@ -716,11 +735,12 @@
                 btn.className = 'question-chip';
                 btn.setAttribute('data-question-index', group.index);
                 btn.setAttribute('data-last-slide', group.lastSlide);
-                btn.title = 'Ir para a pergunta ' + group.number;
-                label.textContent = 'Pergunta ' + group.number;
+                var t = PONDERSEC_I18N;
+                btn.title = t.goToQuestion + ' ' + group.number;
+                label.textContent = t.question + ' ' + group.number;
                 count.textContent = group.responsesTotal === 0
-                    ? 'sem respostas'
-                    : group.responsesTotal + (group.responsesTotal === 1 ? ' resposta' : ' respostas');
+                    ? t.noAnswers
+                    : group.responsesTotal + ' ' + (group.responsesTotal === 1 ? t.answer : t.answers);
                 btn.appendChild(label);
                 btn.appendChild(count);
                 btn.addEventListener('click', function() { goTo(group.firstSlide); });

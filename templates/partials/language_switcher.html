@@ -1,0 +1,77 @@
+{% load i18n %}
+{% get_current_language as CURRENT_LANGUAGE %}
+{% get_available_languages as AVAILABLE_LANGUAGES %}
+
+<style>
+    .language-switcher {
+        position: fixed;
+        top: 16px;
+        right: 16px;
+        z-index: 9999;
+    }
+
+    .language-switcher form {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px;
+        background: rgba(2, 6, 11, 0.82);
+        border: 1px solid rgba(0, 255, 160, 0.24);
+        border-radius: 999px;
+        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.38);
+        backdrop-filter: blur(10px);
+    }
+
+    .language-switcher button {
+        min-width: 38px;
+        height: 30px;
+        border: 0;
+        border-radius: 999px;
+        background: transparent;
+        color: #8ba1b0;
+        cursor: pointer;
+        font: 700 11px/1 "Space Grotesk", system-ui, sans-serif;
+        letter-spacing: 0.08em;
+        transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    }
+
+    .language-switcher button:hover,
+    .language-switcher button.is-active {
+        background: rgba(0, 255, 160, 0.12);
+        color: #00ff9f;
+        box-shadow: inset 0 0 0 1px rgba(0, 255, 160, 0.2);
+    }
+
+    @media (max-width: 600px) {
+        .language-switcher {
+            top: 10px;
+            right: 10px;
+        }
+
+        .language-switcher button {
+            min-width: 34px;
+            height: 28px;
+            font-size: 10px;
+        }
+    }
+</style>
+
+<div class="language-switcher" aria-label="{% translate 'Selecionar idioma' %}">
+    <form action="{% url 'set_language' %}" method="post">
+        {% csrf_token %}
+        <input name="next" type="hidden" value="{{ request.get_full_path }}">
+        {% for code, name in AVAILABLE_LANGUAGES %}
+            <button
+                type="submit"
+                name="language"
+                value="{{ code }}"
+                class="{% if code == CURRENT_LANGUAGE %}is-active{% endif %}"
+                title="{{ name }}"
+                aria-label="{{ name }}"
+                {% if code == CURRENT_LANGUAGE %}aria-current="true"{% endif %}
+            >
+                {{ code|slice:":2"|upper }}
+            </button>
+        {% endfor %}
+    </form>
+</div>

@@ -1,6 +1,6 @@
-{% load static %}
+{% load static i18n %}
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="{{ LANGUAGE_CODE|default:'pt-br' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -369,6 +369,7 @@
     </style>
 </head>
 <body>
+    {% include "partials/language_switcher.html" %}
     <div class="background-grid"></div>
 
     <div class="container">

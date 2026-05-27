@@ -1,10 +1,10 @@
-{% load static %}
+{% load static i18n %}
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="{{ LANGUAGE_CODE|default:'pt-br' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PonderSEC — Setup</title>
+    <title>{% translate "PonderSEC — Setup" %}</title>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -205,6 +205,7 @@
     </style>
 </head>
 <body>
+    {% include "partials/language_switcher.html" %}
     <div class="background-grid"></div>
     <div class="scanline"></div>
     <div class="glow-orb"></div>
@@ -218,11 +219,11 @@
             <div class="header-text">
                 <div class="product-name">PonderSEC</div>
                 <div class="headline">Setup</div>
-                <div class="subtitle">Configure os parâmetros do sistema</div>
+                <div class="subtitle">{% translate "Configure os parâmetros do sistema" %}</div>
             </div>
         </div>
 
-        <div class="section-label">Configurações</div>
+        <div class="section-label">{% translate "Configurações" %}</div>
 
         <div class="cards-grid">
             <a href="{% url 'setup_llm' %}" class="card">
@@ -238,9 +239,9 @@
                     </svg>
                 </div>
                 <div class="card-title">LLM</div>
-                <div class="card-desc">Gerencie e configure os modelos de linguagem integrados à plataforma de avaliação.</div>
+                <div class="card-desc">{% translate "Gerencie e configure os modelos de linguagem integrados à plataforma de avaliação." %}</div>
                 <div class="card-footer">
-                    Acessar
+                    {% translate "Acessar" %}
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
                         <path d="M5 12h14M13 6l6 6-6 6"/>
                     </svg>
@@ -260,10 +261,10 @@
                         <path d="M5 14l3-4 3-4 3 3 3-6 3 4"/>
                     </svg>
                 </div>
-                <div class="card-title">Métrica</div>
-                <div class="card-desc">Defina e ajuste as métricas de avaliação qualitativa e quantitativa das respostas.</div>
+                <div class="card-title">{% translate "Métrica" %}</div>
+                <div class="card-desc">{% translate "Defina e ajuste as métricas de avaliação qualitativa e quantitativa das respostas." %}</div>
                 <div class="card-footer">
-                    Acessar
+                    {% translate "Acessar" %}
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
                         <path d="M5 12h14M13 6l6 6-6 6"/>
                     </svg>
@@ -275,7 +276,7 @@
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
                 <path d="M19 12H5M11 6l-6 6 6 6"/>
             </svg>
-            Voltar ao Menu
+            {% translate "Voltar ao Menu" %}
         </a>
     </div>
 </body>

@@ -7,6 +7,7 @@ from django.http import HttpResponse
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
+from django.utils.translation import gettext as _
 
 def cadastro(request):
     user_id = request.session.get('usuario_inativo_id')
@@ -25,14 +26,14 @@ def cadastro(request):
                 registro.delete()
                 del request.session['usuario_inativo_id']
 
-                messages.success(request, 'Conta ativada com sucesso! Faça login para acessar.')
+                messages.success(request, _('Conta ativada com sucesso! Faça login para acessar.'))
                 
                 return redirect('login')
                 
             except CodigoVerificacao.DoesNotExist:
                 return render(request, 'cadastro.html', {
                     'precisa_verificar': True, 
-                    'erro': 'Código inválido. Tente novamente.'
+                    'erro': _('Código inválido. Tente novamente.')
                 })
 
         elif 'username' in request.POST:
@@ -42,13 +43,13 @@ def cadastro(request):
             senha_confirm = request.POST.get('password_confirm')
 
             if senha != senha_confirm:
-                return render(request, 'cadastro.html', {'erro': 'As senhas não coincidem!'})
+                return render(request, 'cadastro.html', {'erro': _('As senhas não coincidem!')})
         
             if User.objects.filter(email=email).exists():
-                return render(request, 'cadastro.html', {'erro': 'E-mail já cadastrado!'})
+                return render(request, 'cadastro.html', {'erro': _('E-mail já cadastrado!')})
             
             if User.objects.filter(username=username).exists():
-                return render(request, 'cadastro.html', {'erro': 'Nome de usuário já existe!'})
+                return render(request, 'cadastro.html', {'erro': _('Nome de usuário já existe!')})
 
             user = User.objects.create_user(username=username, email=email, password=senha)
             user.is_active = False 
@@ -98,7 +99,7 @@ def verificar_codigo(request):
             return redirect('login')
             
         except CodigoVerificacao.DoesNotExist:
-            return HttpResponse("Código inválido ou expirado. Tente novamente.")
+            return HttpResponse(_("Código inválido ou expirado. Tente novamente."))
 
     return render(request, 'verificar_codigo.html')
 
@@ -107,7 +108,7 @@ def reenviar_codigo(request):
     user_id = request.session.get('usuario_inativo_id')
     
     if not user_id:
-        messages.error(request, 'Sessão expirada. Por favor, inicie o cadastro novamente.')
+        messages.error(request, _('Sessão expirada. Por favor, inicie o cadastro novamente.'))
         return redirect('cadastro')
         
     try:
@@ -126,10 +127,10 @@ def reenviar_codigo(request):
             fail_silently=False,
         )
         
-        messages.success(request, 'Um novo código foi enviado para o seu e-mail!')
+        messages.success(request, _('Um novo código foi enviado para o seu e-mail!'))
         
     except User.DoesNotExist:
-        messages.error(request, 'Usuário não encontrado no sistema.')
+        messages.error(request, _('Usuário não encontrado no sistema.'))
         del request.session['usuario_inativo_id']
         return redirect('cadastro')
 
@@ -155,7 +156,7 @@ def login_view(request):
             return redirect('menu')
 
         return render(request, 'login.html', {
-            'error': 'Usuário inválido ou conta não ativada'
+            'error': _('Usuário inválido ou conta não ativada')
         })
 
 def logout_view(request):
