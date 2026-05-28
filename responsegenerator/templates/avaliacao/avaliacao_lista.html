@@ -2,296 +2,314 @@
 <!DOCTYPE html>
 <html lang="{{ LANGUAGE_CODE|default:'pt-br' }}">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PonderSEC — Formulários de Avaliação</title>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'app_sidebar.css' %}">
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% translate "PonderSEC — Formulários de Avaliação" %}</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'app_sidebar.css' %}">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
-        body {
-            font-family: "Space Grotesk", system-ui, sans-serif;
-            background: radial-gradient(circle at top, #051015 0, #02060b 45%, #000000 100%);
-            color: #e5fef6; min-height: 100vh;
-            display: flex; align-items: flex-start; justify-content: center; padding: 20px;
-        }
+:root {
+  --bg: #050c14;
+  --surface: rgba(10, 20, 33, 0.72);
+  --surface-strong: rgba(5, 12, 22, 0.92);
+  --surface-soft: rgba(0, 220, 130, 0.05);
+  --border: rgba(0, 220, 130, 0.18);
+  --border-strong: rgba(0, 220, 130, 0.36);
+  --accent: #00dc82;
+  --accent-bright: #00ff9f;
+  --text: #d4f5e9;
+  --text-strong: #f0fff9;
+  --muted: #7a968c;
+  --mono: "IBM Plex Mono", monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
 
-        .background-grid {
-            position: fixed; inset: 0;
-            background-image:
-                linear-gradient(90deg, rgba(0, 255, 160, 0.06) 1px, transparent 1px),
-                linear-gradient(180deg, rgba(0, 255, 160, 0.06) 1px, transparent 1px);
-            background-size: 40px 40px; opacity: 0.4; pointer-events: none; z-index: 0;
-        }
+body {
+  min-height: 100vh;
+  padding: 20px;
+  overflow-x: hidden;
+  background: radial-gradient(circle at top, #020806 0, #010305 42%, #000000 100%);
+  color: var(--text);
+  font-family: var(--sans);
+}
 
-        .scanline {
-            position: fixed; inset: 0;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.7), rgba(0,0,0,0.15), rgba(0,0,0,0.7));
-            background-size: 100% 4px; opacity: 0.25; pointer-events: none; z-index: 0;
-        }
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(90deg, rgba(0, 255, 160, 0.035) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(0, 255, 160, 0.035) 1px, transparent 1px);
+  background-size: 40px 40px;
+  opacity: 0.16;
+}
 
-        .glow-orb {
-            position: fixed; width: 500px; height: 500px; border-radius: 50%;
-            background: radial-gradient(circle, rgba(0, 255, 160, 0.25), transparent 70%);
-            top: -10%; right: -5%; filter: blur(80px); opacity: 0.6; pointer-events: none; z-index: 0;
-        }
+/* --- ESTRUTURA GERAL --- */
+.app-shell {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  width: min(1680px, 100%);
+  margin: 0 auto;
+}
 
-        .container { position: relative; max-width: 1000px; width: 100%; z-index: 2; }
+.wrap {
+  width: min(1400px, 100%);
+  min-width: 0;
+  flex: 1;
+}
 
-        /* HEADER */
-        .header {
-            display: flex; align-items: center; justify-content: space-between;
-            margin-bottom: 28px; padding: 28px 35px;
-            background: radial-gradient(circle at top, #0b141d 0, #050a11 55%, #020509 100%);
-            border-radius: 18px;
-            border: 1px solid rgba(0, 255, 160, 0.15);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-        }
+/* --- CSS DA BARRA LATERAL (Fallback) --- */
+.side-nav {
+  position: sticky; top: 20px; width: 246px; min-height: calc(100vh - 40px);
+  display: flex; flex-direction: column; gap: 18px; padding: 18px;
+  border: 1px solid var(--border); border-radius: 18px;
+  background: linear-gradient(180deg, rgba(5, 10, 17, 0.99), rgba(2, 5, 9, 0.99));
+  box-shadow: 0 14px 42px rgba(0, 0, 0, 0.34);
+}
+.side-brand { display: flex; align-items: center; gap: 12px; padding-bottom: 16px; border-bottom: 1px solid rgba(0, 220, 130, 0.12); }
+.side-logo { width: 46px; height: 46px; flex-shrink: 0; overflow: hidden; border: 1px solid rgba(0, 220, 130, 0.34); border-radius: 13px; background: rgba(0, 220, 130, 0.06); box-shadow: 0 0 18px rgba(0, 220, 130, 0.12); }
+.side-logo img { width: 100%; height: 100%; object-fit: cover; }
+.side-brand-text { min-width: 0; }
+.side-kicker, .side-section, .side-link, .side-logout { font-family: var(--mono); }
+.side-kicker, .side-section { text-transform: uppercase; letter-spacing: 0.1em; }
+.side-kicker { color: rgba(0, 220, 130, 0.76); font-size: 9px; font-weight: 700; }
+.side-title { margin-top: 3px; color: var(--accent-bright); font-size: 16px; font-weight: 800; line-height: 1.15; }
+.side-section { margin-bottom: 8px; color: var(--muted); font-size: 9px; font-weight: 700; }
+.side-links { display: grid; gap: 8px; }
+.side-link, .side-logout { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 10px 12px; border: 1px solid rgba(0, 220, 130, 0.12); border-radius: 12px; background: rgba(0, 0, 0, 0.22); color: var(--muted); text-decoration: none; font-size: 11px; font-weight: 700; line-height: 1.2; transition: all 0.18s ease; }
+.side-link:hover, .side-logout:hover { transform: translateY(-1px); }
+.side-link svg, .side-logout svg { flex-shrink: 0; color: currentColor; }
+.side-link.active { border-color: rgba(0, 220, 130, 0.44); background: rgba(0, 220, 130, 0.12); color: var(--accent-bright); box-shadow: 0 0 22px rgba(0, 220, 130, 0.08); }
+.side-link:not(.active):hover { border-color: rgba(0, 220, 130, 0.34); background: rgba(0, 220, 130, 0.075); color: var(--text); }
+.side-footer { margin-top: auto; padding-top: 14px; border-top: 1px solid rgba(0, 220, 130, 0.12); }
+.side-logout { border-color: rgba(239, 68, 68, 0.28); background: rgba(239, 68, 68, 0.06); color: #f87171; }
+.side-logout:hover { border-color: rgba(239, 68, 68, 0.5); background: rgba(239, 68, 68, 0.12); color: #fecaca; }
 
-        .logo-section { display: flex; align-items: center; gap: 20px; }
-        .logo-section img { width: 68px; border-radius: 10px; filter: drop-shadow(0 0 10px rgba(0,255,160,0.8)) drop-shadow(0 0 30px rgba(0,255,160,0.5)); }
-        
-        .header-title { display: flex; flex-direction: column; gap: 4px; }
-        .product-name { color: #7df6c2; text-transform: uppercase; letter-spacing: 0.28em; font-size: 12px; font-weight: 700; margin-bottom: 4px; }
-        .page-title { color: #00ff9f; font-size: 24px; font-weight: 700; margin-bottom: 4px; }
-        .subtitle { font-size: 13px; color: #8ba1b0; }
+/* --- CSS DO HEADER --- */
+.hdr {
+  display: flex; align-items: center; justify-content: space-between; gap: 18px;
+  margin-bottom: 20px; padding: 22px 28px;
+  border: 1px solid var(--border); border-radius: 18px;
+  background: linear-gradient(180deg, rgba(5, 10, 17, 0.99), rgba(2, 5, 9, 0.99));
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.34);
+}
+.hdr-left { display: flex; align-items: center; gap: 18px; min-width: 0; }
+.logo-box { width: 54px; height: 54px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; border: 1px solid rgba(0, 220, 130, 0.34); border-radius: 14px; background: rgba(0, 220, 130, 0.06); box-shadow: inset 0 0 24px rgba(0, 220, 130, 0.05), 0 0 18px rgba(0, 220, 130, 0.1); }
+.logo-box img { width: 100%; height: 100%; object-fit: cover; }
+.hdr-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.hdr-tag { color: rgba(0, 220, 130, 0.76); font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+.hdr-title { color: var(--accent-bright); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 22px; font-weight: 800; line-height: 1.18; }
+.hdr-sub { color: var(--muted); font-size: 13px; line-height: 1.4; }
 
-        .btn-back-header {
-            padding: 12px 24px; background: rgba(0,255,160,0.08);
-            border: 1px solid rgba(0,255,160,0.25); border-radius: 10px;
-            cursor: pointer; font-size: 13px; font-weight: 700; color: #00ff9f;
-            text-decoration: none; text-transform: uppercase; letter-spacing: 0.08em;
-            transition: all 0.2s; display: flex; align-items: center; gap: 8px;
-        }
-        .btn-back-header:hover {
-            background: rgba(0,255,160,0.15); border-color: rgba(0,255,160,0.5);
-            box-shadow: 0 0 20px rgba(0,255,160,0.15); transform: translateY(-1px);
-        }
+/* --- BOTÕES PADRÃO --- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+  min-height: 42px; padding: 11px 18px; border-radius: 10px; cursor: pointer;
+  text-decoration: none; white-space: nowrap; font-family: var(--sans);
+  font-size: 12px; font-weight: 700; transition: all 0.18s ease;
+}
+.btn:hover { transform: translateY(-1px); }
+.btn-primary { border: 1px solid rgba(0, 220, 130, 0.44); background: rgba(0, 220, 130, 0.12); color: var(--accent-bright); box-shadow: 0 0 20px rgba(0, 220, 130, 0.08); }
+.btn-primary:hover { border-color: var(--accent-bright); background: rgba(0, 220, 130, 0.2); box-shadow: 0 0 26px rgba(0, 220, 130, 0.14); }
+.btn-ghost { border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(255, 255, 255, 0.035); color: var(--muted); }
+.btn-ghost:hover { border-color: rgba(255, 255, 255, 0.18); color: var(--text); background: rgba(255, 255, 255, 0.065); }
+.btn-danger { border: 1px solid rgba(239, 68, 68, 0.34); background: rgba(239, 68, 68, 0.08); color: #f87171; }
+.btn-danger:hover { border-color: rgba(239, 68, 68, 0.58); background: rgba(239, 68, 68, 0.16); color: #fecaca; }
 
-        /* TOOLBAR */
-        .toolbar { display: flex; gap: 14px; margin-bottom: 24px; flex-wrap: wrap; }
-        
-        .search-bar { position: relative; flex: 1; min-width: 250px; }
-        .search-input {
-            width: 100%; padding: 13px 18px 13px 46px;
-            background: rgba(5,10,17,0.9); border: 1px solid #1b2635;
-            border-radius: 10px; color: #e5fef6; font-size: 14px;
-            font-family: "Space Grotesk", system-ui, sans-serif;
-            outline: none; transition: all 0.2s;
-        }
-        .search-input::placeholder { color: #3a5062; }
-        .search-input:focus { border-color: rgba(0,255,160,0.4); box-shadow: 0 0 10px rgba(0,255,160,0.08); }
-        .search-icon {
-            position: absolute; left: 15px; top: 50%;
-            transform: translateY(-50%); display: flex; align-items: center;
-        }
+/* --- CONTEÚDO PRINCIPAL --- */
+.main-card {
+  border: 1px solid var(--border); border-radius: 18px;
+  background: linear-gradient(180deg, rgba(5, 10, 17, 0.99), rgba(2, 5, 9, 0.99));
+  box-shadow: 0 10px 38px rgba(0, 0, 0, 0.3); padding: 34px 28px 44px;
+}
 
-        .btn-add {
-            padding: 13px 24px; background: rgba(0,255,160,0.1); border: 1px solid rgba(0,255,160,0.25);
-            border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 700; color: #00ff9f;
-            text-transform: uppercase; letter-spacing: 0.08em; transition: all 0.2s;
-            display: flex; align-items: center; gap: 8px; white-space: nowrap; font-family: "Space Grotesk", system-ui, sans-serif;
-        }
-        .btn-add:hover { background: rgba(0,255,160,0.16); border-color: rgba(0,255,160,0.5); box-shadow: 0 0 20px rgba(0,255,160,0.1); }
+.toolbar { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 24px; flex-wrap: wrap;}
+.search-bar { position: relative; flex: 1; max-width: 400px; }
+.search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
 
-        .section-label {
-            font-size: 10px; color: #4ecf9a; font-weight: 700;
-            text-transform: uppercase; letter-spacing: 0.25em;
-            margin-bottom: 16px; display: flex; align-items: center; gap: 12px;
-        }
-        .section-label::after { content: ''; flex: 1; height: 1px; background: linear-gradient(to right, rgba(0,255,160,0.2), transparent); }
+.section-kicker { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; color: var(--accent); font-family: var(--mono); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+.section-kicker::after { content: ""; flex: 1; height: 1px; background: linear-gradient(to right, rgba(0, 220, 130, 0.24), transparent); }
 
-        /* CARDS */
-        .forms-list { display: flex; flex-direction: column; gap: 16px; margin-bottom: 40px; }
+/* --- CARDS DOS FORMULÁRIOS --- */
+.forms-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 16px; margin-bottom: 30px; }
 
-        .metric-card {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 22px 24px;
-            background: linear-gradient(135deg, rgba(11,20,29,0.9) 0%, rgba(5,10,17,0.95) 100%);
-            border: 1px solid rgba(0,255,160,0.1); border-radius: 16px; transition: all 0.3s;
-            position: relative; overflow: visible;
-        }
-        .metric-card::before {
-            content: ''; position: absolute; inset: 0; border-radius: 16px;
-            background: radial-gradient(circle at 0% 0%, rgba(0,255,160,0.05) 0%, transparent 60%);
-            opacity: 0; transition: opacity 0.3s; pointer-events: none;
-        }
-        .metric-card:hover::before { opacity: 1; }
-        .metric-card:hover {
-            border-color: rgba(0,255,160,0.3); transform: translateY(-2px);
-            box-shadow: 0 0 24px rgba(0,0,0,0.4), 0 0 20px rgba(0,255,160,0.06);
-        }
+.metric-card {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 22px 24px;
+  background: linear-gradient(135deg, rgba(11,20,29,0.9) 0%, rgba(5,10,17,0.96) 100%);
+  border: 1px solid rgba(0,255,160,0.12); border-radius: 16px; transition: all 0.25s ease;
+  position: relative; overflow: hidden;
+}
+.metric-card:hover {
+  border-color: rgba(0,255,160,0.34); transform: translateY(-2px);
+  background: linear-gradient(135deg, rgba(12,24,33,0.94) 0%, rgba(5,10,17,0.98) 100%);
+}
 
-        .metric-info { display: flex; align-items: center; gap: 16px; flex: 1; min-width: 0; }
+.metric-info { display: flex; align-items: center; gap: 16px; flex: 1; min-width: 0; position: relative; z-index: 2;}
 
-        .metric-icon-box {
-            width: 48px; height: 48px; flex-shrink: 0;
-            background: rgba(0,255,160,0.06); border: 1px solid rgba(0,255,160,0.15);
-            border-radius: 12px; display: flex; align-items: center; justify-content: center;
-            transition: all 0.3s;
-        }
-        .metric-card:hover .metric-icon-box {
-            background: rgba(0,255,160,0.1); border-color: rgba(0,255,160,0.3);
-            box-shadow: 0 0 16px rgba(0,255,160,0.12);
-        }
-        .metric-icon-box svg { filter: drop-shadow(0 0 5px rgba(0,255,160,0.35)); transition: filter 0.3s; }
-        .metric-card:hover .metric-icon-box svg { filter: drop-shadow(0 0 10px rgba(0,255,160,0.6)); }
+.metric-icon-box {
+  width: 48px; height: 48px; flex-shrink: 0;
+  background: rgba(0,255,160,0.06); border: 1px solid rgba(0,255,160,0.15);
+  border-radius: 12px; display: flex; align-items: center; justify-content: center;
+  color: var(--accent-bright); transition: all 0.25s ease;
+}
+.metric-card:hover .metric-icon-box { background: rgba(0,255,160,0.12); border-color: rgba(0,255,160,0.4); }
 
-        .metric-details { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-        .metric-name { font-size: 16px; font-weight: 700; color: #e5fef6; }
-        
-        .metric-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-        .badge-tipo {
-            font-size: 10px; font-weight: 600; text-transform: uppercase;
-            letter-spacing: 0.08em; padding: 3px 10px; border-radius: 20px;
-            background: rgba(0,255,160,0.05); border: 1px solid rgba(0,255,160,0.15); color: #4ecf9a;
-        }
-        .badge-highlight {
-            font-size: 10px; font-weight: 700; text-transform: uppercase;
-            letter-spacing: 0.08em; padding: 3px 10px; border-radius: 20px;
-            background: rgba(0,255,160,0.1); border: 1px solid rgba(0,255,160,0.3); color: #00ff9f;
-        }
+.metric-details { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.metric-name { font-size: 15px; font-weight: 700; color: var(--text-strong); }
+.metric-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 
-        .metric-actions { display: flex; gap: 8px; flex-shrink: 0; margin-left: 12px; }
+.badge-tipo {
+  font-family: var(--mono); font-size: 9px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.08em; padding: 4px 10px; border-radius: 20px;
+  background: rgba(0,255,160,0.055); border: 1px solid rgba(0,255,160,0.16); color: #7df6c2;
+}
 
-        .btn-icon {
-            width: 38px; height: 38px; border-radius: 8px; border: 1px solid;
-            cursor: pointer; display: flex; align-items: center; justify-content: center;
-            transition: all 0.2s; background: none;
-        }
-        .btn-edit { border-color: rgba(0,255,160,0.2); color: #4ecf9a; }
-        .btn-edit:hover { background: rgba(0,255,160,0.08); border-color: rgba(0,255,160,0.4); color: #00ff9f; box-shadow: 0 0 12px rgba(0,255,160,0.12); }
-        .btn-delete { border-color: rgba(255,80,80,0.2); color: #cc5555; }
-        .btn-delete:hover { background: rgba(255,80,80,0.1); border-color: rgba(255,80,80,0.4); color: #ff6b6b; box-shadow: 0 0 12px rgba(255,80,80,0.15); }
-        .btn-share { border-color: rgba(0,207,255,0.2); color: #00cfff; }
-        .btn-share:hover { background: rgba(0,207,255,0.1); border-color: rgba(0,207,255,0.4); color: #00cfff; box-shadow: 0 0 12px rgba(0,207,255,0.15); }
+.badge-highlight {
+  font-family: var(--mono); font-size: 9px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.08em; padding: 4px 10px; border-radius: 20px;
+  background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); color: #c4b5fd;
+}
 
-        .empty-state { text-align: center; padding: 60px 20px; color: #6b7b8d; font-size: 15px; }
-        .empty-state svg { margin-bottom: 16px; opacity: 0.4; }
+.metric-actions { display: flex; gap: 8px; flex-shrink: 0; margin-left: 12px; position: relative; z-index: 2; }
 
-        /* ===== MODAIS PADRONIZADOS ===== */
-        .modal-overlay {
-            position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,0.8);
-            display: none; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(5px);
-        }
-        .modal-overlay.active { display: flex; }
+.btn-icon {
+  width: 36px; height: 36px; border-radius: 9px; border: 1px solid;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all 0.18s ease; background: rgba(0, 0, 0, 0.18);
+}
+.btn-edit { border-color: rgba(0,255,160,0.24); color: var(--accent); }
+.btn-edit:hover { background: rgba(0,255,160,0.09); border-color: rgba(0,255,160,0.52); color: var(--accent-bright); }
+.btn-delete { border-color: rgba(239,68,68,0.26); color: #f87171; }
+.btn-delete:hover { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.56); color: #fecaca; }
+.btn-share { border-color: rgba(14, 165, 233, 0.26); color: #38bdf8; }
+.btn-share:hover { background: rgba(14, 165, 233, 0.1); border-color: rgba(14, 165, 233, 0.56); color: #7dd3fc; }
 
-        .modal {
-            position: relative; width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto;
-            background: radial-gradient(circle at top, #0b141d 0, #050a11 55%, #020509 100%);
-            border: 1px solid rgba(0,255,160,0.25); border-radius: 18px; padding: 36px;
-            box-shadow: 0 0 0 1px rgba(0,255,160,0.08), 0 18px 60px rgba(0,0,0,0.9), 0 0 20px rgba(0,255,160,0.06);
-        }
-        .modal::-webkit-scrollbar { width: 4px; }
-        .modal::-webkit-scrollbar-thumb { background: rgba(0,255,160,0.2); border-radius: 2px; }
+.empty-state {
+  grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; min-height: 200px; padding: 34px 18px;
+  border: 1px dashed rgba(0, 220, 130, 0.18); border-radius: 16px;
+  background: rgba(0, 0, 0, 0.16); text-align: center; color: var(--muted);
+}
+.empty-state svg { margin-bottom: 12px; opacity: 0.6; color: var(--muted); }
+.empty-state p { font-size: 14px; }
 
-        .modal-header {
-            display: flex; align-items: center; justify-content: space-between;
-            margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid rgba(0,255,160,0.12);
-        }
+/* --- MODAIS --- */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 100; display: none; align-items: center;
+  justify-content: center; padding: 20px; background: rgba(0, 0, 0, 0.78);
+}
+.modal-overlay.active { display: flex; }
 
-        .modal-title-wrap { display: flex; flex-direction: column; gap: 2px; }
-        .modal-product { color: #7df6c2; text-transform: uppercase; letter-spacing: 0.28em; font-size: 10px; font-weight: 700; }
-        .modal-title   { color: #00ff9f; font-size: 20px; font-weight: 700; }
+.modal {
+  width: min(100%, 600px); max-height: 90vh; overflow-y: auto; padding: 30px;
+  border: 1px solid rgba(0, 220, 130, 0.26); border-radius: 18px;
+  background: linear-gradient(135deg, rgba(11, 20, 29, 0.98), rgba(2, 5, 9, 0.98));
+  box-shadow: 0 22px 80px rgba(0, 0, 0, 0.72), 0 0 32px rgba(0, 220, 130, 0.08);
+}
+.modal::-webkit-scrollbar { width: 6px; }
+.modal::-webkit-scrollbar-thumb { background: rgba(0, 220, 130, 0.24); border-radius: 99px; }
 
-        .modal-close {
-            background: none; border: 1px solid rgba(255,80,80,0.2); border-radius: 8px;
-            color: #cc5555; font-size: 16px; cursor: pointer; width: 34px; height: 34px;
-            display: flex; align-items: center; justify-content: center; transition: all 0.2s; line-height: 1;
-        }
-        .modal-close:hover { background: rgba(255,80,80,0.1); border-color: rgba(255,80,80,0.4); color: #ff6b6b; }
+.modal-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 22px; padding-bottom: 18px; border-bottom: 1px solid rgba(0, 220, 130, 0.12); }
+.modal-title-wrap { display: flex; flex-direction: column; gap: 4px; }
+.modal-product { color: rgba(0, 220, 130, 0.78); font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+.modal-title { color: var(--accent-bright); font-size: 21px; font-weight: 800; }
 
-        .modal-section-label {
-            font-size: 10px; color: #4ecf9a; font-weight: 700;
-            text-transform: uppercase; letter-spacing: 0.25em;
-            margin-bottom: 16px; display: flex; align-items: center; gap: 10px;
-        }
-        .modal-section-label::after { content: ''; flex: 1; height: 1px; background: linear-gradient(to right, rgba(0,255,160,0.2), transparent); }
+.modal-close {
+  display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; flex-shrink: 0;
+  border: 1px solid rgba(239, 68, 68, 0.26); border-radius: 9px; background: rgba(239, 68, 68, 0.055);
+  color: #f87171; cursor: pointer; transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+.modal-close:hover { border-color: rgba(239, 68, 68, 0.56); background: rgba(239, 68, 68, 0.14); color: #fecaca; }
 
-        .field-group { margin-bottom: 16px; }
-        .field-label {
-            display: block; color: #c5d9e3; font-size: 11px; font-weight: 700;
-            margin-bottom: 7px; text-transform: uppercase; letter-spacing: 0.08em;
-        }
+.modal-section-label { font-size: 10px; color: #4ecf9a; font-family: var(--mono); font-weight: 700; text-transform: uppercase; letter-spacing: 0.25em; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+.modal-section-label::after { content: ''; flex: 1; height: 1px; background: linear-gradient(to right, rgba(0,255,160,0.2), transparent); }
 
-        .field-input {
-            width: 100%; padding: 12px 14px; background: #050a11; border: 1px solid #1b2635;
-            border-radius: 10px; color: #e5fef6; font-size: 14px; font-family: "Space Grotesk", sans-serif;
-            outline: none; transition: all 0.2s;
-        }
-        .field-input:focus { border-color: rgba(0,255,160,0.4); box-shadow: 0 0 10px rgba(0,255,160,0.08); }
-        .field-input::placeholder { color: #3a5062; }
+.field-group { margin-bottom: 16px; }
+.field-label { display: block; margin-bottom: 8px; color: #c5d9e3; font-size: 11px; font-weight: 700; letter-spacing: 0.01em; }
 
-        .questions-select {
-            display: flex; flex-direction: column; gap: 10px;
-            max-height: 280px; overflow-y: auto; padding-right: 6px; margin-bottom: 10px;
-        }
-        .questions-select::-webkit-scrollbar { width: 4px; }
-        .questions-select::-webkit-scrollbar-thumb { background: rgba(0,255,160,0.2); border-radius: 2px; }
+.field-input {
+  width: 100%; height: 44px; padding: 0 14px; border-radius: 10px; font-size: 13px;
+  color: var(--text); outline: none; border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.42); transition: border-color 0.16s ease, background 0.16s ease;
+}
+.field-input:focus { border-color: rgba(0, 220, 130, 0.44); background: rgba(0, 0, 0, 0.5); }
+.field-input::placeholder { color: rgba(122, 150, 140, 0.68); }
 
-        .question-option {
-            display: flex; align-items: center; gap: 14px; padding: 12px 16px;
-            background: #050a11; border: 1px solid #1b2635;
-            border-radius: 10px; cursor: pointer; transition: all 0.2s;
-        }
-        .question-option:hover { border-color: rgba(0, 255, 160, 0.25); background: rgba(0, 255, 160, 0.05); }
-        .question-option.selected { border-color: #00ff9f; background: rgba(0, 255, 160, 0.08); box-shadow: 0 0 10px rgba(0,255,160,0.1); }
+/* Checklist de Questões */
+.questions-select {
+    display: flex; flex-direction: column; gap: 10px;
+    max-height: 280px; overflow-y: auto; padding-right: 6px; margin-bottom: 10px;
+}
+.questions-select::-webkit-scrollbar { width: 6px; }
+.questions-select::-webkit-scrollbar-thumb { background: rgba(0, 220, 130, 0.24); border-radius: 99px; }
 
-        .custom-checkbox {
-            width: 18px; height: 18px; border-radius: 4px;
-            border: 2px solid #1b2635;
-            display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0; transition: all 0.2s;
-        }
-        .question-option:hover .custom-checkbox { border-color: rgba(0, 255, 160, 0.3); }
-        .question-option.selected .custom-checkbox { background: rgba(0, 255, 160, 0.2); border-color: #00ff9f; }
-        .checkmark { color: #00ff9f; font-size: 13px; display: none; }
-        .question-option.selected .checkmark { display: block; }
-        
-        .question-option-text { font-size: 14px; color: #e5fef6; line-height: 1.4; }
-        .question-option-meta { font-size: 11px; color: #6b7b8d; margin-top: 4px; font-weight: 600; text-transform: uppercase; }
+.question-option {
+    display: flex; align-items: center; gap: 14px; padding: 12px 16px;
+    background: rgba(0, 0, 0, 0.42); border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px; cursor: pointer; transition: all 0.2s ease;
+}
+.question-option:hover { border-color: rgba(0, 220, 130, 0.34); background: rgba(0, 220, 130, 0.06); }
+.question-option.selected { border-color: var(--accent-bright); background: rgba(0, 220, 130, 0.12); box-shadow: 0 0 10px rgba(0,220,130,0.1); }
 
-        .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+.custom-checkbox {
+    width: 18px; height: 18px; border-radius: 4px;
+    border: 2px solid var(--muted);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: all 0.2s ease;
+}
+.question-option:hover .custom-checkbox { border-color: rgba(0, 220, 130, 0.5); }
+.question-option.selected .custom-checkbox { background: rgba(0, 220, 130, 0.2); border-color: var(--accent-bright); }
+.checkmark { color: var(--accent-bright); font-size: 13px; display: none; }
+.question-option.selected .checkmark { display: block; }
 
-        .btn-modal-cancel {
-            padding: 11px 24px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12);
-            border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 700; color: #8ba1b0;
-            text-transform: uppercase; letter-spacing: 0.06em; transition: all 0.2s; font-family: "Space Grotesk", sans-serif;
-        }
-        .btn-modal-cancel:hover { background: rgba(255,255,255,0.08); color: #e5fef6; }
+.question-option-text { font-size: 14px; color: var(--text-strong); line-height: 1.4; }
+.question-option-meta { font-family: var(--mono); font-size: 10px; color: var(--muted); margin-top: 4px; font-weight: 700; text-transform: uppercase; }
 
-        .btn-modal-save {
-            padding: 11px 28px; background: rgba(0,255,160,0.12); border: 1px solid rgba(0,255,160,0.4);
-            border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 700; color: #00ff9f;
-            text-transform: uppercase; letter-spacing: 0.06em; transition: all 0.2s; font-family: "Space Grotesk", sans-serif;
-            display: flex; align-items: center; gap: 8px; justify-content: center;
-        }
-        .btn-modal-save:hover { background: rgba(0,255,160,0.2); border-color: #00ff9f; box-shadow: 0 0 20px rgba(0,255,160,0.2); }
-        
-        .btn-modal-danger {
-            background: rgba(255,80,80,0.1); border-color: rgba(255,80,80,0.4); color: #ff6b6b;
-        }
-        .btn-modal-danger:hover { background: rgba(255,80,80,0.2); border-color: #ff6b6b; box-shadow: 0 0 20px rgba(255,80,80,0.2); color: #fff;}
+/* Box de Compartilhamento */
+.share-box {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 24px;
+    background: rgba(0, 220, 130, 0.05); padding: 6px; border-radius: 10px; border: 1px solid rgba(0, 220, 130, 0.2);
+}
+.share-input {
+    flex: 1; background: transparent; border: none; color: var(--accent-bright); font-family: var(--mono);
+    font-size: 13px; outline: none; padding: 0 10px;
+}
 
-        /* Compartilhar Link Box */
-        .share-box {
-            display: flex; align-items: center; gap: 10px; margin-bottom: 24px;
-            background: rgba(0, 255, 160, 0.05); padding: 6px; border-radius: 10px; border: 1px solid rgba(0, 255, 160, 0.2);
-        }
-        .share-input {
-            flex: 1; background: transparent; border: none; color: #00ff9f; font-family: "Space Grotesk", monospace;
-            font-size: 13px; outline: none; padding: 0 10px;
-        }
+.modal-footer { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; margin-top: 24px; padding-top: 18px; border-top: 1px solid rgba(0, 220, 130, 0.12); }
+.modal-footer .btn { min-width: 120px; }
 
-        @media (max-width: 768px) {
-            .header { flex-direction: column; text-align: center; }
-            .toolbar { flex-direction: column; align-items: stretch; }
-            .search-bar { width: 100%; }
-            .metric-card { flex-direction: column; align-items: stretch; gap: 16px; }
-            .metric-actions { margin-left: 0; justify-content: flex-end; }
-        }
-    </style>
+/* TOASTS */
+.toast-stack { position: fixed; top: 28px; right: 28px; z-index: 2000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
+.toast-message {
+  padding: 15px 18px; border-radius: 12px; background: rgba(0, 220, 130, 0.12);
+  border: 1px solid rgba(0, 220, 130, 0.42); color: var(--accent-bright);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.38); font-size: 13px; font-weight: 700; line-height: 1.45;
+  transition: opacity 0.45s ease, transform 0.45s ease;
+}
+.toast-message.error { background: rgba(239, 68, 68, 0.12); border-color: rgba(239, 68, 68, 0.5); color: #fca5a5; }
+
+/* Responsividade */
+@media (max-width: 1180px) { .app-shell { gap: 14px; } .side-nav { width: 220px; } .forms-list { grid-template-columns: 1fr; } }
+@media (max-width: 760px) { 
+  body { padding: 12px; } 
+  .app-shell { flex-direction: column; } 
+  .side-nav { position: relative; top: auto; width: 100%; min-height: auto; } 
+  .hdr { align-items: flex-start; flex-direction: column; padding: 18px; } 
+  .hdr-left { margin-bottom: 16px; }
+  .hdr .btn { width: 100%; justify-content: center; }
+  .main-card { padding: 20px; } 
+  .toolbar { flex-direction: column; align-items: stretch; }
+  .search-bar { max-width: 100%; }
+}
+</style>
 </head>
 <body>
     {% include "partials/language_switcher.html" %}
@@ -301,128 +319,129 @@
 
     <div class="app-shell">
         {% include "partials/app_sidebar.html" with active_nav="avaliacao" %}
-        <main class="app-content">
-    <div class="container">
-        <div class="header">
-            <div class="logo-section">
-                <img src="{% static 'pondersec_logo.jpg' %}" alt="PonderSEC Logo">
-                <div class="header-title">
-                    <div class="product-name">PONDERSEC</div>
-                    <div class="page-title">Formulários de Avaliação</div>
-                    <div class="subtitle">Agrupe questões e colete feedback profissional</div>
+        
+        <div class="wrap">
+            <header class="hdr">
+                <div class="hdr-left">
+                    <div class="logo-box" aria-hidden="true">
+                        <img src="{% static 'pondersec_logo.jpg' %}" alt="">
+                    </div>
+                    <div class="hdr-info">
+                        <span class="hdr-tag">PonderSEC</span>
+                        <span class="hdr-title">{% translate "Formulários de Avaliação" %}</span>
+                        <span class="hdr-sub">{% translate "Agrupe questões e colete feedback profissional" %}</span>
+                    </div>
                 </div>
-            </div>
-            <a href="{% url 'menu_avaliacao' %}" class="btn-back-header">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-                    <path d="M19 12H5M11 6l-6 6 6 6"/>
-                </svg>
-                Voltar
-            </a>
-        </div>
+                
+                <a href="{% url 'menu_avaliacao' %}" class="btn btn-ghost" style="white-space: nowrap;">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                        <path d="M19 12H5M11 6l-6 6 6 6"/>
+                    </svg>
+                    {% translate "Voltar" %}
+                </a>
+            </header>
 
-        {% if messages %}
-            <div id="toast-container" style="position: fixed; top: 30px; right: 30px; z-index: 999999; display: flex; flex-direction: column; gap: 12px; pointer-events: none;">
-            {% for message in messages %}
-                <div class="toast-message" style="
-                            background: {% if message.tags == 'error' %}rgba(255, 80, 54, 0.15){% else %}rgba(0, 255, 160, 0.15){% endif %}; 
-                            border: 1px solid {% if message.tags == 'error' %}#f55036{% else %}#00ff9f{% endif %}; 
-                            color: {% if message.tags == 'error' %}#f55036{% else %}#00ff9f{% endif %}; 
-                            padding: 16px 24px; border-radius: 12px; font-size: 14px; font-weight: 600; text-align: center;
-                            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5); backdrop-filter: blur(5px);
-                            transition: opacity 0.5s ease, transform 0.5s ease;
-                            transform: translateX(0); opacity: 1;">
+            {% if messages %}
+            <div class="toast-stack" id="toast-container">
+                {% for message in messages %}
+                <div class="toast-message {% if message.tags == 'error' %}error{% endif %}">
                     {{ message }}
                 </div>
-            {% endfor %}
+                {% endfor %}
             </div>
-        {% endif %}
+            {% endif %}
 
-        <div class="toolbar">
-            <div class="search-bar">
-                <span class="search-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ecf9a" stroke-width="2" stroke-linecap="round">
-                        <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
-                    </svg>
-                </span>
-                <input type="text" class="search-input" id="searchInput" placeholder="Buscar formulário..." onkeyup="filterForms()">
-            </div>
-            <button class="btn-add" onclick="abrirModal('modalAdicionar')">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-                    <path d="M12 5v14M5 12h14"/>
-                </svg>
-                Criar Formulário
-            </button>
-        </div>
-
-        <div class="section-label">Formulários Criados</div>
-
-        <div class="forms-list" id="formsList">
-            {% for formulario in formularios %}
-            <div class="metric-card" data-text="{{ formulario.nome|lower }}">
-                <div class="metric-info">
-                    <div class="metric-icon-box">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00ff9f" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline>
-                        </svg>
-                    </div>
-                    <div class="metric-details">
-                        <div class="metric-name">{{ formulario.nome }}</div>
-                        <div class="metric-meta">
-                            <span class="badge-tipo">{{ formulario.questoes_total }} pergunta(s) vinculadas</span>
-                            <span class="badge-highlight">{{ formulario.avaliadores_total }} avaliação(ões) coletada(s)</span>
+            <main>
+                <section class="main-card">
+                    <div class="toolbar">
+                        <div class="search-bar">
+                            <span class="search-icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                                    <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+                                </svg>
+                            </span>
+                            <input type="text" class="field-input" id="searchInput" placeholder="{% translate 'Buscar formulário...' %}" style="padding-left: 42px;" onkeyup="filterForms()">
                         </div>
+                        <button class="btn btn-primary" onclick="abrirModal('modalAdicionar')">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                                <path d="M12 5v14M5 12h14"/>
+                            </svg>
+                            {% translate "Criar Formulário" %}
+                        </button>
                     </div>
-                </div>
-                <div class="metric-actions">
-                    <button class="btn-icon btn-edit" title="Editar" onclick="abrirModalEditar({{ formulario.id }}, '{{ formulario.nome|escapejs }}', [{% for q in formulario.questoes_cache %}{{ q.id }}{% if not forloop.last %},{% endif %}{% endfor %}])">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                        </svg>
-                    </button>
-                    <button class="btn-icon btn-delete" title="Deletar" onclick="abrirModalDeletar({{ formulario.id }}, '{{ formulario.nome|escapejs }}')">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>
-                        </svg>
-                    </button>
-                    {% if formulario.questoes_total > 0 %}
-                    <button type="button" class="btn-icon btn-share" title="Compartilhar Link" onclick="abrirModalCompartilhar('{{ formulario.id }}')">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
-                        </svg>
-                    </button>
-                    {% endif %}
-                </div>
-            </div>
-            {% empty %}
-            <div class="empty-state">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#4ecf9a" stroke-width="1.5" stroke-linecap="round">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line>
-                </svg>
-                <p>Nenhum formulário de coleta criado ainda.</p>
-            </div>
-            {% endfor %}
+
+                    <div class="section-kicker">{% translate "Formulários Criados" %}</div>
+
+                    <div class="forms-list" id="formsList">
+                        {% for formulario in formularios %}
+                        <div class="metric-card" data-text="{{ formulario.nome|lower }}">
+                            <div class="metric-info">
+                                <div class="metric-icon-box">
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline>
+                                    </svg>
+                                </div>
+                                <div class="metric-details">
+                                    <div class="metric-name">{{ formulario.nome }}</div>
+                                    <div class="metric-meta">
+                                        <span class="badge-tipo">{{ formulario.questoes_total }} {% translate "pergunta(s) vinculadas" %}</span>
+                                        <span class="badge-highlight">{{ formulario.avaliadores_total }} {% translate "avaliação(ões) coletada(s)" %}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="metric-actions">
+                                <button class="btn-icon btn-edit" title="{% translate 'Editar' %}" onclick="abrirModalEditar({{ formulario.id }}, '{{ formulario.nome|escapejs }}', [{% for q in formulario.questoes_cache %}{{ q.id }}{% if not forloop.last %},{% endif %}{% endfor %}])">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                    </svg>
+                                </button>
+                                <button class="btn-icon btn-delete" title="{% translate 'Deletar' %}" onclick="abrirModalDeletar({{ formulario.id }}, '{{ formulario.nome|escapejs }}')">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                        <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>
+                                    </svg>
+                                </button>
+                                {% if formulario.questoes_total > 0 %}
+                                <button type="button" class="btn-icon btn-share" title="{% translate 'Compartilhar Link' %}" onclick="abrirModalCompartilhar('{{ formulario.id }}')">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                                    </svg>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="empty-state">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line>
+                            </svg>
+                            <p>{% translate "Nenhum formulário de coleta criado ainda." %}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </section>
+            </main>
         </div>
-    </div>
-        </main>
     </div>
 
     <div class="modal-overlay" id="modalAdicionar">
         <div class="modal">
             <div class="modal-header">
                 <div class="modal-title-wrap">
-                    <span class="modal-product">Coleta de Dados</span>
-                    <span class="modal-title">Novo Formulário</span>
+                    <span class="modal-product">{% translate "Coleta de Dados" %}</span>
+                    <span class="modal-title">{% translate "Novo Formulário" %}</span>
                 </div>
-                <button class="modal-close" onclick="fecharModal('modalAdicionar')">✕</button>
+                <button class="modal-close" onclick="fecharModal('modalAdicionar')">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6L6 18"></path><path d="M6 6l12 12"></path></svg>
+                </button>
             </div>
             <form method="POST" action="{% url 'avaliacao_adicionar_formulario' %}" id="formAdicionar">
                 {% csrf_token %}
                 <div class="field-group">
-                    <label class="field-label">Nome do Formulário</label>
-                    <input type="text" name="nome" class="field-input" placeholder="Ex: Formulário de Enumeração (NMAP)">
+                    <label class="field-label">{% translate "Nome do Formulário" %}</label>
+                    <input type="text" name="nome" class="field-input" placeholder="{% translate 'Ex: Formulário de Enumeração (NMAP)' %}">
                 </div>
 
-                <div class="modal-section-label">Questões Vinculadas</div>
+                <div class="modal-section-label" style="margin-top: 24px;">{% translate "Questões Vinculadas" %}</div>
                 <div class="questions-select">
                     {% for questao in questoes %}
                     <div class="question-option" onclick="toggleQuestao(this)">
@@ -434,13 +453,18 @@
                         <input type="checkbox" name="questoes" value="{{ questao.id }}" style="display:none;">
                     </div>
                     {% empty %}
-                    <div style="color: #6b7b8d; font-size: 13px; padding: 16px 0;">Nenhuma questão registrada no sistema ainda.</div>
+                    <div style="color: var(--muted); font-size: 13px; padding: 16px 0; text-align: center;">{% translate "Nenhuma questão registrada no sistema ainda." %}</div>
                     {% endfor %}
                 </div>
 
                 <div class="modal-footer">
-                    <button type="button" class="btn-modal-cancel" onclick="fecharModal('modalAdicionar')">Cancelar</button>
-                    <button type="button" class="btn-modal-save" onclick="submitForm('formAdicionar')">Criar Formulário</button>
+                    <button type="button" class="btn btn-ghost" onclick="fecharModal('modalAdicionar')">{% translate "Cancelar" %}</button>
+                    <button type="button" class="btn btn-primary" onclick="submitForm('formAdicionar')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                            <path d="M12 5v14M5 12h14"/>
+                        </svg>
+                        {% translate "Criar Formulário" %}
+                    </button>
                 </div>
             </form>
         </div>
@@ -450,19 +474,21 @@
         <div class="modal">
             <div class="modal-header">
                 <div class="modal-title-wrap">
-                    <span class="modal-product">Configuração</span>
-                    <span class="modal-title">Editar Formulário</span>
+                    <span class="modal-product">{% translate "Configuração" %}</span>
+                    <span class="modal-title">{% translate "Editar Formulário" %}</span>
                 </div>
-                <button class="modal-close" onclick="fecharModal('modalEditar')">✕</button>
+                <button class="modal-close" onclick="fecharModal('modalEditar')">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6L6 18"></path><path d="M6 6l12 12"></path></svg>
+                </button>
             </div>
             <form method="POST" id="formEditar">
                 {% csrf_token %}
                 <div class="field-group">
-                    <label class="field-label">Nome do Formulário</label>
-                    <input type="text" name="nome" class="field-input" id="nomeEditar" placeholder="Nome do formulário">
+                    <label class="field-label">{% translate "Nome do Formulário" %}</label>
+                    <input type="text" name="nome" class="field-input" id="nomeEditar" placeholder="{% translate 'Nome do formulário' %}">
                 </div>
 
-                <div class="modal-section-label">Questões Vinculadas</div>
+                <div class="modal-section-label" style="margin-top: 24px;">{% translate "Questões Vinculadas" %}</div>
                 <div class="questions-select">
                     {% for questao in questoes %}
                         <div class="question-option" onclick="toggleQuestao(this)" data-id="{{ questao.id }}">
@@ -474,13 +500,18 @@
                             <input type="checkbox" name="questoes" value="{{ questao.id }}" style="display:none;">
                         </div>
                         {% empty %}
-                    <div style="color: #6b7b8d; font-size: 13px; padding: 16px 0;">Nenhuma pergunta cadastrada.</div>
+                    <div style="color: var(--muted); font-size: 13px; padding: 16px 0; text-align: center;">{% translate "Nenhuma pergunta cadastrada." %}</div>
                     {% endfor %}
                 </div>
 
                 <div class="modal-footer">
-                    <button type="button" class="btn-modal-cancel" onclick="fecharModal('modalEditar')">Cancelar</button>
-                    <button type="button" class="btn-modal-save" onclick="submitForm('formEditar')">Salvar Alterações</button>
+                    <button type="button" class="btn btn-ghost" onclick="fecharModal('modalEditar')">{% translate "Cancelar" %}</button>
+                    <button type="button" class="btn btn-primary" onclick="submitForm('formEditar')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                        {% translate "Salvar Alterações" %}
+                    </button>
                 </div>
             </form>
         </div>
@@ -490,22 +521,22 @@
         <div class="modal" style="max-width: 440px; text-align: center;">
             <div class="modal-header" style="justify-content: center; border-bottom: none; padding-bottom: 0;">
                 <div class="modal-title-wrap">
-                    <span class="modal-product">Atenção</span>
-                    <span class="modal-title" style="color: #ff6b6b;">Excluir Formulário</span>
+                    <span class="modal-product">{% translate "Atenção" %}</span>
+                    <span class="modal-title" style="color: #f87171;">{% translate "Excluir Formulário" %}</span>
                 </div>
             </div>
             <div style="margin-bottom: 24px;">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ff6b6b" stroke-width="1.5" stroke-linecap="round" style="margin-bottom:12px;">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="1.5" stroke-linecap="round" style="margin-bottom:12px;">
                     <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
                 </svg>
-                <p style="color: #c5d9e3; font-size: 14px; line-height: 1.6;">
-                    Tem certeza que deseja excluir o formulário <br><strong style="color:#ff6b6b;" id="nomeFormularioDeletar"></strong>?<br>Esta ação apagará todas as respostas vinculadas e não pode ser desfeita.
+                <p style="color: var(--text); font-size: 14px; line-height: 1.6;">
+                    {% translate "Tem certeza que deseja excluir o formulário" %} <br><strong style="color:#f87171;" id="nomeFormularioDeletar"></strong>?<br>{% translate "Esta ação apagará todas as respostas vinculadas e não pode ser desfeita." %}
                 </p>
             </div>
             <form method="POST" id="formDeletar" style="display:flex; justify-content:center; gap:10px;">
                 {% csrf_token %}
-                <button type="button" class="btn-modal-cancel" onclick="fecharModal('modalDeletar')">Cancelar</button>
-                <button type="submit" class="btn-modal-save btn-modal-danger">Sim, Excluir</button>
+                <button type="button" class="btn btn-ghost" onclick="fecharModal('modalDeletar')">{% translate "Cancelar" %}</button>
+                <button type="submit" class="btn btn-danger">{% translate "Sim, Excluir" %}</button>
             </form>
         </div>
     </div>
@@ -514,29 +545,31 @@
         <div class="modal" style="max-width: 500px;">
             <div class="modal-header">
                 <div class="modal-title-wrap">
-                    <span class="modal-product">Distribuição</span>
-                    <span class="modal-title">Compartilhar Formulário</span>
+                    <span class="modal-product">{% translate "Distribuição" %}</span>
+                    <span class="modal-title">{% translate "Compartilhar Formulário" %}</span>
                 </div>
-                <button class="modal-close" onclick="fecharModal('modalCompartilhar')">✕</button>
+                <button class="modal-close" onclick="fecharModal('modalCompartilhar')">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6L6 18"></path><path d="M6 6l12 12"></path></svg>
+                </button>
             </div>
             
-            <p style="color: #8ba1b0; margin-bottom: 24px; font-size: 14px; line-height: 1.6;">
-                Copie o link abaixo e envie para os profissionais encarregados da avaliação.<br>Eles <b>não precisam</b> de senha ou conta no PonderSec para responder.
+            <p style="color: var(--muted); margin-bottom: 24px; font-size: 14px; line-height: 1.6;">
+                {% translate "Copie o link abaixo e envie para os profissionais encarregados da avaliação." %}<br><b>{% translate "Eles não precisam" %}</b> {% translate "de senha ou conta no PonderSec para responder." %}
             </p>
 
             <div class="question-option" style="margin-bottom: 24px; cursor: default;">
                 <label style="display: flex; align-items: center; gap: 14px; cursor: pointer; width: 100%;">
-                    <input type="checkbox" id="blindTestToggle" onchange="atualizarLinkCompartilhamento()" style="width: 18px; height: 18px; accent-color: #00ff9f;">
+                    <input type="checkbox" id="blindTestToggle" onchange="atualizarLinkCompartilhamento()" style="width: 18px; height: 18px; accent-color: var(--accent-bright);">
                     <div>
-                        <div style="font-size: 14px; color: #e5fef6; font-weight: 600;">Ativar Blind Test</div>
-                        <div style="font-size: 12px; color: #8ba1b0; margin-top: 2px;">Oculta os nomes das IAs para o avaliador</div>
+                        <div style="font-size: 14px; color: var(--text-strong); font-weight: 600;">{% translate "Ativar Blind Test" %}</div>
+                        <div style="font-size: 12px; color: var(--muted); margin-top: 2px;">{% translate "Oculta os nomes das IAs para o avaliador" %}</div>
                     </div>
                 </label>
             </div>
             
             <div class="share-box">
                 <input type="text" id="linkCompartilhamento" class="share-input" readonly>
-                <button type="button" class="btn-icon" onclick="copiarLink()" style="border-color: rgba(0,255,160,0.3); color: #00ff9f;" title="Copiar Link">
+                <button type="button" class="btn-icon" onclick="copiarLink()" style="border-color: rgba(0, 220, 130, 0.34); color: var(--accent-bright);" title="{% translate 'Copiar Link' %}">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                     </svg>
@@ -544,7 +577,7 @@
             </div>
             
             <div class="modal-footer" style="justify-content: center;">
-                <button type="button" class="btn-modal-cancel" onclick="fecharModal('modalCompartilhar')" style="min-width: 150px;">Fechar</button>
+                <button type="button" class="btn btn-ghost" onclick="fecharModal('modalCompartilhar')" style="min-width: 150px;">{% translate "Fechar" %}</button>
             </div>
         </div>
     </div>
@@ -578,16 +611,16 @@
             
             navigator.clipboard.writeText(linkInput.value).then(() => {
                 const toastContainer = document.getElementById('toast-container') || criarToastContainer();
-                mostrarToast(toastContainer, "Link copiado para a área de transferência!");
+                mostrarToast(toastContainer, "{% translate 'Link copiado para a área de transferência!' %}");
             }).catch(err => {
-                alert("Não foi possível copiar o link automaticamente.");
+                alert("{% translate 'Não foi possível copiar o link automaticamente.' %}");
             });
         }
 
         function criarToastContainer() {
             const container = document.createElement('div');
             container.id = 'toast-container';
-            container.style.cssText = 'position: fixed; top: 30px; right: 30px; z-index: 999999; display: flex; flex-direction: column; gap: 12px; pointer-events: none;';
+            container.className = 'toast-stack';
             document.body.appendChild(container);
             return container;
         }
@@ -595,13 +628,6 @@
         function mostrarToast(container, mensagem) {
             const toast = document.createElement('div');
             toast.className = 'toast-message';
-            toast.style.cssText = `
-                background: rgba(0, 255, 160, 0.15); border: 1px solid #00ff9f; color: #00ff9f; 
-                padding: 16px 24px; border-radius: 12px; font-size: 14px; font-weight: 600; text-align: center;
-                box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5); backdrop-filter: blur(5px);
-                transition: opacity 0.5s ease, transform 0.5s ease;
-                transform: translateX(0); opacity: 1;
-            `;
             toast.innerText = mensagem;
             container.appendChild(toast);
 
@@ -651,8 +677,8 @@
             const nome = form.querySelector('input[name="nome"]').value.trim();
             const selecionadas = form.querySelectorAll('input[name="questoes"]:checked');
 
-            if (!nome) { alert('Por favor, informe o nome do formulário.'); return; }
-            if (selecionadas.length === 0) { alert('Selecione pelo menos uma pergunta.'); return; }
+            if (!nome) { alert('{% translate "Por favor, informe o nome do formulário." %}'); return; }
+            if (selecionadas.length === 0) { alert('{% translate "Selecione pelo menos uma pergunta." %}'); return; }
 
             form.submit();
         }
