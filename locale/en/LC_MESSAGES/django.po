@@ -513,6 +513,7 @@ msgid "Sim, limpar tudo"
 msgstr "Yes, clear all"
 
 #: responsegenerator/templates/questoes/questoes.html:1412
+#: responsegenerator/templates/questoes/executar-consulta.html:278
 msgid "Apagar tudo"
 msgstr "Delete all"
 

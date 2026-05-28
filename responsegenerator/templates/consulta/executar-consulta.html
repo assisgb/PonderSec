@@ -248,32 +248,17 @@ body::before {
             <div class="progress-bar-container" id="progressBar">
                  <div class="progress-bar-fill"></div>
             </div>
-        <div class="header">
-            <div class="search-container">
-                <input type="text" class="search-input" id="filterInput" placeholder="Filtro de pesquisa...">
-            </div>
 
-            <button class="btn-limpar" onclick="limparRespostas()">⟳ Limpar</button>
-
-            <button class="btn-run" onclick="executeQuestions()">
-                <span>▶</span>
-                <span>Executar</span>
-            </button>
-
-        </div>
-
-        <div class="questions-list">
-
-            {% if questoes %}
-
-            {% for questao in questoes %}
-
-            {% if questao.respostas_cache %}
-
-            <div class="question-item" data-id="{{questao.id}}">
-
-                <div class="question-text">
-                    {{questao.conteudo}}
+            <header class="hdr">
+                <div class="hdr-left">
+                    <div class="logo-box" aria-hidden="true">
+                        <img src="{% static 'pondersec_logo.jpg' %}" alt="">
+                    </div>
+                    <div class="hdr-info">
+                        <span class="hdr-tag">PonderSEC</span>
+                        <span class="hdr-title">{% translate "Executar Consulta" %}</span>
+                        <span class="hdr-sub">{% translate "Selecione as perguntas para processamento em lote nas IAs." %}</span>
+                    </div>
                 </div>
             </header>
 
@@ -290,7 +275,7 @@ body::before {
                         </div>
                         <button class="btn btn-danger" onclick="limparRespostas()">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M3 6h18"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-                            {% translate "Limpar Tudo" %}
+                            {% translate "Apagar tudo" %}
                         </button>
                         <button class="btn btn-primary" id="btnRun" onclick="executeQuestions()">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>

@@ -1279,19 +1279,6 @@ textarea:focus,
           </div>
         </div>
 
-        <div class="question-meta-grid">
-          <div class="field-group" style="margin-bottom: 0;">
-            <label class="field-label" for="categoriaQuestao">{% translate "Categoria da questão" %}</label>
-            <select class="filter-select" id="categoriaQuestao" name="categoria_id">
-              <option value="">{% translate "Geral" %}</option>
-              {% for cat in categorias %}
-              <option value="{{ cat.id }}">{{ cat.nome_categoria }}</option>
-              {% endfor %}
-            </select>
-          </div>
-          <button class="btn btn-secondary" type="button" onclick="abrirModalCategoria()">{% translate "Cadastrar categoria" %}</button>
-        </div>
-
         <div class="upload-callout">
           <div class="upload-icon" aria-hidden="true">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -1312,6 +1299,19 @@ textarea:focus,
             </svg>
             {% translate "Enviar TXT/JSON" %}
           </button>
+        </div>
+
+        <div class="question-meta-grid">
+          <div class="field-group" style="margin-bottom: 0;">
+            <label class="field-label" for="categoriaQuestao">{% translate "Categoria da questão" %}</label>
+            <select class="filter-select" id="categoriaQuestao" name="categoria_id">
+              <option value="">{% translate "Geral" %}</option>
+              {% for cat in categorias %}
+              <option value="{{ cat.id }}">{{ cat.nome_categoria }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <button class="btn btn-secondary" type="button" onclick="abrirModalCategoria()">{% translate "Cadastrar categoria" %}</button>
         </div>
 
         <div class="actions">
