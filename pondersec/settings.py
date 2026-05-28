@@ -75,6 +75,18 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp-relay.brevo.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+EMAIL_HOST_USER = os.environ.get('HOST_API_EMAIL') 
+EMAIL_HOST_PASSWORD = os.environ.get('SENHA_API_EMAIL')
+
+DEFAULT_FROM_EMAIL = 'PonderSec <naoresp00@gmail.com>'
+
+ROOT_URLCONF = 'pondersec.urls'
+
 try:
     import whitenoise  # noqa: F401
 except ImportError:
