@@ -4,8 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard de Avaliações · PonderSec</title>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>{% translate "PonderSEC — Dashboard de Avaliações" %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'app_sidebar.css' %}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -13,23 +13,34 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        body {
-            font-family: "Space Grotesk", system-ui, sans-serif;
-            background: radial-gradient(circle at top, #051015 0, #02060b 45%, #000000 100%);
-            color: #e5fef6;
-            min-height: 100vh;
-            display: flex;
-            align-items: flex-start;
-            justify-content: center;
-            padding: 20px;
+        :root {
+            --bg: #050c14;
+            --surface: rgba(10, 20, 33, 0.72);
+            --surface-strong: rgba(5, 12, 22, 0.92);
+            --surface-soft: rgba(0, 220, 130, 0.05);
+            --border: rgba(0, 220, 130, 0.18);
+            --border-strong: rgba(0, 220, 130, 0.36);
+            --accent: #00dc82;
+            --accent-bright: #00ff9f;
+            --text: #d4f5e9;
+            --text-strong: #f0fff9;
+            --muted: #7a968c;
+            --mono: "IBM Plex Mono", monospace;
+            --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
         }
 
-        .background-grid {
-            position: fixed; inset: 0;
+        body {
+            min-height: 100vh; padding: 20px; overflow-x: hidden;
+            background: radial-gradient(circle at top, #020806 0, #010305 42%, #000000 100%);
+            color: var(--text); font-family: var(--sans);
+        }
+
+        body::before {
+            content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
             background-image:
-                linear-gradient(90deg, rgba(0, 255, 160, 0.06) 1px, transparent 1px),
-                linear-gradient(180deg, rgba(0, 255, 160, 0.06) 1px, transparent 1px);
-            background-size: 40px 40px; opacity: 0.4; pointer-events: none; z-index: 0;
+                linear-gradient(90deg, rgba(0, 255, 160, 0.035) 1px, transparent 1px),
+                linear-gradient(180deg, rgba(0, 255, 160, 0.035) 1px, transparent 1px);
+            background-size: 40px 40px; opacity: 0.16;
         }
 
         .scanline {
@@ -40,610 +51,469 @@
 
         .glow-orb {
             position: fixed; width: 500px; height: 500px; border-radius: 50%;
-            background: radial-gradient(circle, rgba(0, 255, 160, 0.25), transparent 70%);
+            background: radial-gradient(circle, rgba(0, 255, 160, 0.2), transparent 70%);
             top: -10%; right: -5%; filter: blur(80px); opacity: 0.6; pointer-events: none; z-index: 0;
         }
 
-        .glow-orb-2 {
-            position: fixed; width: 350px; height: 350px; border-radius: 50%;
-            background: radial-gradient(circle, rgba(0, 150, 255, 0.15), transparent 70%);
-            bottom: 10%; left: -5%; filter: blur(80px); opacity: 0.5; pointer-events: none; z-index: 0;
+        /* --- ESTRUTURA GERAL --- */
+        .app-shell {
+            position: relative; z-index: 1; display: flex; align-items: flex-start;
+            gap: 20px; width: min(1680px, 100%); margin: 0 auto;
         }
 
-        .container {
-            position: relative; max-width: 1280px; width: 100%; z-index: 2;
-            padding-bottom: 60px;
-        }
+        .wrap { width: min(1400px, 100%); min-width: 0; flex: 1; padding-bottom: 60px; }
 
-        .header {
-            display: flex; align-items: center; justify-content: space-between;
-            margin-bottom: 35px; padding: 28px 35px;
-            background: radial-gradient(circle at top, #0b141d 0, #050a11 55%, #020509 100%); border-radius: 18px;
-            border: 1px solid rgba(0, 255, 160, 0.15);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        /* --- CSS DA BARRA LATERAL (Fallback) --- */
+        .side-nav {
+            position: sticky; top: 20px; width: 246px; min-height: calc(100vh - 40px);
+            display: flex; flex-direction: column; gap: 18px; padding: 18px;
+            border: 1px solid var(--border); border-radius: 18px;
+            background: linear-gradient(180deg, rgba(5, 10, 17, 0.99), rgba(2, 5, 9, 0.99));
+            box-shadow: 0 14px 42px rgba(0, 0, 0, 0.34);
         }
+        .side-brand { display: flex; align-items: center; gap: 12px; padding-bottom: 16px; border-bottom: 1px solid rgba(0, 220, 130, 0.12); }
+        .side-logo { width: 46px; height: 46px; flex-shrink: 0; overflow: hidden; border: 1px solid rgba(0, 220, 130, 0.34); border-radius: 13px; background: rgba(0, 220, 130, 0.06); }
+        .side-logo img { width: 100%; height: 100%; object-fit: cover; }
+        .side-brand-text { min-width: 0; }
+        .side-kicker, .side-section, .side-link, .side-logout { font-family: var(--mono); }
+        .side-kicker, .side-section { text-transform: uppercase; letter-spacing: 0.1em; }
+        .side-kicker { color: rgba(0, 220, 130, 0.76); font-size: 9px; font-weight: 700; }
+        .side-title { margin-top: 3px; color: var(--accent-bright); font-size: 16px; font-weight: 800; }
+        .side-section { margin-bottom: 8px; color: var(--muted); font-size: 9px; font-weight: 700; }
+        .side-links { display: grid; gap: 8px; }
+        .side-link, .side-logout { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 10px 12px; border: 1px solid rgba(0, 220, 130, 0.12); border-radius: 12px; background: rgba(0, 0, 0, 0.22); color: var(--muted); text-decoration: none; font-size: 11px; font-weight: 700; transition: all 0.18s ease; }
+        .side-link:hover, .side-logout:hover { transform: translateY(-1px); }
+        .side-link svg, .side-logout svg { flex-shrink: 0; color: currentColor; }
+        .side-link.active { border-color: rgba(0, 220, 130, 0.44); background: rgba(0, 220, 130, 0.12); color: var(--accent-bright); }
+        .side-link:not(.active):hover { border-color: rgba(0, 220, 130, 0.34); background: rgba(0, 220, 130, 0.075); color: var(--text); }
+        .side-footer { margin-top: auto; padding-top: 14px; border-top: 1px solid rgba(0, 220, 130, 0.12); }
+        .side-logout { border-color: rgba(239, 68, 68, 0.28); background: rgba(239, 68, 68, 0.06); color: #f87171; }
+        .side-logout:hover { border-color: rgba(239, 68, 68, 0.5); background: rgba(239, 68, 68, 0.12); color: #fecaca; }
 
-        .logo-section { display: flex; align-items: center; gap: 22px; }
-        .logo-section img {
-            width: 68px; border-radius: 10px;
-            filter: drop-shadow(0 0 10px rgba(0,255,160,0.8)) drop-shadow(0 0 30px rgba(0,255,160,0.5));
+        /* --- HEADER --- */
+        .hdr {
+            display: flex; align-items: center; justify-content: space-between; gap: 18px;
+            margin-bottom: 24px; padding: 22px 28px;
+            border: 1px solid var(--border); border-radius: 18px;
+            background: linear-gradient(180deg, rgba(5, 10, 17, 0.99), rgba(2, 5, 9, 0.99));
+            box-shadow: 0 10px 34px rgba(0, 0, 0, 0.34);
         }
-        .header-title { display: flex; flex-direction: column; gap: 4px; }
-        .product-name { color: #7df6c2; text-transform: uppercase; letter-spacing: 0.28em; font-size: 11px; font-weight: 700; }
-        .page-title   { color: #00ff9f; font-size: 24px; font-weight: 700; }
+        .hdr-left { display: flex; align-items: center; gap: 18px; min-width: 0; }
+        .logo-box { width: 54px; height: 54px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; border: 1px solid rgba(0, 220, 130, 0.34); border-radius: 14px; background: rgba(0, 220, 130, 0.06); }
+        .logo-box img { width: 100%; height: 100%; object-fit: cover; }
+        .hdr-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+        .hdr-tag { color: rgba(0, 220, 130, 0.76); font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+        .hdr-title { color: var(--accent-bright); font-size: 22px; font-weight: 800; line-height: 1.18; }
 
         .header-actions { display: flex; align-items: center; gap: 12px; }
 
-        .btn-back {
-            padding: 12px 26px; background: rgba(0, 255, 160, 0.08);
-            border: 1px solid rgba(0, 255, 160, 0.25); border-radius: 8px;
-            cursor: pointer; font-size: 13px; font-weight: 700; color: #00ff9f;
-            text-decoration: none; text-transform: uppercase; letter-spacing: 0.05em;
-            transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px;
-            font-family: "Space Grotesk", system-ui, sans-serif;
+        /* --- BOTOES --- */
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+            min-height: 42px; padding: 11px 18px; border-radius: 10px; cursor: pointer;
+            text-decoration: none; white-space: nowrap; font-family: var(--sans);
+            font-size: 12px; font-weight: 700; transition: all 0.18s ease;
         }
-        .btn-back:hover { background: rgba(0, 255, 160, 0.15); border-color: #00ff9f; transform: translateY(-1px); }
-
+        .btn:hover { transform: translateY(-1px); }
+        .btn-ghost { border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(255, 255, 255, 0.035); color: var(--muted); }
+        .btn-ghost:hover { border-color: rgba(255, 255, 255, 0.18); color: var(--text); background: rgba(255, 255, 255, 0.065); }
+        
         .btn-export-pdf {
-            padding: 12px 22px;
-            background: rgba(255, 180, 0, 0.08);
-            border: 1px solid rgba(255, 180, 0, 0.3);
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 13px; font-weight: 700;
-            color: #ffb400;
-            font-family: "Space Grotesk", system-ui, sans-serif;
-            text-transform: uppercase; letter-spacing: 0.05em;
-            transition: all 0.2s;
-            display: inline-flex; align-items: center; gap: 8px;
-            white-space: nowrap;
+            border: 1px solid rgba(255, 180, 0, 0.4); background: rgba(255, 180, 0, 0.12); color: #ffb400;
         }
-        .btn-export-pdf:hover:not(:disabled) {
-            background: rgba(255, 180, 0, 0.15);
-            border-color: #ffb400;
-            transform: translateY(-1px);
-            box-shadow: 0 0 16px rgba(255, 180, 0, 0.2);
-        }
+        .btn-export-pdf:hover:not(:disabled) { border-color: #ffb400; background: rgba(255, 180, 0, 0.2); box-shadow: 0 0 20px rgba(255, 180, 0, 0.15); }
         .btn-export-pdf:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-        .btn-export-pdf .export-spinner {
-            display: none; width: 14px; height: 14px;
-            border: 2px solid rgba(255, 180, 0, 0.3);
-            border-top-color: #ffb400;
-            border-radius: 50%;
-            animation: spin 0.7s linear infinite;
+        
+        .export-spinner {
+            display: none; width: 14px; height: 14px; border: 2px solid rgba(255, 180, 0, 0.3);
+            border-top-color: #ffb400; border-radius: 50%; animation: spin 0.7s linear infinite;
         }
         .btn-export-pdf.loading .export-spinner { display: block; }
-        .btn-export-pdf.loading .export-icon   { display: none; }
+        .btn-export-pdf.loading .export-icon { display: none; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
+        /* --- PDF OVERLAY --- */
         .pdf-overlay {
-            display: none;
-            position: fixed; inset: 0; z-index: 9999;
-            background: rgba(2, 6, 11, 0.88);
-            backdrop-filter: blur(6px);
-            align-items: center; justify-content: center;
-            flex-direction: column; gap: 20px;
+            display: none; position: fixed; inset: 0; z-index: 9999;
+            background: rgba(2, 6, 11, 0.88); backdrop-filter: blur(6px);
+            align-items: center; justify-content: center; flex-direction: column; gap: 20px;
         }
         .pdf-overlay.visible { display: flex; }
         .pdf-overlay-box {
-            background: rgba(11, 20, 29, 0.95);
-            border: 1px solid rgba(0, 255, 160, 0.2);
-            border-radius: 16px;
-            padding: 36px 48px;
-            display: flex; flex-direction: column; align-items: center; gap: 18px;
-            min-width: 320px;
-            box-shadow: 0 8px 40px rgba(0,0,0,0.6), 0 0 60px rgba(0,255,160,0.06);
+            background: rgba(11, 20, 29, 0.95); border: 1px solid rgba(0, 255, 160, 0.2);
+            border-radius: 16px; padding: 36px 48px; display: flex; flex-direction: column; align-items: center; gap: 18px;
+            min-width: 320px; box-shadow: 0 8px 40px rgba(0,0,0,0.6), 0 0 60px rgba(0,255,160,0.06);
         }
         .pdf-overlay-icon { font-size: 36px; }
         .pdf-overlay-title { font-size: 16px; font-weight: 700; color: #00ff9f; text-transform: uppercase; letter-spacing: 0.1em; }
         .pdf-overlay-msg { font-size: 13px; color: #7df6c2; text-align: center; min-height: 20px; }
-        .pdf-progress-track {
-            width: 260px; height: 6px;
-            background: rgba(0, 255, 160, 0.1);
-            border-radius: 99px; overflow: hidden;
-        }
-        .pdf-progress-bar {
-            height: 100%; width: 0%;
-            background: linear-gradient(90deg, #00ff9f, #00cfff);
-            border-radius: 99px;
-            transition: width 0.4s ease;
-            box-shadow: 0 0 8px rgba(0,255,160,0.5);
-        }
+        .pdf-progress-track { width: 260px; height: 6px; background: rgba(0, 255, 160, 0.1); border-radius: 99px; overflow: hidden; }
+        .pdf-progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg, #00ff9f, #00cfff); border-radius: 99px; transition: width 0.4s ease; box-shadow: 0 0 8px rgba(0,255,160,0.5); }
         .pdf-step-counter { font-size: 11px; color: #6b7b8d; }
 
-        .stats-row {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px; margin-bottom: 30px;
+        /* --- MAIN CARDS --- */
+        .mode-bar {
+            display: flex; flex-direction: column; gap: 14px; margin-bottom: 24px; padding: 20px 26px;
+            background: linear-gradient(180deg, rgba(5, 10, 17, 0.99), rgba(2, 5, 9, 0.99));
+            border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
+        .mode-switcher {
+            display: inline-flex; gap: 4px; align-self: flex-start; padding: 5px;
+            background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(0, 255, 160, 0.15); border-radius: 12px;
+        }
+        .mode-btn {
+            display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px;
+            background: transparent; border: 1px solid transparent; border-radius: 8px;
+            cursor: pointer; font: 600 13px var(--sans); color: var(--muted); transition: all 0.2s; white-space: nowrap;
+        }
+        .mode-btn:hover { color: #7df6c2; background: rgba(0, 255, 160, 0.05); }
+        .mode-btn.active { background: rgba(0, 255, 160, 0.16); border-color: rgba(0, 255, 160, 0.45); color: #00ff9f; box-shadow: 0 0 14px rgba(0, 255, 160, 0.15); }
+        .mode-btn .mode-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; opacity: 0.7; }
+        .mode-context { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+        .mode-desc { font-size: 13px; color: var(--muted); line-height: 1.5; max-width: 720px; }
+        .mode-desc strong { color: #7df6c2; }
+        
+        .btn-mode-action {
+            display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px;
+            background: rgba(0, 207, 255, 0.08); border: 1px solid rgba(0, 207, 255, 0.3); border-radius: 8px;
+            cursor: pointer; font: 700 12px var(--sans); color: #00cfff; text-decoration: none;
+            text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.2s; white-space: nowrap;
+        }
+        .btn-mode-action:hover { background: rgba(0, 207, 255, 0.16); border-color: #00cfff; transform: translateY(-1px); }
+
+        .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
         .stat-card {
-            padding: 22px 26px;
-            background: linear-gradient(135deg, rgba(11,20,29,0.9) 0%, rgba(5,10,17,0.95) 100%);
-            border: 1px solid rgba(0, 255, 160, 0.12);
-            border-radius: 12px; transition: all 0.3s;
+            padding: 22px 26px; background: linear-gradient(135deg, rgba(11,20,29,0.9) 0%, rgba(5,10,17,0.95) 100%);
+            border: 1px solid rgba(0, 255, 160, 0.12); border-radius: 14px; transition: all 0.3s;
         }
         .stat-card:hover { border-color: rgba(0, 255, 160, 0.3); transform: translateY(-2px); box-shadow: 0 0 24px rgba(0,0,0,0.4), 0 0 20px rgba(0,255,160,0.06); }
-        .stat-label { font-size: 11px; text-transform: uppercase; font-weight: 700; letter-spacing: 0.15em; color: #4ecf9a; margin-bottom: 8px; }
-        .stat-value { font-size: 28px; font-weight: 700; color: #e5fef6; }
-        .stat-sub   { font-size: 12px; color: #8ba1b0; margin-top: 4px; }
+        .stat-label { font-family: var(--mono); font-size: 10px; text-transform: uppercase; font-weight: 700; letter-spacing: 0.15em; color: #4ecf9a; margin-bottom: 8px; }
+        .stat-value { font-family: var(--mono); font-size: 24px; font-weight: 700; color: #e5fef6; }
+        .stat-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
 
-        .chart-card {
-            background: rgba(11, 20, 29, 0.6);
-            border: 1px solid rgba(0, 255, 160, 0.15);
-            border-radius: 16px; padding: 36px 40px;
-            box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+        .chart-card, .comp-panel {
+            background: linear-gradient(180deg, rgba(5, 10, 17, 0.99), rgba(2, 5, 9, 0.99));
+            border: 1px solid var(--border); border-radius: 18px; padding: 36px 40px;
+            box-shadow: 0 10px 38px rgba(0, 0, 0, 0.3); margin-bottom: 20px;
         }
-        .chart-top {
-            display: flex; align-items: flex-start; justify-content: space-between;
-            flex-wrap: wrap; gap: 20px; margin-bottom: 30px;
-        }
-        .chart-heading  { display: flex; flex-direction: column; gap: 6px; }
-        .chart-title    { font-size: 20px; font-weight: 700; color: #00ff9f; }
-        .chart-subtitle { font-size: 13px; color: #8ba1b0; }
+        
+        .chart-top, .comp-head { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 20px; margin-bottom: 30px; }
+        .chart-heading, .comp-head > div { display: flex; flex-direction: column; gap: 6px; }
+        .chart-title, .comp-title { font-size: 20px; font-weight: 800; color: var(--accent-bright); }
+        .chart-subtitle, .comp-copy { font-size: 13px; color: var(--muted); line-height: 1.5; }
 
         .chart-type-switcher {
-            display: flex; gap: 6px; align-items: center;
-            padding: 5px;
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(0, 255, 160, 0.12);
-            border-radius: 12px;
+            display: flex; gap: 6px; align-items: center; padding: 5px;
+            background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(0, 255, 160, 0.12); border-radius: 12px;
         }
         .type-btn {
-            display: flex; align-items: center; gap: 7px;
-            padding: 9px 16px; background: transparent;
-            border: 1px solid transparent; border-radius: 8px;
-            cursor: pointer; font-size: 13px; font-weight: 600; color: #6b7b8d;
+            display: flex; align-items: center; gap: 7px; padding: 9px 16px; background: transparent;
+            border: 1px solid transparent; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--muted);
             font-family: inherit; transition: all 0.2s; white-space: nowrap;
         }
         .type-btn:hover { color: #7df6c2; background: rgba(0, 255, 160, 0.06); }
-        .type-btn.active {
-            background: rgba(0, 255, 160, 0.15); border-color: rgba(0, 255, 160, 0.4);
-            color: #00ff9f; box-shadow: 0 0 14px rgba(0, 255, 160, 0.15);
-        }
-        .type-btn .type-icon { font-size: 15px; line-height: 1; }
-
+        .type-btn.active { background: rgba(0, 255, 160, 0.15); border-color: rgba(0, 255, 160, 0.4); color: #00ff9f; box-shadow: 0 0 14px rgba(0, 255, 160, 0.15); }
+        
         .controls-row { display: flex; flex-direction: column; align-items: flex-end; gap: 12px; }
-
         .metrica-nav { display: flex; align-items: center; gap: 10px; }
         .nav-btn {
-            width: 40px; height: 40px;
-            background: rgba(0, 255, 160, 0.08);
-            border: 1px solid rgba(0, 255, 160, 0.2);
-            border-radius: 8px; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
+            width: 40px; height: 40px; background: rgba(0, 255, 160, 0.08); border: 1px solid rgba(0, 255, 160, 0.2);
+            border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center;
             color: #00ff9f; font-size: 18px; transition: all 0.2s; font-family: inherit;
         }
-        .nav-btn:hover:not(:disabled) {
-            background: rgba(0, 255, 160, 0.18); border-color: #00ff9f;
-            box-shadow: 0 0 10px rgba(0, 255, 160, 0.25);
-        }
+        .nav-btn:hover:not(:disabled) { background: rgba(0, 255, 160, 0.18); border-color: #00ff9f; box-shadow: 0 0 10px rgba(0, 255, 160, 0.25); }
         .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
         .metrica-pills { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
         .pill {
-            padding: 8px 16px;
-            background: rgba(0, 255, 160, 0.06);
-            border: 1px solid rgba(0, 255, 160, 0.15);
-            border-radius: 20px; cursor: pointer;
-            font-size: 13px; font-weight: 500; color: #7df6c2;
+            padding: 8px 16px; background: rgba(0, 255, 160, 0.06); border: 1px solid rgba(0, 255, 160, 0.15);
+            border-radius: 20px; cursor: pointer; font-size: 12px; font-weight: 600; color: #7df6c2;
             transition: all 0.2s; white-space: nowrap; font-family: inherit;
         }
         .pill:hover { background: rgba(0, 255, 160, 0.12); border-color: rgba(0, 255, 160, 0.35); }
-        .pill.active {
-            background: rgba(0, 255, 160, 0.18); border-color: #00ff9f; color: #00ff9f;
-            box-shadow: 0 0 12px rgba(0, 255, 160, 0.2);
-        }
-        .pill.disabled-pill  { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
+        .pill.active { background: rgba(0, 255, 160, 0.18); border-color: #00ff9f; color: #00ff9f; box-shadow: 0 0 12px rgba(0, 255, 160, 0.2); }
+        .pill.disabled-pill { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
         .nav-btn.disabled-nav { opacity: 0.2; cursor: not-allowed; pointer-events: none; }
 
-        .context-hint {
-            display: none; align-items: center; gap: 8px;
-            padding: 8px 16px; border-radius: 8px;
-            font-size: 12px; margin-bottom: 16px;
-        }
+        .context-hint { display: none; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 8px; font-size: 12px; margin-bottom: 16px; }
         .context-hint.visible { display: flex; }
         .hint-badge   { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; background: rgba(0,207,255,0.08); border: 1px solid rgba(0,207,255,0.2); border-radius: 20px; font-size: 12px; color: #00cfff; }
         .hint-radar   { background: rgba(0,207,255,0.07); border: 1px solid rgba(0,207,255,0.2); color: #00cfff; }
-        .hint-stacked { background: rgba(255,180,0,0.07);  border: 1px solid rgba(255,180,0,0.2);  color: #ffb400; }
+        .hint-stacked { background: rgba(255,180,0,0.07); border: 1px solid rgba(255,180,0,0.2); color: #ffb400; }
 
         .chart-wrapper { position: relative; height: 480px; margin-bottom: 28px; }
         .chart-wrapper canvas { transition: opacity 0.2s ease; }
         .chart-wrapper.fading canvas { opacity: 0; }
 
-        .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 300px; color: #6b7b8d; }
+        .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 300px; color: var(--muted); }
         .empty-state .empty-icon { font-size: 52px; margin-bottom: 16px; opacity: 0.6; }
         .empty-state p { font-size: 15px; }
 
-        .chart-legend {
-            display: flex; flex-wrap: wrap; gap: 12px;
-            padding-top: 20px;
-            border-top: 1px solid rgba(0, 255, 160, 0.08);
-        }
+        .chart-legend { display: flex; flex-wrap: wrap; gap: 12px; padding-top: 20px; border-top: 1px solid rgba(0, 255, 160, 0.08); }
         .legend-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #c5d9e3; }
         .legend-dot  { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+        .metrica-counter { font-size: 12px; color: var(--muted); text-align: center; min-width: 50px; }
 
-        .metrica-counter { font-size: 12px; color: #6b7b8d; text-align: center; min-width: 50px; }
-
-        @media (max-width: 768px) {
-            .header { flex-direction: column; gap: 20px; align-items: flex-start; }
-            .header-actions { width: 100%; flex-direction: column; }
-            .btn-export-pdf, .btn-back { width: 100%; justify-content: center; }
-            .chart-top { flex-direction: column; }
-            .chart-card { padding: 24px 20px; }
-            .pill { font-size: 12px; padding: 6px 12px; }
-            .chart-type-switcher { width: 100%; justify-content: center; flex-wrap: wrap; }
-            .controls-row { align-items: flex-start; }
-            .type-btn { font-size: 12px; padding: 8px 12px; }
-        }
-
-        /* ── SELETOR DE MODO ── */
-        .mode-bar {
-            display: flex; flex-direction: column; gap: 14px;
-            margin-bottom: 28px; padding: 20px 26px;
-            background: rgba(11, 20, 29, 0.72);
-            border: 1px solid rgba(0, 255, 160, 0.12);
-            border-radius: 14px;
-        }
-        .mode-switcher {
-            display: inline-flex; gap: 4px; align-self: flex-start;
-            padding: 5px;
-            background: rgba(0, 0, 0, 0.35);
-            border: 1px solid rgba(0, 255, 160, 0.15);
-            border-radius: 12px;
-        }
-        .mode-btn {
-            display: inline-flex; align-items: center; gap: 8px;
-            padding: 10px 18px;
-            background: transparent; border: 1px solid transparent; border-radius: 8px;
-            cursor: pointer; font: 600 13px "Space Grotesk", system-ui, sans-serif;
-            color: #6b7b8d; transition: all 0.2s; white-space: nowrap;
-        }
-        .mode-btn:hover { color: #7df6c2; background: rgba(0, 255, 160, 0.05); }
-        .mode-btn.active {
-            background: rgba(0, 255, 160, 0.16); border-color: rgba(0, 255, 160, 0.45);
-            color: #00ff9f; box-shadow: 0 0 14px rgba(0, 255, 160, 0.15);
-        }
-        .mode-btn .mode-dot {
-            width: 8px; height: 8px; border-radius: 50%;
-            background: currentColor; opacity: 0.7;
-        }
-        .mode-context {
-            display: flex; align-items: center; justify-content: space-between;
-            gap: 16px; flex-wrap: wrap;
-        }
-        .mode-desc { font-size: 13px; color: #8ba1b0; line-height: 1.5; max-width: 720px; }
-        .mode-desc strong { color: #7df6c2; }
-        .btn-mode-action {
-            display: inline-flex; align-items: center; gap: 8px;
-            padding: 9px 16px;
-            background: rgba(0, 207, 255, 0.08);
-            border: 1px solid rgba(0, 207, 255, 0.3);
-            border-radius: 8px;
-            cursor: pointer; font: 700 12px "Space Grotesk", system-ui, sans-serif;
-            color: #00cfff; text-decoration: none;
-            text-transform: uppercase; letter-spacing: 0.05em;
-            transition: all 0.2s; white-space: nowrap;
-        }
-        .btn-mode-action:hover {
-            background: rgba(0, 207, 255, 0.16); border-color: #00cfff;
-            transform: translateY(-1px);
-        }
-
-        /* ── LAYOUT COMPARATIVO ── */
-        .comparativo-layout {
-            display: grid; grid-template-columns: minmax(0, 1fr) 340px;
-            gap: 18px; align-items: start;
-        }
-        .comp-panel {
-            background: rgba(11, 20, 29, 0.6);
-            border: 1px solid rgba(0, 255, 160, 0.15);
-            border-radius: 14px; padding: 26px 28px;
-            margin-bottom: 18px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
-        }
-        .comp-head {
-            display: flex; align-items: flex-start; justify-content: space-between;
-            gap: 16px; margin-bottom: 18px; flex-wrap: wrap;
-        }
-        .comp-title { font-size: 18px; font-weight: 700; color: #00ff9f; }
-        .comp-copy  { font-size: 13px; color: #8ba1b0; line-height: 1.5; margin-top: 5px; }
+        /* --- LAYOUT COMPARATIVO --- */
+        .comparativo-layout { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 20px; align-items: start; }
         .comp-chart-wrap { position: relative; height: 380px; margin-bottom: 16px; }
-        .comp-mini-strip {
-            display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 10px;
-        }
-        .mini-card {
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 10px;
-            background: rgba(0,0,0,0.22);
-            padding: 12px 14px;
-        }
-        .mini-label {
-            font: 700 10px/1.2 "Space Grotesk", monospace;
-            color: #5e7280; letter-spacing: 0.12em;
-            text-transform: uppercase;
-        }
-        .mini-value { margin-top: 6px; color: #e5fef6; font-size: 16px; font-weight: 700; }
+        .comp-mini-strip { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+        .mini-card { border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; background: rgba(0,0,0,0.22); padding: 12px 14px; }
+        .mini-label { font: 700 10px/1.2 var(--mono); color: #5e7280; letter-spacing: 0.12em; text-transform: uppercase; }
+        .mini-value { margin-top: 6px; color: #e5fef6; font-family: var(--mono); font-size: 15px; font-weight: 700; }
 
-        .comp-table-wrap {
-            overflow-x: auto;
-            border: 1px solid rgba(255,255,255,0.07);
-            border-radius: 12px;
-            background: rgba(0,0,0,0.18);
-        }
+        .comp-table-wrap { overflow-x: auto; border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; background: rgba(0,0,0,0.18); }
         .comp-table { width: 100%; border-collapse: collapse; min-width: 720px; }
-        .comp-table th, .comp-table td {
-            padding: 12px 14px;
-            border-bottom: 1px solid rgba(255,255,255,0.06);
-            text-align: left; font-size: 13px;
-        }
-        .comp-table th {
-            color: #00ff9f; background: rgba(0,255,160,0.07);
-            font: 700 10px/1.25 "Space Grotesk", monospace;
-            text-transform: uppercase; letter-spacing: 0.08em;
-        }
+        .comp-table th, .comp-table td { padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,0.06); text-align: left; font-size: 13px; }
+        .comp-table th { color: #00ff9f; background: rgba(0,255,160,0.07); font: 700 10px/1.25 var(--mono); text-transform: uppercase; letter-spacing: 0.08em; }
         .comp-table tr:last-child td { border-bottom: 0; }
         .score-muted { color: #5e7280; }
-        .score-esp   { color: #00ff9f; font-weight: 700; }
-        .score-jud   { color: #bb86fc; font-weight: 700; }
-        .delta-pos   { color: #ffb400; font-weight: 700; }
-        .delta-neg   { color: #00cfff; font-weight: 700; }
-        .delta-zero  { color: #7df6c2; font-weight: 700; }
+        .score-esp   { color: #00ff9f; font-weight: 700; font-family: var(--mono); }
+        .score-jud   { color: #bb86fc; font-weight: 700; font-family: var(--mono); }
+        .delta-pos   { color: #ffb400; font-weight: 700; font-family: var(--mono); }
+        .delta-neg   { color: #00cfff; font-weight: 700; font-family: var(--mono); }
+        .delta-zero  { color: #7df6c2; font-weight: 700; font-family: var(--mono); }
 
         .divergence-list { display: grid; gap: 10px; }
-        .divergence-card {
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 11px;
-            background: rgba(0,0,0,0.22);
-            padding: 13px 14px;
-        }
-        .divergence-top {
-            display: flex; justify-content: space-between;
-            gap: 10px; align-items: flex-start; margin-bottom: 8px;
-        }
+        .divergence-card { border: 1px solid rgba(255,255,255,0.08); border-radius: 11px; background: rgba(0,0,0,0.22); padding: 13px 14px; }
+        .divergence-top { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; margin-bottom: 8px; }
         .divergence-title { color: #e5fef6; font-size: 13px; font-weight: 700; line-height: 1.35; }
-        .divergence-meta  { color: #8ba1b0; font-size: 12px; line-height: 1.5; }
-        .delta-badge {
-            display: inline-flex; align-items: center; justify-content: center;
-            border-radius: 999px;
-            border: 1px solid rgba(255,180,0,0.3);
-            background: rgba(255,180,0,0.08);
-            color: #ffb400;
-            padding: 5px 10px;
-            font: 700 10px/1 "Space Grotesk", monospace;
-            white-space: nowrap;
-        }
-
-        .comp-empty {
-            min-height: 240px;
-            display: grid; place-items: center;
-            border: 1px dashed rgba(255,255,255,0.14);
-            border-radius: 12px;
-            color: #8ba1b0;
-            text-align: center; padding: 24px; line-height: 1.6;
-        }
+        .divergence-meta  { color: var(--muted); font-size: 12px; line-height: 1.5; }
+        .delta-badge { display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; border: 1px solid rgba(255,180,0,0.3); background: rgba(255,180,0,0.08); color: #ffb400; padding: 5px 10px; font: 700 10px/1 var(--mono); white-space: nowrap; }
+        .comp-empty { min-height: 240px; display: grid; place-items: center; border: 1px dashed rgba(255,255,255,0.14); border-radius: 12px; color: var(--muted); text-align: center; padding: 24px; line-height: 1.6; }
         .comp-empty .comp-empty-icon { font-size: 36px; margin-bottom: 12px; opacity: 0.7; }
         .comp-empty a { color: #00cfff; text-decoration: underline; }
 
-        @media (max-width: 1100px) {
-            .comparativo-layout { grid-template-columns: 1fr; }
-        }
+        @media (max-width: 1100px) { .comparativo-layout { grid-template-columns: 1fr; } }
         @media (max-width: 768px) {
+            .app-shell { flex-direction: column; }
+            .side-nav { position: relative; top: auto; width: 100%; min-height: auto; }
+            .hdr { flex-direction: column; gap: 20px; align-items: flex-start; padding: 18px; }
+            .header-actions { width: 100%; flex-direction: column; }
+            .btn { width: 100%; justify-content: center; }
             .mode-bar { padding: 16px; }
             .mode-switcher { width: 100%; }
             .mode-btn { flex: 1; justify-content: center; padding: 9px 10px; font-size: 12px; }
             .mode-context { flex-direction: column; align-items: flex-start; }
             .btn-mode-action { width: 100%; justify-content: center; }
-            .comp-panel { padding: 20px 18px; }
+            .chart-card, .comp-panel { padding: 20px 18px; }
+            .chart-top { flex-direction: column; }
+            .pill { font-size: 12px; padding: 6px 12px; }
+            .chart-type-switcher { width: 100%; justify-content: center; flex-wrap: wrap; }
+            .controls-row { align-items: flex-start; }
+            .type-btn { font-size: 12px; padding: 8px 12px; }
             .comp-mini-strip { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
     {% include "partials/language_switcher.html" %}
-<div class="background-grid"></div>
-<div class="scanline"></div>
-<div class="glow-orb"></div>
-<div class="glow-orb-2"></div>
+    <div class="background-grid"></div>
+    <div class="scanline"></div>
+    <div class="glow-orb"></div>
 
-{% if messages %}
-    <div id="toast-container" style="position: fixed; top: 30px; right: 30px; z-index: 999999; display: flex; flex-direction: column; gap: 12px; pointer-events: none;">
-    {% for message in messages %}
-        <div class="toast-message" style="
-                    background: {% if message.tags == 'error' %}rgba(255, 80, 54, 0.15){% else %}rgba(0, 255, 160, 0.15){% endif %}; 
-                    border: 1px solid {% if message.tags == 'error' %}#f55036{% else %}#00ff9f{% endif %}; 
-                    color: {% if message.tags == 'error' %}#f55036{% else %}#00ff9f{% endif %}; 
-                    padding: 16px 24px; border-radius: 12px; font-size: 14px; font-weight: 600; text-align: center;
-                    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5); backdrop-filter: blur(5px);
-                    transition: opacity 0.5s ease, transform 0.5s ease;
-                    transform: translateX(0); opacity: 1;">
-            {{ message }}
-        </div>
-    {% endfor %}
-    </div>
-{% endif %}
+    <div class="app-shell">
+        {% include "partials/app_sidebar.html" with active_nav="avaliacao" %}
+        
+        <div class="wrap">
+            <header class="hdr">
+                <div class="hdr-left">
+                    <div class="logo-box" aria-hidden="true">
+                        <img src="{% static 'pondersec_logo.jpg' %}" alt="">
+                    </div>
+                    <div class="hdr-info">
+                        <span class="hdr-tag">PonderSec · Analytics</span>
+                        <span class="hdr-title">{% translate "Dashboard de Avaliações" %}</span>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-export-pdf" id="btnExportPdf" onclick="exportarPDF()">
+                        <span class="export-icon">⬇ {% translate "Exportar PDF" %}</span>
+                        <span class="export-spinner"></span>
+                    </button>
+                    <a href="{% url 'menu_avaliacao' %}" class="btn btn-ghost" style="white-space: nowrap;">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                            <path d="M19 12H5M11 6l-6 6 6 6"/>
+                        </svg>
+                        {% translate "Voltar" %}
+                    </a>
+                </div>
+            </header>
 
-<div class="pdf-overlay" id="pdfOverlay">
-    <div class="pdf-overlay-box">
-        <div class="pdf-overlay-icon">📄</div>
-        <div class="pdf-overlay-title">Gerando PDF</div>
-        <div class="pdf-overlay-msg" id="pdfOverlayMsg">Inicializando...</div>
-        <div class="pdf-progress-track">
-            <div class="pdf-progress-bar" id="pdfProgressBar"></div>
-        </div>
-        <div class="pdf-step-counter" id="pdfStepCounter"></div>
-    </div>
-</div>
+            {% if messages %}
+                <div id="toast-container" style="position: fixed; top: 30px; right: 30px; z-index: 999999; display: flex; flex-direction: column; gap: 12px; pointer-events: none;">
+                {% for message in messages %}
+                    <div class="toast-message" style="
+                                background: {% if message.tags == 'error' %}rgba(239, 68, 68, 0.12){% else %}rgba(0, 220, 130, 0.12){% endif %}; 
+                                border: 1px solid {% if message.tags == 'error' %}rgba(239, 68, 68, 0.5){% else %}rgba(0, 220, 130, 0.42){% endif %}; 
+                                color: {% if message.tags == 'error' %}#fca5a5{% else %}var(--accent-bright){% endif %}; 
+                                padding: 15px 18px; border-radius: 12px; font-size: 13px; font-weight: 700; text-align: center;
+                                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.38); backdrop-filter: blur(5px);
+                                transition: opacity 0.5s ease, transform 0.5s ease;
+                                transform: translateX(0); opacity: 1;">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+                </div>
+            {% endif %}
 
-<div class="app-shell">
-    {% include "partials/app_sidebar.html" with active_nav="avaliacao" %}
-    <main class="app-content">
-<div class="container">
-
-    <div class="header">
-        <div class="logo-section">
-            <img src="{% static 'pondersec_logo.jpg' %}" alt="PonderSEC Logo">
-            <div class="header-title">
-                <span class="product-name">PonderSec · Analytics</span>
-                <span class="page-title">Dashboard de Avaliações</span>
-            </div>
-        </div>
-        <div class="header-actions">
-            <button class="btn-export-pdf" id="btnExportPdf" onclick="exportarPDF()">
-                <span class="export-icon">⬇ Exportar PDF</span>
-                <span class="export-spinner"></span>
-            </button>
-            <a href="{% url 'menu_avaliacao' %}" class="btn-back">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
-                Voltar
-            </a>
-        </div>
-    </div>
-
-    <div class="mode-bar">
-        <div class="mode-switcher" role="tablist" aria-label="Modo de visualização">
-            <button type="button" class="mode-btn" data-mode="especialistas" onclick="setMode('especialistas')">
-                <span class="mode-dot"></span> Especialistas
-            </button>
-            <button type="button" class="mode-btn" data-mode="juizes" onclick="setMode('juizes')">
-                <span class="mode-dot"></span> Juízes Online
-            </button>
-            <button type="button" class="mode-btn" data-mode="comparativo" onclick="setMode('comparativo')">
-                <span class="mode-dot"></span> Comparativo
-            </button>
-        </div>
-        <div class="mode-context">
-            <div class="mode-desc" id="modeDesc">—</div>
-            <a class="btn-mode-action" id="modeAction" href="#" style="display:none;"></a>
-        </div>
-    </div>
-
-    <div class="stats-row" id="statsRow"></div>
-
-    <div id="viewSingle">
-    <div class="chart-card">
-        <div class="chart-top">
-            <div class="chart-heading">
-                <div class="chart-title" id="chartTitle">Comparativo de LLMs por Métrica</div>
-                <div class="chart-subtitle" id="chartSubtitle">Média das avaliações quantitativas por modelo de linguagem</div>
+            <div class="pdf-overlay" id="pdfOverlay">
+                <div class="pdf-overlay-box">
+                    <div class="pdf-overlay-icon">📄</div>
+                    <div class="pdf-overlay-title">{% translate "Gerando PDF" %}</div>
+                    <div class="pdf-overlay-msg" id="pdfOverlayMsg">{% translate "Inicializando..." %}</div>
+                    <div class="pdf-progress-track">
+                        <div class="pdf-progress-bar" id="pdfProgressBar"></div>
+                    </div>
+                    <div class="pdf-step-counter" id="pdfStepCounter"></div>
+                </div>
             </div>
 
-            <div class="controls-row">
-                <div class="chart-type-switcher">
-                    <button class="type-btn active" id="btnTypeBar"     onclick="setChartType('bar')">
-                        <span class="type-icon">▦</span> Barras
-                    </button>
-                    <button class="type-btn"        id="btnTypeStacked" onclick="setChartType('stacked')">
-                        <span class="type-icon">▤</span> Empilhadas
-                    </button>
-                    <button class="type-btn"        id="btnTypeRadar"   onclick="setChartType('radar')">
-                        <span class="type-icon">✦</span> Radar
-                    </button>
+            <main>
+                <div class="mode-bar">
+                    <div class="mode-switcher" role="tablist" aria-label="Modo de visualização">
+                        <button type="button" class="mode-btn" data-mode="especialistas" onclick="setMode('especialistas')">
+                            <span class="mode-dot"></span> {% translate "Especialistas" %}
+                        </button>
+                        <button type="button" class="mode-btn" data-mode="juizes" onclick="setMode('juizes')">
+                            <span class="mode-dot"></span> {% translate "Juízes Online" %}
+                        </button>
+                        <button type="button" class="mode-btn" data-mode="comparativo" onclick="setMode('comparativo')">
+                            <span class="mode-dot"></span> {% translate "Comparativo" %}
+                        </button>
+                    </div>
+                    <div class="mode-context">
+                        <div class="mode-desc" id="modeDesc">—</div>
+                        <a class="btn-mode-action" id="modeAction" href="#" style="display:none;"></a>
+                    </div>
                 </div>
 
-                <div class="metrica-nav">
-                    <button class="nav-btn" id="btnPrev" onclick="navegarMetrica(-1)">‹</button>
-                    <div class="metrica-pills" id="metricaPills"></div>
-                    <button class="nav-btn" id="btnNext" onclick="navegarMetrica(1)">›</button>
+                <div class="stats-row" id="statsRow"></div>
+
+                <div id="viewSingle">
+                    <div class="chart-card">
+                        <div class="chart-top">
+                            <div class="chart-heading">
+                                <div class="chart-title" id="chartTitle">{% translate "Comparativo de LLMs por Métrica" %}</div>
+                                <div class="chart-subtitle" id="chartSubtitle">{% translate "Média das avaliações quantitativas por modelo de linguagem" %}</div>
+                            </div>
+
+                            <div class="controls-row">
+                                <div class="chart-type-switcher">
+                                    <button class="type-btn active" id="btnTypeBar"     onclick="setChartType('bar')">
+                                        <span class="type-icon">▦</span> {% translate "Barras" %}
+                                    </button>
+                                    <button class="type-btn"        id="btnTypeStacked" onclick="setChartType('stacked')">
+                                        <span class="type-icon">▤</span> {% translate "Empilhadas" %}
+                                    </button>
+                                    <button class="type-btn"        id="btnTypeRadar"   onclick="setChartType('radar')">
+                                        <span class="type-icon">✦</span> {% translate "Radar" %}
+                                    </button>
+                                </div>
+
+                                <div class="metrica-nav">
+                                    <button class="nav-btn" id="btnPrev" onclick="navegarMetrica(-1)">‹</button>
+                                    <div class="metrica-pills" id="metricaPills"></div>
+                                    <button class="nav-btn" id="btnNext" onclick="navegarMetrica(1)">›</button>
+                                </div>
+                                <div class="metrica-counter" id="metricaCounter"></div>
+                            </div>
+                        </div>
+
+                        <div id="hintBar" class="context-hint hint-badge visible">
+                            <span>📐</span>
+                            <span id="badgeText">{% translate "Selecione uma métrica" %}</span>
+                        </div>
+                        <div id="hintStacked" class="context-hint hint-stacked">
+                            <span>📊</span>
+                            <span>{% blocktranslate %}O gráfico empilhado exibe <strong>todas as métricas</strong> acumuladas por LLM — permite comparar o score total e a composição de cada modelo.{% endblocktranslate %}</span>
+                        </div>
+                        <div id="hintRadar" class="context-hint hint-radar">
+                            <span>🕸</span>
+                            <span>{% blocktranslate %}O Radar exibe <strong>todas as métricas</strong> simultaneamente. Passe o mouse sobre os números nos anéis para ver o nível de qualidade.{% endblocktranslate %}</span>
+                        </div>
+
+                        <div class="chart-wrapper" id="chartWrapper">
+                            <canvas id="barChart"></canvas>
+                        </div>
+
+                        <div class="chart-legend" id="chartLegend"></div>
+                    </div>
                 </div>
-                <div class="metrica-counter" id="metricaCounter"></div>
-            </div>
-        </div>
 
-        <div id="hintBar" class="context-hint hint-badge visible">
-            <span>📐</span>
-            <span id="badgeText">Selecione uma métrica</span>
-        </div>
-        <div id="hintStacked" class="context-hint hint-stacked">
-            <span>📊</span>
-            <span>O gráfico empilhado exibe <strong>todas as métricas</strong> acumuladas por LLM — permite comparar o score total e a composição de cada modelo.</span>
-        </div>
-        <div id="hintRadar" class="context-hint hint-radar">
-            <span>🕸</span>
-            <span>O Radar exibe <strong>todas as métricas</strong> simultaneamente. Passe o mouse sobre os números nos anéis para ver o nível de qualidade.</span>
-        </div>
+                <div id="viewComparativo" hidden>
+                    <div class="comparativo-layout">
+                        <section>
+                            <article class="comp-panel">
+                                <div class="comp-head">
+                                    <div>
+                                        <div class="comp-title">{% translate "Especialistas vs Juízes Online" %}</div>
+                                        <div class="comp-copy">{% translate "Barras agrupadas por modelo respondente · diferença = média dos juízes − média dos especialistas." %}</div>
+                                    </div>
+                                    <div class="metrica-pills" id="compPills"></div>
+                                </div>
+                                <div id="compChartArea">
+                                    <div class="comp-chart-wrap">
+                                        <canvas id="compChart"></canvas>
+                                    </div>
+                                    <div class="comp-mini-strip">
+                                        <div class="mini-card">
+                                            <div class="mini-label">{% translate "Métrica atual" %}</div>
+                                            <div class="mini-value" id="compMiniMetric">—</div>
+                                        </div>
+                                        <div class="mini-card">
+                                            <div class="mini-label">{% translate "Top especialistas" %}</div>
+                                            <div class="mini-value" id="compMiniTopEsp">—</div>
+                                        </div>
+                                        <div class="mini-card">
+                                            <div class="mini-label">{% translate "Top juízes" %}</div>
+                                            <div class="mini-value" id="compMiniTopJud">—</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </article>
 
-        <div class="chart-wrapper" id="chartWrapper">
-            <canvas id="barChart"></canvas>
-        </div>
+                            <article class="comp-panel">
+                                <div class="comp-head">
+                                    <div>
+                                        <div class="comp-title">{% translate "Detalhes por Modelo" %}</div>
+                                        <div class="comp-copy">{% translate "Médias da métrica selecionada e volume de notas em cada lado." %}</div>
+                                    </div>
+                                </div>
+                                <div class="comp-table-wrap">
+                                    <table class="comp-table">
+                                        <thead>
+                                            <tr>
+                                                <th>{% translate "Modelo" %}</th>
+                                                <th>{% translate "Especialistas" %}</th>
+                                                <th>{% translate "Notas humanas" %}</th>
+                                                <th>{% translate "Juízes" %}</th>
+                                                <th>{% translate "Notas juízes" %}</th>
+                                                <th>{% translate "Diferença" %}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="compTable"></tbody>
+                                    </table>
+                                </div>
+                            </article>
+                        </section>
 
-        <div class="chart-legend" id="chartLegend"></div>
-    </div>
-    </div>
-
-    <div id="viewComparativo" hidden>
-        <div class="comparativo-layout">
-            <section>
-                <article class="comp-panel">
-                    <div class="comp-head">
-                        <div>
-                            <div class="comp-title">Especialistas vs Juízes Online</div>
-                            <div class="comp-copy">Barras agrupadas por modelo respondente · diferença = média dos juízes − média dos especialistas.</div>
-                        </div>
-                        <div class="metrica-pills" id="compPills"></div>
+                        <aside>
+                            <article class="comp-panel">
+                                <div class="comp-head">
+                                    <div>
+                                        <div class="comp-title">{% translate "Maiores Divergências" %}</div>
+                                        <div class="comp-copy">{% translate "Pares (métrica × modelo) onde juízes e especialistas mais discordaram." %}</div>
+                                    </div>
+                                </div>
+                                <div class="divergence-list" id="compDivergences"></div>
+                            </article>
+                        </aside>
                     </div>
-                    <div id="compChartArea">
-                        <div class="comp-chart-wrap">
-                            <canvas id="compChart"></canvas>
-                        </div>
-                        <div class="comp-mini-strip">
-                            <div class="mini-card">
-                                <div class="mini-label">Métrica atual</div>
-                                <div class="mini-value" id="compMiniMetric">—</div>
-                            </div>
-                            <div class="mini-card">
-                                <div class="mini-label">Top especialistas</div>
-                                <div class="mini-value" id="compMiniTopEsp">—</div>
-                            </div>
-                            <div class="mini-card">
-                                <div class="mini-label">Top juízes</div>
-                                <div class="mini-value" id="compMiniTopJud">—</div>
-                            </div>
-                        </div>
-                    </div>
-                </article>
-
-                <article class="comp-panel">
-                    <div class="comp-head">
-                        <div>
-                            <div class="comp-title">Detalhes por Modelo</div>
-                            <div class="comp-copy">Médias da métrica selecionada e volume de notas em cada lado.</div>
-                        </div>
-                    </div>
-                    <div class="comp-table-wrap">
-                        <table class="comp-table">
-                            <thead>
-                                <tr>
-                                    <th>Modelo</th>
-                                    <th>Especialistas</th>
-                                    <th>Notas humanas</th>
-                                    <th>Juízes</th>
-                                    <th>Notas juízes</th>
-                                    <th>Diferença</th>
-                                </tr>
-                            </thead>
-                            <tbody id="compTable"></tbody>
-                        </table>
-                    </div>
-                </article>
-            </section>
-
-            <aside>
-                <article class="comp-panel">
-                    <div class="comp-head">
-                        <div>
-                            <div class="comp-title">Maiores Divergências</div>
-                            <div class="comp-copy">Pares (métrica × modelo) onde juízes e especialistas mais discordaram.</div>
-                        </div>
-                    </div>
-                    <div class="divergence-list" id="compDivergences"></div>
-                </article>
-            </aside>
+                </div>
+            </main>
         </div>
     </div>
-
-</div>
-    </main>
-</div>
 
 <script>
     // ── DADOS DO DJANGO ──
@@ -657,8 +527,6 @@
     const METRICAS_META = DASHBOARD_PAYLOAD.metricas || [];
     const RESUMO       = DASHBOARD_PAYLOAD.resumo  || {};
 
-    // METRICAS_DATA tem o formato { nomeMetrica: { id, pontuacao_maxima, dados: { llm: valor } } }
-    // É reconstruído a cada troca de modo (especialistas | juízes) para reaproveitar todo o code path de barras/empilhadas/radar.
     let METRICAS_DATA  = {};
     let metricaNomes   = [];
     let currentMode    = 'especialistas';
@@ -673,42 +541,42 @@
             sourceKey:   'especialistas',
             countKey:    'especialistas_count',
             label:       'especialistas',
-            badge:       'Especialistas humanos',
-            desc:        '<strong>Especialistas:</strong> médias das avaliações coletadas via formulários com avaliadores humanos.',
-            chartTitle:  'Médias dos Especialistas por Modelo',
-            chartCopy:   'Notas médias atribuídas pelos avaliadores humanos para cada modelo de linguagem.',
-            actionLabel: 'Coletar mais avaliações →',
+            badge:       '{% translate "Especialistas humanos" %}',
+            desc:        '{% blocktranslate %}<strong>Especialistas:</strong> médias das avaliações coletadas via formulários com avaliadores humanos.{% endblocktranslate %}',
+            chartTitle:  '{% translate "Médias dos Especialistas por Modelo" %}',
+            chartCopy:   '{% translate "Notas médias atribuídas pelos avaliadores humanos para cada modelo de linguagem." %}',
+            actionLabel: '{% translate "Coletar mais avaliações →" %}',
             actionUrl:   URL_FORMULARIOS,
-            emptyIcon:   '🧑‍💼',
-            emptyMsg:    'Nenhuma avaliação humana registrada ainda. Crie um formulário e compartilhe o link com especialistas.',
-            emptyAction: { label: 'Ir para Formulários', url: URL_FORMULARIOS },
+            emptyIcon:   `<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+            emptyMsg:    '{% translate "Nenhuma avaliação humana registrada ainda. Crie um formulário e compartilhe o link com especialistas." %}',
+            emptyAction: { label: '{% translate "Ir para Formulários" %}', url: URL_FORMULARIOS },
         },
         juizes: {
             sourceKey:   'juizes',
             countKey:    'juizes_count',
             label:       'juízes online',
-            badge:       'LLMs como juízes',
-            desc:        '<strong>Juízes Online:</strong> médias das notas atribuídas por LLMs atuando como juízes nas respostas geradas.',
-            chartTitle:  'Médias dos Juízes Online por Modelo',
-            chartCopy:   'Notas médias atribuídas por LLMs avaliadoras para cada modelo de linguagem respondente.',
-            actionLabel: 'Executar juízes →',
+            badge:       '{% translate "LLMs como juízes" %}',
+            desc:        '{% blocktranslate %}<strong>Juízes Online:</strong> médias das notas atribuídas por LLMs atuando como juízes nas respostas geradas.{% endblocktranslate %}',
+            chartTitle:  '{% translate "Médias dos Juízes Online por Modelo" %}',
+            chartCopy:   '{% translate "Notas médias atribuídas por LLMs avaliadoras para cada modelo de linguagem respondente." %}',
+            actionLabel: '{% translate "Executar juízes →" %}',
             actionUrl:   URL_JUIZES,
-            emptyIcon:   '🤖',
-            emptyMsg:    'Nenhuma avaliação por juízes online registrada. Execute o comparador de juízes para gerar dados.',
-            emptyAction: { label: 'Ir para Juízes Online', url: URL_JUIZES },
+            emptyIcon:   `<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="10" rx="2"/><path d="M12 4v4"/><path d="M7 18v2"/><path d="M17 18v2"/><circle cx="8" cy="13" r="1.5"/><circle cx="16" cy="13" r="1.5"/></svg>`,
+            emptyMsg:    '{% translate "Nenhuma avaliação por juízes online registrada. Execute o comparador de juízes para gerar dados." %}',
+            emptyAction: { label: '{% translate "Ir para Juízes Online" %}', url: URL_JUIZES },
         },
         comparativo: {
             sourceKey:   null,
             countKey:    null,
             label:       'comparativo',
-            badge:       'Especialistas × Juízes',
-            desc:        '<strong>Comparativo:</strong> médias dos especialistas vs juízes online lado a lado, com diferença, divergências e tabela detalhada.',
+            badge:       '{% translate "Especialistas × Juízes" %}',
+            desc:        '{% blocktranslate %}<strong>Comparativo:</strong> médias dos especialistas vs juízes online lado a lado, com diferença, divergências e tabela detalhada.{% endblocktranslate %}',
             chartTitle:  null,
             chartCopy:   null,
             actionLabel: null,
             actionUrl:   null,
-            emptyIcon:   '⚖️',
-            emptyMsg:    'Para comparar é preciso ter avaliações dos dois lados. Faltam dados de especialistas ou juízes.',
+            emptyIcon:   `<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/></svg>`,
+            emptyMsg:    '{% translate "Para comparar é preciso ter avaliações dos dois lados. Faltam dados de especialistas ou juízes." %}',
             emptyAction: null,
         },
     };
@@ -725,16 +593,13 @@
 
     // ── LABELS SEMÂNTICOS DOS ANÉIS LIKERT ──
     const RING_LABELS = {
-        1: { text: 'Muito Ruim', color: '#ff5566' },
-        2: { text: 'Ruim',       color: '#ff8c00' },
-        3: { text: 'Regular',    color: '#ffb400' },
-        4: { text: 'Bom',        color: '#7df6c2' },
-        5: { text: 'Excelente',  color: '#00ff9f' },
+        1: { text: '{% translate "Muito Ruim" %}', color: '#ff5566' },
+        2: { text: '{% translate "Ruim" %}',       color: '#ff8c00' },
+        3: { text: '{% translate "Regular" %}',    color: '#ffb400' },
+        4: { text: '{% translate "Bom" %}',        color: '#7df6c2' },
+        5: { text: '{% translate "Excelente" %}',  color: '#00ff9f' },
     };
 
-    // ════════════════════════════════════════════════════════
-    // PLUGIN — labels nos anéis do Radar
-    // ════════════════════════════════════════════════════════
     const radarRingLabelPlugin = {
         id: 'radarRingLabels',
         _hovered: null,
@@ -764,7 +629,7 @@
                 const isHov  = this._hovered === nivelNum;
 
                 if (isHov) {
-                    ctx.font = '600 11px "Space Grotesk", system-ui, sans-serif';
+                    ctx.font = '600 11px system-ui, sans-serif';
                     const padding = 6;
                     const textW   = ctx.measureText(text).width;
                     const boxW    = textW + padding * 2 + 22;
@@ -793,11 +658,11 @@
                     ctx.arc(badgeX, badgeY, badgeR, 0, Math.PI * 2);
                     ctx.fill();
                     ctx.fillStyle = color;
-                    ctx.font      = '700 10px "Space Grotesk", system-ui, sans-serif';
+                    ctx.font      = '700 10px system-ui, sans-serif';
                     ctx.fillText(nivel, badgeX, badgeY);
 
                     ctx.fillStyle = color;
-                    ctx.font      = '600 11px "Space Grotesk", system-ui, sans-serif';
+                    ctx.font      = '600 11px system-ui, sans-serif';
                     ctx.textAlign = 'left';
                     ctx.fillText(text, badgeX + badgeR + 5, dotY);
                     ctx.textAlign = 'center';
@@ -814,7 +679,7 @@
                     ctx.stroke();
 
                     ctx.fillStyle = color;
-                    ctx.font      = '700 10px "Space Grotesk", system-ui, sans-serif';
+                    ctx.font      = '700 10px system-ui, sans-serif';
                     ctx.fillText(nivel, dotX, dotY);
                 }
             });
@@ -880,9 +745,6 @@
 
     Chart.register(radarRingLabelPlugin);
 
-    // ════════════════════════════════════════════
-    // HELPERS GERAIS
-    // ════════════════════════════════════════════
     function escapeHtml(value) {
         return String(value ?? "")
             .replaceAll("&", "&amp;")
@@ -921,9 +783,6 @@
         );
     }
 
-    // ════════════════════════════════════════════
-    // STATS ROW (CONTEÚDO DINÂMICO POR MODO)
-    // ════════════════════════════════════════════
     function statCard(label, value, sub, opts = {}) {
         const style = opts.small ? 'font-size:18px;margin-top:4px;' : '';
         return `
@@ -942,38 +801,38 @@
 
         if (mode === 'especialistas') {
             row.innerHTML = [
-                statCard('Notas coletadas', RESUMO.notas_especialistas ?? 0, `${RESUMO.avaliadores_humanos ?? 0} avaliadores humanos`),
-                statCard('LLMs avaliados', totalModelos, 'modelos no comparativo'),
-                statCard('Métricas ativas', totalMetricas, 'critérios de avaliação'),
-                statCard('Métrica atual', '—', 'em visualização', { id: 'statAtual', small: true }),
-                statCard('Melhor desempenho', '—', 'nesta métrica', { id: 'statMelhor', small: true }),
+                statCard('{% translate "Notas coletadas" %}', RESUMO.notas_especialistas ?? 0, `${RESUMO.avaliadores_humanos ?? 0} {% translate "avaliadores humanos" %}`),
+                statCard('{% translate "LLMs avaliados" %}', totalModelos, '{% translate "modelos no comparativo" %}'),
+                statCard('{% translate "Métricas ativas" %}', totalMetricas, '{% translate "critérios de avaliação" %}'),
+                statCard('{% translate "Métrica atual" %}', '—', '{% translate "em visualização" %}', { id: 'statAtual', small: true }),
+                statCard('{% translate "Melhor desempenho" %}', '—', '{% translate "nesta métrica" %}', { id: 'statMelhor', small: true }),
             ].join('');
         } else if (mode === 'juizes') {
             row.innerHTML = [
-                statCard('Notas dos juízes', RESUMO.notas_juizes ?? 0, `${RESUMO.juizes_online ?? 0} LLMs atuando como juízes`),
-                statCard('LLMs avaliados', totalModelos, 'modelos no comparativo'),
-                statCard('Métricas ativas', totalMetricas, 'critérios de avaliação'),
-                statCard('Métrica atual', '—', 'em visualização', { id: 'statAtual', small: true }),
-                statCard('Melhor desempenho', '—', 'nesta métrica', { id: 'statMelhor', small: true }),
+                statCard('{% translate "Notas dos juízes" %}', RESUMO.notas_juizes ?? 0, `${RESUMO.juizes_online ?? 0} {% translate "LLMs atuando como juízes" %}`),
+                statCard('{% translate "LLMs avaliados" %}', totalModelos, '{% translate "modelos no comparativo" %}'),
+                statCard('{% translate "Métricas ativas" %}', totalMetricas, '{% translate "critérios de avaliação" %}'),
+                statCard('{% translate "Métrica atual" %}', '—', '{% translate "em visualização" %}', { id: 'statAtual', small: true }),
+                statCard('{% translate "Melhor desempenho" %}', '—', '{% translate "nesta métrica" %}', { id: 'statMelhor', small: true }),
             ].join('');
         } else {
             const desvio = RESUMO.desvio_medio;
             const desvioTxt = (desvio === null || desvio === undefined) ? '—' : Number(desvio).toFixed(2);
             row.innerHTML = [
-                statCard('Notas especialistas', RESUMO.notas_especialistas ?? 0, `${RESUMO.avaliadores_humanos ?? 0} avaliadores humanos`),
-                statCard('Notas juízes', RESUMO.notas_juizes ?? 0, `${RESUMO.juizes_online ?? 0} LLMs como juízes`),
-                statCard('Modelos', totalModelos, 'LLMs respondentes'),
-                statCard('Métricas', totalMetricas, 'critérios ativos'),
-                statCard('Desvio médio', desvioTxt, `${RESUMO.pontos_comparaveis ?? 0} pontos · ${alignmentLabel(desvio)}`),
+                statCard('{% translate "Notas especialistas" %}', RESUMO.notas_especialistas ?? 0, `${RESUMO.avaliadores_humanos ?? 0} {% translate "avaliadores humanos" %}`),
+                statCard('{% translate "Notas juízes" %}', RESUMO.notas_juizes ?? 0, `${RESUMO.juizes_online ?? 0} {% translate "LLMs como juízes" %}`),
+                statCard('{% translate "Modelos" %}', totalModelos, '{% translate "LLMs respondentes" %}'),
+                statCard('{% translate "Métricas" %}', totalMetricas, '{% translate "critérios ativos" %}'),
+                statCard('{% translate "Desvio médio" %}', desvioTxt, `${RESUMO.pontos_comparaveis ?? 0} {% translate "pontos" %} · ${alignmentLabel(desvio)}`),
             ].join('');
         }
     }
 
     function alignmentLabel(value) {
-        if (value === null || value === undefined) return 'sem pares comparáveis';
-        if (value <= 0.5) return 'alta convergência';
-        if (value <= 1)   return 'convergência moderada';
-        return 'divergência relevante';
+        if (value === null || value === undefined) return '{% translate "sem pares comparáveis" %}';
+        if (value <= 0.5) return '{% translate "alta convergência" %}';
+        if (value <= 1)   return '{% translate "convergência moderada" %}';
+        return '{% translate "divergência relevante" %}';
     }
 
     function updateModeBar(mode) {
@@ -992,9 +851,6 @@
         }
     }
 
-    // ════════════════════════════════════════════
-    // SETMODE — troca o modo de visualização
-    // ════════════════════════════════════════════
     function setMode(mode) {
         if (!MODE_CONFIG[mode]) return;
         currentMode = mode;
@@ -1037,7 +893,6 @@
                 return;
             }
 
-            // canvas pode ter sido substituído por mensagem de empty state — recoloca
             if (!document.getElementById('barChart')) {
                 wrapper.innerHTML = '<canvas id="barChart"></canvas>';
             }
@@ -1060,7 +915,7 @@
 
     function emptyStateHtml(cfg) {
         const action = cfg.emptyAction
-            ? `<a href="${cfg.emptyAction.url}" style="margin-top:14px;display:inline-block;">${escapeHtml(cfg.emptyAction.label)} →</a>`
+            ? `<a class="btn btn-ghost" href="${cfg.emptyAction.url}" style="margin-top:14px;display:inline-block;">${escapeHtml(cfg.emptyAction.label)} →</a>`
             : '';
         return `
             <div class="empty-state">
@@ -1071,16 +926,10 @@
         `;
     }
 
-    // ════════════════════════════════════════════
-    // INIT
-    // ════════════════════════════════════════════
     function init() {
         setMode(MODO_INICIAL || 'especialistas');
     }
 
-    // ════════════════════════════════════════════
-    // TIPO DE GRÁFICO
-    // ════════════════════════════════════════════
     function setChartType(type) {
         if (chartType === type) return;
         chartType = type;
@@ -1101,14 +950,11 @@
         document.getElementById('btnPrev').classList.toggle('disabled-nav', multiMode);
         document.getElementById('btnNext').classList.toggle('disabled-nav', multiMode);
         document.getElementById('statAtual').textContent =
-            multiMode ? 'Todas' : metricaNomes[indiceSelecionado];
+            multiMode ? '{% translate "Todas" %}' : metricaNomes[indiceSelecionado];
 
         destroyAndRebuild();
     }
 
-    // ════════════════════════════════════════════
-    // PILLS / NAVEGAÇÃO
-    // ════════════════════════════════════════════
     function renderPills() {
         const container = document.getElementById('metricaPills');
         container.innerHTML = '';
@@ -1124,7 +970,7 @@
         });
 
         document.getElementById('metricaCounter').textContent = multiMode
-            ? `${metricaNomes.length} métricas`
+            ? `${metricaNomes.length} {% translate "métricas" %}`
             : `${indiceSelecionado + 1} / ${metricaNomes.length}`;
 
         document.getElementById('btnPrev').disabled = multiMode || indiceSelecionado === 0;
@@ -1138,9 +984,6 @@
         renderChart(novo);
     }
 
-    // ════════════════════════════════════════════
-    // RENDER DISPATCHER
-    // ════════════════════════════════════════════
     function renderChart(index) {
         indiceSelecionado = index;
         renderPills();
@@ -1170,16 +1013,13 @@
         else                              renderBar(indiceSelecionado);
     }
 
-    // ════════════════════════════════════════════
-    // MODO BARRAS SIMPLES
-    // ════════════════════════════════════════════
     function renderBar(index) {
         const nomeMetrica = metricaNomes[index];
         const metricaInfo = METRICAS_DATA[nomeMetrica];
         const maxScore    = metricaInfo.pontuacao_maxima || 5;
 
         document.getElementById('badgeText').textContent =
-            `${nomeMetrica} · Pontuação máxima: ${maxScore}`;
+            `${nomeMetrica} · {% translate "Pontuação máxima:" %} ${maxScore}`;
         document.getElementById('statAtual').textContent = nomeMetrica;
 
         const labels = LLMS;
@@ -1237,14 +1077,11 @@
         labels.forEach((l, i) => {
             legend.appendChild(makeLegendItem(
                 PALETTE[i % PALETTE.length].border,
-                `${l} — ${valores[i] > 0 ? valores[i] + ' / ' + maxScore : 'Sem dados'}`
+                `${l} — ${valores[i] > 0 ? valores[i] + ' / ' + maxScore : '{% translate "Sem dados" %}'}`
             ));
         });
     }
 
-    // ════════════════════════════════════════════
-    // MODO BARRAS EMPILHADAS
-    // ════════════════════════════════════════════
     function renderStacked() {
         const labels   = LLMS;
         const datasets = metricaNomes.map((nomeMetrica, mi) => {
@@ -1272,7 +1109,7 @@
         const melhorIdx = totais.indexOf(Math.max(...totais));
         document.getElementById('statMelhor').textContent =
             totais[melhorIdx] > 0 ? LLMS[melhorIdx] : '—';
-        document.getElementById('statAtual').textContent = 'Todas';
+        document.getElementById('statAtual').textContent = '{% translate "Todas" %}';
 
         buildLegendStacked();
 
@@ -1293,20 +1130,20 @@
                         borderColor: 'rgba(0,255,160,0.3)',
                         borderWidth: 1, padding: 14,
                         titleColor: '#7df6c2', bodyColor: '#e5fef6',
-                        titleFont: { family: 'Space Grotesk', size: 13, weight: '600' },
-                        bodyFont:  { family: 'Space Grotesk', size: 13 },
+                        titleFont: { family: 'system-ui, sans-serif', size: 13, weight: '600' },
+                        bodyFont:  { family: 'system-ui, sans-serif', size: 13 },
                         callbacks: {
                             title:  (items) => `🤖 ${items[0].label}`,
                             label:  (item)  => {
                                 const v   = item.raw;
                                 const m   = item.dataset.label;
                                 const max = METRICAS_DATA[m].pontuacao_maxima || 5;
-                                if (!v) return `  ${m}: Sem dados`;
+                                if (!v) return `  ${m}: {% translate "Sem dados" %}`;
                                 return `  ${m}: ${v} / ${max}`;
                             },
                             footer: (items) => {
                                 const total = items.reduce((s, i) => s + i.raw, 0);
-                                return `  ─────────────\n  Score total: ${total.toFixed(1)}`;
+                                return `  ─────────────\n  {% translate "Score total:" %} ${total.toFixed(1)}`;
                             }
                         }
                     }
@@ -1316,9 +1153,9 @@
                     y: {
                         stacked: true, min: 0, max: yMax,
                         grid:   { color: 'rgba(0,255,160,0.07)', drawBorder: false },
-                        ticks:  { color: '#6b7b8d', font: { family: 'Space Grotesk', size: 12 }, stepSize: Math.ceil(yMax / 8) },
+                        ticks:  { color: '#6b7b8d', font: { family: 'system-ui, sans-serif', size: 12 }, stepSize: Math.ceil(yMax / 8) },
                         border: { color: 'rgba(0,255,160,0.1)' },
-                        title:  { display: true, text: 'Score acumulado', color: '#7df6c2', font: { family: 'Space Grotesk', size: 13, weight: '600' } }
+                        title:  { display: true, text: '{% translate "Score acumulado" %}', color: '#7df6c2', font: { family: 'system-ui, sans-serif', size: 13, weight: '600' } }
                     }
                 }
             }
@@ -1333,9 +1170,6 @@
         });
     }
 
-    // ════════════════════════════════════════════
-    // MODO RADAR
-    // ════════════════════════════════════════════
     function renderRadar() {
         const maxGlobal = Math.max(
             ...metricaNomes.map(m => METRICAS_DATA[m].pontuacao_maxima || 5)
@@ -1366,7 +1200,7 @@
         const melhorIdx = totais.indexOf(Math.max(...totais));
         document.getElementById('statMelhor').textContent =
             totais[melhorIdx] > 0 ? LLMS[melhorIdx] : '—';
-        document.getElementById('statAtual').textContent = 'Todas';
+        document.getElementById('statAtual').textContent = '{% translate "Todas" %}';
 
         buildLegendRadar(totais);
 
@@ -1384,8 +1218,8 @@
                         borderColor: 'rgba(0,255,160,0.3)',
                         borderWidth: 1, padding: 14,
                         titleColor: '#7df6c2', bodyColor: '#e5fef6',
-                        titleFont: { family: 'Space Grotesk', size: 13, weight: '600' },
-                        bodyFont:  { family: 'Space Grotesk', size: 13 },
+                        titleFont: { family: 'system-ui, sans-serif', size: 13, weight: '600' },
+                        bodyFont:  { family: 'system-ui, sans-serif', size: 13 },
                         callbacks: {
                             title: (items) => items[0].label,
                             label: (item)  => {
@@ -1393,7 +1227,7 @@
                                 const m   = metricaNomes[item.dataIndex];
                                 const max = METRICAS_DATA[m].pontuacao_maxima || 5;
                                 const sem = RING_LABELS[Math.round(v)]?.text ?? '';
-                                if (!v) return `  ${item.dataset.label}: Sem dados`;
+                                if (!v) return `  ${item.dataset.label}: {% translate "Sem dados" %}`;
                                 return `  ${item.dataset.label}: ${v} / ${max}${sem ? '  · ' + sem : ''}`;
                             }
                         }
@@ -1406,13 +1240,13 @@
                         grid:        { color: 'rgba(0,255,160,0.1)'  },
                         pointLabels: {
                             color: '#7df6c2',
-                            font:  { family: 'Space Grotesk', size: 12, weight: '500' },
+                            font:  { family: 'system-ui, sans-serif', size: 12, weight: '500' },
                             callback: (l) => l.length > 14 ? l.slice(0, 13) + '…' : l,
                         },
                         ticks: {
                             color:         '#6b7b8d',
                             backdropColor: 'transparent',
-                            font:          { family: 'Space Grotesk', size: 10 },
+                            font:          { family: 'system-ui, sans-serif', size: 10 },
                             stepSize:      1,
                             maxTicksLimit: maxGlobal + 1,
                             callback: (v) => Number.isInteger(v) ? v : '',
@@ -1430,7 +1264,7 @@
         LLMS.forEach((llm, i) => {
             legend.appendChild(makeLegendItem(
                 PALETTE[i % PALETTE.length].border,
-                `${llm} — score total: ${totais[i].toFixed(1)}`
+                `${llm} — {% translate "score total:" %} ${totais[i].toFixed(1)}`
             ));
         });
 
@@ -1442,17 +1276,14 @@
             border-radius: 8px; font-size: 11px; color: #6b7b8d;
             display: flex; align-items: center; gap: 8px;
         `;
-        tip.innerHTML = `<span>💡</span><span>Passe o mouse sobre os <strong style="color:#00cfff">números nos anéis</strong> para ver a descrição do nível.</span>`;
+        tip.innerHTML = `<span>💡</span><span>{% blocktranslate %}Passe o mouse sobre os <strong style="color:#00cfff">números nos anéis</strong> para ver a descrição do nível.{% endblocktranslate %}</span>`;
         legend.appendChild(tip);
     }
 
-    // ════════════════════════════════════════════
-    // HELPERS COMPARTILHADOS
-    // ════════════════════════════════════════════
     function xScaleDefaults() {
         return {
             grid:   { color: 'rgba(0,255,160,0.05)', drawBorder: false },
-            ticks:  { color: '#7df6c2', font: { family: 'Space Grotesk', size: 13, weight: '500' } },
+            ticks:  { color: '#7df6c2', font: { family: 'system-ui, sans-serif', size: 13, weight: '500' } },
             border: { color: 'rgba(0,255,160,0.1)' }
         };
     }
@@ -1461,9 +1292,9 @@
         return {
             min: 0, max: maxScore,
             grid:   { color: 'rgba(0,255,160,0.07)', drawBorder: false },
-            ticks:  { color: '#6b7b8d', font: { family: 'Space Grotesk', size: 12 }, stepSize: maxScore <= 5 ? 1 : maxScore <= 10 ? 2 : 5 },
+            ticks:  { color: '#6b7b8d', font: { family: 'system-ui, sans-serif', size: 12 }, stepSize: maxScore <= 5 ? 1 : maxScore <= 10 ? 2 : 5 },
             border: { color: 'rgba(0,255,160,0.1)' },
-            title:  { display: true, text: 'Nota', color: '#7df6c2', font: { family: 'Space Grotesk', size: 13, weight: '600' } }
+            title:  { display: true, text: '{% translate "Nota" %}', color: '#7df6c2', font: { family: 'system-ui, sans-serif', size: 13, weight: '600' } }
         };
     }
 
@@ -1473,14 +1304,14 @@
             borderColor: 'rgba(0,255,160,0.3)',
             borderWidth: 1, padding: 14,
             titleColor: '#7df6c2', bodyColor: '#e5fef6',
-            titleFont: { family: 'Space Grotesk', size: 13, weight: '600' },
-            bodyFont:  { family: 'Space Grotesk', size: 14 },
+            titleFont: { family: 'system-ui, sans-serif', size: 13, weight: '600' },
+            bodyFont:  { family: 'system-ui, sans-serif', size: 14 },
             callbacks: {
                 title:      (items) => items[0].label,
                 label:      (item)  => {
                     const v = item.raw;
-                    if (!v) return '  Sem avaliações registradas';
-                    return `  Média: ${v} / ${maxScore}`;
+                    if (!v) return '  {% translate "Sem avaliações registradas" %}';
+                    return `  {% translate "Média:" %} ${v} / ${maxScore}`;
                 },
                 afterLabel: (item)  => {
                     const v = item.raw;
@@ -1506,9 +1337,6 @@
         return item;
     }
 
-    // ════════════════════════════════════════════════════════════════
-    // CAPTURA DE GRÁFICO — tema claro para PDF
-    // ════════════════════════════════════════════════════════════════
     function captureChartType(type, metricaIndex) {
         return new Promise((resolve) => {
             const prevType  = chartType;
@@ -1519,10 +1347,9 @@
 
             if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
 
-            const origAnimation       = Chart.defaults.animation;
-            Chart.defaults.animation  = { duration: 0 };
+            const origAnimation      = Chart.defaults.animation;
+            Chart.defaults.animation = { duration: 0 };
 
-            // ── Aplica fundo branco no wrapper e canvas ──
             const canvas  = document.getElementById('barChart');
             const wrapper = document.getElementById('chartWrapper');
 
@@ -1531,20 +1358,16 @@
             wrapper.style.background = '#ffffff';
             canvas.style.background  = '#ffffff';
 
-            // Renderiza o gráfico no tipo solicitado
             if      (type === 'radar')   renderRadar();
             else if (type === 'stacked') renderStacked();
             else                         renderBar(metricaIndex);
 
-            // Adapta cores do gráfico ativo para fundo claro
             if (chartInstance) {
-                // Eixo X
                 if (chartInstance.options.scales?.x) {
                     chartInstance.options.scales.x.ticks.color  = '#1a1a2e';
                     chartInstance.options.scales.x.grid.color   = 'rgba(0,0,0,0.08)';
                     chartInstance.options.scales.x.border.color = 'rgba(0,0,0,0.15)';
                 }
-                // Eixo Y
                 if (chartInstance.options.scales?.y) {
                     chartInstance.options.scales.y.ticks.color  = '#333344';
                     chartInstance.options.scales.y.grid.color   = 'rgba(0,0,0,0.08)';
@@ -1552,7 +1375,6 @@
                     if (chartInstance.options.scales.y.title)
                         chartInstance.options.scales.y.title.color = '#1a1a2e';
                 }
-                // Eixo Radar
                 if (chartInstance.options.scales?.r) {
                     chartInstance.options.scales.r.angleLines.color    = 'rgba(0,0,0,0.15)';
                     chartInstance.options.scales.r.grid.color          = 'rgba(0,0,0,0.1)';
@@ -1561,7 +1383,6 @@
                     chartInstance.options.scales.r.ticks.backdropColor = '#ffffff';
                 }
 
-                // Cores dos datasets — sólidas e visíveis no branco
                 chartInstance.data.datasets.forEach((ds, i) => {
                     const p = PALETTE[i % PALETTE.length];
                     if (type === 'bar') {
@@ -1581,7 +1402,6 @@
                 chartInstance.update('none');
             }
 
-            // Aguarda dois frames para garantir pintura completa
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
                     html2canvas(canvas, {
@@ -1592,7 +1412,6 @@
                     }).then(capturedCanvas => {
                         const dataURL = capturedCanvas.toDataURL('image/png', 1.0);
 
-                        // ── Restaura estado original ──
                         wrapper.style.background = prevWrapperBg;
                         canvas.style.background  = prevCanvasBg;
                         Chart.defaults.animation = origAnimation;
@@ -1611,9 +1430,6 @@
         });
     }
 
-    // ════════════════════════════════════════════════════════════════
-    // EXPORTAÇÃO PDF
-    // ════════════════════════════════════════════════════════════════
     function setOverlayProgress(pct, msg, step) {
         document.getElementById('pdfProgressBar').style.width = pct + '%';
         document.getElementById('pdfOverlayMsg').textContent  = msg;
@@ -1627,7 +1443,7 @@
 
         const overlay = document.getElementById('pdfOverlay');
         overlay.classList.add('visible');
-        setOverlayProgress(0, 'Carregando bibliotecas...', '');
+        setOverlayProgress(0, '{% translate "Carregando bibliotecas..." %}', '');
 
         try {
             const { jsPDF } = window.jspdf;
@@ -1642,7 +1458,6 @@
             const draw = (r, g, b) => pdf.setDrawColor(Math.round(r), Math.round(g), Math.round(b));
             const text = (r, g, b) => pdf.setTextColor(Math.round(r), Math.round(g), Math.round(b));
 
-            // ── Paleta PDF ──
             const BG    = { r: 5,   g: 10,  b: 17  };
             const GREEN = { r: 0,   g: 200, b: 120 };
             const CYAN  = { r: 0,   g: 160, b: 210 };
@@ -1741,7 +1556,7 @@
 
             // PÁGINA 1
             pageNum++;
-            setOverlayProgress(5, 'Gerando capa...', `Passo 1 / ${totalPages}`);
+            setOverlayProgress(5, '{% translate "Gerando capa..." %}', `{% translate "Passo" %} 1 / ${totalPages}`);
             await new Promise(r => setTimeout(r, 50));
 
             drawPageBg();
@@ -1767,8 +1582,8 @@
             const cardsY = 80;
 
             const statsCards = [
-                { label: 'LLMs Avaliados',  value: String(LLMS.length),                        sub: 'modelos',     c: GREEN },
-                { label: 'Metricas Ativas', value: String(metricaNomes.length),                 sub: 'criterios',   c: CYAN  },
+                { label: 'LLMs Avaliados',  value: String(LLMS.length),                        sub: 'modelos',      c: GREEN },
+                { label: 'Metricas Ativas', value: String(metricaNomes.length),                sub: 'criterios',    c: CYAN  },
                 { label: 'Melhor Score',    value: totaisGlobais[melhorGlobalIdx].toFixed(1),   sub: 'score total', c: GOLD  },
                 { label: 'Top LLM',         value: (LLMS[melhorGlobalIdx] || '-').slice(0, 10), sub: 'geral',       c: GREEN },
             ];
@@ -1845,7 +1660,7 @@
 
             // PÁGINA 2
             pageNum++;
-            setOverlayProgress(15, 'Capturando grafico empilhado...', `Passo 2 / ${totalPages}`);
+            setOverlayProgress(15, '{% translate "Capturando grafico empilhado..." %}', `{% translate "Passo" %} 2 / ${totalPages}`);
             await new Promise(r => setTimeout(r, 80));
 
             const imgStacked = await captureChartType('stacked');
@@ -1878,7 +1693,7 @@
 
             // PÁGINA 3
             pageNum++;
-            setOverlayProgress(30, 'Capturando grafico radar...', `Passo 3 / ${totalPages}`);
+            setOverlayProgress(30, '{% translate "Capturando grafico radar..." %}', `{% translate "Passo" %} 3 / ${totalPages}`);
             await new Promise(r => setTimeout(r, 80));
 
             const imgRadar = await captureChartType('radar');
@@ -1940,7 +1755,7 @@
             for (let mi = 0; mi < metricaNomes.length; mi++) {
                 pageNum++;
                 const progPct = 30 + Math.round((mi / metricaNomes.length) * 65);
-                setOverlayProgress(progPct, `Capturando metrica: ${metricaNomes[mi]}`, `Passo ${pageNum} / ${totalPages}`);
+                setOverlayProgress(progPct, `{% translate "Capturando metrica:" %} ${metricaNomes[mi]}`, `{% translate "Passo" %} ${pageNum} / ${totalPages}`);
                 await new Promise(r => setTimeout(r, 60));
 
                 const imgBar = await captureChartType('bar', mi);
@@ -2015,7 +1830,7 @@
                 );
             }
 
-            setOverlayProgress(98, 'Finalizando e salvando...', '');
+            setOverlayProgress(98, '{% translate "Finalizando e salvando..." %}', '');
             await new Promise(r => setTimeout(r, 100));
 
             chartType         = 'bar';
@@ -2027,12 +1842,12 @@
             const modoSlug = currentMode === 'juizes' ? 'juizes' : 'especialistas';
             pdf.save(`PonderSec_Dashboard_${modoSlug}_${dataStr}.pdf`);
 
-            setOverlayProgress(100, 'PDF gerado com sucesso!', '');
+            setOverlayProgress(100, '{% translate "PDF gerado com sucesso!" %}', '');
             await new Promise(r => setTimeout(r, 800));
 
         } catch (err) {
             console.error('[PDF Export Error]', err);
-            setOverlayProgress(0, `Erro: ${err.message}`, '');
+            setOverlayProgress(0, `{% translate "Erro:" %} ${err.message}`, '');
             await new Promise(r => setTimeout(r, 2500));
         } finally {
             overlay.classList.remove('visible');
@@ -2053,12 +1868,12 @@
                     <div class="comp-empty-icon">${MODE_CONFIG.comparativo.emptyIcon}</div>
                     <p>${escapeHtml(MODE_CONFIG.comparativo.emptyMsg)}</p>
                     <p style="margin-top:12px;font-size:12px;">
-                        <a href="${URL_FORMULARIOS}">Formulários</a> · <a href="${URL_JUIZES}">Juízes Online</a>
+                        <a href="${URL_FORMULARIOS}">{% translate "Formulários" %}</a> · <a href="${URL_JUIZES}">{% translate "Juízes Online" %}</a>
                     </p>
                 </div>`;
-            document.getElementById('compTable').innerHTML       = '<tr><td colspan="6" class="score-muted">Sem dados.</td></tr>';
+            document.getElementById('compTable').innerHTML       = `<tr><td colspan="6" class="score-muted">{% translate "Sem dados." %}</td></tr>`;
             document.getElementById('compPills').innerHTML       = '';
-            document.getElementById('compDivergences').innerHTML = '<div class="comp-empty" style="min-height:120px;">Sem pares comparáveis.</div>';
+            document.getElementById('compDivergences').innerHTML = `<div class="comp-empty" style="min-height:120px;">{% translate "Sem pares comparáveis." %}</div>`;
             return;
         }
 
@@ -2130,14 +1945,14 @@
                 labels,
                 datasets: [
                     {
-                        label: 'Especialistas',
+                        label: '{% translate "Especialistas" %}',
                         data: esp,
                         backgroundColor: 'rgba(0,255,160,0.72)',
                         borderColor: '#00ff9f',
                         borderWidth: 2, borderRadius: 8, borderSkipped: false,
                     },
                     {
-                        label: 'Juízes Online',
+                        label: '{% translate "Juízes Online" %}',
                         data: jud,
                         backgroundColor: 'rgba(187,134,252,0.72)',
                         borderColor: '#bb86fc',
@@ -2150,7 +1965,7 @@
                 animation: { duration: 500, easing: 'easeOutQuart' },
                 plugins: {
                     legend: {
-                        labels: { color: '#c5d9e3', font: { family: 'Space Grotesk', size: 12, weight: '700' } },
+                        labels: { color: '#c5d9e3', font: { family: 'system-ui, sans-serif', size: 12, weight: '700' } },
                     },
                     tooltip: {
                         backgroundColor: 'rgba(5,10,17,0.96)',
@@ -2159,7 +1974,7 @@
                         callbacks: {
                             label: (item) => {
                                 const v = item.raw;
-                                if (v === null || v === undefined) return `${item.dataset.label}: sem dados`;
+                                if (v === null || v === undefined) return `${item.dataset.label}: {% translate "sem dados" %}`;
                                 return `${item.dataset.label}: ${Number(v).toFixed(2)} / ${maxScore}`;
                             },
                         },
@@ -2167,7 +1982,7 @@
                 },
                 scales: {
                     x: { ...xScaleDefaults() },
-                    y: { ...yScaleDefaults(maxScore), title: { display: true, text: 'Nota média', color: '#7df6c2', font: { family: 'Space Grotesk', size: 13, weight: '600' } } },
+                    y: { ...yScaleDefaults(maxScore), title: { display: true, text: '{% translate "Nota média" %}', color: '#7df6c2', font: { family: 'system-ui, sans-serif', size: 13, weight: '600' } } },
                 },
             },
         });
@@ -2178,7 +1993,7 @@
     }
 
     function fmtScore(v, max) {
-        if (v === null || v === undefined) return 'Sem dados';
+        if (v === null || v === undefined) return '{% translate "Sem dados" %}';
         return `${Number(v).toFixed(2)} / ${max}`;
     }
 
@@ -2198,7 +2013,7 @@
         const { rows, maxScore } = comparativoRows();
         const tbody = document.getElementById('compTable');
         if (!rows.length) {
-            tbody.innerHTML = '<tr><td colspan="6" class="score-muted">Nenhum dado disponível.</td></tr>';
+            tbody.innerHTML = `<tr><td colspan="6" class="score-muted">{% translate "Nenhum dado disponível." %}</td></tr>`;
             return;
         }
         tbody.innerHTML = rows.map(row => `
@@ -2217,15 +2032,15 @@
         const items = DASHBOARD_PAYLOAD.maiores_divergencias || [];
         const container = document.getElementById('compDivergences');
         if (!items.length) {
-            container.innerHTML = '<div class="comp-empty" style="min-height:120px;">Sem pares com notas dos dois lados ainda.</div>';
+            container.innerHTML = `<div class="comp-empty" style="min-height:120px;">{% translate "Sem pares com notas dos dois lados ainda." %}</div>`;
             return;
         }
         container.innerHTML = items.map(item => {
             const direction = item.diferenca > 0
-                ? 'juízes mais generosos'
+                ? '{% translate "juízes mais generosos" %}'
                 : item.diferenca < 0
-                    ? 'juízes mais rigorosos'
-                    : 'mesma média';
+                    ? '{% translate "juízes mais rigorosos" %}'
+                    : '{% translate "mesma média" %}';
             return `
                 <article class="divergence-card">
                     <div class="divergence-top">
@@ -2242,16 +2057,13 @@
         }).join('');
     }
 
-    // ════════════════════════════════════════════
-    // BOOTSTRAP
-    // ════════════════════════════════════════════
     if (!METRICAS_META.length || !LLMS.length) {
         document.getElementById('statsRow').innerHTML = '';
         document.getElementById('viewSingle').innerHTML = `
             <div class="chart-card">
                 <div class="empty-state">
-                    <div class="empty-icon">📭</div>
-                    <p>Nenhuma métrica ou LLM cadastrada. Configure no <a href="{% url 'setup' %}" style="color:#00cfff;">Setup</a> antes de avaliar.</p>
+                    
+                    <p>{% blocktranslate %}Nenhuma métrica ou LLM cadastrada. Configure no <a href="{{ setup_url }}" style="color:#00cfff;">Setup</a> antes de avaliar.{% endblocktranslate %}</p>
                 </div>
             </div>`;
         document.getElementById('viewComparativo').hidden = true;
@@ -2260,6 +2072,6 @@
     } else {
         init();
     }
-    </script>
+</script>
 </body>
 </html>

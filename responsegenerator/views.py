@@ -168,7 +168,7 @@ def add_questoes(request):
                 categoria=categoria_obj,
             )
 
-            django_messages.success(request, created("Questão adicionada na categoria '%(categoria)s'!") % {
+            django_messages.success(request, _("Questão adicionada na categoria '%(categoria)s'!") % {
                 "categoria": categoria_obj.nome_categoria,
             })
         
@@ -210,7 +210,7 @@ def upload_perguntas(request):
                             Questao.objects.create(conteudo=texto_pergunta, usuario=request.user, categoria=categoria_padrao)
 
                 except (json.JSONDecodeError, AttributeError):
-                    django_messages.error(request, created("Arquivo JSON inválido ou mal formatado."))
+                    django_messages.error(request, _("Arquivo JSON inválido ou mal formatado."))
                     return redirect('questoes')
 
             else:
@@ -234,14 +234,14 @@ def upload_perguntas(request):
                         Questao.objects.create(conteudo=texto_pergunta, usuario=request.user, categoria=categoria_padrao)
 
             if perguntas:
-                django_messages.success(request, created("%(count)s perguntas importadas na categoria '%(categoria)s'!") % {
+                django_messages.success(request, _("%(count)s perguntas importadas na categoria '%(categoria)s'!") % {
                     "count": len(perguntas),
                     "categoria": categoria_padrao.nome_categoria,
                 })
             else:
-                django_messages.error(request, created("Nenhuma pergunta encontrada no arquivo."))
+                django_messages.error(request, _("Nenhuma pergunta encontrada no arquivo."))
         else:
-            django_messages.error(request, created("Nenhum arquivo foi enviado."))
+            django_messages.error(request, _("Nenhum arquivo foi enviado."))
 
     return redirect('questoes')
 

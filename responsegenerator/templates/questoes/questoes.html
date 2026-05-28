@@ -1546,15 +1546,7 @@ textarea:focus,
 
     <form id="uploadForm" method="POST" action="{% url 'upload_perguntas' %}" enctype="multipart/form-data">
       {% csrf_token %}
-      <div class="field-group">
-        <label class="field-label" for="categoriaUpload">{% translate "Categoria para o lote" %}</label>
-        <select class="filter-select" id="categoriaUpload" name="categoria_id">
-          <option value="">{% translate "Geral" %}</option>
-          {% for cat in categorias %}
-          <option value="{{ cat.id }}">{{ cat.nome_categoria }}</option>
-          {% endfor %}
-        </select>
-      </div>
+      
       <div class="drop-zone" id="dropZone" role="button" tabindex="0">
         <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#7dd3fc" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -1564,6 +1556,15 @@ textarea:focus,
         <strong>{% translate "Enviar arquivo TXT/JSON" %}</strong>
         <span>{% translate "Arraste o arquivo aqui ou clique para procurar." %}</span>
         <input type="file" id="fileInput" name="arquivo_upload" accept=".txt,.json,text/plain,application/json" style="display: none;">
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="categoriaUpload">{% translate "Categoria para o lote" %}</label>
+        <select class="filter-select" id="categoriaUpload" name="categoria_id">
+          <option value="">{% translate "Geral" %}</option>
+          {% for cat in categorias %}
+          <option value="{{ cat.id }}">{{ cat.nome_categoria }}</option>
+          {% endfor %}
+        </select>
       </div>
       <div class="file-name" id="fileName"></div>
 
