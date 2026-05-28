@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PonderSEC | Questões</title>
+<title>{% translate "PonderSEC | Questões" %}</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -1233,8 +1233,8 @@ textarea:focus,
       </div>
       <div class="hdr-info">
         <span class="hdr-tag">PonderSEC</span>
-        <span class="hdr-title">Questões</span>
-        <span class="hdr-sub">Cadastre, importe, pesquise e acompanhe perguntas de cibersegurança.</span>
+        <span class="hdr-title">{% translate "Questões" %}</span>
+        <span class="hdr-sub">{% translate "Cadastre, importe, pesquise e acompanhe perguntas de cibersegurança." %}</span>
       </div>
     </div>
   </header>
@@ -1251,25 +1251,25 @@ textarea:focus,
 
   <main>
     <section class="main-card question-hub" aria-labelledby="questionTitle">
-      <div class="section-kicker">Cadastro rápido</div>
+      <div class="section-kicker">{% translate "Cadastro rápido" %}</div>
       <div class="question-intro">
-        <h1 id="questionTitle">Digite uma pergunta</h1>
-        <p>Use a seta no campo para cadastrar ou envie TXT/JSON para importar várias perguntas.</p>
+        <h1 id="questionTitle">{% translate "Digite uma pergunta" %}</h1>
+        <p>{% translate "Use a seta no campo para cadastrar ou envie TXT/JSON para importar várias perguntas." %}</p>
       </div>
 
       <form class="question-form" method="POST" action="{% url 'add_questoes' %}" onsubmit="return bloquearBotao('btnSalvarQuestaoPrincipal')">
         {% csrf_token %}
         <div>
-          <label class="field-label" for="question">Pergunta</label>
+          <label class="field-label" for="question">{% translate "Pergunta" %}</label>
           <div class="question-input-shell">
-            <textarea id="question" name="pergunta" required placeholder="Ex.: Quais controles reduzem o risco de phishing em uma organização?"></textarea>
+            <textarea id="question" name="pergunta" required placeholder="{% translate 'Ex.: Quais controles reduzem o risco de phishing em uma organização?' %}"></textarea>
             <button
               class="send-question-btn"
               type="submit"
               id="btnSalvarQuestaoPrincipal"
               data-icon-submit="true"
-              aria-label="Adicionar questão"
-              title="Adicionar questão"
+              aria-label="{% translate 'Adicionar questão' %}"
+              title="{% translate 'Adicionar questão' %}"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M12 19V5"></path>
@@ -1281,15 +1281,15 @@ textarea:focus,
 
         <div class="question-meta-grid">
           <div class="field-group" style="margin-bottom: 0;">
-            <label class="field-label" for="categoriaQuestao">Categoria da questão</label>
+            <label class="field-label" for="categoriaQuestao">{% translate "Categoria da questão" %}</label>
             <select class="filter-select" id="categoriaQuestao" name="categoria_id">
-              <option value="">Geral</option>
+              <option value="">{% translate "Geral" %}</option>
               {% for cat in categorias %}
               <option value="{{ cat.id }}">{{ cat.nome_categoria }}</option>
               {% endfor %}
             </select>
           </div>
-          <button class="btn btn-secondary" type="button" onclick="abrirModalCategoria()">Cadastrar categoria</button>
+          <button class="btn btn-secondary" type="button" onclick="abrirModalCategoria()">{% translate "Cadastrar categoria" %}</button>
         </div>
 
         <div class="upload-callout">
@@ -1301,8 +1301,8 @@ textarea:focus,
             </svg>
           </div>
           <div>
-            <div class="upload-title">TXT/JSON = upload em lote de perguntas</div>
-            <div class="upload-desc">Use esta opção quando quiser importar várias perguntas de uma vez.</div>
+            <div class="upload-title">{% translate "TXT/JSON = upload em lote de perguntas" %}</div>
+            <div class="upload-desc">{% translate "Use esta opção quando quiser importar várias perguntas de uma vez." %}</div>
           </div>
           <button class="btn btn-upload" type="button" onclick="abrirModalUpload()">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -1310,43 +1310,43 @@ textarea:focus,
               <path d="M17 8l-5-5-5 5"></path>
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
             </svg>
-            Enviar TXT/JSON
+            {% translate "Enviar TXT/JSON" %}
           </button>
         </div>
 
         <div class="actions">
-          <button class="btn btn-ghost" type="reset" onclick="setStatus('Campo limpo. Pronto para cadastrar outra pergunta.', 'aviso')">
-            Limpar
+          <button class="btn btn-ghost" type="reset" data-reset-status="{% translate 'Campo limpo. Pronto para cadastrar outra pergunta.' %}" onclick="setStatus(this.dataset.resetStatus, 'aviso')">
+            {% translate "Limpar" %}
           </button>
           <button class="btn btn-ghost" type="button" onclick="scrollToHistory()">
-            Ver histórico
+            {% translate "Ver histórico" %}
           </button>
         </div>
       </form>
 
-      <div class="status-bar" id="status" role="status">Pronto para cadastrar perguntas.</div>
+      <div class="status-bar" id="status" role="status">{% translate "Pronto para cadastrar perguntas." %}</div>
     </section>
 
     <section class="history-panel" id="historico" aria-labelledby="historyTitle">
       <div class="section-heading">
         <div class="section-copy">
-          <div class="section-kicker">Histórico de questões</div>
-          <h2 id="historyTitle">Perguntas cadastradas</h2>
-          <p>Pesquise por conteúdo e filtre por status, IA vinculada, formulário ou categoria.</p>
+          <div class="section-kicker">{% translate "Histórico de questões" %}</div>
+          <h2 id="historyTitle">{% translate "Perguntas cadastradas" %}</h2>
+          <p>{% translate "Pesquise por conteúdo e filtre por status, IA vinculada, formulário ou categoria." %}</p>
         </div>
       </div>
 
-      <div class="stats-grid" aria-label="Resumo do histórico">
+      <div class="stats-grid" aria-label="{% translate 'Resumo do histórico' %}">
         <div class="stat-card">
-          <div class="stat-label">Total</div>
+          <div class="stat-label">{% translate "Total" %}</div>
           <div class="stat-value" id="statTotal">0</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">Respondidas</div>
+          <div class="stat-label">{% translate "Respondidas" %}</div>
           <div class="stat-value" id="statAnswered">0</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">Pendentes</div>
+          <div class="stat-label">{% translate "Pendentes" %}</div>
           <div class="stat-value" id="statPending">0</div>
         </div>
       </div>
@@ -1359,17 +1359,17 @@ textarea:focus,
               <path d="M21 21l-4.35-4.35"></path>
             </svg>
           </span>
-          <input type="text" class="search-input" id="searchInput" placeholder="Buscar em perguntas..." oninput="queueFilterHistory()">
+          <input type="text" class="search-input" id="searchInput" placeholder="{% translate 'Buscar em perguntas...' %}" oninput="queueFilterHistory()">
         </div>
 
-        <select id="statusFilter" class="filter-select" onchange="queueFilterHistory()" aria-label="Filtrar por status">
-          <option value="all">Todos os status</option>
-          <option value="answered">Respondidas</option>
-          <option value="pending">Pendentes</option>
+        <select id="statusFilter" class="filter-select" onchange="queueFilterHistory()" aria-label="{% translate 'Filtrar por status' %}">
+          <option value="all">{% translate "Todos os status" %}</option>
+          <option value="answered">{% translate "Respondidas" %}</option>
+          <option value="pending">{% translate "Pendentes" %}</option>
         </select>
 
-        <select id="aiFilter" class="filter-select" onchange="queueFilterHistory()" aria-label="Filtrar por IA">
-          <option value="all">Todas as IAs</option>
+        <select id="aiFilter" class="filter-select" onchange="queueFilterHistory()" aria-label="{% translate 'Filtrar por IA' %}">
+          <option value="all">{% translate "Todas as IAs" %}</option>
           {% if llms %}
             {% for llm in llms %}
               <option value="{{ llm.nome|lower }}">{{ llm.nome }}</option>
@@ -1377,8 +1377,8 @@ textarea:focus,
           {% endif %}
         </select>
 
-        <select id="formFilter" class="filter-select" onchange="queueFilterHistory()" aria-label="Filtrar por formulário">
-          <option value="all">Todos os formulários</option>
+        <select id="formFilter" class="filter-select" onchange="queueFilterHistory()" aria-label="{% translate 'Filtrar por formulário' %}">
+          <option value="all">{% translate "Todos os formulários" %}</option>
           {% if formularios %}
             {% for form in formularios %}
               <option value="{{ form.nome|lower }}">{{ form.nome }}</option>
@@ -1386,8 +1386,8 @@ textarea:focus,
           {% endif %}
         </select>
 
-        <select id="categoryFilter" class="filter-select" onchange="queueFilterHistory()" aria-label="Filtrar por categoria">
-          <option value="all">Todas as categorias</option>
+        <select id="categoryFilter" class="filter-select" onchange="queueFilterHistory()" aria-label="{% translate 'Filtrar por categoria' %}">
+          <option value="all">{% translate "Todas as categorias" %}</option>
           {% if categorias %}
             {% for cat in categorias %}
               <option value="{{ cat.nome_categoria|lower }}">{{ cat.nome_categoria }}</option>
@@ -1398,10 +1398,10 @@ textarea:focus,
 
       <div class="history-actions">
         <button class="btn btn-secondary" type="button" onclick="abrirModalCategoria()">
-          Cadastrar categoria
+          {% translate "Cadastrar categoria" %}
         </button>
         {% if historico %}
-        <button class="btn btn-danger" type="button" data-action="{% url 'limpar_questoes' %}" data-title="Limpar histórico?" data-desc="Todas as questões cadastradas serão apagadas." data-btn-text="Sim, limpar tudo" onclick="configurarModal(this)">
+        <button class="btn btn-danger" type="button" data-action="{% url 'limpar_questoes' %}" data-title="{% translate 'Limpar histórico?' %}" data-desc="{% translate 'Todas as questões cadastradas serão apagadas.' %}" data-btn-text="{% translate 'Sim, limpar tudo' %}" onclick="configurarModal(this)">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M3 6h18"></path>
             <path d="M19 6l-1 14H6L5 6"></path>
@@ -1409,7 +1409,7 @@ textarea:focus,
             <path d="M14 11v6"></path>
             <path d="M9 6V4h6v2"></path>
           </svg>
-          Apagar tudo
+          {% translate "Apagar tudo" %}
         </button>
         {% endif %}
       </div>
@@ -1426,44 +1426,48 @@ textarea:focus,
             <div class="card-header">
               <div class="badge-row">
                 {% if item.respostas_cache %}
-                <span class="status-badge status-answered">Respondida</span>
+                <span class="status-badge status-answered">{% translate "Respondida" %}</span>
                 {% else %}
-                <span class="status-badge status-pending">Pendente</span>
+                <span class="status-badge status-pending">{% translate "Pendente" %}</span>
                 {% endif %}
-                <span class="badge-categoria">{{ item.categoria.nome_categoria|default:"Sem categoria" }}</span>
+                <span class="badge-categoria">
+                  {% if item.categoria.nome_categoria %}{{ item.categoria.nome_categoria }}{% else %}{% translate "Sem categoria" %}{% endif %}
+                </span>
                 {% for form in item.formularios_cache %}
                 <span class="status-badge badge-form">{{ form.nome }}</span>
                 {% endfor %}
               </div>
 
               <div class="card-actions">
-                <button type="button" class="btn-icon btn-view" title="Ver detalhes" data-url="{% url 'ver_detalhes_questao' item.id %}" onclick="abrirModalDetalhes(this)">Ver</button>
-                <button type="button" class="btn-icon btn-icon-danger" title="Deletar" data-action="{% url 'deletar_questao_historico' item.id %}" data-title="Apagar questão?" data-desc="Esta questão será removida permanentemente." data-btn-text="Sim, apagar" onclick="configurarModal(this)">Del</button>
+                <button type="button" class="btn-icon btn-view" title="{% translate 'Ver detalhes' %}" data-url="{% url 'ver_detalhes_questao' item.id %}" onclick="abrirModalDetalhes(this)">{% translate "Ver" %}</button>
+                <button type="button" class="btn-icon btn-icon-danger" title="{% translate 'Deletar' %}" data-action="{% url 'deletar_questao_historico' item.id %}" data-title="{% translate 'Apagar questão?' %}" data-desc="{% translate 'Esta questão será removida permanentemente.' %}" data-btn-text="{% translate 'Sim, apagar' %}" onclick="configurarModal(this)">{% translate "Del" %}</button>
               </div>
             </div>
 
             <div class="card-question">{{ item.conteudo }}</div>
             {% if item.respostas_cache %}
             {% with primeira_resposta=item.respostas_cache.0 %}
-            <div class="card-preview">{{ primeira_resposta.conteudo_resposta|truncatewords:18|default:"Resposta detalhada registrada." }}...</div>
+            <div class="card-preview">
+              {% if primeira_resposta.conteudo_resposta %}{{ primeira_resposta.conteudo_resposta|truncatewords:18 }}{% else %}{% translate "Resposta detalhada registrada." %}{% endif %}...
+            </div>
             {% endwith %}
             <div class="card-footer">
               {% for resp in item.respostas_cache %}
-              <span class="tag">{{ resp.llm.nome|default:"IA geral" }}</span>
+              <span class="tag">{% if resp.llm.nome %}{{ resp.llm.nome }}{% else %}{% translate "IA geral" %}{% endif %}</span>
               {% endfor %}
             </div>
             {% else %}
-            <div class="card-preview">Ainda sem respostas vinculadas a esta questão.</div>
+            <div class="card-preview">{% translate "Ainda sem respostas vinculadas a esta questão." %}</div>
             {% endif %}
           </article>
           {% endfor %}
         {% else %}
-          <div class="empty-state"><p>Nenhuma questão cadastrada ainda.</p></div>
+          <div class="empty-state"><p>{% translate "Nenhuma questão cadastrada ainda." %}</p></div>
         {% endif %}
       </div>
 
       <div class="empty-state filter-empty" id="filterEmpty" hidden>
-        <p>Nenhuma questão encontrada com os filtros atuais.</p>
+        <p>{% translate "Nenhuma questão encontrada com os filtros atuais." %}</p>
       </div>
     </section>
   </main>
@@ -1474,17 +1478,17 @@ textarea:focus,
   <div class="modal" style="max-width: 440px; text-align: center;">
     <div class="modal-header" style="justify-content: center; border-bottom: 0; padding-bottom: 0;">
       <div class="modal-title-wrap">
-        <span class="modal-product">Atenção</span>
-        <span class="modal-title" id="modalTitle" style="color: #f87171;">Confirmação</span>
+        <span class="modal-product">{% translate "Atenção" %}</span>
+        <span class="modal-title" id="modalTitle" style="color: #f87171;">{% translate "Confirmação" %}</span>
       </div>
     </div>
-    <div class="modal-desc" id="modalDesc" style="margin-bottom: 22px;">Confirme a ação.</div>
+    <div class="modal-desc" id="modalDesc" style="margin-bottom: 22px;">{% translate "Confirme a ação." %}</div>
 
     <div class="modal-footer" style="justify-content: center; border-top: 0;">
-      <button type="button" class="btn btn-ghost" onclick="fecharModalUniversal()">Cancelar</button>
+      <button type="button" class="btn btn-ghost" onclick="fecharModalUniversal()">{% translate "Cancelar" %}</button>
       <form id="modalForm" method="POST" action="" style="display: flex; flex: 1;">
         {% csrf_token %}
-        <button type="submit" class="btn btn-danger" id="modalConfirmBtn" style="width: 100%;">Confirmar</button>
+        <button type="submit" class="btn btn-danger" id="modalConfirmBtn" style="width: 100%;">{% translate "Confirmar" %}</button>
       </form>
     </div>
   </div>
@@ -1494,11 +1498,11 @@ textarea:focus,
   <div class="modal" style="max-width: 520px;">
     <div class="modal-header">
       <div class="modal-title-wrap">
-        <span class="modal-product">Categorias</span>
-        <span class="modal-title">Cadastrar categoria</span>
-        <span class="modal-desc">Crie uma categoria para organizar as questões.</span>
+        <span class="modal-product">{% translate "Categorias" %}</span>
+        <span class="modal-title">{% translate "Cadastrar categoria" %}</span>
+        <span class="modal-desc">{% translate "Crie uma categoria para organizar as questões." %}</span>
       </div>
-      <button type="button" class="modal-close" onclick="fecharModalCategoria()" aria-label="Fechar modal">
+      <button type="button" class="modal-close" onclick="fecharModalCategoria()" aria-label="{% translate 'Fechar modal' %}">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M18 6L6 18"></path>
           <path d="M6 6l12 12"></path>
@@ -1509,16 +1513,16 @@ textarea:focus,
     <form method="POST" action="{% url 'questoes_cadastro_categoria' %}">
       {% csrf_token %}
       <div class="field-group">
-        <label class="field-label" for="categoriaNome">Nome da categoria</label>
-        <input class="field-input" id="categoriaNome" name="nome" type="text" maxlength="100" required placeholder="Ex.: Redes, Criptografia, Phishing">
+        <label class="field-label" for="categoriaNome">{% translate "Nome da categoria" %}</label>
+        <input class="field-input" id="categoriaNome" name="nome" type="text" maxlength="100" required placeholder="{% translate 'Ex.: Redes, Criptografia, Phishing' %}">
       </div>
       <div class="field-group">
-        <label class="field-label" for="categoriaDescricao">Descrição</label>
-        <textarea class="field-textarea" id="categoriaDescricao" name="descricao" placeholder="Descrição curta da categoria..."></textarea>
+        <label class="field-label" for="categoriaDescricao">{% translate "Descrição" %}</label>
+        <textarea class="field-textarea" id="categoriaDescricao" name="descricao" placeholder="{% translate 'Descrição curta da categoria...' %}"></textarea>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-ghost" onclick="fecharModalCategoria()">Cancelar</button>
-        <button type="submit" class="btn btn-primary">Salvar categoria</button>
+        <button type="button" class="btn btn-ghost" onclick="fecharModalCategoria()">{% translate "Cancelar" %}</button>
+        <button type="submit" class="btn btn-primary">{% translate "Salvar categoria" %}</button>
       </div>
     </form>
   </div>
@@ -1528,11 +1532,11 @@ textarea:focus,
   <div class="modal" style="max-width: 520px;">
     <div class="modal-header">
       <div class="modal-title-wrap">
-        <span class="modal-product">Upload em lote</span>
-        <span class="modal-title">Enviar TXT/JSON</span>
-        <span class="modal-desc">TXT/JSON cadastra várias perguntas de uma vez.</span>
+        <span class="modal-product">{% translate "Upload em lote" %}</span>
+        <span class="modal-title">{% translate "Enviar TXT/JSON" %}</span>
+        <span class="modal-desc">{% translate "TXT/JSON cadastra várias perguntas de uma vez." %}</span>
       </div>
-      <button type="button" class="modal-close" onclick="fecharModalUpload()" aria-label="Fechar modal">
+      <button type="button" class="modal-close" onclick="fecharModalUpload()" aria-label="{% translate 'Fechar modal' %}">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M18 6L6 18"></path>
           <path d="M6 6l12 12"></path>
@@ -1543,9 +1547,9 @@ textarea:focus,
     <form id="uploadForm" method="POST" action="{% url 'upload_perguntas' %}" enctype="multipart/form-data">
       {% csrf_token %}
       <div class="field-group">
-        <label class="field-label" for="categoriaUpload">Categoria para o lote</label>
+        <label class="field-label" for="categoriaUpload">{% translate "Categoria para o lote" %}</label>
         <select class="filter-select" id="categoriaUpload" name="categoria_id">
-          <option value="">Geral</option>
+          <option value="">{% translate "Geral" %}</option>
           {% for cat in categorias %}
           <option value="{{ cat.id }}">{{ cat.nome_categoria }}</option>
           {% endfor %}
@@ -1557,15 +1561,15 @@ textarea:focus,
           <path d="M17 8l-5-5-5 5"></path>
           <path d="M12 3v12"></path>
         </svg>
-        <strong>Enviar arquivo TXT/JSON</strong>
-        <span>Arraste o arquivo aqui ou clique para procurar.</span>
+        <strong>{% translate "Enviar arquivo TXT/JSON" %}</strong>
+        <span>{% translate "Arraste o arquivo aqui ou clique para procurar." %}</span>
         <input type="file" id="fileInput" name="arquivo_upload" accept=".txt,.json,text/plain,application/json" style="display: none;">
       </div>
       <div class="file-name" id="fileName"></div>
 
       <div class="modal-footer">
-        <button type="button" class="btn btn-ghost" onclick="fecharModalUpload()">Cancelar</button>
-        <button type="button" class="btn btn-upload" onclick="submitUpload()">Enviar TXT/JSON</button>
+        <button type="button" class="btn btn-ghost" onclick="fecharModalUpload()">{% translate "Cancelar" %}</button>
+        <button type="button" class="btn btn-upload" onclick="submitUpload()">{% translate "Enviar TXT/JSON" %}</button>
       </div>
     </form>
   </div>
@@ -1576,9 +1580,9 @@ textarea:focus,
     <div class="modal-header">
       <div class="modal-title-wrap">
         <span class="modal-product">PonderSEC</span>
-        <span class="modal-title">Detalhes da questão</span>
+        <span class="modal-title">{% translate "Detalhes da questão" %}</span>
       </div>
-      <button type="button" class="modal-close" onclick="fecharModalDetalhes()" aria-label="Fechar modal">
+      <button type="button" class="modal-close" onclick="fecharModalDetalhes()" aria-label="{% translate 'Fechar modal' %}">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M18 6L6 18"></path>
           <path d="M6 6l12 12"></path>
@@ -1587,19 +1591,32 @@ textarea:focus,
     </div>
 
     <div class="field-group">
-      <label class="field-label">Pergunta cadastrada</label>
-      <div id="detalhesPergunta" class="details-question">Carregando...</div>
+      <label class="field-label">{% translate "Pergunta cadastrada" %}</label>
+      <div id="detalhesPergunta" class="details-question">{% translate "Carregando..." %}</div>
     </div>
 
     <div id="respostasContainer" class="responses-grid"></div>
 
     <div class="modal-footer" style="justify-content: center;">
-      <button type="button" class="btn btn-ghost" onclick="fecharModalDetalhes()">Fechar visualização</button>
+      <button type="button" class="btn btn-ghost" onclick="fecharModalDetalhes()">{% translate "Fechar visualização" %}</button>
     </div>
   </div>
 </div>
 
 <script>
+const pageText = {
+  processing: "{% translate 'Processando...' %}",
+  invalidFormat: "{% translate 'Formato inválido. Use TXT ou JSON.' %}",
+  selectedPrefix: "{% translate 'Selecionado:' %} ",
+  selectFile: "{% translate 'Selecione um arquivo TXT ou JSON.' %}",
+  loadingDetails: "{% translate 'Carregando detalhes...' %}",
+  fetchingResponses: "{% translate 'Buscando respostas registradas...' %}",
+  unavailableQuestion: "{% translate 'Pergunta indisponível.' %}",
+  noLinkedResponse: "{% translate 'Nenhuma resposta vinculada a esta questão.' %}",
+  answerPrefix: "{% translate 'Resposta' %} ",
+  loadError: "{% translate 'Houve um erro ao carregar os dados.' %}"
+};
+
 function setStatus(msg, tipo) {
   const el = document.getElementById("status");
   if (!el) return;
@@ -1618,12 +1635,12 @@ function bloquearBotao(btnId) {
     btn.disabled = true;
     if (btn.dataset.iconSubmit === "true") {
       btn.classList.add("is-loading");
-      btn.setAttribute("aria-label", "Processando...");
-      btn.setAttribute("title", "Processando...");
+      btn.setAttribute("aria-label", pageText.processing);
+      btn.setAttribute("title", pageText.processing);
       return;
     }
     btn.dataset.originalText = btn.dataset.originalText || btn.textContent;
-    btn.textContent = "Processando...";
+    btn.textContent = pageText.processing;
   }, 10);
   return true;
 }
@@ -1732,13 +1749,13 @@ function showFile(file) {
   if (!file || !fileName) return;
 
   if (!/\.(txt|json)$/i.test(file.name)) {
-    fileName.textContent = "Formato inválido. Use TXT ou JSON.";
+    fileName.textContent = pageText.invalidFormat;
     fileName.style.color = "#f87171";
     if (fileInput) fileInput.value = "";
     return;
   }
 
-  fileName.textContent = "Selecionado: " + file.name;
+  fileName.textContent = pageText.selectedPrefix + file.name;
   fileName.style.color = "#00ff9f";
 }
 
@@ -1748,7 +1765,7 @@ function submitUpload() {
 
   if (!fileInput?.files.length) {
     if (fileName) {
-      fileName.textContent = "Selecione um arquivo TXT ou JSON.";
+      fileName.textContent = pageText.selectFile;
       fileName.style.color = "#f87171";
     }
     return;
@@ -1767,12 +1784,12 @@ function abrirModalDetalhes(btn) {
   const respostasContainer = document.getElementById("respostasContainer");
 
   document.getElementById("detalhesModal")?.classList.add("active");
-  if (detalhesPergunta) detalhesPergunta.innerText = "Carregando detalhes...";
+  if (detalhesPergunta) detalhesPergunta.innerText = pageText.loadingDetails;
   if (respostasContainer) {
     respostasContainer.innerHTML = "";
     const loading = document.createElement("p");
     loading.className = "modal-desc";
-    loading.textContent = "Buscando respostas registradas...";
+    loading.textContent = pageText.fetchingResponses;
     respostasContainer.appendChild(loading);
   }
 
@@ -1780,13 +1797,13 @@ function abrirModalDetalhes(btn) {
     .then(response => response.json())
     .then(data => {
       if (data.erro) throw new Error(data.erro);
-      detalhesPergunta.innerText = data.pergunta || "Pergunta indisponível.";
+      detalhesPergunta.innerText = data.pergunta || pageText.unavailableQuestion;
       respostasContainer.innerHTML = "";
 
       if (!data.respostas || data.respostas.length === 0) {
         const empty = document.createElement("p");
         empty.className = "modal-desc";
-        empty.textContent = "Nenhuma resposta vinculada a esta questão.";
+        empty.textContent = pageText.noLinkedResponse;
         respostasContainer.appendChild(empty);
         return;
       }
@@ -1797,7 +1814,7 @@ function abrirModalDetalhes(btn) {
 
         const label = document.createElement("label");
         label.className = "field-label";
-        label.textContent = "Resposta " + (resp.ia || "");
+        label.textContent = pageText.answerPrefix + (resp.ia || "");
         label.style.color = resp.cor || "#00ff9f";
 
         const body = document.createElement("div");
@@ -1812,7 +1829,7 @@ function abrirModalDetalhes(btn) {
       });
     })
     .catch(() => {
-      if (detalhesPergunta) detalhesPergunta.innerText = "Houve um erro ao carregar os dados.";
+      if (detalhesPergunta) detalhesPergunta.innerText = pageText.loadError;
       if (respostasContainer) respostasContainer.innerHTML = "";
     });
 }
