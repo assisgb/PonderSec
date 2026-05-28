@@ -248,17 +248,32 @@ body::before {
             <div class="progress-bar-container" id="progressBar">
                  <div class="progress-bar-fill"></div>
             </div>
+        <div class="header">
+            <div class="search-container">
+                <input type="text" class="search-input" id="filterInput" placeholder="Filtro de pesquisa...">
+            </div>
 
-            <header class="hdr">
-                <div class="hdr-left">
-                    <div class="logo-box" aria-hidden="true">
-                        <img src="{% static 'pondersec_logo.jpg' %}" alt="">
-                    </div>
-                    <div class="hdr-info">
-                        <span class="hdr-tag">PonderSEC</span>
-                        <span class="hdr-title">{% translate "Executar Consulta" %}</span>
-                        <span class="hdr-sub">{% translate "Selecione as perguntas para processamento em lote nas IAs." %}</span>
-                    </div>
+            <button class="btn-limpar" onclick="limparRespostas()">⟳ Limpar</button>
+
+            <button class="btn-run" onclick="executeQuestions()">
+                <span>▶</span>
+                <span>Executar</span>
+            </button>
+
+        </div>
+
+        <div class="questions-list">
+
+            {% if questoes %}
+
+            {% for questao in questoes %}
+
+            {% if questao.respostas_cache %}
+
+            <div class="question-item" data-id="{{questao.id}}">
+
+                <div class="question-text">
+                    {{questao.conteudo}}
                 </div>
             </header>
 
