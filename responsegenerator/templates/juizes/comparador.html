@@ -4,555 +4,289 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PonderSEC — Juízes Online</title>
+<title>{% translate "PonderSEC — Juízes Online" %}</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<!-- Garante que a folha de estilo externa seja carregada corretamente sempre -->
 <link rel="stylesheet" href="{% static 'app_sidebar.css' %}">
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
-:root{
-  --bg:#02070d;
-  --panel:#07111c;
-  --panel-2:#091723;
-  --line:rgba(0,255,159,.16);
-  --line-strong:rgba(0,255,159,.32);
-  --accent:#00ff9f;
-  --accent-soft:rgba(0,255,159,.09);
-  --text:#e7fff7;
-  --muted:#8aa69d;
-  --muted-2:#5e766e;
-  --danger:#ef4444;
-  --warn:#f59e0b;
-  --blue:#38bdf8;
-  --mono:"IBM Plex Mono","SFMono-Regular",Consolas,monospace;
-  --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+:root {
+  --bg: #050c14;
+  --surface: rgba(10, 20, 33, 0.72);
+  --surface-strong: rgba(5, 12, 22, 0.92);
+  --surface-soft: rgba(0, 220, 130, 0.05);
+  --border: rgba(0, 220, 130, 0.18);
+  --border-strong: rgba(0, 220, 130, 0.36);
+  --accent: #00dc82;
+  --accent-bright: #00ff9f;
+  --text: #d4f5e9;
+  --text-strong: #f0fff9;
+  --muted: #7a968c;
+  --mono: "IBM Plex Mono", monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
-body{
-  min-height:100vh;
-  background:
-    radial-gradient(circle at 78% 0%,rgba(0,255,159,.09),transparent 30%),
-    radial-gradient(circle at 0% 65%,rgba(56,189,248,.05),transparent 28%),
-    var(--bg);
-  color:var(--text);
-  font-family:var(--sans);
-  padding:24px;
+body {
+  min-height: 100vh;
+  padding: 20px;
+  overflow-x: hidden;
+  background: radial-gradient(circle at top, #020806 0, #010305 42%, #000000 100%);
+  color: var(--text);
+  font-family: var(--sans);
 }
 
-body::before{
-  content:"";
-  position:fixed;
-  inset:0;
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
   background-image:
-    linear-gradient(rgba(0,255,159,.035) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(0,255,159,.035) 1px,transparent 1px);
-  background-size:44px 44px;
-  pointer-events:none;
+    linear-gradient(90deg, rgba(0, 255, 160, 0.035) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(0, 255, 160, 0.035) 1px, transparent 1px);
+  background-size: 40px 40px;
+  opacity: 0.16;
 }
 
-button,input,select{font:inherit}
-button{cursor:pointer}
-a{color:inherit}
-
-.shell{
-  width:min(1280px,100%);
-  margin:0 auto;
-  position:relative;
-  z-index:1;
+/* --- ESTRUTURA GERAL --- */
+.app-shell {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  width: min(1680px, 100%);
+  margin: 0 auto;
 }
 
-.topbar,.panel{
-  background:linear-gradient(135deg,rgba(9,23,35,.96),rgba(5,11,18,.98));
-  border:1px solid var(--line);
-  border-radius:16px;
+.wrap {
+  width: min(1400px, 100%);
+  min-width: 0;
+  flex: 1;
+  padding-bottom: 40px;
 }
 
-.topbar{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:20px;
-  padding:18px 22px;
-  margin-bottom:18px;
+/* --- CSS DA BARRA LATERAL (Fallback) --- */
+.side-nav {
+  position: sticky; top: 20px; width: 246px; min-height: calc(100vh - 40px);
+  display: flex; flex-direction: column; gap: 18px; padding: 18px;
+  border: 1px solid var(--border); border-radius: 18px;
+  background: linear-gradient(180deg, rgba(5, 10, 17, 0.99), rgba(2, 5, 9, 0.99));
+  box-shadow: 0 14px 42px rgba(0, 0, 0, 0.34);
+}
+.side-brand { display: flex; align-items: center; gap: 12px; padding-bottom: 16px; border-bottom: 1px solid rgba(0, 220, 130, 0.12); }
+.side-logo { width: 46px; height: 46px; flex-shrink: 0; overflow: hidden; border: 1px solid rgba(0, 220, 130, 0.34); border-radius: 13px; background: rgba(0, 220, 130, 0.06); box-shadow: 0 0 18px rgba(0, 220, 130, 0.12); }
+.side-logo img { width: 100%; height: 100%; object-fit: cover; }
+.side-brand-text { min-width: 0; }
+.side-kicker, .side-section, .side-link, .side-logout { font-family: var(--mono); }
+.side-kicker, .side-section { text-transform: uppercase; letter-spacing: 0.1em; }
+.side-kicker { color: rgba(0, 220, 130, 0.76); font-size: 9px; font-weight: 700; }
+.side-title { margin-top: 3px; color: var(--accent-bright); font-size: 16px; font-weight: 800; line-height: 1.15; }
+.side-section { margin-bottom: 8px; color: var(--muted); font-size: 9px; font-weight: 700; }
+.side-links { display: grid; gap: 8px; }
+.side-link, .side-logout { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 10px 12px; border: 1px solid rgba(0, 220, 130, 0.12); border-radius: 12px; background: rgba(0, 0, 0, 0.22); color: var(--muted); text-decoration: none; font-size: 11px; font-weight: 700; line-height: 1.2; transition: all 0.18s ease; }
+.side-link:hover, .side-logout:hover { transform: translateY(-1px); }
+.side-link svg, .side-logout svg { flex-shrink: 0; color: currentColor; }
+.side-link.active { border-color: rgba(0, 220, 130, 0.44); background: rgba(0, 220, 130, 0.12); color: var(--accent-bright); box-shadow: 0 0 22px rgba(0, 220, 130, 0.08); }
+.side-link:not(.active):hover { border-color: rgba(0, 220, 130, 0.34); background: rgba(0, 220, 130, 0.075); color: var(--text); }
+.side-footer { margin-top: auto; padding-top: 14px; border-top: 1px solid rgba(0, 220, 130, 0.12); }
+.side-logout { border-color: rgba(239, 68, 68, 0.28); background: rgba(239, 68, 68, 0.06); color: #f87171; }
+.side-logout:hover { border-color: rgba(239, 68, 68, 0.5); background: rgba(239, 68, 68, 0.12); color: #fecaca; }
+
+/* --- CSS DO HEADER --- */
+.hdr {
+  display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap;
+  margin-bottom: 20px; padding: 22px 28px;
+  border: 1px solid var(--border); border-radius: 18px;
+  background: linear-gradient(180deg, rgba(5, 10, 17, 0.99), rgba(2, 5, 9, 0.99));
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.34);
+}
+.hdr-left { display: flex; align-items: center; gap: 18px; min-width: 0; }
+.logo-box { width: 54px; height: 54px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; border: 1px solid rgba(0, 220, 130, 0.34); border-radius: 14px; background: rgba(0, 220, 130, 0.06); box-shadow: inset 0 0 24px rgba(0, 220, 130, 0.05), 0 0 18px rgba(0, 220, 130, 0.1); }
+.logo-box img { width: 100%; height: 100%; object-fit: cover; }
+.hdr-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.hdr-tag { color: rgba(0, 220, 130, 0.76); font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+.hdr-title { color: var(--accent-bright); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 22px; font-weight: 800; line-height: 1.18; }
+.hdr-sub { color: var(--muted); font-size: 13px; line-height: 1.4; }
+
+/* --- BOTÕES PADRÃO --- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+  min-height: 42px; padding: 11px 18px; border-radius: 10px; cursor: pointer;
+  text-decoration: none; white-space: nowrap; font-family: var(--sans);
+  font-size: 12px; font-weight: 700; transition: all 0.18s ease; outline: none;
+}
+.btn:hover { transform: translateY(-1px); }
+.btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+.btn-primary { border: 1px solid rgba(0, 220, 130, 0.44); background: rgba(0, 220, 130, 0.12); color: var(--accent-bright); box-shadow: 0 0 20px rgba(0, 220, 130, 0.08); }
+.btn-primary:hover:not(:disabled) { border-color: var(--accent-bright); background: rgba(0, 220, 130, 0.2); box-shadow: 0 0 26px rgba(0, 220, 130, 0.14); }
+.btn-ghost { border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(255, 255, 255, 0.035); color: var(--muted); }
+.btn-ghost:hover { border-color: rgba(255, 255, 255, 0.18); color: var(--text); background: rgba(255, 255, 255, 0.065); }
+.btn-danger { border: 1px solid rgba(239, 68, 68, 0.34); background: rgba(239, 68, 68, 0.08); color: #f87171; }
+.btn-danger:hover { border-color: rgba(239, 68, 68, 0.58); background: rgba(239, 68, 68, 0.16); color: #fecaca; }
+
+.hdr-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+/* --- CONTEÚDO PRINCIPAL (Grid/Painéis) --- */
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) 380px;
+  gap: 18px; align-items: start;
 }
 
-.brand{display:flex;align-items:center;gap:16px;min-width:0}
-.brand-logo{
-  width:54px;
-  height:54px;
-  border-radius:13px;
-  object-fit:cover;
-  border:1px solid rgba(0,255,159,.25);
-}
-.eyebrow{
-  color:var(--accent);
-  font:700 10px/1.2 var(--mono);
-  letter-spacing:.2em;
-  text-transform:uppercase;
-  margin-bottom:5px;
-}
-h1{
-  color:var(--accent);
-  font-size:28px;
-  line-height:1.15;
-  letter-spacing:0;
-}
-.subtitle{
-  color:var(--muted);
-  font-size:13px;
-  line-height:1.45;
-  margin-top:6px;
+.panel {
+  border: 1px solid var(--border); border-radius: 18px;
+  background: linear-gradient(180deg, rgba(5, 10, 17, 0.99), rgba(2, 5, 9, 0.99));
+  box-shadow: 0 10px 38px rgba(0, 0, 0, 0.3); padding: 24px; margin-bottom: 18px;
 }
 
-.step-number{
-  display:grid;
-  place-items:center;
-  width:28px;
-  height:28px;
-  border:1px solid var(--line-strong);
-  border-radius:9px;
-  color:var(--accent);
-  font:800 12px/1 var(--mono);
-  background:var(--accent-soft);
+.section-title { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 18px; }
+.step-title { display: flex; align-items: flex-start; gap: 12px; }
+
+.step-number {
+  display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; flex-shrink: 0;
+  border: 1px solid rgba(0, 220, 130, 0.34); border-radius: 9px;
+  background: rgba(0, 220, 130, 0.12); color: var(--accent-bright); font-family: var(--mono); font-weight: 800; font-size: 13px;
 }
 
-.top-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
-.btn{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  gap:8px;
-  min-height:38px;
-  padding:10px 14px;
-  border-radius:10px;
-  border:1px solid var(--line-strong);
-  background:var(--accent-soft);
-  color:var(--accent);
-  font:700 12px/1 var(--mono);
-  text-transform:uppercase;
-  letter-spacing:.05em;
-  text-decoration:none;
-  transition:background .2s,border-color .2s,color .2s;
+.title-copy h2 { color: var(--text-strong); font-size: 16px; font-weight: 800; margin-bottom: 4px; }
+.title-copy p { color: var(--muted); font-size: 12.5px; line-height: 1.5; }
+.section-kicker { color: var(--accent); font-family: var(--mono); font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; }
+
+.filters { display: grid; grid-template-columns: 1.5fr repeat(3, 1fr); gap: 10px; margin-bottom: 18px; }
+.field {
+  width: 100%; height: 42px; padding: 0 12px; border-radius: 10px; font-size: 13px;
+  color: var(--text); outline: none; border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.42); transition: border-color 0.16s ease, background 0.16s ease;
 }
-.btn:hover{background:rgba(0,255,159,.14);border-color:var(--accent)}
-.btn.secondary{
-  background:rgba(255,255,255,.03);
-  border-color:rgba(255,255,255,.1);
-  color:var(--muted);
+.field:focus { border-color: rgba(0, 220, 130, 0.44); background: rgba(0, 0, 0, 0.5); }
+.field::placeholder { color: rgba(122, 150, 140, 0.68); }
+select.field option { background: #050c14; color: var(--text); }
+
+.question-tools { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+.question-tools .hint { color: var(--muted); font-size: 12.5px; }
+.question-tools .actions { display: flex; gap: 10px; }
+
+/* LISTAS DE PERGUNTAS E JUÍZES */
+.question-list, .judge-list { display: grid; gap: 10px; max-height: 560px; overflow-y: auto; padding-right: 4px; }
+.question-list::-webkit-scrollbar, .judge-list::-webkit-scrollbar { width: 4px; }
+.question-list::-webkit-scrollbar-thumb, .judge-list::-webkit-scrollbar-thumb { background: rgba(0, 220, 130, 0.24); border-radius: 99px; }
+
+.question-card, .judge-card {
+  display: flex; gap: 12px; padding: 14px 16px; border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 13px; background: rgba(0, 0, 0, 0.24); cursor: pointer; transition: all 0.18s ease; align-items: flex-start;
 }
-.btn.secondary:hover{color:var(--accent);border-color:var(--line-strong)}
-.btn.danger{
-  background:rgba(239,68,68,.08);
-  border-color:rgba(239,68,68,.28);
-  color:#f87171;
+.question-card:hover:not(.is-disabled), .judge-card:hover { border-color: rgba(0, 220, 130, 0.34); background: rgba(0, 220, 130, 0.06); }
+.question-card.is-selected, .judge-card.is-selected { border-color: var(--accent-bright); background: rgba(0, 220, 130, 0.12); box-shadow: 0 0 10px rgba(0,220,130,0.08); }
+.question-card.is-disabled { opacity: 0.5; cursor: not-allowed; }
+
+.question-card input, .judge-card input { display: none; }
+
+.custom-checkbox {
+    width: 20px; height: 20px; border-radius: 6px; border: 2px solid var(--muted);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s ease; margin-top: 2px;
 }
-.btn:disabled{
-  opacity:.45;
-  cursor:not-allowed;
+.question-card.is-selected .custom-checkbox, .judge-card.is-selected .custom-checkbox { background: rgba(0, 220, 130, 0.2); border-color: var(--accent-bright); }
+.checkmark { color: var(--accent-bright); font-size: 13px; font-weight: bold; display: none; }
+.question-card.is-selected .checkmark, .judge-card.is-selected .checkmark { display: block; }
+
+.question-text { color: var(--text-strong); font-size: 14px; line-height: 1.45; }
+.meta-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+
+.chip {
+  display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px;
+  border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.09); background: rgba(0, 0, 0, 0.24);
+  color: var(--muted); font-family: var(--mono); font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+}
+.chip.good { border-color: rgba(0, 220, 130, 0.28); background: rgba(0, 220, 130, 0.1); color: var(--accent-bright); }
+.chip.warn { border-color: rgba(245, 158, 11, 0.32); background: rgba(245, 158, 11, 0.1); color: #fbbf24; }
+.chip.blue { border-color: rgba(56, 189, 248, 0.3); background: rgba(56, 189, 248, 0.1); color: #7dd3fc; }
+
+.judge-name { font-weight: 700; color: var(--text-strong); font-size: 14px; }
+.judge-provider { color: var(--muted); font-family: var(--mono); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 4px; }
+
+.empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 24px; border: 1px dashed rgba(0, 220, 130, 0.18); border-radius: 12px;
+  color: var(--muted); font-size: 13px; text-align: center; background: rgba(0, 0, 0, 0.16); min-height: 120px;
 }
 
-.grid{
-  display:grid;
-  grid-template-columns:minmax(0,1fr) 340px;
-  gap:18px;
-  align-items:start;
+/* RESPUESTAS */
+.responses { display: grid; gap: 14px; }
+.response-group { border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 13px; background: rgba(0, 0, 0, 0.24); padding: 16px; }
+.response-question { color: var(--muted); font-size: 13px; line-height: 1.45; margin-bottom: 12px; }
+.response-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+.response-card {
+  display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; background: rgba(0, 0, 0, 0.42); transition: all 0.2s ease;
 }
+.response-card.is-participant { border-color: rgba(0, 220, 130, 0.44); background: rgba(0, 220, 130, 0.12); }
+.response-card.is-muted { opacity: 0.52; }
+.response-card h3 { color: var(--text-strong); font-size: 13px; font-weight: 700; margin: 0; }
 
-.panel{padding:20px;margin-bottom:18px}
-.section-title{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:14px;
-  margin-bottom:14px;
-}
-.section-title h2{
-  color:var(--text);
-  font-size:17px;
-  letter-spacing:0;
-}
-.section-title span{
-  color:var(--muted-2);
-  font:700 10px/1 var(--mono);
-  letter-spacing:.14em;
-  text-transform:uppercase;
-}
-.title-copy p{
-  color:var(--muted);
-  font-size:13px;
-  line-height:1.5;
-  margin-top:5px;
-}
-.step-title{
-  display:flex;
-  align-items:flex-start;
-  gap:10px;
-}
+.metric-list { display: flex; flex-wrap: wrap; gap: 8px; }
 
-.side-flow{
-  position:sticky;
-  top:18px;
+/* RESUMO E EXECUÇÃO */
+.side-flow { position: sticky; top: 20px; }
+.summary-grid { display: grid; gap: 10px; margin-bottom: 16px; }
+.summary-card {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; background: rgba(0, 0, 0, 0.24);
 }
+.summary-label { color: var(--muted); font-family: var(--mono); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; }
+.summary-value { color: var(--text-strong); font-family: var(--mono); font-size: 20px; font-weight: 800; }
 
-.summary-grid{
-  display:grid;
-  gap:10px;
-}
-.summary-card{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:12px;
-  border:1px solid rgba(255,255,255,.07);
-  border-radius:12px;
-  padding:12px;
-  background:rgba(0,0,0,.18);
-}
-.summary-label{
-  color:var(--muted-2);
-  font:700 10px/1 var(--mono);
-  text-transform:uppercase;
-  letter-spacing:.1em;
-}
-.summary-value{
-  color:var(--text);
-  font-size:20px;
-  font-weight:800;
-}
+.execution-actions { display: grid; gap: 10px; margin-top: 14px; }
+.execution-actions .btn { width: 100%; }
 
-.filters{
-  display:grid;
-  grid-template-columns:1.5fr repeat(3,1fr);
-  gap:10px;
-  margin-bottom:14px;
+.status {
+  margin-top: 14px; padding: 12px 14px; border: 1px solid rgba(0, 220, 130, 0.14); border-radius: 10px;
+  background: rgba(0, 220, 130, 0.05); color: var(--accent); font-family: var(--mono); font-size: 11px; font-weight: 700; line-height: 1.4; text-align: center;
 }
-.field{
-  min-height:40px;
-  width:100%;
-  border:1px solid rgba(255,255,255,.1);
-  border-radius:10px;
-  background:rgba(0,0,0,.28);
-  color:var(--text);
-  padding:10px 12px;
-  outline:none;
-}
-.field:focus{border-color:var(--line-strong)}
-.field::placeholder{color:var(--muted-2)}
-select.field option{background:#07111c;color:var(--text)}
+.status.error { border-color: rgba(239, 68, 68, 0.25); background: rgba(239, 68, 68, 0.07); color: #f87171; }
+.status.warn { border-color: rgba(245, 158, 11, 0.25); background: rgba(245, 158, 11, 0.07); color: #fbbf24; }
 
-.question-tools{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  flex-wrap:wrap;
-  margin-bottom:14px;
-}
-.question-tools .hint{
-  color:var(--muted-2);
-  font-size:12px;
-}
+/* RESULTADOS */
+.results-shell { display: grid; grid-template-columns: minmax(280px, 0.8fr) minmax(0, 1.2fr); gap: 18px; }
+.results-list { display: grid; gap: 10px; max-height: 620px; overflow-y: auto; padding-right: 4px; }
+.results-list::-webkit-scrollbar { width: 4px; }
+.results-list::-webkit-scrollbar-thumb { background: rgba(0, 220, 130, 0.24); border-radius: 99px; }
 
-.question-list{
-  display:grid;
-  gap:10px;
-  max-height:560px;
-  overflow:auto;
-  padding-right:4px;
+.result-row {
+  width: 100%; text-align: left; padding: 14px 16px; cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; background: rgba(0, 0, 0, 0.24); transition: all 0.2s ease;
 }
-.question-card{
-  display:grid;
-  grid-template-columns:auto 1fr;
-  gap:12px;
-  padding:14px;
-  border:1px solid rgba(255,255,255,.08);
-  border-radius:13px;
-  background:rgba(2,7,13,.72);
-}
-.question-card:hover{border-color:var(--line-strong)}
-.question-card.is-selected{
-  border-color:var(--accent);
-  background:rgba(0,255,159,.07);
-}
-.question-card.is-disabled{opacity:.58}
-.question-card input{margin-top:3px;accent-color:var(--accent)}
-.question-text{
-  color:var(--text);
-  font-size:14px;
-  line-height:1.45;
-}
-.meta-row{
-  display:flex;
-  flex-wrap:wrap;
-  gap:8px;
-  margin-top:10px;
-}
-.chip{
-  display:inline-flex;
-  align-items:center;
-  gap:6px;
-  border:1px solid rgba(255,255,255,.09);
-  border-radius:999px;
-  padding:5px 8px;
-  background:rgba(255,255,255,.03);
-  color:var(--muted);
-  font:700 10px/1 var(--mono);
-  text-transform:uppercase;
-  letter-spacing:.05em;
-}
-.chip.good{border-color:rgba(0,255,159,.22);color:var(--accent)}
-.chip.warn{border-color:rgba(245,158,11,.25);color:var(--warn)}
-.chip.blue{border-color:rgba(56,189,248,.25);color:var(--blue)}
+.result-row:hover, .result-row.is-active { border-color: rgba(0, 220, 130, 0.34); background: rgba(0, 220, 130, 0.08); }
+.result-route { color: var(--text-strong); font-size: 13px; font-weight: 800; line-height: 1.35; margin-bottom: 6px; }
+.result-question { color: var(--muted); font-size: 12.5px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.result-score-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 
-.empty{
-  padding:18px;
-  border:1px dashed rgba(255,255,255,.12);
-  border-radius:12px;
-  color:var(--muted);
-  font-size:13px;
-  line-height:1.5;
-  background:rgba(0,0,0,.16);
+.result-detail {
+  min-height: 420px; padding: 22px; border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px; background: rgba(0, 0, 0, 0.24);
 }
+.detail-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
+.detail-title { color: var(--text-strong); font-size: 16px; font-weight: 800; line-height: 1.35; }
+.detail-sub { color: var(--muted); font-size: 13px; line-height: 1.45; margin-top: 5px; }
 
-.responses{
-  display:grid;
-  gap:12px;
-}
-.response-group{
-  border:1px solid rgba(255,255,255,.08);
-  border-radius:13px;
-  background:rgba(2,7,13,.55);
-  padding:14px;
-}
-.response-question{
-  color:var(--muted);
-  font-size:13px;
-  line-height:1.45;
-  margin-bottom:12px;
-}
-.response-list{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-  gap:10px;
-}
-.response-card{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:10px;
-  border:1px solid rgba(255,255,255,.08);
-  border-radius:12px;
-  padding:12px;
-  background:rgba(0,0,0,.2);
-}
-.response-card.is-participant{
-  border-color:rgba(0,255,159,.34);
-  background:rgba(0,255,159,.06);
-}
-.response-card.is-muted{
-  opacity:.52;
-}
-.response-card h3{
-  color:var(--accent);
-  font-size:13px;
-  margin:0;
-}
+.detail-block { margin-bottom: 20px; }
+.detail-label { color: var(--accent); font-family: var(--mono); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; }
+.detail-text { color: var(--text); font-size: 13.5px; line-height: 1.6; padding: 14px; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; background: rgba(0, 0, 0, 0.42); white-space: pre-wrap; }
+.detail-response { max-height: 230px; overflow-y: auto; }
+.detail-response::-webkit-scrollbar { width: 4px; }
+.detail-response::-webkit-scrollbar-thumb { background: rgba(0, 220, 130, 0.24); border-radius: 99px; }
 
-.judge-list{
-  display:grid;
-  gap:10px;
-  max-height:310px;
-  overflow:auto;
-  padding-right:3px;
-}
-.judge-card{
-  display:flex;
-  align-items:center;
-  gap:12px;
-  padding:12px;
-  border:1px solid rgba(255,255,255,.08);
-  border-radius:12px;
-  background:rgba(0,0,0,.18);
-}
-.judge-card.is-selected{
-  border-color:var(--accent);
-  background:rgba(0,255,159,.07);
-}
-.judge-card input{accent-color:var(--accent)}
-.judge-name{font-weight:700;color:var(--text);font-size:14px}
-.judge-provider{color:var(--muted-2);font:700 10px/1.4 var(--mono);text-transform:uppercase;letter-spacing:.08em}
+.detail-table { width: 100%; border-collapse: collapse; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; }
+.detail-table th, .detail-table td { padding: 12px 14px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); text-align: left; font-size: 13px; color: var(--text); }
+.detail-table th { color: var(--accent); background: rgba(0, 220, 130, 0.06); font-family: var(--mono); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; }
+.detail-table tr:last-child td { border-bottom: 0; }
+.detail-score { color: var(--accent-bright); font-family: var(--mono); font-size: 14px; font-weight: 800; white-space: nowrap; }
 
-.metric-list{
-  display:flex;
-  flex-wrap:wrap;
-  gap:8px;
-}
-.status{
-  margin-top:12px;
-  padding:11px 12px;
-  border:1px solid rgba(0,255,159,.14);
-  border-radius:10px;
-  background:rgba(0,255,159,.05);
-  color:var(--accent);
-  font:700 12px/1.4 var(--mono);
-}
-.status.error{
-  border-color:rgba(239,68,68,.25);
-  background:rgba(239,68,68,.07);
-  color:#f87171;
-}
-.status.warn{
-  border-color:rgba(245,158,11,.25);
-  background:rgba(245,158,11,.07);
-  color:var(--warn);
-}
+.csrf-holder { display: none; }
 
-.results-shell{
-  display:grid;
-  grid-template-columns:minmax(280px,.8fr) minmax(0,1.2fr);
-  gap:14px;
-}
-.results-list{
-  display:grid;
-  gap:8px;
-  max-height:620px;
-  overflow:auto;
-  padding-right:3px;
-}
-.result-row{
-  width:100%;
-  text-align:left;
-  border:1px solid rgba(255,255,255,.06);
-  border-radius:12px;
-  background:rgba(0,0,0,.18);
-  padding:11px 12px;
-}
-.result-row:hover,
-.result-row.is-active{
-  border-color:var(--line-strong);
-  background:rgba(0,255,159,.06);
-}
-.result-route{
-  color:var(--text);
-  font-size:13px;
-  font-weight:800;
-  line-height:1.35;
-}
-.result-question{
-  color:var(--muted);
-  font-size:12px;
-  line-height:1.4;
-  margin-top:5px;
-  display:-webkit-box;
-  -webkit-line-clamp:2;
-  -webkit-box-orient:vertical;
-  overflow:hidden;
-}
-.result-score-chips{
-  display:flex;
-  flex-wrap:wrap;
-  gap:6px;
-  margin-top:9px;
-}
-.result-detail{
-  min-height:420px;
-  border:1px solid rgba(255,255,255,.08);
-  border-radius:14px;
-  background:rgba(2,7,13,.76);
-  padding:16px;
-}
-.detail-head{
-  display:flex;
-  align-items:flex-start;
-  justify-content:space-between;
-  gap:12px;
-  margin-bottom:14px;
-}
-.detail-title{
-  color:var(--text);
-  font-size:15px;
-  font-weight:800;
-  line-height:1.35;
-}
-.detail-sub{
-  color:var(--muted);
-  font-size:12px;
-  line-height:1.45;
-  margin-top:5px;
-}
-.detail-block{
-  margin-top:14px;
-}
-.detail-label{
-  color:var(--accent);
-  font:800 10px/1 var(--mono);
-  text-transform:uppercase;
-  letter-spacing:.08em;
-  margin-bottom:8px;
-}
-.detail-text{
-  color:var(--muted);
-  font-size:13px;
-  line-height:1.6;
-  border:1px solid rgba(255,255,255,.07);
-  border-radius:10px;
-  background:rgba(0,0,0,.2);
-  padding:12px;
-  white-space:pre-wrap;
-}
-.detail-response{
-  max-height:230px;
-  overflow:auto;
-}
-.detail-table{
-  width:100%;
-  border-collapse:collapse;
-  overflow:hidden;
-  border:1px solid rgba(255,255,255,.06);
-  border-radius:10px;
-}
-.detail-table th,
-.detail-table td{
-  padding:10px 12px;
-  border-bottom:1px solid rgba(255,255,255,.05);
-  text-align:left;
-  font-size:12px;
-}
-.detail-table th{
-  color:var(--accent);
-  background:rgba(0,255,159,.08);
-  font:800 10px/1.3 var(--mono);
-  text-transform:uppercase;
-  letter-spacing:.08em;
-}
-.detail-table tr:last-child td{border-bottom:0}
-.detail-score{
-  color:var(--accent);
-  font:800 13px/1.2 var(--mono);
-  white-space:nowrap;
-}
-
-.csrf-holder{display:none}
-.execution-actions{
-  display:grid;
-  gap:10px;
-  margin-top:14px;
-}
-.execution-actions .btn{width:100%}
-
-@media (max-width:980px){
-  body{padding:14px}
-  .grid{grid-template-columns:1fr}
-  .side-flow{position:static}
-  .results-shell{grid-template-columns:1fr}
-  .filters{grid-template-columns:1fr 1fr}
-}
-
-@media (max-width:620px){
-  .topbar{align-items:flex-start;flex-direction:column}
-  .top-actions,.btn{width:100%}
-  .filters{grid-template-columns:1fr}
-  h1{font-size:24px}
-}
+@media (max-width: 1080px) { .grid { grid-template-columns: 1fr; } .side-flow { position: static; } .results-shell { grid-template-columns: 1fr; } .filters { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 620px) { .hdr { flex-direction: column; align-items: flex-start; } .hdr-actions { width: 100%; } .hdr-actions .btn { width: 100%; } .filters { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
@@ -563,155 +297,169 @@ select.field option{background:#07111c;color:var(--text)}
 
 <form class="csrf-holder">{% csrf_token %}</form>
 
+<div class="background-grid"></div>
+
 <div class="app-shell">
   {% include "partials/app_sidebar.html" with active_nav="avaliacao" %}
-  <main class="app-content">
-<div class="shell">
-  <header class="topbar">
-    <div class="brand">
-      <img class="brand-logo" src="{% static 'pondersec_logo.jpg' %}" alt="PonderSEC">
+  
+  <div class="wrap">
+    <header class="hdr">
+        <div class="hdr-left">
+            <div class="logo-box" aria-hidden="true">
+                <img src="{% static 'pondersec_logo.jpg' %}" alt="">
+            </div>
+            <div class="hdr-info">
+                <span class="hdr-tag">PonderSEC · {% translate "Avaliação" %}</span>
+                <span class="hdr-title">{% translate "Juízes Online" %}</span>
+                <span class="hdr-sub">{% translate "Selecione perguntas já cadastradas e use LLMs como avaliadoras das respostas geradas por outros modelos." %}</span>
+            </div>
+        </div>
+        <div class="hdr-actions">
+            <a href="{% url 'menu_avaliacao' %}" class="btn btn-ghost" style="white-space: nowrap;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                    <path d="M19 12H5M11 6l-6 6 6 6"/>
+                </svg>
+                {% translate "Voltar" %}
+            </a>
+            <a class="btn btn-ghost" href="{% url 'dashboard_avaliacoes' %}?mode=comparativo">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M5 20V14"/><path d="M8 20V10"/><path d="M11 20V6"/><path d="M14 20V9"/><path d="M17 20V13"/><path d="M20 20V16"/><path d="M5 14l3-4 3-4 3 3 3-6 3 4"/></svg>
+              Dashboard
+            </a>
+            <a class="btn btn-ghost" href="{% url 'setup_llm' %}">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2 2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><path d="M12 8v3"/><path d="M6.5 11a5.5 5.5 0 0 0 11 0"/><rect x="3" y="11" width="4" height="7" rx="1"/><rect x="17" y="11" width="4" height="7" rx="1"/><path d="M7 18h10"/><path d="M9 21h6"/></svg>
+              LLMs
+            </a>
+        </div>
+    </header>
+
+    <div class="grid">
       <div>
-        <div class="eyebrow">PonderSEC · Avaliação</div>
-        <h1>Juízes Online</h1>
-        <p class="subtitle">Selecione perguntas já cadastradas e use LLMs como avaliadoras das respostas geradas por outros modelos.</p>
+        <section class="panel">
+          <div class="section-title">
+            <div class="step-title">
+              <div class="step-number">1</div>
+              <div class="title-copy">
+                <h2>{% translate "Selecionar perguntas" %}</h2>
+                <p>{% translate "As perguntas vêm do banco de Questões. Itens sem respostas aparecem apenas para contexto." %}</p>
+              </div>
+            </div>
+            <span class="section-kicker">{% translate "Banco de questões" %}</span>
+          </div>
+
+          <div class="filters">
+            <input class="field" id="searchInput" type="search" placeholder="{% translate 'Pesquisar pergunta cadastrada...' %}">
+            <select class="field" id="statusFilter">
+              <option value="">{% translate "Todos os status" %}</option>
+              <option value="respondida">{% translate "Com respostas" %}</option>
+              <option value="sem_respostas">{% translate "Sem respostas" %}</option>
+            </select>
+            <select class="field" id="categoryFilter">
+              <option value="">{% translate "Todas as categorias" %}</option>
+              {% for categoria in categorias %}
+                <option value="{{ categoria.id }}">{{ categoria.nome_categoria }}</option>
+              {% endfor %}
+            </select>
+            <select class="field" id="modelFilter">
+              <option value="">{% translate "Todos os respondentes" %}</option>
+            </select>
+          </div>
+
+          <div class="question-tools">
+            <span class="hint">{% translate "Marque uma ou mais perguntas com respostas." %}</span>
+            <div class="actions">
+              <button class="btn btn-ghost" type="button" id="selectAnsweredBtn">{% translate "Selecionar respondidas" %}</button>
+              <button class="btn btn-ghost" type="button" id="clearQuestionsBtn">{% translate "Limpar seleção" %}</button>
+            </div>
+          </div>
+
+          <div class="question-list" id="questionList"></div>
+        </section>
+
+        <section class="panel">
+          <div class="section-title">
+            <div class="step-title">
+              <div class="step-number">2</div>
+              <div class="title-copy">
+                <h2>{% translate "Modelos respondentes" %}</h2>
+                <p>{% translate "Resumo das respostas existentes por pergunta, sem repetir o texto." %}</p>
+              </div>
+            </div>
+            <span class="section-kicker">{% translate "LLMs respondentes" %}</span>
+          </div>
+          <div class="responses" id="responsesList"></div>
+        </section>
       </div>
-    </div>
-    <div class="top-actions">
-      <a class="btn secondary" href="{% url 'menu_avaliacao' %}">&larr; Voltar</a>
-      <a class="btn secondary" href="{% url 'dashboard_avaliacoes' %}?mode=comparativo">Dashboard</a>
-      <a class="btn secondary" href="{% url 'setup_llm' %}">LLMs</a>
-    </div>
-  </header>
 
-  <div class="grid">
-    <div>
-      <section class="panel">
-        <div class="section-title">
-          <div class="step-title">
-            <div class="step-number">1</div>
-            <div class="title-copy">
-              <h2>Selecionar perguntas</h2>
-              <p>As perguntas vêm do banco de Questões. Itens sem respostas aparecem apenas para contexto.</p>
+      <aside class="side-flow">
+        <section class="panel">
+          <div class="section-title">
+            <div class="step-title">
+              <div class="step-number">3</div>
+              <div class="title-copy">
+                <h2>{% translate "Selecionar LLMs participantes" %}</h2>
+                <p>{% translate "As selecionadas entram na avaliação cruzada: uma avalia a resposta da outra." %}</p>
+              </div>
             </div>
           </div>
-          <span>Banco de questões</span>
-        </div>
+          <div class="judge-list" id="judgeList"></div>
+        </section>
 
-        <div class="filters">
-          <input class="field" id="searchInput" type="search" placeholder="Pesquisar pergunta cadastrada">
-          <select class="field" id="statusFilter">
-            <option value="">Todos os status</option>
-            <option value="respondida">Com respostas</option>
-            <option value="sem_respostas">Sem respostas</option>
-          </select>
-          <select class="field" id="categoryFilter">
-            <option value="">Todas as categorias</option>
-            {% for categoria in categorias %}
-              <option value="{{ categoria.id }}">{{ categoria.nome_categoria }}</option>
-            {% endfor %}
-          </select>
-          <select class="field" id="modelFilter">
-            <option value="">Todos os respondentes</option>
-          </select>
-        </div>
-
-        <div class="question-tools">
-          <span class="hint">Marque uma ou mais perguntas com respostas.</span>
-          <div class="top-actions">
-            <button class="btn secondary" type="button" id="selectAnsweredBtn">Selecionar respondidas</button>
-            <button class="btn secondary" type="button" id="clearQuestionsBtn">Limpar seleção</button>
-          </div>
-        </div>
-
-        <div class="question-list" id="questionList"></div>
-      </section>
-
-      <section class="panel">
-        <div class="section-title">
-          <div class="step-title">
-            <div class="step-number">2</div>
+        <section class="panel">
+          <div class="section-title">
             <div class="title-copy">
-              <h2>Modelos respondentes</h2>
-              <p>Resumo das respostas existentes por pergunta, sem repetir o texto da resposta.</p>
+              <h2>{% translate "Métricas usadas" %}</h2>
+              <p>{% translate "A avaliação usa somente métricas ativas já configuradas." %}</p>
             </div>
           </div>
-          <span>LLMs respondentes</span>
-        </div>
-        <div class="responses" id="responsesList"></div>
-      </section>
+          <div class="metric-list" id="metricList"></div>
+        </section>
+
+        <section class="panel">
+          <div class="section-title">
+            <div class="step-title">
+              <div class="step-number">4</div>
+              <div class="title-copy">
+                <h2>{% translate "Resumo e execução" %}</h2>
+                <p>{% translate "Confira a seleção antes de iniciar a avaliação automática." %}</p>
+              </div>
+            </div>
+          </div>
+          <div class="summary-grid">
+            <div class="summary-card">
+              <div class="summary-label">{% translate "Perguntas selecionadas" %}</div>
+              <div class="summary-value" id="statSelecionadas">0</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-label">{% translate "LLMs selecionadas" %}</div>
+              <div class="summary-value" id="statJuizes">0</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-label">{% translate "Notas previstas" %}</div>
+              <div class="summary-value" id="statNotas">0</div>
+            </div>
+          </div>
+          <div class="execution-actions">
+            <button class="btn btn-primary" type="button" id="runBtn">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+              {% translate "Executar avaliação automática" %}
+            </button>
+            <button class="btn btn-danger" type="button" id="clearResultsBtn">{% translate "Limpar resultados" %}</button>
+          </div>
+          <div class="status" id="statusBox">{% translate "Selecione perguntas com respostas e ao menos duas LLMs participantes." %}</div>
+        </section>
+      </aside>
     </div>
 
-    <aside class="side-flow">
-      <section class="panel">
-        <div class="section-title">
-          <div class="step-title">
-            <div class="step-number">3</div>
-            <div class="title-copy">
-              <h2>Selecionar LLMs participantes</h2>
-              <p>As selecionadas entram na avaliação cruzada: uma avalia a resposta da outra. Nenhuma chave é pedida aqui.</p>
-            </div>
-          </div>
-          <span>Setup de LLMs</span>
-        </div>
-        <div class="judge-list" id="judgeList"></div>
-      </section>
-
-      <section class="panel">
-        <div class="section-title">
-          <div class="title-copy">
-            <h2>Métricas usadas</h2>
-            <p>A avaliação usa somente métricas ativas já configuradas.</p>
-          </div>
-          <span>Ativas no Setup</span>
-        </div>
-        <div class="metric-list" id="metricList"></div>
-      </section>
-
-      <section class="panel">
-        <div class="section-title">
-          <div class="step-title">
-            <div class="step-number">4</div>
-            <div class="title-copy">
-              <h2>Resumo e execução</h2>
-              <p>Confira a seleção antes de iniciar a avaliação automática.</p>
-            </div>
-          </div>
-          <span>Juízes online</span>
-        </div>
-        <div class="summary-grid">
-          <div class="summary-card">
-            <div class="summary-label">Perguntas selecionadas</div>
-            <div class="summary-value" id="statSelecionadas">0</div>
-          </div>
-          <div class="summary-card">
-            <div class="summary-label">LLMs selecionadas</div>
-            <div class="summary-value" id="statJuizes">0</div>
-          </div>
-          <div class="summary-card">
-            <div class="summary-label">Notas previstas</div>
-            <div class="summary-value" id="statNotas">0</div>
-          </div>
-        </div>
-        <div class="execution-actions">
-          <button class="btn" type="button" id="runBtn">Executar avaliação automática</button>
-          <button class="btn danger" type="button" id="clearResultsBtn">Limpar resultados</button>
-        </div>
-        <div class="status" id="statusBox">Selecione perguntas com respostas e ao menos duas LLMs participantes.</div>
-      </section>
-    </aside>
+    <section class="panel">
+      <div class="section-title">
+        <div class="title-copy"><h2>{% translate "Resultados" %}</h2></div>
+        <span class="section-kicker" id="resultCount" style="color: var(--muted);">0 pares · 0 notas</span>
+      </div>
+      <div class="results-grid" id="resultsGrid">
+        <div class="empty">{% translate "A tabela de notas aparecerá aqui após a execução da avaliação automática." %}</div>
+      </div>
+    </section>
   </div>
-
-  <section class="panel">
-    <div class="section-title">
-      <h2>Resultados</h2>
-      <span id="resultCount">0 pares · 0 notas</span>
-    </div>
-    <div class="results-grid" id="resultsGrid">
-      <div class="empty">A tabela de notas aparecerá aqui após a execução da avaliação automática.</div>
-    </div>
-  </section>
-</div>
-  </main>
 </div>
 
 <script>
@@ -808,7 +556,7 @@ function renderModelFilter(){
 function renderQuestions(){
   const items = filteredQuestions();
   if(!items.length){
-    els.questionList.innerHTML = '<div class="empty">Nenhuma pergunta encontrada para os filtros atuais.</div>';
+    els.questionList.innerHTML = `<div class="empty">{% translate "Nenhuma pergunta encontrada para os filtros atuais." %}</div>`;
     return;
   }
 
@@ -818,11 +566,12 @@ function renderQuestions(){
     return `
       <label class="question-card ${selected ? "is-selected" : ""} ${disabled ? "is-disabled" : ""}">
         <input type="checkbox" data-question-id="${q.id}" ${selected ? "checked" : ""} ${disabled ? "disabled" : ""}>
-        <div>
+        <div class="custom-checkbox"><span class="checkmark">✓</span></div>
+        <div style="flex:1;">
           <div class="question-text">${escapeHtml(q.conteudo)}</div>
           <div class="meta-row">
             <span class="chip">${escapeHtml(q.categoria)}</span>
-            <span class="chip ${disabled ? "warn" : "good"}">${disabled ? "sem respostas" : q.respostas_count + " respostas"}</span>
+            <span class="chip ${disabled ? "warn" : "good"}">${disabled ? "{% translate 'sem respostas' %}" : q.respostas_count + " {% translate 'respostas' %}"}</span>
             ${q.respostas.map(r => `<span class="chip blue">${escapeHtml(r.llm)}</span>`).join("")}
           </div>
         </div>
@@ -842,20 +591,20 @@ function renderQuestions(){
 function renderResponses(){
   const selected = questoes.filter(q => state.selectedQuestions.has(q.id));
   if(!selected.length){
-    els.responsesList.innerHTML = '<div class="empty">Selecione uma pergunta com respostas para ver quais modelos podem participar da avaliação.</div>';
+    els.responsesList.innerHTML = `<div class="empty">{% translate "Selecione uma pergunta com respostas para ver quais modelos podem participar da avaliação." %}</div>`;
     return;
   }
 
   els.responsesList.innerHTML = selected.map(q => `
     <article class="response-group">
-      <div class="response-question">Pergunta #${q.id} · ${q.respostas_count} respostas disponíveis</div>
+      <div class="response-question">{% translate "Pergunta" %} #${q.id} · ${q.respostas_count} {% translate "respostas disponíveis" %}</div>
       <div class="response-list">
         ${q.respostas.map(r => {
           const participating = state.selectedJudges.has(r.llm_id);
           return `
           <div class="response-card ${state.selectedJudges.size ? (participating ? "is-participant" : "is-muted") : ""}">
             <h3>${escapeHtml(r.llm)}</h3>
-            <span class="chip ${participating ? "good" : ""}">${participating ? "incluída" : "disponível"}</span>
+            <span class="chip ${participating ? "good" : ""}">${participating ? "{% translate 'incluída' %}" : "{% translate 'disponível' %}"}</span>
           </div>
         `}).join("")}
       </div>
@@ -865,7 +614,7 @@ function renderResponses(){
 
 function renderJudges(){
   if(!llms.length){
-    els.judgeList.innerHTML = '<div class="empty">Nenhuma LLM ativa encontrada. Configure as LLMs no Setup para usar juízes online.</div>';
+    els.judgeList.innerHTML = `<div class="empty">{% translate "Nenhuma LLM ativa encontrada. Configure as LLMs no Setup para usar juízes online." %}</div>`;
     return;
   }
 
@@ -874,6 +623,7 @@ function renderJudges(){
     return `
       <label class="judge-card ${selected ? "is-selected" : ""}">
         <input type="checkbox" data-judge-id="${llm.id}" ${selected ? "checked" : ""}>
+        <div class="custom-checkbox"><span class="checkmark">✓</span></div>
         <div>
           <div class="judge-name">${escapeHtml(llm.nome)}</div>
           <div class="judge-provider">${escapeHtml(llm.provedor)}</div>
@@ -895,7 +645,7 @@ function renderJudges(){
 
 function renderMetrics(){
   if(!metricas.length){
-    els.metricList.innerHTML = '<div class="empty">Nenhuma métrica ativa encontrada. A avaliação online usa as métricas já configuradas no Setup.</div>';
+    els.metricList.innerHTML = `<div class="empty">{% translate "Nenhuma métrica ativa encontrada. A avaliação online usa as métricas já configuradas no Setup." %}</div>`;
     return;
   }
   els.metricList.innerHTML = metricas.map(m => `
@@ -913,9 +663,9 @@ function renderResults(results){
   state.results = results;
   state.activeResult = 0;
   const scoreCount = results.reduce((total,item) => total + ((item.notas || []).length),0);
-  els.resultCount.textContent = `${results.length} pares · ${scoreCount} notas`;
+  els.resultCount.textContent = `${results.length} {% translate "pares" %} · ${scoreCount} {% translate "notas" %}`;
   if(!results.length){
-    els.resultsGrid.innerHTML = '<div class="empty">Nenhuma avaliação foi retornada.</div>';
+    els.resultsGrid.innerHTML = `<div class="empty">{% translate "Nenhuma avaliação foi retornada." %}</div>`;
     return;
   }
 
@@ -940,7 +690,7 @@ function renderResultList(){
 
     return `
       <button class="result-row ${index === state.activeResult ? "is-active" : ""}" type="button" data-result-index="${index}">
-        <div class="result-route">${escapeHtml(item.modelo_juiz)} avalia ${escapeHtml(item.modelo_respondente)}</div>
+        <div class="result-route">${escapeHtml(item.modelo_juiz)} {% translate "avalia" %} ${escapeHtml(item.modelo_respondente)}</div>
         <div class="result-question">${escapeHtml(item.pergunta)}</div>
         <div class="result-score-chips">${chips}</div>
       </button>
@@ -971,25 +721,25 @@ function renderResultDetail(index){
   detail.innerHTML = `
     <div class="detail-head">
       <div>
-        <div class="detail-title">${escapeHtml(item.modelo_juiz)} avalia ${escapeHtml(item.modelo_respondente)}</div>
+        <div class="detail-title">${escapeHtml(item.modelo_juiz)} {% translate "avalia" %} ${escapeHtml(item.modelo_respondente)}</div>
         <div class="detail-sub">${escapeHtml(item.pergunta)}</div>
       </div>
-      <span class="chip ${item.erro ? "warn" : "good"}">${item.erro ? "erro" : "avaliado"}</span>
+      <span class="chip ${item.erro ? "warn" : "good"}">${item.erro ? "{% translate 'erro' %}" : "{% translate 'avaliado' %}"}</span>
     </div>
 
     <div class="detail-block">
-      <div class="detail-label">Resposta avaliada</div>
-      <div class="detail-text detail-response">${escapeHtml(item.resposta_texto || item.resposta_preview || "Resposta não retornada.")}</div>
+      <div class="detail-label">{% translate "Resposta avaliada" %}</div>
+      <div class="detail-text detail-response">${escapeHtml(item.resposta_texto || item.resposta_preview || "{% translate 'Resposta não retornada.' %}")}</div>
     </div>
 
     <div class="detail-block">
-      <div class="detail-label">Notas por métrica</div>
+      <div class="detail-label">{% translate "Notas por métrica" %}</div>
       <table class="detail-table">
         <thead>
           <tr>
-            <th>Métrica</th>
-            <th>Nota</th>
-            <th>Observação</th>
+            <th>{% translate "Métrica" %}</th>
+            <th>{% translate "Nota" %}</th>
+            <th>{% translate "Observação" %}</th>
           </tr>
         </thead>
         <tbody>${notesRows}</tbody>
@@ -997,28 +747,29 @@ function renderResultDetail(index){
     </div>
 
     <div class="detail-block">
-      <div class="detail-label">Justificativa geral</div>
-      <div class="detail-text">${escapeHtml(item.justificativa || "Sem justificativa retornada.")}</div>
+      <div class="detail-label">{% translate "Justificativa geral" %}</div>
+      <div class="detail-text">${escapeHtml(item.justificativa || "{% translate 'Sem justificativa retornada.' %}")}</div>
     </div>
   `;
 }
 
 async function runEvaluation(){
   if(!state.selectedQuestions.size){
-    setStatus("Selecione ao menos uma pergunta com respostas.", "warn");
+    setStatus("{% translate 'Selecione ao menos uma pergunta com respostas.' %}", "warn");
     return;
   }
   if(state.selectedJudges.size < 2){
-    setStatus("Selecione ao menos duas LLMs participantes para avaliação cruzada.", "warn");
+    setStatus("{% translate 'Selecione ao menos duas LLMs participantes para avaliação cruzada.' %}", "warn");
     return;
   }
   if(!metricas.length){
-    setStatus("Nenhuma métrica ativa encontrada no Setup.", "warn");
+    setStatus("{% translate 'Nenhuma métrica ativa encontrada no Setup.' %}", "warn");
     return;
   }
 
   els.runBtn.disabled = true;
-  setStatus("Executando avaliação automática. Isso pode levar alguns instantes.");
+  els.runBtn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="animation: spin 1s linear infinite;"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg> {% translate "Processando..." %}';
+  setStatus("{% translate 'Executando avaliação automática. Isso pode levar alguns instantes.' %}");
 
   try{
     const response = await fetch("{% url 'juizes_executar_avaliacao' %}", {
@@ -1034,14 +785,15 @@ async function runEvaluation(){
     });
     const data = await response.json();
     if(!response.ok || data.status !== "ok"){
-      throw new Error(data.mensagem || "Erro ao executar avaliação.");
+      throw new Error(data.mensagem || "{% translate 'Erro ao executar avaliação.' %}");
     }
     renderResults(data.resultados || []);
-    setStatus(`${data.total || 0} pares avaliados · ${data.notas_total || 0} notas geradas · dashboard comparativo atualizado.`);
+    setStatus(`${data.total || 0} {% translate "pares avaliados" %} · ${data.notas_total || 0} {% translate "notas geradas · dashboard comparativo atualizado." %}`);
   }catch(error){
     setStatus(error.message, "error");
   }finally{
     els.runBtn.disabled = false;
+    els.runBtn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg> {% translate "Executar avaliação automática" %}';
   }
 }
 
@@ -1059,8 +811,8 @@ document.getElementById("clearQuestionsBtn").addEventListener("click", () => {
 
 document.getElementById("clearResultsBtn").addEventListener("click", () => {
   renderResults([]);
-  els.resultCount.textContent = "0 pares · 0 notas";
-  setStatus("Resultados limpos.");
+  els.resultCount.textContent = "0 {% translate 'pares' %} · 0 {% translate 'notas' %}";
+  setStatus("{% translate 'Resultados limpos.' %}");
 });
 
 els.runBtn.addEventListener("click", runEvaluation);
@@ -1074,5 +826,8 @@ renderJudges();
 renderMetrics();
 renderAll();
 </script>
+<style>
+@keyframes spin { 100% { transform: rotate(360deg); } }
+</style>
 </body>
 </html>
