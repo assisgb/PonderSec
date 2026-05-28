@@ -60,8 +60,10 @@ def cadastro(request):
 
             # Envia e-mail
             send_mail(
-                "Código de Verificação - PonderSec",
-                f"Seu código de ativação é: {codigo_secreto}\n\n Se você não solicitou este código, ignore este e-mail.",
+                _("Código de Verificação - PonderSec"),
+                _("Seu código de ativação é: %(codigo)s\n\nSe você não solicitou este código, ignore este e-mail.") % {
+                    "codigo": codigo_secreto
+                },
                 None,
                 [user.email],
                 fail_silently=False,
@@ -120,8 +122,10 @@ def reenviar_codigo(request):
         CodigoVerificacao.objects.create(usuario=user, codigo=codigo_secreto)
         
         send_mail(
-            "Novo Código de Verificação - PonderSec",
-            f"Seu novo código de ativação é: {codigo_secreto}\n\nSe você não solicitou este código, ignore este e-mail.",
+            _("Novo Código de Verificação - PonderSec"),
+            _("Seu novo código de ativação é: %(codigo)s\n\nSe você não solicitou este código, ignore este e-mail.") % {
+                "codigo": codigo_secreto
+            },
             None,
             [user.email],
             fail_silently=False,

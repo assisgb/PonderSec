@@ -384,7 +384,7 @@ body::before {
                                     <div class="metric-name">{{ metrica.nome }}</div>
                                     <div class="metric-meta">
                                         <span class="badge-tipo {% if metrica.tipo == 'quantitativa' %}badge-quanti{% else %}badge-quali{% endif %}">
-                                            {{ metrica.tipo }}
+                                            {% if metrica.tipo == 'quantitativa' %}{% translate "Quantitativa" %}{% else %}{% translate "Qualitativa" %}{% endif %}
                                         </span>
                                         {% if metrica.tipo == 'quantitativa' %}
                                         <span class="metric-score">{% translate "máx" %} {{ metrica.pontuacao_maxima|default:"5" }}</span>
@@ -394,7 +394,7 @@ body::before {
                                 </div>
                             </div>
                             <div class="metric-actions">
-                                <button class="btn-icon btn-edit" title="Editar"
+                                <button class="btn-icon btn-edit" title="{% translate 'Editar' %}"
                                     onclick="abrirModalEditar(
                                         {{ metrica.id }},
                                         '{{ metrica.nome|escapejs }}',
@@ -408,7 +408,7 @@ body::before {
                                         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                                     </svg>
                                 </button>
-                                <button class="btn-icon btn-delete" title="Deletar"
+                                <button class="btn-icon btn-delete" title="{% translate 'Deletar' %}"
                                     onclick="deletar_metrica({{metrica.id }})">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                                         <polyline points="3 6 5 6 21 6"/>
