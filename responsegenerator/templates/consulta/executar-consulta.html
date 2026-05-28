@@ -424,7 +424,7 @@ body::before {
                 location.reload();
                 
             } catch (error) {
-                console.error("Erro ao executar consultas:", error);
+                console.error("{% translate 'Erro ao executar consultas:' %}", error);
                 alert("{% translate 'Houve um erro ao processar as perguntas.' %}");
                 btnRun.innerHTML = originalText;
                 btnRun.disabled = false;

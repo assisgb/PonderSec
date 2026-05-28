@@ -322,7 +322,7 @@
                         <img src="{% static 'pondersec_logo.jpg' %}" alt="">
                     </div>
                     <div class="hdr-info">
-                        <span class="hdr-tag">PonderSec · Analytics</span>
+                        <span class="hdr-tag">PonderSec · {% translate "Analytics" %}</span>
                         <span class="hdr-title">{% translate "Dashboard de Avaliações" %}</span>
                     </div>
                 </div>
@@ -371,7 +371,7 @@
 
             <main>
                 <div class="mode-bar">
-                    <div class="mode-switcher" role="tablist" aria-label="Modo de visualização">
+                    <div class="mode-switcher" role="tablist" aria-label="{% translate 'Modo de visualização' %}">
                         <button type="button" class="mode-btn" data-mode="especialistas" onclick="setMode('especialistas')">
                             <span class="mode-dot"></span> {% translate "Especialistas" %}
                         </button>
@@ -519,6 +519,7 @@
     // ── DADOS DO DJANGO ──
     const DASHBOARD_PAYLOAD = {{ dashboard_json|safe }};
     const MODO_INICIAL      = "{{ modo_inicial }}";
+    const CURRENT_LANG      = "{{ LANGUAGE_CODE|default:'pt-br' }}";
     const URL_FORMULARIOS   = "{% url 'avaliacao' %}";
     const URL_JUIZES        = "{% url 'juizes_comparador' %}";
 
@@ -540,7 +541,7 @@
         especialistas: {
             sourceKey:   'especialistas',
             countKey:    'especialistas_count',
-            label:       'especialistas',
+            label:       '{% translate "especialistas" %}',
             badge:       '{% translate "Especialistas humanos" %}',
             desc:        '{% blocktranslate %}<strong>Especialistas:</strong> médias das avaliações coletadas via formulários com avaliadores humanos.{% endblocktranslate %}',
             chartTitle:  '{% translate "Médias dos Especialistas por Modelo" %}',
@@ -554,7 +555,7 @@
         juizes: {
             sourceKey:   'juizes',
             countKey:    'juizes_count',
-            label:       'juízes online',
+            label:       '{% translate "juízes online" %}',
             badge:       '{% translate "LLMs como juízes" %}',
             desc:        '{% blocktranslate %}<strong>Juízes Online:</strong> médias das notas atribuídas por LLMs atuando como juízes nas respostas geradas.{% endblocktranslate %}',
             chartTitle:  '{% translate "Médias dos Juízes Online por Modelo" %}',
@@ -568,7 +569,7 @@
         comparativo: {
             sourceKey:   null,
             countKey:    null,
-            label:       'comparativo',
+            label:       '{% translate "comparativo" %}',
             badge:       '{% translate "Especialistas × Juízes" %}',
             desc:        '{% blocktranslate %}<strong>Comparativo:</strong> médias dos especialistas vs juízes online lado a lado, com diferença, divergências e tabela detalhada.{% endblocktranslate %}',
             chartTitle:  null,
@@ -1521,8 +1522,8 @@
 
                 text(MUTED.r, MUTED.g, MUTED.b);
                 pdf.setFontSize(7);
-                pdf.text(`Pag. ${pNum} / ${pTotal}`, pageW - margin - 2, margin + 9.5, { align: 'right' });
-                const now = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                pdf.text(`{% translate "Pág." %} ${pNum} / ${pTotal}`, pageW - margin - 2, margin + 9.5, { align: 'right' });
+                const now = new Date().toLocaleDateString(CURRENT_LANG, { day: '2-digit', month: '2-digit', year: 'numeric' });
                 pdf.text(now, pageW - margin - 2, margin + 14, { align: 'right' });
             }
 
@@ -1561,17 +1562,17 @@
 
             drawPageBg();
 
-            const modeLabel = currentMode === 'juizes' ? 'Juizes Online' : 'Especialistas';
+            const modeLabel = currentMode === 'juizes' ? '{% translate "Juízes Online" %}' : '{% translate "Especialistas" %}';
 
             text(GREEN.r, GREEN.g, GREEN.b);
             pdf.setFontSize(28);
             pdf.setFont('helvetica', 'bold');
-            pdf.text('Dashboard de Avaliacoes', pageW / 2, 55, { align: 'center' });
+            pdf.text('{% translate "Dashboard de Avaliações" %}', pageW / 2, 55, { align: 'center' });
 
             text(CYAN.r, CYAN.g, CYAN.b);
             pdf.setFontSize(11);
             pdf.setFont('helvetica', 'normal');
-            pdf.text(`PonderSec - Relatorio de LLMs (Modo: ${modeLabel})`, pageW / 2, 65, { align: 'center' });
+            pdf.text(`{% translate "PonderSec - Relatório de LLMs" %} ({% translate "Modo" %}: ${modeLabel})`, pageW / 2, 65, { align: 'center' });
 
             draw(GREEN.r, GREEN.g, GREEN.b);
             pdf.setLineWidth(0.5);
@@ -1582,10 +1583,10 @@
             const cardsY = 80;
 
             const statsCards = [
-                { label: 'LLMs Avaliados',  value: String(LLMS.length),                        sub: 'modelos',      c: GREEN },
-                { label: 'Metricas Ativas', value: String(metricaNomes.length),                sub: 'criterios',    c: CYAN  },
-                { label: 'Melhor Score',    value: totaisGlobais[melhorGlobalIdx].toFixed(1),   sub: 'score total', c: GOLD  },
-                { label: 'Top LLM',         value: (LLMS[melhorGlobalIdx] || '-').slice(0, 10), sub: 'geral',       c: GREEN },
+                { label: '{% translate "LLMs avaliados" %}',    value: String(LLMS.length),                        sub: '{% translate "modelos" %}',       c: GREEN },
+                { label: '{% translate "Métricas ativas" %}',   value: String(metricaNomes.length),                sub: '{% translate "critérios" %}',     c: CYAN  },
+                { label: '{% translate "Melhor pontuação" %}',  value: totaisGlobais[melhorGlobalIdx].toFixed(1),   sub: '{% translate "score total" %}',   c: GOLD  },
+                { label: '{% translate "Top LLM" %}',           value: (LLMS[melhorGlobalIdx] || '-').slice(0, 10), sub: '{% translate "geral" %}',         c: GREEN },
             ];
 
             statsCards.forEach((card, i) => {
@@ -1609,7 +1610,7 @@
             });
 
             const tableY = cardsY + cardH + 12;
-            drawSectionLabel('Resumo Geral de Scores por Modelo', tableY, CYAN);
+            drawSectionLabel('{% translate "Resumo geral de pontuações por modelo" %}', tableY, CYAN);
 
             const tY   = tableY + 10;
             const colW = contentW / (LLMS.length + 1);
@@ -1619,7 +1620,7 @@
             text(GREEN.r, GREEN.g, GREEN.b);
             pdf.setFontSize(7);
             pdf.setFont('helvetica', 'bold');
-            pdf.text('METRICA', margin + 3, tY + 4.5);
+            pdf.text('{% translate "MÉTRICA" %}', margin + 3, tY + 4.5);
             LLMS.forEach((llm, i) => {
                 pdf.text(llm, margin + colW * (i + 1) + colW / 2, tY + 4.5, { align: 'center' });
             });
@@ -1656,19 +1657,19 @@
 
             text(MUTED.r, MUTED.g, MUTED.b);
             pdf.setFontSize(6);
-            pdf.text(`Gerado em ${new Date().toLocaleString('pt-BR')} - PonderSec Analytics`, pageW / 2, pageH - 6, { align: 'center' });
+            pdf.text(`{% translate "Gerado em" %} ${new Date().toLocaleString(CURRENT_LANG)} - PonderSec Analytics`, pageW / 2, pageH - 6, { align: 'center' });
 
             // PÁGINA 2
             pageNum++;
-            setOverlayProgress(15, '{% translate "Capturando grafico empilhado..." %}', `{% translate "Passo" %} 2 / ${totalPages}`);
+            setOverlayProgress(15, '{% translate "Capturando gráfico empilhado..." %}', `{% translate "Passo" %} 2 / ${totalPages}`);
             await new Promise(r => setTimeout(r, 80));
 
             const imgStacked = await captureChartType('stacked');
 
             pdf.addPage();
             drawPageBg();
-            drawHeader('Comparativo por Score Acumulado', 'Barras empilhadas - todas as metricas por modelo', pageNum, totalPages);
-            drawSectionLabel('Grafico de Barras Empilhadas', margin + 22, GOLD);
+            drawHeader('{% translate "Comparativo por score acumulado" %}', '{% translate "Barras empilhadas - todas as métricas por modelo" %}', pageNum, totalPages);
+            drawSectionLabel('{% translate "Gráfico de barras empilhadas" %}', margin + 22, GOLD);
 
             const stackedImgY = margin + 30;
             const stackedImgH = pageH - stackedImgY - margin - 16;
@@ -1679,7 +1680,7 @@
             const legY = stackedImgY + stackedImgH + 4;
             text(MUTED.r, MUTED.g, MUTED.b);
             pdf.setFontSize(6);
-            pdf.text('Legenda:', margin, legY + 4);
+            pdf.text('{% translate "Legenda:" %}', margin, legY + 4);
 
             metricaNomes.forEach((m, i) => {
                 const c  = hex2rgb(PALETTE[i % PALETTE.length].border);
@@ -1693,15 +1694,15 @@
 
             // PÁGINA 3
             pageNum++;
-            setOverlayProgress(30, '{% translate "Capturando grafico radar..." %}', `{% translate "Passo" %} 3 / ${totalPages}`);
+            setOverlayProgress(30, '{% translate "Capturando gráfico radar..." %}', `{% translate "Passo" %} 3 / ${totalPages}`);
             await new Promise(r => setTimeout(r, 80));
 
             const imgRadar = await captureChartType('radar');
 
             pdf.addPage();
             drawPageBg();
-            drawHeader('Visao Multidimensional - Radar', 'Todas as metricas simultaneas por modelo de linguagem', pageNum, totalPages);
-            drawSectionLabel('Grafico Radar - Performance Multidimensional', margin + 22, CYAN);
+            drawHeader('{% translate "Visão multidimensional - Radar" %}', '{% translate "Todas as métricas simultâneas por modelo de linguagem" %}', pageNum, totalPages);
+            drawSectionLabel('{% translate "Gráfico radar - performance multidimensional" %}', margin + 22, CYAN);
 
             const radarImgW = contentW * 0.78;
             const radarImgH = pageH - margin * 2 - 34;
@@ -1722,7 +1723,7 @@
 
             text(CYAN.r, CYAN.g, CYAN.b);
             pdf.setFontSize(7);
-            pdf.text('MODELOS', panelX + panelW / 2, radarImgY + 7, { align: 'center' });
+            pdf.text('{% translate "MODELOS" %}', panelX + panelW / 2, radarImgY + 7, { align: 'center' });
 
             draw(CYAN.r, CYAN.g, CYAN.b);
             pdf.setLineWidth(0.15);
@@ -1748,14 +1749,14 @@
 
                 text(MUTED.r, MUTED.g, MUTED.b);
                 pdf.setFontSize(5.5);
-                pdf.text(`Score total: ${totaisGlobais[i].toFixed(1)}`, panelX + 9, lyPos + 10.5);
+                pdf.text(`{% translate "Score total:" %} ${totaisGlobais[i].toFixed(1)}`, panelX + 9, lyPos + 10.5);
             });
 
             // PÁGINAS 4+
             for (let mi = 0; mi < metricaNomes.length; mi++) {
                 pageNum++;
                 const progPct = 30 + Math.round((mi / metricaNomes.length) * 65);
-                setOverlayProgress(progPct, `{% translate "Capturando metrica:" %} ${metricaNomes[mi]}`, `{% translate "Passo" %} ${pageNum} / ${totalPages}`);
+                setOverlayProgress(progPct, `{% translate "Capturando métrica:" %} ${metricaNomes[mi]}`, `{% translate "Passo" %} ${pageNum} / ${totalPages}`);
                 await new Promise(r => setTimeout(r, 60));
 
                 const imgBar = await captureChartType('bar', mi);
@@ -1768,8 +1769,8 @@
                 const maxScore    = metricaInfo.pontuacao_maxima || 5;
 
                 drawHeader(
-                    `Metrica: ${nomeMetrica}`,
-                    `Pontuacao maxima: ${maxScore} - Barras individuais por LLM`,
+                    `{% translate "Métrica:" %} ${nomeMetrica}`,
+                    `{% translate "Pontuação máxima:" %} ${maxScore} - {% translate "barras individuais por LLM" %}`,
                     pageNum, totalPages
                 );
                 drawSectionLabel(nomeMetrica, margin + 22, GREEN);
@@ -1811,7 +1812,7 @@
                     text(MUTED.r, MUTED.g, MUTED.b);
                     pdf.setFontSize(5.5);
                     pdf.text(
-                        val !== null ? `${val} / ${maxScore}` : 'Sem dados',
+                        val !== null ? `${val} / ${maxScore}` : '{% translate "Sem dados" %}',
                         lx + 10, barLegY + 9.5
                     );
 
@@ -1825,7 +1826,7 @@
                 text(MUTED.r, MUTED.g, MUTED.b);
                 pdf.setFontSize(6);
                 pdf.text(
-                    `Gerado em ${new Date().toLocaleString('pt-BR')} - PonderSec Analytics`,
+                    `{% translate "Gerado em" %} ${new Date().toLocaleString(CURRENT_LANG)} - PonderSec Analytics`,
                     pageW / 2, pageH - 4, { align: 'center' }
                 );
             }
@@ -2049,7 +2050,7 @@
                     </div>
                     <div class="divergence-meta">
                         ${escapeHtml(item.metrica)}<br>
-                        Esp ${item.especialistas.toFixed(2)} · Juízes ${item.juizes.toFixed(2)} / ${item.max}<br>
+                        {% translate "Especialistas" %} ${item.especialistas.toFixed(2)} · {% translate "Juízes" %} ${item.juizes.toFixed(2)} / ${item.max}<br>
                         ${direction}
                     </div>
                 </article>

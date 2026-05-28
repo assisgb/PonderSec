@@ -78,8 +78,8 @@ def ver_detalhes_questao(request, id):
                 })
         else:
             respostas_encontradas.append({
-                'ia': 'Sistema',
-                'texto': 'Nenhuma resposta vinculada a esta questão no banco de dados.',
+                'ia': _('Sistema'),
+                'texto': _('Nenhuma resposta vinculada a esta questão no banco de dados.'),
                 'cor': '#8ba1b0'
             })
 
@@ -368,10 +368,15 @@ def gerar_respostas(request, questao_id):
                 texto_ia_limpa = response.choices[0].message.content
             
             else:
-                texto_ia_limpa = f"Provedor '{llm.descricao}' não reconhecido para execução automática."
+                texto_ia_limpa = _("Provedor '%(provedor)s' não reconhecido para execução automática.") % {
+                    "provedor": llm.descricao
+                }
 
         except Exception as e:
-            texto_ia_limpa = f"Erro na IA {llm.nome}: {str(e)}"
+            texto_ia_limpa = _("Erro na IA %(nome)s: %(erro)s") % {
+                "nome": llm.nome,
+                "erro": str(e),
+            }
 
         Resposta.objects.create(
             questao_id=questao_id,
@@ -550,14 +555,14 @@ def _judgeai_call_configured_llm(llm, prompt):
 
     if "gemini" in provider or "google" in provider:
         if genai is None:
-            raise RuntimeError("Biblioteca google-genai não instalada.")
+            raise RuntimeError(_("Biblioteca google-genai não instalada."))
         client = genai.Client(api_key=llm.api_key)
         response = client.models.generate_content(model=llm.nome, contents=prompt)
         return (getattr(response, "text", "") or "").strip()
 
     if "groq" in provider or "llama" in provider or "mixtral" in provider:
         if Groq is None:
-            raise RuntimeError("Biblioteca groq não instalada.")
+            raise RuntimeError(_("Biblioteca groq não instalada."))
         client = Groq(api_key=llm.api_key)
         completion = client.chat.completions.create(
             messages=[{"role": "user", "content": prompt}],
@@ -567,7 +572,7 @@ def _judgeai_call_configured_llm(llm, prompt):
 
     if "deepseek" in provider:
         if openai is None:
-            raise RuntimeError("Biblioteca openai não instalada.")
+            raise RuntimeError(_("Biblioteca openai não instalada."))
         client = openai.OpenAI(
             api_key=llm.api_key,
             base_url="https://integrate.api.nvidia.com/v1"
@@ -580,7 +585,7 @@ def _judgeai_call_configured_llm(llm, prompt):
 
     if "openai" in provider or "gpt" in provider or "chatgpt" in provider:
         if openai is None:
-            raise RuntimeError("Biblioteca openai não instalada.")
+            raise RuntimeError(_("Biblioteca openai não instalada."))
         client = openai.OpenAI(api_key=llm.api_key)
         response = client.chat.completions.create(
             model=llm.nome,
@@ -588,7 +593,9 @@ def _judgeai_call_configured_llm(llm, prompt):
         )
         return response.choices[0].message.content.strip()
 
-    raise RuntimeError(f"Provedor '{llm.descricao or llm.nome}' não reconhecido.")
+    raise RuntimeError(_("Provedor '%(provedor)s' não reconhecido.") % {
+        "provedor": llm.descricao or llm.nome
+    })
 
 def _judgeai_prompt(questao, resposta, juiz, metricas):
     metricas_txt = "\n".join(
