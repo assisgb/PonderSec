@@ -15,8 +15,16 @@ from pathlib import Path
 import mimetypes
 from django.utils.translation import gettext_lazy as _
 
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    load_dotenv = None
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+if load_dotenv:
+    load_dotenv(BASE_DIR / '.env')
 
 
 # Quick-start development settings - unsuitable for production
@@ -75,15 +83,15 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp-relay.brevo.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
+EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp-relay.brevo.com')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True').lower() in ('1', 'true', 'yes', 'on')
 
-EMAIL_HOST_USER = os.environ.get('HOST_API_EMAIL') 
-EMAIL_HOST_PASSWORD = os.environ.get('SENHA_API_EMAIL')
+EMAIL_HOST_USER = os.environ.get('HOST_API_EMAIL') or os.environ.get('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.environ.get('SENHA_API_EMAIL') or os.environ.get('EMAIL_HOST_PASSWORD')
 
-DEFAULT_FROM_EMAIL = 'PonderSec <naoresp00@gmail.com>'
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'PonderSec <naoresp00@gmail.com>')
 
 ROOT_URLCONF = 'pondersec.urls'
 
@@ -113,7 +121,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'pondersec.wsgi.application'
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 
 # Database
