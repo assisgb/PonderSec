@@ -155,6 +155,49 @@
             box-shadow: 0 0 12px rgba(0, 255, 160, 0.6);
         }
 
+        .password-field {
+            position: relative;
+        }
+
+        .password-field input {
+            padding-right: 48px;
+        }
+
+        .password-toggle {
+            position: absolute;
+            top: 50%;
+            right: 8px;
+            width: 34px;
+            height: 34px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transform: translateY(-50%);
+            border: 1px solid rgba(0, 255, 160, 0.18);
+            border-radius: 8px;
+            background: rgba(0, 255, 160, 0.08);
+            color: #8fffe0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .password-toggle:hover,
+        .password-toggle:focus-visible {
+            border-color: rgba(0, 255, 160, 0.48);
+            background: rgba(0, 255, 160, 0.14);
+            color: #00ff9f;
+            outline: none;
+        }
+
+        .password-toggle .icon-eye-off,
+        .password-toggle.is-visible .icon-eye {
+            display: none;
+        }
+
+        .password-toggle.is-visible .icon-eye-off {
+            display: block;
+        }
+
         /* BOTÃO */
         .button-primary {
             width: 100%;
@@ -237,7 +280,30 @@
 
             <div class="form-group">
                 <label>{% translate "Senha" %}</label>
-                <input type="password" name="password" placeholder="••••••••" required>
+                <div class="password-field">
+                    <input type="password" name="password" id="loginPassword" placeholder="••••••••" required>
+                    <button
+                        type="button"
+                        class="password-toggle"
+                        aria-label="{% translate 'Mostrar senha' %}"
+                        title="{% translate 'Mostrar senha' %}"
+                        aria-pressed="false"
+                        data-show-label="{% translate 'Mostrar senha' %}"
+                        data-hide-label="{% translate 'Ocultar senha' %}"
+                        onclick="togglePasswordVisibility('loginPassword', this)"
+                    >
+                        <svg class="icon-eye" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                        <svg class="icon-eye-off" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M3 3l18 18"></path>
+                            <path d="M10.6 10.6A3 3 0 0 0 12 15a3 3 0 0 0 2.4-1.2"></path>
+                            <path d="M9.9 4.3A10.5 10.5 0 0 1 12 4.1c6.5 0 10 7 10 7a18 18 0 0 1-3.2 4.2"></path>
+                            <path d="M6.1 6.5C3.5 8.3 2 12 2 12s3.5 7 10 7a10.8 10.8 0 0 0 4.1-.8"></path>
+                        </svg>
+                    </button>
+                </div>
             </div>
 
             <button type="submit" class="button-primary">{% translate "Entrar" %}</button>
@@ -249,6 +315,22 @@
         </form>
 
     </div>
+
+    <script>
+        function togglePasswordVisibility(inputId, button) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+
+            const isVisible = input.type === "text";
+            input.type = isVisible ? "password" : "text";
+            button.classList.toggle("is-visible", !isVisible);
+            button.setAttribute("aria-pressed", String(!isVisible));
+
+            const label = isVisible ? button.dataset.showLabel : button.dataset.hideLabel;
+            button.setAttribute("aria-label", label);
+            button.setAttribute("title", label);
+        }
+    </script>
 
 </body>
 </html>

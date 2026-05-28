@@ -156,7 +156,7 @@ def add_questoes(request):
                 categoria_obj = Categoria.objects.filter(id=categoria_id, usuario=request.user).first()
 
             if not categoria_obj:
-                categoria_obj, created = Categoria.objects.get_or_create(
+                categoria_obj, _categoria_created = Categoria.objects.get_or_create(
                     nome_categoria="Geral",
                     usuario=request.user,
                     defaults={'descricao_categoria': 'Categoria padrão'}
@@ -190,7 +190,7 @@ def upload_perguntas(request):
                 categoria_padrao = Categoria.objects.filter(id=categoria_id, usuario=request.user).first()
 
             if not categoria_padrao:
-                categoria_padrao, created = Categoria.objects.get_or_create(
+                categoria_padrao, _categoria_created = Categoria.objects.get_or_create(
                     nome_categoria="Geral",
                     usuario=request.user,
                     defaults={'descricao_categoria': 'Categoria padrão para importação'}
@@ -514,7 +514,7 @@ def edit_llm_api(request, id):
 
 @login_required
 def menu_consulta(request):
-    return render(request, 'consulta/menu-consulta.html')
+    return redirect('executar_consulta')
 
 @login_required
 def executar_consulta(request):
