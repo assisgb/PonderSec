@@ -1,10 +1,10 @@
-{% load static %}
+{% load static i18n %}
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="{{ LANGUAGE_CODE }}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PonderSEC | Chat Público</title>
+<title>{% trans "PonderSEC | Chat Público" %}</title>
 
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&display=swap" rel="stylesheet">
 
@@ -139,6 +139,28 @@ button:hover {
   border-color: var(--accent-bright);
 }
 
+.lang-form {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lang-select {
+  appearance: none;
+  border: 1px solid rgba(0, 220, 130, 0.28);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.14);
+  color: var(--text);
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.lang-select option {
+  background: #04101c;
+}
+
 /* HERO */
 
 .hero {
@@ -155,6 +177,8 @@ button:hover {
 }
 
 .hero h1 span {
+  display: block;
+  margin-top: 8px;
   color: var(--accent-bright);
 }
 
@@ -503,29 +527,43 @@ textarea::placeholder {
 
       <div class="header-text">
         <span class="product">PonderSEC</span>
-        <span class="header-title">Chat Público</span>
-        <span class="header-subtitle">Consulta aberta para perguntas sobre cibersegurança</span>
+        <span class="header-title">{% trans "Chat Público" %}</span>
+        <span class="header-subtitle">{% trans "Consulta aberta para perguntas sobre cibersegurança" %}</span>
       </div>
     </div>
 
-    <a href="{% url 'login' %}" class="btn-login">
-      Entrar
-    </a>
+    <div class="lang-form">
+      <form action="{% url 'set_language' %}" method="post">
+        {% csrf_token %}
+        <input name="next" type="hidden" value="{{ request.get_full_path }}">
+        <select name="language" class="lang-select" onchange="this.form.submit()" aria-label="{% trans 'Selecionar idioma' %}">
+          <option value="pt-br" {% if LANGUAGE_CODE == 'pt-br' %}selected{% endif %}>{% trans "Português" %}</option>
+          <option value="en" {% if LANGUAGE_CODE == 'en' %}selected{% endif %}>{% trans "English" %}</option>
+          <option value="es" {% if LANGUAGE_CODE == 'es' %}selected{% endif %}>{% trans "Español" %}</option>
+        </select>
+      </form>
+      <a href="{% url 'login' %}" class="btn-login">
+        {% trans "Entrar" %}
+      </a>
+    </div>
   </header>
 
   <main>
     <section class="hero">
-      <h1>Faça uma pergunta sobre <span>cibersegurança</span></h1>
+      <h1>
+        {% trans "Faça uma pergunta sobre" %}<br>
+        <span>{% trans "cibersegurança" %}</span>
+      </h1>
       <p>
-        Digite sua dúvida e receba respostas geradas pelos modelos configurados no PonderSEC.
+        {% trans "Digite sua dúvida e receba respostas geradas pelos modelos configurados no PonderSEC." %}
       </p>
     </section>
 
     <section class="chat-box">
       <div class="input-wrap">
-        <textarea id="questionInput" placeholder="Digite sua pergunta... Ex.: Como reduzir riscos de phishing em uma organização?"></textarea>
+        <textarea id="questionInput" placeholder="{% trans "Digite sua pergunta... Ex.: Como reduzir riscos de phishing em uma organização?" %}"></textarea>
 
-        <button class="btn-send" id="sendBtn" type="button" onclick="sendPublicQuestion()" aria-label="Enviar pergunta">
+        <button class="btn-send" id="sendBtn" type="button" onclick="sendPublicQuestion()" aria-label="{% trans 'Enviar pergunta' %}">
           <!-- ícone de seta -->
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
             <path d="M2 21L23 12L2 3V10L17 12L2 14V21Z" fill="currentColor"/>
@@ -534,20 +572,20 @@ textarea::placeholder {
       </div>
 
       <div class="hint">
-        As respostas são geradas automaticamente pelas LLMs configuradas pelos administradores.
+        {% trans "As respostas são geradas automaticamente pelas LLMs configuradas pelos administradores." %}
       </div>
 
       <div class="status" id="statusBox"></div>
     </section>
 
     <section class="responses-section" id="responsesSection" hidden>
-      <div class="section-title">Respostas dos modelos</div>
+      <div class="section-title">{% trans "Respostas dos modelos" %}</div>
       <div class="responses-grid" id="responsesGrid"></div>
     </section>
   </main>
 
   <footer class="footer">
-    PonderSEC · IA aplicada à cibersegurança
+    {% trans "PonderSEC · IA aplicada à cibersegurança" %}
   </footer>
 </div>
 
@@ -578,6 +616,11 @@ function clearStatus() {
   statusBox.className = "status";
 }
 
+const TRANSLATED_OK_LABEL = "{% trans 'OK' %}";
+const TRANSLATED_ERROR_LABEL = "{% trans 'Erro' %}";
+const TRANSLATED_NO_CONTENT = "{% trans 'Sem conteúdo.' %}";
+const TRANSLATED_QUERYING = "{% trans 'Consultando modelos...' %}";
+
 function escapeHtml(value) {
   return String(value ?? "")
     .replaceAll("&", "&amp;")
@@ -599,7 +642,7 @@ function renderLoadingCards() {
   loadingCard.innerHTML = `
     <div class="loading">
       <div class="spinner"></div>
-      Consultando modelos...
+      ${TRANSLATED_QUERYING}
     </div>
   `;
 
@@ -617,10 +660,10 @@ function renderResponses(responses) {
     grid.innerHTML = `
       <div class="response-card">
         <div class="response-head">
-          <div class="model-name">Nenhuma resposta</div>
-          <div class="model-status error">Erro</div>
+          <div class="model-name">{% trans "Nenhuma resposta" %}</div>
+          <div class="model-status error">{% trans "Erro" %}</div>
         </div>
-        <div class="response-body">Nenhum modelo retornou resposta.</div>
+        <div class="response-body">{% trans "Nenhum modelo retornou resposta." %}</div>
       </div>
     `;
     return;
@@ -633,9 +676,9 @@ function renderResponses(responses) {
     card.innerHTML = `
       <div class="response-head">
         <div class="model-name">${escapeHtml(item.modelo || item.model || item.nome || "LLM")}</div>
-        <div class="model-status ${ok ? "" : "error"}">${ok ? "OK" : "Erro"}</div>
+        <div class="model-status ${ok ? "" : "error"}">${ok ? TRANSLATED_OK_LABEL : TRANSLATED_ERROR_LABEL}</div>
       </div>
-      <div class="response-body">${escapeHtml(item.resposta || item.content || item.texto || "Sem conteúdo.")}</div>
+      <div class="response-body">${escapeHtml(item.resposta || item.content || item.texto || TRANSLATED_NO_CONTENT)}</div>
     `;
     grid.appendChild(card);
   });
@@ -647,7 +690,7 @@ async function sendPublicQuestion() {
   const pergunta = input.value.trim();
 
   if (!pergunta) {
-    setStatus("Digite uma pergunta antes de enviar.", "error");
+    setStatus('{% trans "Digite uma pergunta antes de enviar." %}', "error");
     input.focus();
     return;
   }
@@ -673,14 +716,14 @@ async function sendPublicQuestion() {
     const data = await response.json();
 
     if (!response.ok || data.status === "erro") {
-      throw new Error(data.mensagem || "Erro ao consultar os modelos.");
+      throw new Error(data.mensagem || '{% trans "Erro ao consultar os modelos." %}');
     }
 
     renderResponses(data.respostas || data.responses || []);
-    setStatus("Consulta finalizada.");
+    setStatus('{% trans "Consulta finalizada." %}');
   } catch (error) {
     renderResponses([]);
-    setStatus("Erro: " + error.message, "error");
+    setStatus('{% trans "Erro:" %} ' + error.message, "error");
   } finally {
     btn.disabled = false;
   }
