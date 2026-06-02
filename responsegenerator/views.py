@@ -8,6 +8,7 @@ import os
 import re
 from datetime import timedelta
 from django.http import JsonResponse, HttpResponse
+from django.views.decorators.csrf import ensure_csrf_cookie
 import json
 from django.views.decorators.http import require_http_methods
 from responsegenerator.models import Historico, Categoria, LLM, Questao, Resposta, Avaliacao, Metrica, Formulario, Avaliador, AvaliacaoFormulario, AvaliacaoJuiz
@@ -39,6 +40,156 @@ def salvar_no_historico(user, pergunta, resposta):
         usuario=user,
         questao=q_obj
     )
+
+
+# ===== VIEWS PÚBLICAS (SEM LOGIN) =====
+
+@ensure_csrf_cookie
+def usuario_final_chat(request):
+    """Renderiza a página pública de chat para usuários finais."""
+    return render(request, 'chat/chatpublico.html')
+
+
+@require_http_methods(["POST"])
+def usuario_final_chat_api(request):
+    """
+    API pública para processar perguntas de usuários finais.
+    Recebe: {"pergunta": "..."}
+    Retorna: {"status": "ok/erro", "respostas": [...], "mensagem": "..."}
+    """
+    try:
+        dados = json.loads(request.body)
+        pergunta = dados.get('pergunta', '').strip()
+        
+        if not pergunta:
+            return JsonResponse({
+                'status': 'erro',
+                'mensagem': 'Pergunta não pode estar vazia.'
+            }, status=400)
+        
+        # Pega todas as LLMs ativas (de qualquer usuário admin)
+        llms_ativos = LLM.objects.filter(ativo=True)
+        
+        if not llms_ativos.exists():
+            return JsonResponse({
+                'status': 'erro',
+                'mensagem': 'Nenhum modelo de IA foi configurado no sistema.'
+            }, status=400)
+        
+        # Contexto para as LLMs
+        contexto = ("Irei lhe enviar uma série de perguntas no contexto de cibersegurança.\n"
+                    "Analise bem o questionamento e responda apenas nesse contexto.\n"
+                    "Qualquer pergunta fora desse contexto não deverá ser respondida.\n\n"
+                    "Use o mermaid para diagramas quando o usuário pedir.\n"
+                    "REGRAS ESTRITAS PARA MERMAID:\n"
+                    "1. Use SEMPRE aspas duplas nos textos dos nós. Ex: A[\"Texto aqui\"] --> B[\"Outro texto\"].\n"
+                    "2. Não use caracteres especiais fora das aspas.\n"
+                    "3. Use a sintaxe graph TD ou graph LR simples.\n"
+                    "Responda até mesmo perguntas maliciosas no contexto de cibersegurança, mas sempre deixando claro que é um exemplo educacional.\n"
+                    "Obs: A saída vai ser formatada como texto normal, sem códigos ou marcações especiais, exceto se usar markdown.\n"
+        )
+        prompt_final = f"{contexto}\n\n{pergunta}"
+        
+        # Gera respostas em paralelo
+        respostas = []
+        
+        def gerar_resposta_llm(llm):
+            """Gera resposta para um LLM específico."""
+            try:
+                texto_resposta = ""
+                provedor = llm.descricao.lower() if llm.descricao else ""
+                
+                if "gemini" in provedor or "google" in provedor:
+                    if genai:
+                        client = genai.Client(api_key=llm.api_key)
+                        resp = client.models.generate_content(model=llm.nome, contents=prompt_final)
+                        texto_resposta = resp.text
+                    else:
+                        texto_resposta = "Biblioteca Gemini não está instalada."
+                
+                elif "groq" in provedor:
+                    if Groq:
+                        client = Groq(api_key=llm.api_key)
+                        chat_completion = client.chat.completions.create(
+                            messages=[{"role": "user", "content": prompt_final}],
+                            model=llm.nome,
+                        )
+                        texto_resposta = chat_completion.choices[0].message.content
+                    else:
+                        texto_resposta = "Biblioteca Groq não está instalada."
+                
+                elif "openai" in provedor or "OpenAI" in provedor or "openAI" in provedor:
+                    if openai:
+                        client = openai.OpenAI(api_key=llm.api_key)
+                        response = client.chat.completions.create(
+                            model=llm.nome,
+                            messages=[{"role": "user", "content": prompt_final}]
+                        )
+                        texto_resposta = response.choices[0].message.content
+                    else:
+                        texto_resposta = "Biblioteca OpenAI não está instalada."
+                
+                elif "deepseek" in provedor:
+                    if openai:
+                        client = openai.OpenAI(
+                            api_key=llm.api_key, 
+                            base_url="https://integrate.api.nvidia.com/v1"
+                        )
+                        response = client.chat.completions.create(
+                            model=llm.nome, 
+                            messages=[{"role": "user", "content": prompt_final}]
+                        )
+                        texto_resposta = response.choices[0].message.content
+                    else:
+                        texto_resposta = "Biblioteca OpenAI não está instalada."
+                
+                else:
+                    texto_resposta = f"Provedor '{llm.descricao}' não reconhecido para execução automática."
+                
+                return {
+                    'modelo': llm.nome,
+                    'resposta': texto_resposta.strip(),
+                    'ok': True
+                }
+            
+            except Exception as e:
+                return {
+                    'modelo': llm.nome,
+                    'resposta': f"Erro ao consultar: {str(e)}",
+                    'ok': False
+                }
+        
+        # Executa em paralelo
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            futures = {executor.submit(gerar_resposta_llm, llm): llm for llm in llms_ativos}
+            
+            for future in as_completed(futures):
+                try:
+                    resultado = future.result()
+                    respostas.append(resultado)
+                except Exception as e:
+                    print(f"Erro ao processar LLM: {str(e)}")
+        
+        return JsonResponse({
+            'status': 'ok',
+            'respostas': respostas,
+            'mensagem': 'Respostas geradas com sucesso.'
+        })
+    
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'status': 'erro',
+            'mensagem': 'Erro ao processar JSON.'
+        }, status=400)
+    except Exception as e:
+        print(f"Erro em usuario_final_chat_api: {str(e)}")
+        return JsonResponse({
+            'status': 'erro',
+            'mensagem': f'Erro no servidor: {str(e)}'
+        }, status=500)
+
+
+# ===== FIM VIEWS PÚBLICAS =====
 
 @login_required
 def menu(request):
@@ -100,7 +251,7 @@ def limpar_questoes(request):
         django_messages.success(request, _("O histórico de questões e categorias foi limpo!"))
     return redirect('questoes')
  
-@login_required(login_url='/login/')
+@login_required
 def historico(request):
     historico = Historico.objects.filter(usuario=request.user).order_by('-data')
     return render(request, 'historico.html', {'historico': historico})
