@@ -2,6 +2,11 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    # ===== ROTAS PÚBLICAS (SEM LOGIN) =====
+    path('', views.usuario_final_chat, name='usuario_final_chat'),
+    path('api/usuario-final-chat/', views.usuario_final_chat_api, name='usuario_final_chat_api'),
+    
+    # ===== ROTAS INTERNAS (COM LOGIN) =====
     path('menu/', views.menu, name="menu"),
     path('questoes/', views.questoes, name="questoes"),
     path('add_questoes/', views.add_questoes, name="add_questoes"),

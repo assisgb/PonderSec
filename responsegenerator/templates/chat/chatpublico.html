@@ -1,0 +1,698 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PonderSEC | Chat Público</title>
+
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg: #02060b;
+  --surface: rgba(5, 12, 22, 0.96);
+  --surface-soft: rgba(0, 220, 130, 0.06);
+  --border: rgba(0, 220, 130, 0.18);
+  --border-strong: rgba(0, 220, 130, 0.42);
+  --accent: #00dc82;
+  --accent-bright: #00ff9f;
+  --blue: #0ea5e9;
+  --danger: #ef4444;
+  --text: #d4f5e9;
+  --text-strong: #f0fff9;
+  --muted: #7a968c;
+  --mono: "IBM Plex Mono", monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+body {
+  min-height: 100vh;
+  background: radial-gradient(circle at top, #06111a 0, #02060b 46%, #000 100%);
+  color: var(--text);
+  font-family: var(--sans);
+  padding: 60px 22px 22px;
+}
+
+button,
+textarea {
+  font: inherit;
+}
+
+button {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+button:hover {
+  transform: translateY(-1px);
+}
+
+.page {
+  width: min(1100px, 100%);
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* HEADER */
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 40px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.logo {
+  width: 54px;
+  height: 54px;
+  border: 1px solid rgba(0, 220, 130, 0.34);
+  border-radius: 14px;
+  background: rgba(0, 220, 130, 0.06);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.product {
+  font-family: var(--mono);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.header-title {
+  color: var(--accent-bright);
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.header-subtitle {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.btn-login {
+  padding: 10px 20px;
+  border: 1px solid rgba(0, 220, 130, 0.34);
+  border-radius: 8px;
+  background: rgba(0, 220, 130, 0.06);
+  color: var(--accent-bright);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+}
+
+.btn-login:hover {
+  background: rgba(0, 220, 130, 0.12);
+  border-color: var(--accent-bright);
+}
+
+/* HERO */
+
+.hero {
+  text-align: center;
+  margin: 100px auto 34px;
+}
+
+.hero h1 {
+  color: var(--text-strong);
+  font-size: clamp(30px, 5vw, 56px);
+  line-height: 1.08;
+  font-weight: 850;
+  margin-bottom: 14px;
+}
+
+.hero h1 span {
+  color: var(--accent-bright);
+}
+
+.hero p {
+  max-width: 680px;
+  margin: 0 auto;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+/* CHAT BOX */
+
+.chat-box {
+  margin: 28px auto 0;
+  padding: 24px;
+  border: 1px solid rgba(0, 220, 130, 0.22);
+  border-radius: 22px;
+  background: rgba(8, 14, 24, 0.98);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.35);
+  max-width: 920px;
+}
+
+.input-wrap {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 14px;
+  align-items: center;
+}
+
+.responses-section {
+  margin-top: 34px;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.section-title::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, rgba(0, 220, 130, 0.22), transparent);
+}
+
+.responses-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.response-card {
+  min-height: 170px;
+  padding: 18px;
+  border: 1px solid rgba(0, 220, 130, 0.13);
+  border-radius: 18px;
+  background: rgba(5, 12, 22, 0.94);
+}
+
+.response-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.model-name {
+  color: var(--text-strong);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.model-status {
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: rgba(0, 220, 130, 0.08);
+  border: 1px solid rgba(0, 220, 130, 0.18);
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.model-status.error {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.24);
+  color: #f87171;
+}
+
+.response-body {
+  color: rgba(212, 245, 233, 0.86);
+  font-size: 14px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+textarea {
+  width: 100%;
+  min-height: 110px;
+  max-height: 180px;
+  padding: 18px 20px;
+  resize: vertical;
+  outline: none;
+  border: 1px solid rgba(0, 220, 130, 0.12);
+  border-radius: 22px;
+  background: rgba(4, 8, 15, 0.92);
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+textarea:focus {
+  border-color: var(--border-strong);
+  background: rgba(0, 0, 0, 0.38);
+}
+
+textarea::placeholder {
+  color: rgba(122, 150, 140, 0.7);
+}
+
+.btn-send {
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 220, 130, 0.28);
+  background: linear-gradient(180deg, rgba(0,220,130,0.08), rgba(0,220,130,0.04));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--accent-bright);
+}
+
+.btn-send:hover { transform: translateY(-2px); }
+
+.btn-send:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+.hint {
+  margin-top: 12px;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
+/* STATUS */
+
+.status {
+  display: none;
+  margin-top: 16px;
+  padding: 12px 14px;
+  border: 1px solid rgba(0, 220, 130, 0.14);
+  border-radius: 12px;
+  background: rgba(0, 220, 130, 0.045);
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.status.show {
+  display: block;
+}
+
+.status.error {
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.26);
+  background: rgba(239, 68, 68, 0.055);
+}
+
+/* RESPONSES */
+
+.responses-section {
+  margin-top: 34px;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.section-title::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, rgba(0, 220, 130, 0.22), transparent);
+}
+
+.responses-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.response-card {
+  min-height: 190px;
+  padding: 18px;
+  border: 1px solid rgba(0, 220, 130, 0.13);
+  border-radius: 17px;
+  background: rgba(5, 12, 22, 0.94);
+  contain: content;
+}
+
+.response-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.model-name {
+  color: var(--text-strong);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.model-status {
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: rgba(0, 220, 130, 0.08);
+  border: 1px solid rgba(0, 220, 130, 0.18);
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.model-status.error {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.24);
+  color: #f87171;
+}
+
+.response-body {
+  color: rgba(212, 245, 233, 0.86);
+  font-size: 14px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+/* LOADING */
+
+.loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.spinner {
+  width: 15px;
+  height: 15px;
+  border: 2px solid rgba(0, 220, 130, 0.16);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* FOOTER */
+
+.footer {
+  margin-top: 42px;
+  text-align: center;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 720px) {
+  body {
+    padding: 16px 0;
+  }
+
+  .page {
+    padding: 0 16px;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 28px;
+  }
+
+  .header-left {
+    width: 100%;
+  }
+
+  .btn-login {
+    align-self: flex-end;
+    margin-top: -50px;
+    font-size: 12px;
+    padding: 8px 16px;
+  }
+
+  .input-wrap {
+    grid-template-columns: 1fr;
+  }
+
+  .btn-send {
+    width: 100%;
+  }
+
+  .chat-box {
+    padding: 14px;
+  }
+}
+</style>
+</head>
+
+<body>
+<div class="page">
+
+  <header class="header">
+    <div class="header-left">
+      <div class="logo" aria-hidden="true">
+        <img src="{% static 'pondersec_logo.jpg' %}" alt="">
+      </div>
+
+      <div class="header-text">
+        <span class="product">PonderSEC</span>
+        <span class="header-title">Chat Público</span>
+        <span class="header-subtitle">Consulta aberta para perguntas sobre cibersegurança</span>
+      </div>
+    </div>
+
+    <a href="{% url 'login' %}" class="btn-login">
+      Entrar
+    </a>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h1>Faça uma pergunta sobre <span>cibersegurança</span></h1>
+      <p>
+        Digite sua dúvida e receba respostas geradas pelos modelos configurados no PonderSEC.
+      </p>
+    </section>
+
+    <section class="chat-box">
+      <div class="input-wrap">
+        <textarea id="questionInput" placeholder="Digite sua pergunta... Ex.: Como reduzir riscos de phishing em uma organização?"></textarea>
+
+        <button class="btn-send" id="sendBtn" type="button" onclick="sendPublicQuestion()" aria-label="Enviar pergunta">
+          <!-- ícone de seta -->
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M2 21L23 12L2 3V10L17 12L2 14V21Z" fill="currentColor"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="hint">
+        As respostas são geradas automaticamente pelas LLMs configuradas pelos administradores.
+      </div>
+
+      <div class="status" id="statusBox"></div>
+    </section>
+
+    <section class="responses-section" id="responsesSection" hidden>
+      <div class="section-title">Respostas dos modelos</div>
+      <div class="responses-grid" id="responsesGrid"></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    PonderSEC · IA aplicada à cibersegurança
+  </footer>
+</div>
+
+<script>
+function getCSRFToken() {
+  const name = "csrftoken";
+  const cookies = document.cookie ? document.cookie.split(";") : [];
+
+  for (let cookie of cookies) {
+    cookie = cookie.trim();
+    if (cookie.startsWith(name + "=")) {
+      return decodeURIComponent(cookie.substring(name.length + 1));
+    }
+  }
+
+  return "";
+}
+
+function setStatus(message, type = "") {
+  const statusBox = document.getElementById("statusBox");
+  statusBox.textContent = message;
+  statusBox.className = "status show" + (type ? " " + type : "");
+}
+
+function clearStatus() {
+  const statusBox = document.getElementById("statusBox");
+  statusBox.textContent = "";
+  statusBox.className = "status";
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function renderLoadingCards() {
+  const section = document.getElementById("responsesSection");
+  const grid = document.getElementById("responsesGrid");
+
+  section.hidden = false;
+  grid.innerHTML = "";
+
+  const loadingCard = document.createElement("div");
+  loadingCard.className = "response-card";
+  loadingCard.innerHTML = `
+    <div class="loading">
+      <div class="spinner"></div>
+      Consultando modelos...
+    </div>
+  `;
+
+  grid.appendChild(loadingCard);
+}
+
+function renderResponses(responses) {
+  const section = document.getElementById("responsesSection");
+  const grid = document.getElementById("responsesGrid");
+
+  section.hidden = false;
+  grid.innerHTML = "";
+
+  if (!responses || responses.length === 0) {
+    grid.innerHTML = `
+      <div class="response-card">
+        <div class="response-head">
+          <div class="model-name">Nenhuma resposta</div>
+          <div class="model-status error">Erro</div>
+        </div>
+        <div class="response-body">Nenhum modelo retornou resposta.</div>
+      </div>
+    `;
+    return;
+  }
+
+  responses.forEach(item => {
+    const ok = item.ok !== false;
+    const card = document.createElement("div");
+    card.className = "response-card";
+    card.innerHTML = `
+      <div class="response-head">
+        <div class="model-name">${escapeHtml(item.modelo || item.model || item.nome || "LLM")}</div>
+        <div class="model-status ${ok ? "" : "error"}">${ok ? "OK" : "Erro"}</div>
+      </div>
+      <div class="response-body">${escapeHtml(item.resposta || item.content || item.texto || "Sem conteúdo.")}</div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+async function sendPublicQuestion() {
+  const input = document.getElementById("questionInput");
+  const btn = document.getElementById("sendBtn");
+  const pergunta = input.value.trim();
+
+  if (!pergunta) {
+    setStatus("Digite uma pergunta antes de enviar.", "error");
+    input.focus();
+    return;
+  }
+
+  btn.disabled = true;
+  clearStatus();
+
+  input.value = '';
+  input.focus();
+
+  renderLoadingCards();
+
+  try {
+    const response = await fetch("{% url 'usuario_final_chat_api' %}", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCSRFToken()
+      },
+      body: JSON.stringify({ pergunta })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || data.status === "erro") {
+      throw new Error(data.mensagem || "Erro ao consultar os modelos.");
+    }
+
+    renderResponses(data.respostas || data.responses || []);
+    setStatus("Consulta finalizada.");
+  } catch (error) {
+    renderResponses([]);
+    setStatus("Erro: " + error.message, "error");
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+document.getElementById("questionInput").addEventListener("keydown", function(event) {
+  // Enter to send, Shift+Enter for newline
+  if (event.key === 'Enter' && !event.shiftKey) {
+    event.preventDefault();
+    sendPublicQuestion();
+  }
+});
+</script>
+</body>
+</html>
