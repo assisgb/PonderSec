@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PonderSEC\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-28 17:41+0000\n"
+"POT-Creation-Date: 2026-06-02 19:56+0000\n"
 "PO-Revision-Date: 2026-05-27 15:28+0000\n"
 "Last-Translator: PonderSEC Team\n"
 "Language-Team: English\n"
@@ -17,25 +17,26 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: pondersec/settings.py:155
+#: pondersec/settings.py:174
+#: responsegenerator/templates/chat/chatpublico.html:538
 msgid "Português"
 msgstr "Portuguese"
 
-#: pondersec/settings.py:156
+#: pondersec/settings.py:175
+#: responsegenerator/templates/chat/chatpublico.html:539
 msgid "English"
 msgstr "English"
 
-#: pondersec/settings.py:157
+#: pondersec/settings.py:176
+#: responsegenerator/templates/chat/chatpublico.html:540
 msgid "Español"
 msgstr "Spanish"
 
 #: responsegenerator/templates/avaliacao/avaliacao_lista.html:7
-#| msgid "PonderSEC — Avaliação"
 msgid "PonderSEC — Formulários de Avaliação"
 msgstr "PonderSEC — Evaluation Forms"
 
 #: responsegenerator/templates/avaliacao/avaliacao_lista.html:331
-#| msgid "Módulos de Avaliação"
 msgid "Formulários de Avaliação"
 msgstr "Evaluation Forms"
 
@@ -46,28 +47,23 @@ msgstr "Group questions and collect professional feedback"
 #: responsegenerator/templates/avaliacao/avaliacao_lista.html:340
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:338
 #: responsegenerator/templates/juizes/comparador.html:322
-#| msgid "Voltar ao Menu"
 msgid "Voltar"
 msgstr "Back"
 
 #: responsegenerator/templates/avaliacao/avaliacao_lista.html:363
-#| msgid "Filtrar por formulário"
 msgid "Buscar formulário..."
 msgstr "Search form..."
 
 #: responsegenerator/templates/avaliacao/avaliacao_lista.html:369
 #: responsegenerator/templates/avaliacao/avaliacao_lista.html:466
-#| msgid "Formulários"
 msgid "Criar Formulário"
 msgstr "Create Form"
 
 #: responsegenerator/templates/avaliacao/avaliacao_lista.html:373
-#| msgid "Formulário removido!"
 msgid "Formulários Criados"
 msgstr "Created Forms"
 
 #: responsegenerator/templates/avaliacao/avaliacao_lista.html:387
-#| msgid "Perguntas cadastradas"
 msgid "pergunta(s) vinculadas"
 msgstr "linked question(s)"
 
@@ -93,7 +89,6 @@ msgid "Compartilhar Link"
 msgstr "Share Link"
 
 #: responsegenerator/templates/avaliacao/avaliacao_lista.html:417
-#| msgid "Nenhuma questão cadastrada ainda."
 msgid "Nenhum formulário de coleta criado ainda."
 msgstr "No collection form has been created yet."
 
@@ -102,13 +97,11 @@ msgid "Coleta de Dados"
 msgstr "Data Collection"
 
 #: responsegenerator/templates/avaliacao/avaliacao_lista.html:431
-#| msgid "Formulários"
 msgid "Novo Formulário"
 msgstr "New Form"
 
 #: responsegenerator/templates/avaliacao/avaliacao_lista.html:440
 #: responsegenerator/templates/avaliacao/avaliacao_lista.html:487
-#| msgid "Nome de Usuário"
 msgid "Nome do Formulário"
 msgstr "Form Name"
 
@@ -118,12 +111,10 @@ msgstr "E.g.: Enumeration Form (NMAP)"
 
 #: responsegenerator/templates/avaliacao/avaliacao_lista.html:444
 #: responsegenerator/templates/avaliacao/avaliacao_lista.html:491
-#| msgid "Questões"
 msgid "Questões Vinculadas"
 msgstr "Linked Questions"
 
 #: responsegenerator/templates/avaliacao/avaliacao_lista.html:456
-#| msgid "Nenhuma questão cadastrada ainda."
 msgid "Nenhuma questão registrada no sistema ainda."
 msgstr "No question has been registered in the system yet."
 
@@ -140,29 +131,24 @@ msgstr "Cancel"
 
 #: responsegenerator/templates/avaliacao/avaliacao_lista.html:477
 #: responsegenerator/templates/setup/setup-llm.html:395
-#| msgid "Confirmação"
 msgid "Configuração"
 msgstr "Configuration"
 
 #: responsegenerator/templates/avaliacao/avaliacao_lista.html:478
-#| msgid "Formulários"
 msgid "Editar Formulário"
 msgstr "Edit Form"
 
 #: responsegenerator/templates/avaliacao/avaliacao_lista.html:488
-#| msgid "Todos os formulários"
 msgid "Nome do formulário"
 msgstr "Form name"
 
 #: responsegenerator/templates/avaliacao/avaliacao_lista.html:503
-#| msgid "Pergunta cadastrada"
 msgid "Nenhuma pergunta cadastrada."
 msgstr "No question registered."
 
 #: responsegenerator/templates/avaliacao/avaliacao_lista.html:513
 #: responsegenerator/templates/setup/setup-avaliacao.html:555
 #: responsegenerator/templates/setup/setup-llm.html:546
-#| msgid "Coletar Avaliações"
 msgid "Salvar Alterações"
 msgstr "Save Changes"
 
@@ -172,7 +158,6 @@ msgid "Atenção"
 msgstr "Attention"
 
 #: responsegenerator/templates/avaliacao/avaliacao_lista.html:525
-#| msgid "Formulários"
 msgid "Excluir Formulário"
 msgstr "Delete Form"
 
@@ -190,19 +175,19 @@ msgid "Sim, Excluir"
 msgstr "Yes, Delete"
 
 #: responsegenerator/templates/avaliacao/avaliacao_lista.html:548
-#| msgid "Descrição"
 msgid "Distribuição"
 msgstr "Distribution"
 
 #: responsegenerator/templates/avaliacao/avaliacao_lista.html:549
-#| msgid "Filtrar por formulário"
 msgid "Compartilhar Formulário"
 msgstr "Share Form"
 
 #: responsegenerator/templates/avaliacao/avaliacao_lista.html:557
 msgid ""
 "Copie o link abaixo e envie para os profissionais encarregados da avaliação."
-msgstr "Copy the link below and send it to the professionals responsible for the evaluation."
+msgstr ""
+"Copy the link below and send it to the professionals responsible for the "
+"evaluation."
 
 #: responsegenerator/templates/avaliacao/avaliacao_lista.html:557
 msgid "Eles não precisam"
@@ -225,7 +210,6 @@ msgid "Copiar Link"
 msgstr "Copy Link"
 
 #: responsegenerator/templates/avaliacao/avaliacao_lista.html:580
-#| msgid "Fechar modal"
 msgid "Fechar"
 msgstr "Close"
 
@@ -242,7 +226,6 @@ msgid "Por favor, informe o nome do formulário."
 msgstr "Please enter the form name."
 
 #: responsegenerator/templates/avaliacao/avaliacao_lista.html:681
-#| msgid "Selecione ao menos uma pergunta."
 msgid "Selecione pelo menos uma pergunta."
 msgstr "Select at least one question."
 
@@ -419,7 +402,6 @@ msgid "Você já pode fechar esta aba."
 msgstr "You may now close this tab."
 
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:7
-#| msgid "PonderSEC — Avaliação"
 msgid "PonderSEC — Dashboard de Avaliações"
 msgstr "PonderSEC — Evaluation Dashboard"
 
@@ -429,7 +411,6 @@ msgstr "Analytics"
 
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:326
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:1570
-#| msgid "Coletar Avaliações"
 msgid "Dashboard de Avaliações"
 msgstr "Evaluation Dashboard"
 
@@ -446,7 +427,6 @@ msgid "Inicializando..."
 msgstr "Initializing..."
 
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:374
-#| msgid "Módulos de Avaliação"
 msgid "Modo de visualização"
 msgstr "View mode"
 
@@ -492,7 +472,6 @@ msgid "Radar"
 msgstr "Radar"
 
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:425
-#| msgid "Selecionar idioma"
 msgid "Selecione uma métrica"
 msgstr "Select a metric"
 
@@ -500,16 +479,19 @@ msgstr "Select a metric"
 msgid ""
 "O gráfico empilhado exibe <strong>todas as métricas</strong> acumuladas por "
 "LLM — permite comparar o score total e a composição de cada modelo."
-msgstr "The stacked chart shows <strong>all metrics</strong> accumulated by LLM, making it possible to compare the total score and composition of each model."
+msgstr ""
+"The stacked chart shows <strong>all metrics</strong> accumulated by LLM, "
+"making it possible to compare the total score and composition of each model."
 
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:433
 msgid ""
 "O Radar exibe <strong>todas as métricas</strong> simultaneamente. Passe o "
 "mouse sobre os números nos anéis para ver o nível de qualidade."
-msgstr "The radar chart shows <strong>all metrics</strong> at once. Hover over the numbers on the rings to see the quality level."
+msgstr ""
+"The radar chart shows <strong>all metrics</strong> at once. Hover over the "
+"numbers on the rings to see the quality level."
 
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:450
-#| msgid "Juízes Online"
 msgid "Especialistas vs Juízes Online"
 msgstr "Experts vs Online Judges"
 
@@ -517,12 +499,13 @@ msgstr "Experts vs Online Judges"
 msgid ""
 "Barras agrupadas por modelo respondente · diferença = média dos juízes − "
 "média dos especialistas."
-msgstr "Bars grouped by responding model · difference = judge average − expert average."
+msgstr ""
+"Bars grouped by responding model · difference = judge average − expert "
+"average."
 
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:461
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:808
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:816
-#| msgid "Métrica"
 msgid "Métrica atual"
 msgstr "Current metric"
 
@@ -535,7 +518,6 @@ msgid "Top juízes"
 msgstr "Top judges"
 
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:479
-#| msgid "Detalhes da questão"
 msgid "Detalhes por Modelo"
 msgstr "Details by Model"
 
@@ -554,7 +536,6 @@ msgstr "Human scores"
 
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:490
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:2053
-#| msgid "Juízes Online"
 msgid "Juízes"
 msgstr "Judges"
 
@@ -576,7 +557,6 @@ msgid "Pares (métrica × modelo) onde juízes e especialistas mais discordaram.
 msgstr "Pairs (metric × model) where judges and experts disagreed the most."
 
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:544
-#| msgid "respostas"
 msgid "especialistas"
 msgstr "experts"
 
@@ -588,7 +568,9 @@ msgstr "Human experts"
 msgid ""
 "<strong>Especialistas:</strong> médias das avaliações coletadas via "
 "formulários com avaliadores humanos."
-msgstr "<strong>Experts:</strong> averages from evaluations collected through forms with human evaluators."
+msgstr ""
+"<strong>Experts:</strong> averages from evaluations collected through forms "
+"with human evaluators."
 
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:547
 msgid "Médias dos Especialistas por Modelo"
@@ -601,7 +583,6 @@ msgid ""
 msgstr "Average scores assigned by human evaluators to each language model."
 
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:549
-#| msgid "Coletar Avaliações"
 msgid "Coletar mais avaliações →"
 msgstr "Collect more evaluations →"
 
@@ -609,15 +590,15 @@ msgstr "Collect more evaluations →"
 msgid ""
 "Nenhuma avaliação humana registrada ainda. Crie um formulário e compartilhe "
 "o link com especialistas."
-msgstr "No human evaluation has been recorded yet. Create a form and share the link with experts."
+msgstr ""
+"No human evaluation has been recorded yet. Create a form and share the link "
+"with experts."
 
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:553
-#| msgid "Formulários"
 msgid "Ir para Formulários"
 msgstr "Go to Forms"
 
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:558
-#| msgid "Juízes Online"
 msgid "juízes online"
 msgstr "online judges"
 
@@ -627,13 +608,12 @@ msgid "LLMs como juízes"
 msgstr "LLMs as judges"
 
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:560
-#| msgid ""
-#| "Execute avaliações automáticas em que LLMs atuam como juízes das "
-#| "respostas geradas."
 msgid ""
 "<strong>Juízes Online:</strong> médias das notas atribuídas por LLMs atuando "
 "como juízes nas respostas geradas."
-msgstr "<strong>Online Judges:</strong> averages of scores assigned by LLMs acting as judges for generated answers."
+msgstr ""
+"<strong>Online Judges:</strong> averages of scores assigned by LLMs acting "
+"as judges for generated answers."
 
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:561
 msgid "Médias dos Juízes Online por Modelo"
@@ -643,7 +623,8 @@ msgstr "Online Judge Averages by Model"
 msgid ""
 "Notas médias atribuídas por LLMs avaliadoras para cada modelo de linguagem "
 "respondente."
-msgstr "Average scores assigned by evaluator LLMs to each responding language model."
+msgstr ""
+"Average scores assigned by evaluator LLMs to each responding language model."
 
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:563
 msgid "Executar juízes →"
@@ -653,10 +634,11 @@ msgstr "Run judges →"
 msgid ""
 "Nenhuma avaliação por juízes online registrada. Execute o comparador de "
 "juízes para gerar dados."
-msgstr "No online judge evaluation has been recorded. Run the judge comparator to generate data."
+msgstr ""
+"No online judge evaluation has been recorded. Run the judge comparator to "
+"generate data."
 
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:567
-#| msgid "Juízes Online"
 msgid "Ir para Juízes Online"
 msgstr "Go to Online Judges"
 
@@ -672,16 +654,19 @@ msgstr "Experts × Judges"
 msgid ""
 "<strong>Comparativo:</strong> médias dos especialistas vs juízes online lado "
 "a lado, com diferença, divergências e tabela detalhada."
-msgstr "<strong>Comparison:</strong> expert averages vs online judges side by side, with difference, divergences, and a detailed table."
+msgstr ""
+"<strong>Comparison:</strong> expert averages vs online judges side by side, "
+"with difference, divergences, and a detailed table."
 
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:580
 msgid ""
 "Para comparar é preciso ter avaliações dos dois lados. Faltam dados de "
 "especialistas ou juízes."
-msgstr "To compare, evaluations are required on both sides. Expert or judge data is missing."
+msgstr ""
+"To compare, evaluations are required on both sides. Expert or judge data is "
+"missing."
 
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:597
-#| msgid "Muito"
 msgid "Muito Ruim"
 msgstr "Very Poor"
 
@@ -708,19 +693,16 @@ msgstr "models in the comparison"
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:807
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:815
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:1587
-#| msgid "Métrica"
 msgid "Métricas ativas"
 msgstr "Active metrics"
 
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:807
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:815
-#| msgid "Módulos de Avaliação"
 msgid "critérios de avaliação"
 msgstr "evaluation criteria"
 
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:808
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:816
-#| msgid "Fechar visualização"
 msgid "em visualização"
 msgstr "being viewed"
 
@@ -731,7 +713,6 @@ msgstr "Best performance"
 
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:809
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:817
-#| msgid "Métrica"
 msgid "nesta métrica"
 msgstr "in this metric"
 
@@ -740,7 +721,6 @@ msgid "Notas dos juízes"
 msgstr "Judge scores"
 
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:813
-#| msgid "LLM atualizada com sucesso."
 msgid "LLMs atuando como juízes"
 msgstr "LLMs acting as judges"
 
@@ -754,12 +734,10 @@ msgstr "Models"
 
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:825
 #: responsegenerator/templates/juizes/comparador.html:387
-#| msgid "Pendentes"
 msgid "LLMs respondentes"
 msgstr "responding LLMs"
 
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:826
-#| msgid "Métrica"
 msgid "Métricas"
 msgstr "Metrics"
 
@@ -798,7 +776,6 @@ msgid "Todas"
 msgstr "All"
 
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:974
-#| msgid "Métrica"
 msgid "métricas"
 msgstr "metrics"
 
@@ -832,7 +809,9 @@ msgstr "total score:"
 msgid ""
 "Passe o mouse sobre os <strong style=\"color:#00cfff\">números nos anéis</"
 "strong> para ver a descrição do nível."
-msgstr "Hover over the <strong style=\"color:#00cfff\">numbers on the rings</strong> to see the level description."
+msgstr ""
+"Hover over the <strong style=\"color:#00cfff\">numbers on the rings</strong> "
+"to see the level description."
 
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:1298
 #: responsegenerator/templates/juizes/comparador.html:741
@@ -848,7 +827,6 @@ msgid "Média:"
 msgstr "Average:"
 
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:1447
-#| msgid "Carregando detalhes..."
 msgid "Carregando bibliotecas..."
 msgstr "Loading libraries..."
 
@@ -896,7 +874,6 @@ msgid "Top LLM"
 msgstr "Top LLM"
 
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:1589
-#| msgid "Geral"
 msgid "geral"
 msgstr "overall"
 
@@ -958,7 +935,6 @@ msgid "Capturando métrica:"
 msgstr "Capturing metric:"
 
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:1772
-#| msgid "Métrica"
 msgid "Métrica:"
 msgstr "Metric:"
 
@@ -971,11 +947,11 @@ msgid "Finalizando e salvando..."
 msgstr "Finalizing and saving..."
 
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:1846
-#| msgid "LLM deletada com sucesso."
 msgid "PDF gerado com sucesso!"
 msgstr "PDF generated successfully!"
 
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:1851
+#: responsegenerator/templates/chat/chatpublico.html:721
 msgid "Erro:"
 msgstr "Error:"
 
@@ -1001,7 +977,6 @@ msgid "Nota média"
 msgstr "Average score"
 
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:2017
-#| msgid "Pergunta indisponível."
 msgid "Nenhum dado disponível."
 msgstr "No data available."
 
@@ -1023,13 +998,12 @@ msgstr "same average"
 
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:2067
 #, python-format
-#| msgid ""
-#| "Nenhuma métrica ativa encontrada. Configure métricas no Setup antes de "
-#| "avaliar."
 msgid ""
 "Nenhuma métrica ou LLM cadastrada. Configure no <a href=\"%(setup_url)s\" "
 "style=\"color:#00cfff;\">Setup</a> antes de avaliar."
-msgstr "No metric or LLM registered. Configure them in <a href=\"%(setup_url)s\" style=\"color:#00cfff;\">Setup</a> before evaluating."
+msgstr ""
+"No metric or LLM registered. Configure them in <a href=\"%(setup_url)s\" "
+"style=\"color:#00cfff;\">Setup</a> before evaluating."
 
 #: responsegenerator/templates/avaliacao/menu_avaliacao.html:7
 msgid "PonderSEC — Avaliação"
@@ -1094,18 +1068,115 @@ msgstr ""
 "strong>, <strong style=\"color:#bb86fc;\">Online Judges</strong>, or <strong "
 "style=\"color:#00cfff;\">Comparison</strong> and export PDF reports."
 
+#: responsegenerator/templates/chat/chatpublico.html:7
+#, fuzzy
+#| msgid "PonderSEC — Cadastro"
+msgid "PonderSEC | Chat Público"
+msgstr "PonderSEC — Sign Up"
+
+#: responsegenerator/templates/chat/chatpublico.html:528
+msgid "Chat Público"
+msgstr ""
+
+#: responsegenerator/templates/chat/chatpublico.html:529
+msgid "Consulta aberta para perguntas sobre cibersegurança"
+msgstr "Open consultation for cybersecurity questions"
+
+#: responsegenerator/templates/chat/chatpublico.html:537
+#: templates/partials/language_switcher.html:59
+msgid "Selecionar idioma"
+msgstr "Select language"
+
+#: responsegenerator/templates/chat/chatpublico.html:544
+#: usuarios/templates/cadastro.html:375 usuarios/templates/login.html:253
+#: usuarios/templates/login.html:309
+msgid "Entrar"
+msgstr "Log In"
+
+#: responsegenerator/templates/chat/chatpublico.html:551
+msgid "Faça uma pergunta sobre"
+msgstr "Ask a question about"
+
+#: responsegenerator/templates/chat/chatpublico.html:551
+msgid "cibersegurança"
+msgstr "cybersecurity"
+
+#: responsegenerator/templates/chat/chatpublico.html:553
+msgid ""
+"Digite sua dúvida e receba respostas geradas pelos modelos configurados no "
+"PonderSEC."
+msgstr "Type your question and receive answers generated by the models configured in PonderSEC."
+
+#: responsegenerator/templates/chat/chatpublico.html:559
+msgid ""
+"Digite sua pergunta... Ex.: Como reduzir riscos de phishing em uma "
+"organização?"
+msgstr "Type your question... Ex.: How can you reduce phishing risk in an organization?"
+
+#: responsegenerator/templates/chat/chatpublico.html:561
+msgid "Enviar pergunta"
+msgstr "Send question"
+
+#: responsegenerator/templates/chat/chatpublico.html:570
+msgid ""
+"As respostas são geradas automaticamente pelas LLMs configuradas pelos "
+"administradores."
+msgstr "Answers are automatically generated by the LLMs configured by administrators."
+
+#: responsegenerator/templates/chat/chatpublico.html:577
+msgid "Respostas dos modelos"
+msgstr "Model answers"
+
+#: responsegenerator/templates/chat/chatpublico.html:583
+msgid "PonderSEC · IA aplicada à cibersegurança"
+msgstr "PonderSEC · AI applied to cybersecurity"
+
+#: responsegenerator/templates/chat/chatpublico.html:614
+msgid "OK"
+msgstr "OK"
+
+#: responsegenerator/templates/chat/chatpublico.html:615
+#: responsegenerator/templates/chat/chatpublico.html:659
+msgid "Erro"
+msgstr "Error"
+
+#: responsegenerator/templates/chat/chatpublico.html:616
+msgid "Sem conteúdo."
+msgstr "No content."
+
+#: responsegenerator/templates/chat/chatpublico.html:617
+msgid "Consultando modelos..."
+msgstr "Querying models..."
+
+#: responsegenerator/templates/chat/chatpublico.html:658
+msgid "Nenhuma resposta"
+msgstr "No answers"
+
+#: responsegenerator/templates/chat/chatpublico.html:661
+msgid "Nenhum modelo retornou resposta."
+msgstr "No model returned a response."
+
+#: responsegenerator/templates/chat/chatpublico.html:688
+msgid "Digite uma pergunta antes de enviar."
+msgstr "Type a question before sending."
+
+#: responsegenerator/templates/chat/chatpublico.html:714
+msgid "Erro ao consultar os modelos."
+msgstr "Error querying the models."
+
+#: responsegenerator/templates/chat/chatpublico.html:718
+msgid "Consulta finalizada."
+msgstr "Query completed."
+
 #: responsegenerator/templates/consulta/consulta-comparacao.html:7
-#| msgid "PonderSEC — Setup"
 msgid "PonderSEC — Respostas por LLM"
 msgstr "PonderSEC — Answers by LLM"
 
 #: responsegenerator/templates/consulta/consulta-comparacao.html:384
-#| msgid "Buscar em perguntas..."
 msgid "Buscar outra pergunta..."
 msgstr "Search another question..."
 
 #: responsegenerator/templates/consulta/consulta-comparacao.html:389
-#| msgid "Pergunta cadastrada"
 msgid "Pergunta selecionada"
 msgstr "Selected question"
 
@@ -1118,7 +1189,6 @@ msgid "Copiar"
 msgstr "Copy"
 
 #: responsegenerator/templates/consulta/consulta-comparacao.html:423
-#| msgid "Nome Completo"
 msgid "Ver completo"
 msgstr "View full"
 
@@ -1128,7 +1198,6 @@ msgstr "Run a query to see the compared AI answers here."
 
 #: responsegenerator/templates/consulta/consulta-comparacao.html:442
 #: responsegenerator/templates/consulta/consulta-comparacao.html:452
-#| msgid "Resposta"
 msgid "Resposta completa"
 msgstr "Full answer"
 
@@ -1148,7 +1217,6 @@ msgid "Erro ao copiar:"
 msgstr "Error copying:"
 
 #: responsegenerator/templates/consulta/executar-consulta.html:7
-#| msgid "PonderSEC — Consulta"
 msgid "PonderSEC — Executar Consulta"
 msgstr "PonderSEC — Run Query"
 
@@ -1161,7 +1229,6 @@ msgid "Selecione as perguntas para processamento em lote nas IAs."
 msgstr "Select questions for batch processing in the AIs."
 
 #: responsegenerator/templates/consulta/executar-consulta.html:274
-#| msgid "Buscar em perguntas..."
 msgid "Buscar perguntas..."
 msgstr "Search questions..."
 
@@ -1171,7 +1238,6 @@ msgid "Apagar tudo"
 msgstr "Delete all"
 
 #: responsegenerator/templates/consulta/executar-consulta.html:282
-#| msgid "Executar Consulta"
 msgid "Executar IAs"
 msgstr "Run AIs"
 
@@ -1186,12 +1252,10 @@ msgid "Pendente"
 msgstr "Pending"
 
 #: responsegenerator/templates/consulta/executar-consulta.html:301
-#| msgid "respostas"
 msgid "Ver Respostas"
 msgstr "View Answers"
 
 #: responsegenerator/templates/consulta/executar-consulta.html:314
-#| msgid "Nenhuma LLM avaliadora ativa foi encontrada."
 msgid "Nenhuma pergunta encontrada"
 msgstr "No question found"
 
@@ -1200,22 +1264,18 @@ msgid "Adicione perguntas no menu de Questões para executar consultas."
 msgstr "Add questions in the Questions menu to run queries."
 
 #: responsegenerator/templates/consulta/executar-consulta.html:330
-#| msgid "Detalhes da questão"
 msgid "Detalhes da Questão"
 msgstr "Question Details"
 
 #: responsegenerator/templates/consulta/executar-consulta.html:340
-#| msgid "Resposta"
 msgid "Respostas Geradas"
 msgstr "Generated Answers"
 
 #: responsegenerator/templates/consulta/executar-consulta.html:344
-#| msgid "Fechar visualização"
 msgid "Fechar Visualização"
 msgstr "Close View"
 
 #: responsegenerator/templates/consulta/executar-consulta.html:403
-#| msgid "Selecione ao menos uma pergunta."
 msgid "Selecione pelo menos uma pergunta para executar."
 msgstr "Select at least one question to run."
 
@@ -1226,22 +1286,18 @@ msgid "Processando..."
 msgstr "Processing..."
 
 #: responsegenerator/templates/consulta/executar-consulta.html:427
-#| msgid "Executar Consulta"
 msgid "Erro ao executar consultas:"
 msgstr "Error running queries:"
 
 #: responsegenerator/templates/consulta/executar-consulta.html:428
-#| msgid "Houve um erro ao carregar os dados."
 msgid "Houve um erro ao processar as perguntas."
 msgstr "There was an error processing the questions."
 
 #: responsegenerator/templates/consulta/executar-consulta.html:451
-#| msgid "Todas as respostas avaliadas"
 msgid "Apagar todas as respostas do banco?"
 msgstr "Delete all answers from the database?"
 
 #: responsegenerator/templates/juizes/comparador.html:7
-#| msgid "PonderSEC — Menu"
 msgid "PonderSEC — Juízes Online"
 msgstr "PonderSEC — Online Judges"
 
@@ -1255,10 +1311,11 @@ msgstr "Evaluation"
 msgid ""
 "Selecione perguntas já cadastradas e use LLMs como avaliadoras das respostas "
 "geradas por outros modelos."
-msgstr "Select registered questions and use LLMs as evaluators of answers generated by other models."
+msgstr ""
+"Select registered questions and use LLMs as evaluators of answers generated "
+"by other models."
 
 #: responsegenerator/templates/juizes/comparador.html:342
-#| msgid "Selecione ao menos uma pergunta."
 msgid "Selecionar perguntas"
 msgstr "Select questions"
 
@@ -1266,15 +1323,15 @@ msgstr "Select questions"
 msgid ""
 "As perguntas vêm do banco de Questões. Itens sem respostas aparecem apenas "
 "para contexto."
-msgstr "Questions come from the Questions database. Items without answers appear only for context."
+msgstr ""
+"Questions come from the Questions database. Items without answers appear "
+"only for context."
 
 #: responsegenerator/templates/juizes/comparador.html:346
-#| msgid "Histórico de questões"
 msgid "Banco de questões"
 msgstr "Question bank"
 
 #: responsegenerator/templates/juizes/comparador.html:350
-#| msgid "Pergunta cadastrada"
 msgid "Pesquisar pergunta cadastrada..."
 msgstr "Search registered question..."
 
@@ -1284,12 +1341,10 @@ msgid "Todos os status"
 msgstr "All statuses"
 
 #: responsegenerator/templates/juizes/comparador.html:353
-#| msgid "sem respostas"
 msgid "Com respostas"
 msgstr "With answers"
 
 #: responsegenerator/templates/juizes/comparador.html:354
-#| msgid "sem respostas"
 msgid "Sem respostas"
 msgstr "Without answers"
 
@@ -1299,7 +1354,6 @@ msgid "Todas as categorias"
 msgstr "All categories"
 
 #: responsegenerator/templates/juizes/comparador.html:363
-#| msgid "Todos os status"
 msgid "Todos os respondentes"
 msgstr "All respondents"
 
@@ -1308,7 +1362,6 @@ msgid "Marque uma ou mais perguntas com respostas."
 msgstr "Mark one or more questions with answers."
 
 #: responsegenerator/templates/juizes/comparador.html:370
-#| msgid "Selecionar idioma"
 msgid "Selecionar respondidas"
 msgstr "Select answered"
 
@@ -1325,17 +1378,16 @@ msgid "Resumo das respostas existentes por pergunta, sem repetir o texto."
 msgstr "Summary of existing answers by question, without repeating the text."
 
 #: responsegenerator/templates/juizes/comparador.html:399
-#| msgid "Selecionar idioma"
 msgid "Selecionar LLMs participantes"
 msgstr "Select participating LLMs"
 
 #: responsegenerator/templates/juizes/comparador.html:400
 msgid ""
 "As selecionadas entram na avaliação cruzada: uma avalia a resposta da outra."
-msgstr "Selected LLMs enter cross-evaluation: one evaluates the other's answer."
+msgstr ""
+"Selected LLMs enter cross-evaluation: one evaluates the other's answer."
 
 #: responsegenerator/templates/juizes/comparador.html:410
-#| msgid "Métrica"
 msgid "Métricas usadas"
 msgstr "Metrics used"
 
@@ -1352,12 +1404,10 @@ msgid "Confira a seleção antes de iniciar a avaliação automática."
 msgstr "Review the selection before starting automatic evaluation."
 
 #: responsegenerator/templates/juizes/comparador.html:429
-#| msgid "Perguntas cadastradas"
 msgid "Perguntas selecionadas"
 msgstr "Selected questions"
 
 #: responsegenerator/templates/juizes/comparador.html:433
-#| msgid "Selecionado:"
 msgid "LLMs selecionadas"
 msgstr "Selected LLMs"
 
@@ -1371,7 +1421,6 @@ msgid "Executar avaliação automática"
 msgstr "Run automatic evaluation"
 
 #: responsegenerator/templates/juizes/comparador.html:446
-#| msgid "Analisar Resultados"
 msgid "Limpar resultados"
 msgstr "Clear results"
 
@@ -1380,7 +1429,6 @@ msgid "Selecione perguntas com respostas e ao menos duas LLMs participantes."
 msgstr "Select questions with answers and at least two participating LLMs."
 
 #: responsegenerator/templates/juizes/comparador.html:455
-#| msgid "Ver Resultados"
 msgid "Resultados"
 msgstr "Results"
 
@@ -1402,7 +1450,6 @@ msgid ""
 msgstr "The score table will appear here after the automatic evaluation runs."
 
 #: responsegenerator/templates/juizes/comparador.html:559
-#| msgid "Nenhuma questão encontrada com os filtros atuais."
 msgid "Nenhuma pergunta encontrada para os filtros atuais."
 msgstr "No question found for the current filters."
 
@@ -1410,10 +1457,11 @@ msgstr "No question found for the current filters."
 msgid ""
 "Selecione uma pergunta com respostas para ver quais modelos podem participar "
 "da avaliação."
-msgstr "Select a question with answers to see which models can participate in the evaluation."
+msgstr ""
+"Select a question with answers to see which models can participate in the "
+"evaluation."
 
 #: responsegenerator/templates/juizes/comparador.html:600
-#| msgid "Pergunta indisponível."
 msgid "respostas disponíveis"
 msgstr "available answers"
 
@@ -1422,30 +1470,24 @@ msgid "incluída"
 msgstr "included"
 
 #: responsegenerator/templates/juizes/comparador.html:607
-#| msgid "Pergunta indisponível."
 msgid "disponível"
 msgstr "available"
 
 #: responsegenerator/templates/juizes/comparador.html:617
-#| msgid ""
-#| "Nenhuma métrica ativa encontrada. Configure métricas no Setup antes de "
-#| "avaliar."
 msgid ""
 "Nenhuma LLM ativa encontrada. Configure as LLMs no Setup para usar juízes "
 "online."
 msgstr "No active LLM found. Configure LLMs in Setup to use online judges."
 
 #: responsegenerator/templates/juizes/comparador.html:648
-#| msgid ""
-#| "Nenhuma métrica ativa encontrada. Configure métricas no Setup antes de "
-#| "avaliar."
 msgid ""
 "Nenhuma métrica ativa encontrada. A avaliação online usa as métricas já "
 "configuradas no Setup."
-msgstr "No active metric found. Online evaluation uses the metrics already configured in Setup."
+msgstr ""
+"No active metric found. Online evaluation uses the metrics already "
+"configured in Setup."
 
 #: responsegenerator/templates/juizes/comparador.html:668
-#| msgid "Nenhuma LLM avaliadora ativa foi encontrada."
 msgid "Nenhuma avaliação foi retornada."
 msgstr "No evaluation was returned."
 
@@ -1459,17 +1501,14 @@ msgid "erro"
 msgstr "error"
 
 #: responsegenerator/templates/juizes/comparador.html:727
-#| msgid "Avaliação"
 msgid "avaliado"
 msgstr "evaluated"
 
 #: responsegenerator/templates/juizes/comparador.html:731
-#| msgid "Todas as respostas avaliadas"
 msgid "Resposta avaliada"
 msgstr "Evaluated answer"
 
 #: responsegenerator/templates/juizes/comparador.html:732
-#| msgid "Resposta detalhada registrada."
 msgid "Resposta não retornada."
 msgstr "Answer not returned."
 
@@ -1483,7 +1522,6 @@ msgid "Métrica"
 msgstr "Metric"
 
 #: responsegenerator/templates/juizes/comparador.html:742
-#| msgid "Avaliação"
 msgid "Observação"
 msgstr "Note"
 
@@ -1496,7 +1534,6 @@ msgid "Sem justificativa retornada."
 msgstr "No rationale returned."
 
 #: responsegenerator/templates/juizes/comparador.html:758
-#| msgid "Selecione ao menos uma pergunta."
 msgid "Selecione ao menos uma pergunta com respostas."
 msgstr "Select at least one question with answers."
 
@@ -1505,9 +1542,6 @@ msgid "Selecione ao menos duas LLMs participantes para avaliação cruzada."
 msgstr "Select at least two participating LLMs for cross-evaluation."
 
 #: responsegenerator/templates/juizes/comparador.html:766
-#| msgid ""
-#| "Nenhuma métrica ativa encontrada. Configure métricas no Setup antes de "
-#| "avaliar."
 msgid "Nenhuma métrica ativa encontrada no Setup."
 msgstr "No active metric found in Setup."
 
@@ -1516,12 +1550,10 @@ msgid "Executando avaliação automática. Isso pode levar alguns instantes."
 msgstr "Running automatic evaluation. This may take a few moments."
 
 #: responsegenerator/templates/juizes/comparador.html:788
-#| msgid "Erro ao deletar LLM."
 msgid "Erro ao executar avaliação."
 msgstr "Error running evaluation."
 
 #: responsegenerator/templates/juizes/comparador.html:791
-#| msgid "Todas as respostas avaliadas"
 msgid "pares avaliados"
 msgstr "evaluated pairs"
 
@@ -1530,7 +1562,6 @@ msgid "notas geradas · dashboard comparativo atualizado."
 msgstr "scores generated · comparison dashboard updated."
 
 #: responsegenerator/templates/juizes/comparador.html:815
-#| msgid "Ver Resultados"
 msgid "Resultados limpos."
 msgstr "Results cleared."
 
@@ -1896,28 +1927,23 @@ msgid "Houve um erro ao carregar os dados."
 msgstr "There was an error loading the data."
 
 #: responsegenerator/templates/setup/setup-avaliacao.html:7
-#| msgid "PonderSEC — Avaliação"
 msgid "PonderSEC — Métricas de Avaliação"
 msgstr "PonderSEC — Evaluation Metrics"
 
 #: responsegenerator/templates/setup/setup-avaliacao.html:322
-#| msgid "Módulos de Avaliação"
 msgid "Métricas de Avaliação"
 msgstr "Evaluation Metrics"
 
 #: responsegenerator/templates/setup/setup-avaliacao.html:323
-#| msgid "Gerencie seus formulários de avaliação e analise os resultados."
 msgid "Gerencie os critérios de avaliação das respostas"
 msgstr "Manage answer evaluation criteria"
 
 #: responsegenerator/templates/setup/setup-avaliacao.html:331
 #: responsegenerator/templates/setup/setup-llm.html:312
-#| msgid "Voltar ao Menu"
 msgid "Voltar ao Setup"
 msgstr "Back to Setup"
 
 #: responsegenerator/templates/setup/setup-avaliacao.html:355
-#| msgid "Buscar em perguntas..."
 msgid "Buscar métrica..."
 msgstr "Search metric..."
 
@@ -1926,12 +1952,10 @@ msgstr "Search metric..."
 #: responsegenerator/templates/setup/setup-avaliacao.html:523
 #: responsegenerator/templates/setup/setup-avaliacao.html:536
 #: responsegenerator/templates/setup/setup-avaliacao.html:537
-#| msgid "Métrica"
 msgid "Adicionar Métrica"
 msgstr "Add Metric"
 
 #: responsegenerator/templates/setup/setup-avaliacao.html:365
-#| msgid "Perguntas cadastradas"
 msgid "Métricas Cadastradas"
 msgstr "Registered Metrics"
 
@@ -1950,17 +1974,14 @@ msgid "máx"
 msgstr "max"
 
 #: responsegenerator/templates/setup/setup-avaliacao.html:427
-#| msgid "Nenhuma questão cadastrada ainda."
 msgid "Nenhuma métrica cadastrada ainda."
 msgstr "No metric registered yet."
 
 #: responsegenerator/templates/setup/setup-avaliacao.html:452
-#| msgid "Métrica"
 msgid "Dados da Métrica"
 msgstr "Metric Data"
 
 #: responsegenerator/templates/setup/setup-avaliacao.html:455
-#| msgid "Nome da categoria"
 msgid "Nome da Métrica"
 msgstr "Metric Name"
 
@@ -1973,12 +1994,10 @@ msgid "Descreva o que esta métrica avalia"
 msgstr "Describe what this metric evaluates"
 
 #: responsegenerator/templates/setup/setup-avaliacao.html:467
-#| msgid "Métrica"
 msgid "Tipo de Métrica"
 msgstr "Metric Type"
 
 #: responsegenerator/templates/setup/setup-avaliacao.html:493
-#| msgid "Confirmação"
 msgid "Pontuação"
 msgstr "Score"
 
@@ -2007,7 +2026,6 @@ msgid "Ex: Bom, Sim, Passou"
 msgstr "E.g.: Good, Yes, Passed"
 
 #: responsegenerator/templates/setup/setup-avaliacao.html:512
-#| msgid "Módulos de Avaliação"
 msgid "Critério de Avaliação"
 msgstr "Evaluation Criterion"
 
@@ -2016,7 +2034,6 @@ msgid "Descreva os critérios para avaliar esta métrica..."
 msgstr "Describe the criteria for evaluating this metric..."
 
 #: responsegenerator/templates/setup/setup-avaliacao.html:554
-#| msgid "Métrica"
 msgid "Editar Métrica"
 msgstr "Edit Metric"
 
@@ -2025,7 +2042,6 @@ msgid "Tem certeza que deseja remover esta métrica?"
 msgstr "Are you sure you want to remove this metric?"
 
 #: responsegenerator/templates/setup/setup-llm.html:7
-#| msgid "PonderSEC — Menu"
 msgid "PonderSEC — Gerenciar LLMs"
 msgstr "PonderSEC — Manage LLMs"
 
@@ -2034,19 +2050,16 @@ msgid "Gerenciar LLMs"
 msgstr "Manage LLMs"
 
 #: responsegenerator/templates/setup/setup-llm.html:304
-#| msgid "Painel de Avaliação de Inteligência Artificial"
 msgid "Configure suas chaves de API e modelos de Inteligência Artificial"
 msgstr "Configure your API keys and Artificial Intelligence models"
 
 #: responsegenerator/templates/setup/setup-llm.html:333
 #: responsegenerator/templates/setup/setup-llm.html:396
 #: responsegenerator/templates/setup/setup-llm.html:532
-#| msgid "Adicionar questão"
 msgid "Adicionar LLM"
 msgstr "Add LLM"
 
 #: responsegenerator/templates/setup/setup-llm.html:337
-#| msgid "Não está cadastrado?"
 msgid "Modelos Cadastrados"
 msgstr "Registered Models"
 
@@ -2055,7 +2068,6 @@ msgid "Provedor desconhecido"
 msgstr "Unknown provider"
 
 #: responsegenerator/templates/setup/setup-llm.html:382
-#| msgid "Nenhuma questão cadastrada ainda."
 msgid "Nenhuma Inteligência Artificial cadastrada ainda."
 msgstr "No Artificial Intelligence has been registered yet."
 
@@ -2068,7 +2080,6 @@ msgid "Provedor"
 msgstr "Provider"
 
 #: responsegenerator/templates/setup/setup-llm.html:412
-#| msgid "Selecionado:"
 msgid "Selecione o provedor"
 msgstr "Select the provider"
 
@@ -2091,17 +2102,14 @@ msgstr "Show or hide API key"
 
 #: responsegenerator/templates/setup/setup-llm.html:448
 #: responsegenerator/templates/setup/setup-llm.html:533
-#| msgid "Adicionar questão"
 msgid "Adicionar Modelo"
 msgstr "Add Model"
 
 #: responsegenerator/templates/setup/setup-llm.html:545
-#| msgid "Erro ao deletar LLM."
 msgid "Editar LLM"
 msgstr "Edit LLM"
 
 #: responsegenerator/templates/setup/setup-llm.html:590
-#| msgid "Erro ao deletar LLM."
 msgid "Erro ao salvar:"
 msgstr "Error saving:"
 
@@ -2144,157 +2152,155 @@ msgid ""
 msgstr ""
 "Define and adjust qualitative and quantitative response evaluation metrics."
 
-#: responsegenerator/views.py:81
+#: responsegenerator/views.py:232
 msgid "Sistema"
 msgstr "System"
 
-#: responsegenerator/views.py:82
-#| msgid "Nenhuma resposta vinculada a esta questão."
+#: responsegenerator/views.py:233
 msgid "Nenhuma resposta vinculada a esta questão no banco de dados."
 msgstr "No answer linked to this question in the database."
 
-#: responsegenerator/views.py:100
+#: responsegenerator/views.py:251
 msgid "O histórico de questões e categorias foi limpo!"
 msgstr "The question and category history was cleared!"
 
-#: responsegenerator/views.py:171
+#: responsegenerator/views.py:322
 #, python-format
 msgid "Questão adicionada na categoria '%(categoria)s'!"
 msgstr "Question added to category '%(categoria)s'!"
 
-#: responsegenerator/views.py:213
+#: responsegenerator/views.py:364
 msgid "Arquivo JSON inválido ou mal formatado."
 msgstr "Invalid or malformed JSON file."
 
-#: responsegenerator/views.py:237
+#: responsegenerator/views.py:388
 #, python-format
 msgid "%(count)s perguntas importadas na categoria '%(categoria)s'!"
 msgstr "%(count)s questions imported into category '%(categoria)s'!"
 
-#: responsegenerator/views.py:242
-#| msgid "Nenhuma questão encontrada com os filtros atuais."
+#: responsegenerator/views.py:393
 msgid "Nenhuma pergunta encontrada no arquivo."
 msgstr "No question found in the file."
 
-#: responsegenerator/views.py:244
+#: responsegenerator/views.py:395
 msgid "Nenhum arquivo foi enviado."
 msgstr "No file was uploaded."
 
-#: responsegenerator/views.py:261
+#: responsegenerator/views.py:412
 #, python-format
 msgid "Categoria '%(categoria)s' criada!"
 msgstr "Category '%(categoria)s' created!"
 
-#: responsegenerator/views.py:265
+#: responsegenerator/views.py:416
 msgid "O nome da categoria é obrigatório."
 msgstr "The category name is required."
 
-#: responsegenerator/views.py:281
+#: responsegenerator/views.py:432
 #, python-format
 msgid "Categoria '%(categoria)s' atualizada com sucesso!"
 msgstr "Category '%(categoria)s' updated successfully!"
 
-#: responsegenerator/views.py:285
+#: responsegenerator/views.py:436
 msgid "O nome da categoria não pode ficar vazio."
 msgstr "The category name cannot be empty."
 
-#: responsegenerator/views.py:371
+#: responsegenerator/views.py:522
 #, python-format
 msgid "Provedor '%(provedor)s' não reconhecido para execução automática."
 msgstr "Provider '%(provedor)s' is not recognized for automatic execution."
 
-#: responsegenerator/views.py:376
+#: responsegenerator/views.py:527
 #, python-format
 msgid "Erro na IA %(nome)s: %(erro)s"
 msgstr "Error in AI %(nome)s: %(erro)s"
 
-#: responsegenerator/views.py:399
+#: responsegenerator/views.py:550
 msgid "Método não permitido"
 msgstr "Method not allowed"
 
-#: responsegenerator/views.py:414
+#: responsegenerator/views.py:565
 #, python-format
 msgid "IA '%(nome)s' configurada com sucesso!"
 msgstr "AI '%(nome)s' configured successfully!"
 
-#: responsegenerator/views.py:456
+#: responsegenerator/views.py:607
 msgid "O nome da métrica é obrigatório."
 msgstr "The metric name is required."
 
-#: responsegenerator/views.py:471
+#: responsegenerator/views.py:622
 #, python-format
 msgid "Métrica '%(nome)s' adicionada com sucesso!"
 msgstr "Metric '%(nome)s' added successfully!"
 
-#: responsegenerator/views.py:485
+#: responsegenerator/views.py:636
 msgid "Configurações da métrica atualizadas!"
 msgstr "Metric settings updated!"
 
-#: responsegenerator/views.py:494
+#: responsegenerator/views.py:645
 msgid "Métrica deletada com sucesso."
 msgstr "Metric deleted successfully."
 
-#: responsegenerator/views.py:502
+#: responsegenerator/views.py:653
 msgid "LLM deletada com sucesso."
 msgstr "LLM deleted successfully."
 
-#: responsegenerator/views.py:503
+#: responsegenerator/views.py:654
 msgid "Erro ao deletar LLM."
 msgstr "Error deleting LLM."
 
-#: responsegenerator/views.py:517
+#: responsegenerator/views.py:668
 msgid "LLM atualizada com sucesso."
 msgstr "LLM updated successfully."
 
-#: responsegenerator/views.py:558
+#: responsegenerator/views.py:709
 msgid "Biblioteca google-genai não instalada."
 msgstr "google-genai library is not installed."
 
-#: responsegenerator/views.py:565
+#: responsegenerator/views.py:716
 msgid "Biblioteca groq não instalada."
 msgstr "groq library is not installed."
 
-#: responsegenerator/views.py:575 responsegenerator/views.py:588
+#: responsegenerator/views.py:726 responsegenerator/views.py:739
 msgid "Biblioteca openai não instalada."
 msgstr "openai library is not installed."
 
-#: responsegenerator/views.py:596
+#: responsegenerator/views.py:747
 #, python-format
 msgid "Provedor '%(provedor)s' não reconhecido."
 msgstr "Provider '%(provedor)s' is not recognized."
 
-#: responsegenerator/views.py:721
+#: responsegenerator/views.py:872
 msgid "JSON inválido."
 msgstr "Invalid JSON."
 
-#: responsegenerator/views.py:730
+#: responsegenerator/views.py:881
 msgid "Seleção inválida."
 msgstr "Invalid selection."
 
-#: responsegenerator/views.py:733
+#: responsegenerator/views.py:884
 msgid "Selecione ao menos uma pergunta."
 msgstr "Select at least one question."
 
-#: responsegenerator/views.py:736
+#: responsegenerator/views.py:887
 msgid "Selecione ao menos um juiz online."
 msgstr "Select at least one online judge."
 
-#: responsegenerator/views.py:742
+#: responsegenerator/views.py:893
 msgid ""
 "Nenhuma métrica ativa encontrada. Configure métricas no Setup antes de "
 "avaliar."
 msgstr "No active metric found. Configure metrics in Setup before evaluating."
 
-#: responsegenerator/views.py:760
+#: responsegenerator/views.py:911
 msgid ""
 "As LLMs selecionadas ainda não possuem respostas nas perguntas escolhidas."
 msgstr "The selected LLMs do not have answers for the chosen questions yet."
 
-#: responsegenerator/views.py:766
+#: responsegenerator/views.py:917
 msgid "Nenhuma LLM avaliadora ativa foi encontrada."
 msgstr "No active evaluator LLM was found."
 
-#: responsegenerator/views.py:779
+#: responsegenerator/views.py:930
 msgid ""
 "Não há pares válidos. Selecione ao menos duas LLMs que tenham respostas nas "
 "perguntas escolhidas."
@@ -2302,23 +2308,23 @@ msgstr ""
 "There are no valid pairs. Select at least two LLMs that have answers for the "
 "chosen questions."
 
-#: responsegenerator/views.py:785
+#: responsegenerator/views.py:936
 msgid ""
 "Seleção muito grande. Reduza a quantidade para até 40 avaliações por "
 "execução."
 msgstr "Selection too large. Reduce it to up to 40 evaluations per run."
 
-#: responsegenerator/views.py:893
+#: responsegenerator/views.py:1044
 #, python-format
 msgid "Formulário '%(nome)s' criado com sucesso!"
 msgstr "Form '%(nome)s' created successfully!"
 
-#: responsegenerator/views.py:910
+#: responsegenerator/views.py:1061
 #, python-format
 msgid "Formulário '%(nome)s' atualizado com sucesso!"
 msgstr "Form '%(nome)s' updated successfully!"
 
-#: responsegenerator/views.py:922
+#: responsegenerator/views.py:1073
 msgid "Formulário removido!"
 msgstr "Form removed!"
 
@@ -2333,10 +2339,6 @@ msgstr "Workspace"
 #: templates/partials/app_sidebar.html:41
 msgid "Setup"
 msgstr "Setup"
-
-#: templates/partials/language_switcher.html:59
-msgid "Selecionar idioma"
-msgstr "Select language"
 
 #: usuarios/templates/cadastro.html:8
 msgid "PonderSEC — Cadastro"
@@ -2411,7 +2413,6 @@ msgstr "Password"
 #: usuarios/templates/cadastro.html:351 usuarios/templates/cadastro.html:353
 #: usuarios/templates/login.html:288 usuarios/templates/login.html:289
 #: usuarios/templates/login.html:291
-#| msgid "Confirmar Senha"
 msgid "Mostrar senha"
 msgstr "Show password"
 
@@ -2431,11 +2432,6 @@ msgstr "Sign Up"
 #: usuarios/templates/cadastro.html:375
 msgid "Já possui conta?"
 msgstr "Already have an account?"
-
-#: usuarios/templates/cadastro.html:375 usuarios/templates/login.html:253
-#: usuarios/templates/login.html:309
-msgid "Entrar"
-msgstr "Log In"
 
 #: usuarios/templates/login.html:7
 msgid "PonderSEC — Login"
@@ -2499,7 +2495,10 @@ msgid ""
 "Seu código de ativação é: %(codigo)s\n"
 "\n"
 "Se você não solicitou este código, ignore este e-mail."
-msgstr "Your activation code is: %(codigo)s\n\nIf you did not request this code, ignore this email."
+msgstr ""
+"Your activation code is: %(codigo)s\n"
+"\n"
+"If you did not request this code, ignore this email."
 
 #: usuarios/views.py:104
 msgid "Código inválido ou expirado. Tente novamente."
@@ -2519,7 +2518,10 @@ msgid ""
 "Seu novo código de ativação é: %(codigo)s\n"
 "\n"
 "Se você não solicitou este código, ignore este e-mail."
-msgstr "Your new activation code is: %(codigo)s\n\nIf you did not request this code, ignore this email."
+msgstr ""
+"Your new activation code is: %(codigo)s\n"
+"\n"
+"If you did not request this code, ignore this email."
 
 #: usuarios/views.py:134
 msgid "Um novo código foi enviado para o seu e-mail!"
