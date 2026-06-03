@@ -1,0 +1,297 @@
+{% load static i18n %}
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE|default:'pt-br' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% translate "PonderSEC — Avaliações Públicas" %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #0b0510;
+            --border: rgba(187, 134, 252, 0.2);
+            --accent: #bb86fc;
+            --accent-bright: #d9b8ff;
+            --text: #e5fef6;
+            --text-strong: #fff;
+            --muted: #8b7d9b;
+            --ok: #00ff9f;
+            --cyan: #00cfff;
+            --danger: #ff8a78;
+            --mono: "IBM Plex Mono", monospace;
+            --sans: "Space Grotesk", system-ui, -apple-system, sans-serif;
+        }
+        body {
+            min-height: 100vh; padding: 20px;
+            background: radial-gradient(circle at top, #0b0510 0, #06020b 45%, #000 100%);
+            color: var(--text); font-family: var(--sans);
+        }
+        .background-grid {
+            position: fixed; inset: 0; pointer-events: none;
+            background-image:
+                linear-gradient(90deg, rgba(187, 134, 252, 0.05) 1px, transparent 1px),
+                linear-gradient(180deg, rgba(187, 134, 252, 0.05) 1px, transparent 1px);
+            background-size: 40px 40px; opacity: 0.4;
+        }
+        .wrap { position: relative; z-index: 1; width: min(1240px, 100%); margin: 0 auto 60px; }
+        .hdr {
+            display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap;
+            margin-bottom: 22px; padding: 22px 28px;
+            border: 1px solid var(--border); border-radius: 18px;
+            background: radial-gradient(circle at top, #14091d 0, #07030c 55%, #020509 100%);
+        }
+        .hdr-left { display: flex; align-items: center; gap: 16px; min-width: 0; }
+        .logo-box { width: 52px; height: 52px; border: 1px solid rgba(187,134,252,0.34); border-radius: 12px; overflow: hidden; flex-shrink: 0; }
+        .logo-box img { width: 100%; height: 100%; object-fit: cover; }
+        .badge-admin {
+            display: inline-flex; align-items: center; gap: 6px; width: fit-content;
+            padding: 3px 9px; border: 1px solid rgba(187,134,252,0.35); border-radius: 999px;
+            background: rgba(187,134,252,0.12); color: var(--accent);
+            font-family: var(--mono); font-size: 9px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase;
+        }
+        .badge-admin::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+        .hdr-info { display: flex; flex-direction: column; gap: 4px; }
+        .hdr-title { color: var(--accent-bright); font-size: 22px; font-weight: 800; }
+        .hdr-sub { color: var(--muted); font-size: 13px; line-height: 1.45; }
+        .header-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+            min-height: 42px; padding: 11px 18px; border-radius: 10px; border: 1px solid transparent;
+            cursor: pointer; text-decoration: none; white-space: nowrap;
+            font: 700 12px var(--sans); text-transform: uppercase; letter-spacing: 0.08em;
+        }
+        .btn-ghost { border-color: rgba(187,134,252,0.22); background: rgba(187,134,252,0.05); color: var(--accent); }
+        .btn-danger { border-color: rgba(255,80,54,0.3); background: rgba(255,80,54,0.08); color: var(--danger); }
+        .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; margin-bottom: 18px; }
+        .stat-card, .panel {
+            border: 1px solid var(--border); border-radius: 16px;
+            background: radial-gradient(circle at top, #14091d 0, #07030c 56%, #020509 100%);
+        }
+        .stat-card { padding: 20px 22px; }
+        .stat-label { color: var(--accent); font-family: var(--mono); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 8px; }
+        .stat-value { color: var(--text-strong); font-size: 30px; font-weight: 800; }
+        .stat-sub { color: var(--muted); font-size: 12px; margin-top: 4px; }
+        .grid { display: grid; grid-template-columns: 360px 1fr; gap: 18px; align-items: start; }
+        .panel { padding: 22px; min-width: 0; }
+        .section-kicker {
+            display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+            color: var(--accent); font-family: var(--mono); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em;
+        }
+        .section-kicker::after { content: ""; flex: 1; height: 1px; background: linear-gradient(to right, rgba(187,134,252,0.24), transparent); }
+        .ranking { display: grid; gap: 10px; }
+        .rank-row {
+            display: grid; grid-template-columns: 34px 1fr auto; gap: 12px; align-items: center;
+            padding: 13px 14px; border: 1px solid rgba(187,134,252,0.14); border-radius: 12px; background: rgba(0,0,0,0.2);
+        }
+        .rank-pos { color: var(--accent-bright); font-family: var(--mono); font-weight: 800; }
+        .rank-name { color: var(--text-strong); font-weight: 700; min-width: 0; overflow-wrap: anywhere; }
+        .rank-score { color: var(--ok); font-family: var(--mono); font-weight: 800; }
+        .rank-sub { color: var(--muted); font-size: 11px; grid-column: 2 / 4; }
+        .metric-block { margin-bottom: 18px; }
+        .metric-title { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 10px; color: var(--accent-bright); font-weight: 800; }
+        .metric-title span:last-child { color: var(--muted); font-family: var(--mono); font-size: 12px; font-weight: 700; }
+        .table-wrap { overflow-x: auto; border: 1px solid rgba(187,134,252,0.14); border-radius: 12px; }
+        table { width: 100%; border-collapse: collapse; min-width: 560px; }
+        th, td { padding: 12px 14px; border-bottom: 1px solid rgba(187,134,252,0.12); text-align: left; font-size: 13px; }
+        th { color: var(--accent); font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; background: rgba(187,134,252,0.06); }
+        td { color: var(--text); }
+        tr:last-child td { border-bottom: none; }
+        .score { color: var(--ok); font-family: var(--mono); font-weight: 800; }
+        .muted { color: var(--muted); }
+        .detail-table { min-width: 1020px; }
+        .detail-question { color: var(--muted); line-height: 1.45; min-width: 220px; }
+        .detail-model { color: var(--text-strong); font-weight: 700; overflow-wrap: anywhere; }
+        .detail-judge { color: var(--accent-bright); font-weight: 700; overflow-wrap: anywhere; }
+        .detail-note { color: rgba(229,254,246,0.82); line-height: 1.45; min-width: 240px; }
+        .badge { font-family: var(--mono); font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; padding: 4px 9px; border-radius: 20px; }
+        .badge-on { background: rgba(0,255,160,0.08); border: 1px solid rgba(0,255,160,0.25); color: var(--ok); }
+        .badge-off { background: rgba(107,123,141,0.1); border: 1px solid rgba(107,123,141,0.3); color: var(--muted); }
+        .recent-list { display: grid; gap: 10px; }
+        .recent-item { padding: 14px; border: 1px solid rgba(187,134,252,0.14); border-radius: 12px; background: rgba(0,0,0,0.2); }
+        .recent-text { color: var(--text-strong); font-size: 13px; line-height: 1.45; margin-bottom: 8px; overflow-wrap: anywhere; }
+        .recent-meta { display: flex; gap: 10px; flex-wrap: wrap; color: var(--muted); font-family: var(--mono); font-size: 10px; }
+        .empty-state { min-height: 120px; display: grid; place-items: center; padding: 22px; text-align: center; border: 1px dashed rgba(187,134,252,0.25); border-radius: 12px; color: var(--muted); }
+        @media (max-width: 920px) {
+            body { padding: 12px; }
+            .grid { grid-template-columns: 1fr; }
+            .hdr { padding: 18px; }
+        }
+    </style>
+</head>
+<body>
+    {% include "partials/public_chat_button.html" %}
+    {% include "partials/language_switcher.html" %}
+    <div class="background-grid"></div>
+    <div class="wrap">
+        <header class="hdr">
+            <div class="hdr-left">
+                <div class="logo-box" aria-hidden="true"><img src="{% static 'pondersecRoxo.jpeg' %}" alt=""></div>
+                <div class="hdr-info">
+                    <span class="badge-admin">{% translate "Painel Admin" %}</span>
+                    <span class="hdr-title">{% translate "Avaliações Públicas" %}</span>
+                    <span class="hdr-sub">{% translate "Médias geradas por avaliação cruzada entre LLMs no chat público." %}</span>
+                </div>
+            </div>
+            <div class="header-actions">
+                <a class="btn btn-ghost" href="{% url 'admin_pondersec_home' %}">{% translate "Voltar" %}</a>
+                <a class="btn btn-ghost" href="{% url 'admin_pondersec_metricas_publicas' %}">{% translate "Métricas" %}</a>
+                <a class="btn btn-danger" href="{% url 'admin_pondersec_logout' %}">{% translate "Sair" %}</a>
+            </div>
+        </header>
+
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-label">{% translate "Perguntas" %}</div>
+                <div class="stat-value">{{ total_perguntas }}</div>
+                <div class="stat-sub">{% translate "entradas no chat público" %}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">{% translate "Respostas" %}</div>
+                <div class="stat-value">{{ total_respostas }}</div>
+                <div class="stat-sub">{% translate "geradas por LLMs públicas" %}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">{% translate "Notas" %}</div>
+                <div class="stat-value">{{ total_avaliacoes }}</div>
+                <div class="stat-sub">{% translate "avaliações cruzadas válidas" %}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">{% translate "Respostas Avaliadas" %}</div>
+                <div class="stat-value">{{ respostas_avaliadas }}</div>
+                <div class="stat-sub">{% translate "com ao menos uma nota" %}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">{% translate "Média Geral" %}</div>
+                <div class="stat-value">{% if media_geral is not None %}{{ media_geral|floatformat:2 }}{% else %}-{% endif %}</div>
+                <div class="stat-sub">{% translate "considerando todas as métricas" %}</div>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="panel">
+                <div class="section-kicker">{% translate "Ranking Geral" %}</div>
+                {% if ranking %}
+                    <div class="ranking">
+                        {% for item in ranking %}
+                            <div class="rank-row">
+                                <div class="rank-pos">#{{ forloop.counter }}</div>
+                                <div class="rank-name">{{ item.resposta__llm__nome }}</div>
+                                <div class="rank-score">{{ item.media|floatformat:2 }}</div>
+                                <div class="rank-sub">{{ item.total }} {% translate "notas" %}</div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state">{% translate "Ainda não há avaliações cruzadas válidas." %}</div>
+                {% endif %}
+            </div>
+
+            <div class="panel">
+                <div class="section-kicker">{% translate "Médias por Métrica" %}</div>
+                {% if por_metrica %}
+                    {% for metrica in por_metrica %}
+                        <section class="metric-block">
+                            <div class="metric-title">
+                                <span>{{ metrica.nome }}</span>
+                                <span>{% translate "máx." %} {{ metrica.max }}</span>
+                            </div>
+                            <div class="table-wrap">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>{% translate "LLM Respondente" %}</th>
+                                            <th>{% translate "Estado" %}</th>
+                                            <th>{% translate "Média" %}</th>
+                                            <th>{% translate "Notas" %}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for linha in metrica.linhas %}
+                                            <tr>
+                                                <td>{{ linha.llm }}</td>
+                                                <td>
+                                                    {% if linha.ativa %}
+                                                        <span class="badge badge-on">{% translate "Ativa" %}</span>
+                                                    {% else %}
+                                                        <span class="badge badge-off">{% translate "Inativa" %}</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>{% if linha.media is not None %}<span class="score">{{ linha.media|floatformat:2 }}</span>{% else %}<span class="muted">-</span>{% endif %}</td>
+                                                <td>{{ linha.total }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">{% translate "Nenhuma métrica pública ativa. Configure métricas para gerar esse painel." %}</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="panel" style="margin-top: 18px;">
+            <div class="section-kicker">{% translate "Tabela Cruzada Detalhada" %}</div>
+            {% if avaliacoes_detalhadas %}
+                <div class="table-wrap">
+                    <table class="detail-table">
+                        <thead>
+                            <tr>
+                                <th>{% translate "Pergunta" %}</th>
+                                <th>{% translate "LLM que respondeu" %}</th>
+                                <th>{% translate "LLM avaliadora" %}</th>
+                                <th>{% translate "Métrica" %}</th>
+                                <th>{% translate "Nota" %}</th>
+                                <th>{% translate "Justificativa" %}</th>
+                                <th>{% translate "Data" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for avaliacao in avaliacoes_detalhadas %}
+                                <tr>
+                                    <td class="detail-question">{{ avaliacao.pergunta|truncatechars:120 }}</td>
+                                    <td class="detail-model">{{ avaliacao.modelo_respondente }}</td>
+                                    <td class="detail-judge">{{ avaliacao.modelo_avaliador }}</td>
+                                    <td>{{ avaliacao.metrica }}</td>
+                                    <td>
+                                        <span class="score">
+                                            {{ avaliacao.nota }}/{{ avaliacao.max }}
+                                        </span>
+                                    </td>
+                                    <td class="detail-note">{{ avaliacao.justificativa }}</td>
+                                    <td class="muted">{{ avaliacao.atualizado_em|date:"d/m/Y H:i" }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty-state">{% translate "Ainda não há linhas detalhadas de avaliação cruzada." %}</div>
+            {% endif %}
+        </div>
+
+        <div class="panel" style="margin-top: 18px;">
+            <div class="section-kicker">{% translate "Últimas Perguntas Públicas" %}</div>
+            {% if ultimas_perguntas %}
+                <div class="recent-list">
+                    {% for pergunta in ultimas_perguntas %}
+                        <article class="recent-item">
+                            <div class="recent-text">{{ pergunta.conteudo }}</div>
+                            <div class="recent-meta">
+                                <span>{{ pergunta.criado_em|date:"d/m/Y H:i" }}</span>
+                                <span>{{ pergunta.respostas_total }} {% translate "respostas" %}</span>
+                                <span>{{ pergunta.avaliacoes_total }} {% translate "notas cruzadas" %}</span>
+                            </div>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">{% translate "Nenhuma pergunta pública registrada ainda." %}</div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

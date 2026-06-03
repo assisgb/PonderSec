@@ -189,6 +189,56 @@ button { transition: transform 0.2s ease, box-shadow 0.2s ease; cursor: pointer;
 }
 .markdown-body pre code { background: transparent; padding: 0; color: #e2e8f0; }
 
+.cross-eval-panel {
+  margin-top: 16px;
+  background: rgba(8, 16, 26, 0.85);
+  border: 1px solid rgba(0, 220, 130, 0.14);
+  border-radius: 16px;
+  padding: 18px;
+}
+.cross-eval-title {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  margin-bottom: 12px;
+}
+.cross-eval-title strong {
+  color: var(--accent-bright); font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em;
+}
+.cross-eval-title span {
+  color: var(--muted); font-family: var(--mono); font-size: 10px;
+}
+.cross-eval-table-wrap {
+  overflow-x: auto;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+}
+.cross-eval-table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+}
+.cross-eval-table th,
+.cross-eval-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  text-align: left;
+  vertical-align: top;
+  font-size: 12px;
+}
+.cross-eval-table th {
+  color: var(--accent);
+  background: rgba(0, 220, 130, 0.05);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.cross-eval-table tr:last-child td { border-bottom: none; }
+.cross-eval-model { color: var(--text-strong); font-weight: 700; overflow-wrap: anywhere; }
+.cross-eval-judge { color: #d9b8ff; font-weight: 700; overflow-wrap: anywhere; }
+.cross-eval-score { color: var(--accent-bright); font-family: var(--mono); font-weight: 800; white-space: nowrap; }
+.cross-eval-note { color: rgba(212, 245, 233, 0.82); line-height: 1.45; min-width: 220px; }
+
 /* LOADING BUBBLE */
 .typing-indicator { display: flex; gap: 5px; padding: 4px 0; }
 .typing-indicator span {
@@ -215,10 +265,11 @@ button { transition: transform 0.2s ease, box-shadow 0.2s ease; cursor: pointer;
 .input-box:focus-within { border-color: var(--accent-bright); }
 
 textarea {
-  flex: 1; min-height: 24px; max-height: 200px;
+  flex: 1; min-height: 44px; max-height: 200px;
   background: transparent; border: none; color: var(--text-strong);
   font-size: 15px; line-height: 1.5; padding: 10px 12px;
   resize: none; overflow-y: auto;
+  overflow-wrap: anywhere;
 }
 textarea::placeholder { color: rgba(122, 150, 140, 0.6); }
 
@@ -350,13 +401,55 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
+function renderCrossEvaluationTable(rows) {
+  if (!Array.isArray(rows) || rows.length === 0) return "";
+
+  const body = rows.map(row => {
+    const nota = Number(row.nota);
+    const max = Number(row.max || 5);
+    const notaTxt = Number.isFinite(nota) ? `${nota}/${max}` : `-/${max}`;
+    return `
+      <tr>
+        <td class="cross-eval-model">${escapeHtml(row.modelo_respondente || "{% trans 'LLM respondente' %}")}</td>
+        <td class="cross-eval-judge">${escapeHtml(row.modelo_avaliador || "{% trans 'LLM avaliadora' %}")}</td>
+        <td>${escapeHtml(row.metrica || "{% trans 'Métrica' %}")}</td>
+        <td class="cross-eval-score">${notaTxt}</td>
+        <td class="cross-eval-note">${escapeHtml(row.justificativa || "-")}</td>
+      </tr>
+    `;
+  }).join("");
+
+  return `
+    <section class="cross-eval-panel">
+      <div class="cross-eval-title">
+        <strong>{% trans "Tabela de avaliação cruzada" %}</strong>
+        <span>${rows.length} {% trans "notas" %}</span>
+      </div>
+      <div class="cross-eval-table-wrap">
+        <table class="cross-eval-table">
+          <thead>
+            <tr>
+              <th>{% trans "LLM que respondeu" %}</th>
+              <th>{% trans "LLM avaliadora" %}</th>
+              <th>{% trans "Métrica" %}</th>
+              <th>{% trans "Nota" %}</th>
+              <th>{% trans "Justificativa" %}</th>
+            </tr>
+          </thead>
+          <tbody>${body}</tbody>
+        </table>
+      </div>
+    </section>
+  `;
+}
+
 // Auto-Ajuste da Caixa de Texto
 const textarea = document.getElementById('questionInput');
 const sendBtn = document.getElementById('sendBtn');
 
 textarea.addEventListener('input', function() {
-  this.style.height = '24px';
-  this.style.height = (this.scrollHeight) + 'px';
+  this.style.height = '44px';
+  this.style.height = Math.max(44, this.scrollHeight) + 'px';
   sendBtn.disabled = this.value.trim() === '';
 });
 
@@ -415,7 +508,7 @@ function removeBubble(id) {
   if(el) el.remove();
 }
 
-function addAIBubblesGroup(respostas) {
+function addAIBubblesGroup(respostas, tabelaAvaliacaoCruzada = []) {
   const div = document.createElement('div');
   div.className = 'message-wrapper ai-group';
   
@@ -460,6 +553,7 @@ function addAIBubblesGroup(respostas) {
   }
   
   html += '</div>';
+  html += renderCrossEvaluationTable(tabelaAvaliacaoCruzada);
   div.innerHTML = html;
   chatHistory.appendChild(div);
 }
@@ -469,7 +563,7 @@ async function sendPublicQuestion() {
   if (!pergunta) return;
 
   textarea.value = '';
-  textarea.style.height = '24px';
+  textarea.style.height = '44px';
   sendBtn.disabled = true;
 
   addUserMessage(pergunta);
@@ -490,7 +584,7 @@ async function sendPublicQuestion() {
     }
 
     const respostas = data.respostas || data.responses || [];
-    addAIBubblesGroup(respostas);
+    addAIBubblesGroup(respostas, data.tabela_avaliacao_cruzada || []);
     scrollToBottom();
 
   } catch (error) {

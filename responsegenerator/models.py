@@ -56,6 +56,48 @@ class LLMPublica(models.Model):
         return self.nome
 
 
+class PerguntaPublica(models.Model):
+    """Perguntas feitas por usuários finais no chat público."""
+    conteudo = models.TextField()
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Pergunta Pública"
+        verbose_name_plural = "Perguntas Públicas"
+        ordering = ["-criado_em"]
+
+    def __str__(self):
+        return self.conteudo[:80]
+
+
+class RespostaPublica(models.Model):
+    """Respostas geradas por LLMs públicas para uma pergunta do chat público."""
+    pergunta = models.ForeignKey(
+        PerguntaPublica,
+        on_delete=models.CASCADE,
+        related_name="respostas",
+    )
+    llm = models.ForeignKey(
+        LLMPublica,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="respostas_publicas",
+    )
+    conteudo_resposta = models.TextField()
+    ok = models.BooleanField(default=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Resposta Pública"
+        verbose_name_plural = "Respostas Públicas"
+        ordering = ["id"]
+
+    def __str__(self):
+        nome_llm = self.llm.nome if self.llm else "LLM removida"
+        return f"{nome_llm} - {self.pergunta}"
+
+
 class Metrica(models.Model):
     TIPO_CHOICES = [
         ('quantitativa', 'Quantitativa'),
@@ -205,4 +247,37 @@ class AvaliacaoJuiz(models.Model):
 
     def __str__(self):
         nome_juiz = self.juiz.nome if self.juiz else 'Juiz removido'
+        return f"{nome_juiz} avaliou {self.resposta}"
+
+
+class AvaliacaoPublicaLLM(models.Model):
+    """Avaliação cruzada entre LLMs públicas para respostas do chat público."""
+    juiz = models.ForeignKey(
+        LLMPublica,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="avaliacoes_publicas_como_juiz",
+    )
+    resposta = models.ForeignKey(
+        RespostaPublica,
+        on_delete=models.CASCADE,
+        related_name="avaliacoes_cruzadas",
+    )
+    metrica = models.ForeignKey(Metrica, on_delete=models.SET_NULL, null=True)
+    avaliacao_quali = models.TextField(blank=True, null=True)
+    avaliacao_quanti = models.IntegerField(blank=True, null=True)
+    justificativa_geral = models.TextField(blank=True, null=True)
+    erro = models.BooleanField(default=False)
+    criado_em = models.DateTimeField(auto_now_add=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Avaliação Pública por LLM"
+        verbose_name_plural = "Avaliações Públicas por LLM"
+        ordering = ["-atualizado_em"]
+        unique_together = ("juiz", "resposta", "metrica")
+
+    def __str__(self):
+        nome_juiz = self.juiz.nome if self.juiz else "Juiz removido"
         return f"{nome_juiz} avaliou {self.resposta}"

@@ -180,6 +180,21 @@
                 <div class="stat-value">{{ llms_ativas }}</div>
                 <div class="stat-sub">{% translate "disponíveis no chat público" %}</div>
             </div>
+            <div class="stat-card">
+                <div class="stat-label">{% translate "Métricas Públicas" %}</div>
+                <div class="stat-value">{{ metricas_publicas_ativas }}</div>
+                <div class="stat-sub">{% translate "ativas para avaliação cruzada" %}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">{% translate "Perguntas Públicas" %}</div>
+                <div class="stat-value">{{ total_perguntas_publicas }}</div>
+                <div class="stat-sub">{% translate "registradas pelo chat público" %}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">{% translate "Notas Cruzadas" %}</div>
+                <div class="stat-value">{{ total_avaliacoes_publicas }}</div>
+                <div class="stat-sub">{% translate "geradas pelas LLMs públicas" %}</div>
+            </div>
         </div>
 
         <div class="section-label">{% translate "Configurações" %}</div>
@@ -197,6 +212,42 @@
                 <div class="card-desc">{% translate "Cadastre as API keys que serão utilizadas para responder no chat público da página inicial." %}</div>
                 <div class="card-footer">
                     {% translate "Gerenciar" %}
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                        <path d="M5 12h14M13 6l6 6-6 6"/>
+                    </svg>
+                </div>
+            </a>
+            <a href="{% url 'admin_pondersec_metricas_publicas' %}" class="card">
+                <div class="card-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#bb86fc" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 19V5"/>
+                        <path d="M4 19h16"/>
+                        <path d="M8 16v-5"/>
+                        <path d="M12 16V8"/>
+                        <path d="M16 16v-7"/>
+                    </svg>
+                </div>
+                <div class="card-title">{% translate "Métricas Públicas" %}</div>
+                <div class="card-desc">{% translate "Defina os critérios usados pelas LLMs públicas para avaliar respostas do chat público." %}</div>
+                <div class="card-footer">
+                    {% translate "Configurar" %}
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                        <path d="M5 12h14M13 6l6 6-6 6"/>
+                    </svg>
+                </div>
+            </a>
+            <a href="{% url 'admin_pondersec_avaliacoes_publicas' %}" class="card">
+                <div class="card-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#bb86fc" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 20V10"/>
+                        <path d="M18 20V4"/>
+                        <path d="M6 20v-6"/>
+                    </svg>
+                </div>
+                <div class="card-title">{% translate "Avaliações Públicas" %}</div>
+                <div class="card-desc">{% translate "Acompanhe médias, ranking e histórico das avaliações cruzadas do chat público." %}</div>
+                <div class="card-footer">
+                    {% translate "Ver resultados" %}
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
                         <path d="M5 12h14M13 6l6 6-6 6"/>
                     </svg>

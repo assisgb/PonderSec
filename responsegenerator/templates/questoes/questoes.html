@@ -527,8 +527,8 @@ textarea:focus,
   position: absolute;
   right: 16px;
   bottom: 16px;
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -545,13 +545,21 @@ textarea:focus,
   border-color: var(--accent-bright);
   background: rgba(0, 220, 130, 0.22);
   box-shadow: 0 0 24px rgba(0, 220, 130, 0.16);
-  transform: translateY(-1px);
+  transform: translateX(2px);
 }
 
 .send-question-btn:disabled {
   cursor: not-allowed;
   opacity: 0.62;
   transform: none;
+}
+
+.send-question-btn svg {
+  transition: transform 0.18s ease;
+}
+
+.send-question-btn:hover svg {
+  transform: translateX(1px);
 }
 
 .upload-callout {
@@ -1127,33 +1135,36 @@ textarea:focus,
 }
 
 .toast-stack {
-  position: fixed;
-  top: 28px;
-  right: 28px;
-  z-index: 200;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  width: min(380px, calc(100vw - 32px));
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  margin: -6px 0 18px;
   pointer-events: none;
 }
 
 .toast-message {
-  padding: 15px 18px;
-  border-radius: 12px;
-  background: rgba(0, 220, 130, 0.12);
-  border: 1px solid rgba(0, 220, 130, 0.42);
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  max-height: 140px;
+  overflow: hidden;
+  padding: 12px 16px 12px 18px;
+  border: 1px solid rgba(0, 220, 130, 0.24);
+  border-left: 3px solid rgba(0, 255, 159, 0.72);
+  border-radius: 10px;
+  background: linear-gradient(90deg, rgba(0, 220, 130, 0.105), rgba(0, 220, 130, 0.035));
   color: var(--accent-bright);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.38);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
   font-size: 13px;
   font-weight: 700;
   line-height: 1.45;
-  transition: opacity 0.45s ease, transform 0.45s ease;
+  transition: opacity 0.35s ease, transform 0.35s ease, max-height 0.35s ease, margin 0.35s ease, padding 0.35s ease;
 }
 
 .toast-message.error {
-  background: rgba(239, 68, 68, 0.12);
-  border-color: rgba(239, 68, 68, 0.5);
+  background: linear-gradient(90deg, rgba(239, 68, 68, 0.12), rgba(239, 68, 68, 0.04));
+  border-color: rgba(239, 68, 68, 0.34);
+  border-left-color: rgba(248, 113, 113, 0.84);
   color: #fca5a5;
 }
 
@@ -1264,7 +1275,7 @@ textarea:focus,
   {% if messages %}
   <div class="toast-stack" id="toast-container">
     {% for message in messages %}
-    <div class="toast-message {% if message.tags == 'error' %}error{% endif %}">
+    <div class="toast-message {{ message.tags }}" role="{% if 'error' in message.tags %}alert{% else %}status{% endif %}">
       {{ message }}
     </div>
     {% endfor %}
@@ -1276,10 +1287,10 @@ textarea:focus,
       <div class="section-kicker">{% translate "Cadastro rápido" %}</div>
       <div class="question-intro">
         <h1 id="questionTitle">{% translate "Digite uma pergunta" %}</h1>
-        <p>{% translate "Use a seta no campo para cadastrar ou envie TXT/JSON para importar várias perguntas." %}</p>
+        <p>{% translate "Cadastre uma pergunta pelo campo ou envie TXT/JSON para importar várias perguntas." %}</p>
       </div>
 
-      <form class="question-form" method="POST" action="{% url 'add_questoes' %}" onsubmit="return bloquearBotao('btnSalvarQuestaoPrincipal')">
+      <form class="question-form" id="questionForm" method="POST" action="{% url 'add_questoes' %}" onsubmit="return bloquearBotao('btnSalvarQuestaoPrincipal')">
         {% csrf_token %}
         <div>
           <label class="field-label" for="question">{% translate "Pergunta" %}</label>
@@ -1294,8 +1305,8 @@ textarea:focus,
               title="{% translate 'Adicionar questão' %}"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M12 19V5"></path>
-                <path d="M5 12l7-7 7 7"></path>
+                <path d="M5 12h14"></path>
+                <path d="M13 6l6 6-6 6"></path>
               </svg>
             </button>
           </div>
@@ -1900,18 +1911,50 @@ function bindUploadZone() {
 }
 
 function bindToasts() {
+  const container = document.getElementById("toast-container");
+
   document.querySelectorAll(".toast-message").forEach(toast => {
     setTimeout(() => {
       toast.style.opacity = "0";
-      toast.style.transform = "translateX(40px)";
-      setTimeout(() => toast.remove(), 500);
+      toast.style.transform = "translateY(-8px)";
+      toast.style.maxHeight = "0";
+      toast.style.margin = "0";
+      toast.style.paddingTop = "0";
+      toast.style.paddingBottom = "0";
+
+      setTimeout(() => {
+        toast.remove();
+        if (container && !container.querySelector(".toast-message")) {
+          container.remove();
+        }
+      }, 400);
     }, 6000);
+  });
+}
+
+function bindQuestionEnterSubmit() {
+  const textarea = document.getElementById("question");
+  const form = document.getElementById("questionForm");
+  if (!textarea || !form) return;
+
+  textarea.addEventListener("keydown", event => {
+    if (event.key !== "Enter" || event.shiftKey || event.isComposing) return;
+
+    event.preventDefault();
+    if (!textarea.value.trim()) return;
+
+    if (typeof form.requestSubmit === "function") {
+      form.requestSubmit();
+    } else {
+      form.submit();
+    }
   });
 }
 
 document.addEventListener("DOMContentLoaded", function() {
   bindModalDismiss();
   bindUploadZone();
+  bindQuestionEnterSubmit();
   bindToasts();
   initHistoryCache();
   updateHistoryStats();

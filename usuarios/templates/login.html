@@ -21,10 +21,12 @@
             background: radial-gradient(circle at top, #051015 0, #02060b 45%, #000000 100%);
             color: #e5fef6;
             min-height: 100vh;
+            padding: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            overflow: hidden;
+            overflow-x: hidden;
+            overflow-y: auto;
         }
 
         /* Fundo hacker */
@@ -71,6 +73,7 @@
             position: relative;
             width: 100%;
             max-width: 440px;
+            min-height: 640px;
             background: radial-gradient(circle at top, #0b141d 0, #050a11 55%, #020509 100%);
             border-radius: 18px;
             padding: 32px 36px 40px;
@@ -83,16 +86,26 @@
 
         /* LOGO */
         .logo {
-            text-align: center;
-            margin-bottom: 14px;
+            height: 112px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
         }
 
         .logo img {
             width: 150px;
+            height: 112px;
+            object-fit: contain;
             border-radius: 10px;
             filter:
                 drop-shadow(0 0 10px rgba(0, 255, 160, 0.8))
                 drop-shadow(0 0 30px rgba(0, 255, 160, 0.5));
+        }
+
+        .badge-slot {
+            height: 28px;
+            margin-bottom: 10px;
         }
 
         .product-name {
@@ -101,6 +114,8 @@
             text-transform: uppercase;
             letter-spacing: 0.28em;
             font-size: 13px;
+            font-weight: 700;
+            line-height: 1.25;
             margin-bottom: 6px;
         }
 
@@ -109,13 +124,16 @@
             color: #00ff9f;
             font-size: 23px;
             font-weight: 700;
+            line-height: 1.2;
             margin-bottom: 8px;
         }
 
         .subtitle {
             text-align: center;
             font-size: 12px;
+            line-height: 1.45;
             color: #8ba1b0;
+            min-height: 35px;
             margin-bottom: 16px;
         }
 
@@ -140,7 +158,8 @@
 
         input {
             width: 100%;
-            padding: 11px;
+            height: 46px;
+            padding: 0 14px;
             border: 1px solid #1b2635;
             background: #050a11;
             color: #e5fef6;
@@ -201,16 +220,17 @@
         /* BOTÃO */
         .button-primary {
             width: 100%;
-            padding: 12px;
+            height: 46px;
+            padding: 0 14px;
             margin-top: 6px;
             background: linear-gradient(90deg, #00ff9f, #00ff57);
             border: none;
-            border-radius: 999px;
+            border-radius: 10px;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 14px;
             font-weight: 700;
             color: #020509;
-            letter-spacing: 0.07em;
+            letter-spacing: 0.12em;
             text-transform: uppercase;
             transition: all 0.2s;
         }
@@ -243,6 +263,7 @@
             background: rgba(0, 0, 0, 0.35);
             border: 1px solid rgba(0, 255, 160, 0.15);
             border-radius: 12px;
+            min-height: 44px;
         }
         .role-btn {
             flex: 1;
@@ -281,6 +302,14 @@
             width: 7px; height: 7px; border-radius: 50%;
             background: currentColor; opacity: 0.7;
         }
+
+        @media (max-width: 480px) {
+            .container {
+                min-height: auto;
+                padding: 24px 22px 30px;
+            }
+            .headline { font-size: 22px; }
+        }
     </style>
 </head>
 
@@ -297,6 +326,7 @@
         <div class="logo">
             <img src="{% static 'pondersec_logo.jpg' %}" alt="PonderSEC Logo">
         </div>
+        <div class="badge-slot" aria-hidden="true"></div>
 
         <div class="product-name">PONDERSEC</div>
         <div class="headline">{% translate "Entrar" %}</div>
