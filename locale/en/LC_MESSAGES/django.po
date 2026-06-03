@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PonderSEC\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-02 19:56+0000\n"
+"POT-Creation-Date: 2026-06-03 16:50+0000\n"
 "PO-Revision-Date: 2026-05-27 15:28+0000\n"
 "Last-Translator: PonderSEC Team\n"
 "Language-Team: English\n"
@@ -18,19 +18,315 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: pondersec/settings.py:174
-#: responsegenerator/templates/chat/chatpublico.html:538
 msgid "Português"
 msgstr "Portuguese"
 
 #: pondersec/settings.py:175
-#: responsegenerator/templates/chat/chatpublico.html:539
 msgid "English"
 msgstr "English"
 
 #: pondersec/settings.py:176
-#: responsegenerator/templates/chat/chatpublico.html:540
 msgid "Español"
 msgstr "Spanish"
+
+#: responsegenerator/templates/admin_pondersec/home.html:7
+msgid "PonderSEC — Painel Admin"
+msgstr "PonderSEC — Admin Panel"
+
+#: responsegenerator/templates/admin_pondersec/home.html:159
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:269
+#: responsegenerator/templates/admin_pondersec/login.html:181
+msgid "Painel Admin"
+msgstr "Admin Panel"
+
+#: responsegenerator/templates/admin_pondersec/home.html:161
+msgid "Gerencie as configurações compartilhadas do chat público."
+msgstr "Manage shared public chat settings."
+
+#: responsegenerator/templates/admin_pondersec/home.html:167
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:285
+#: responsegenerator/templates/chat/chatpublico.html:279
+#: responsegenerator/templates/menu.html:311
+#: templates/partials/app_sidebar.html:70
+#: usuarios/templates/tela_inicial.html:165
+msgid "Sair"
+msgstr "Sign out"
+
+#: responsegenerator/templates/admin_pondersec/home.html:173
+#: responsegenerator/templates/admin_pondersec/home.html:195
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:270
+msgid "LLMs Públicas"
+msgstr "Public LLMs"
+
+#: responsegenerator/templates/admin_pondersec/home.html:175
+msgid "configuradas no sistema"
+msgstr "configured in the system"
+
+#: responsegenerator/templates/admin_pondersec/home.html:178
+msgid "LLMs Ativas"
+msgstr "Active LLMs"
+
+#: responsegenerator/templates/admin_pondersec/home.html:180
+msgid "disponíveis no chat público"
+msgstr "available in public chat"
+
+#: responsegenerator/templates/admin_pondersec/home.html:184
+#: responsegenerator/templates/setup/setup.html:205
+msgid "Configurações"
+msgstr "Settings"
+
+#: responsegenerator/templates/admin_pondersec/home.html:196
+msgid ""
+"Cadastre as API keys que serão utilizadas para responder no chat público da "
+"página inicial."
+msgstr ""
+"Register the API keys that will be used to answer on the home page public "
+"chat."
+
+#: responsegenerator/templates/admin_pondersec/home.html:198
+msgid "Gerenciar"
+msgstr "Manage"
+
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:7
+msgid "PonderSEC — LLMs Públicas"
+msgstr "PonderSEC — Public LLMs"
+
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:271
+msgid "Estas API keys são usadas pelo chat público da página inicial."
+msgstr "These API keys are used by the home page public chat."
+
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:279
+#: responsegenerator/templates/avaliacao/avaliacao_lista.html:340
+#: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:338
+#: responsegenerator/templates/juizes/comparador.html:322
+msgid "Voltar"
+msgstr "Back"
+
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:307
+msgid "Buscar modelo..."
+msgstr "Search model..."
+
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:313
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:379
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:394
+#: responsegenerator/templates/setup/setup-llm.html:333
+#: responsegenerator/templates/setup/setup-llm.html:396
+#: responsegenerator/templates/setup/setup-llm.html:532
+msgid "Adicionar LLM"
+msgstr "Add LLM"
+
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:317
+msgid "LLMs Configuradas"
+msgstr "Configured LLMs"
+
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:335
+msgid "Ativa"
+msgstr "Active"
+
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:337
+msgid "Inativa"
+msgstr "Inactive"
+
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:343
+msgid "Desativar"
+msgstr "Deactivate"
+
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:343
+msgid "Ativar"
+msgstr "Activate"
+
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:357
+#: responsegenerator/templates/avaliacao/avaliacao_lista.html:393
+#: responsegenerator/templates/setup/setup-avaliacao.html:397
+#: responsegenerator/templates/setup/setup-llm.html:360
+msgid "Editar"
+msgstr "Edit"
+
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:364
+msgid "Remover"
+msgstr "Remove"
+
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:379
+msgid "Nenhuma LLM pública cadastrada."
+msgstr "No public LLM registered."
+
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:379
+msgid "Clique em"
+msgstr "Click"
+
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:379
+msgid "para cadastrar a primeira."
+msgstr "to register the first one."
+
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:393
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:448
+#: responsegenerator/templates/avaliacao/avaliacao_lista.html:477
+#: responsegenerator/templates/setup/setup-llm.html:395
+msgid "Configuração"
+msgstr "Configuration"
+
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:402
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:457
+#: responsegenerator/templates/setup/setup-llm.html:407
+msgid "Dados da Conexão"
+msgstr "Connection Data"
+
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:404
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:459
+#: responsegenerator/templates/setup/setup-llm.html:410
+msgid "Provedor"
+msgstr "Provider"
+
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:406
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:461
+#: responsegenerator/templates/setup/setup-llm.html:412
+msgid "Selecione o provedor"
+msgstr "Select the provider"
+
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:416
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:471
+#: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:487
+#: responsegenerator/templates/setup/setup-llm.html:423
+msgid "Modelo"
+msgstr "Model"
+
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:418
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:473
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:562
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:597
+#: responsegenerator/templates/setup/setup-llm.html:425
+#: responsegenerator/templates/setup/setup-llm.html:518
+msgid "Selecione um provedor primeiro"
+msgstr "Select a provider first"
+
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:422
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:477
+msgid "API Key"
+msgstr "API Key"
+
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:424
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:479
+#: responsegenerator/templates/setup/setup-llm.html:432
+msgid "Cole sua chave aqui..."
+msgstr "Paste your key here..."
+
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:431
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:486
+#: responsegenerator/templates/avaliacao/avaliacao_lista.html:461
+#: responsegenerator/templates/avaliacao/avaliacao_lista.html:508
+#: responsegenerator/templates/avaliacao/avaliacao_lista.html:538
+#: responsegenerator/templates/questoes/questoes.html:1488
+#: responsegenerator/templates/questoes/questoes.html:1524
+#: responsegenerator/templates/questoes/questoes.html:1572
+#: responsegenerator/templates/setup/setup-avaliacao.html:518
+#: responsegenerator/templates/setup/setup-llm.html:443
+msgid "Cancelar"
+msgstr "Cancel"
+
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:436
+#: responsegenerator/templates/setup/setup-llm.html:448
+#: responsegenerator/templates/setup/setup-llm.html:533
+msgid "Adicionar Modelo"
+msgstr "Add Model"
+
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:449
+msgid "Editar LLM Pública"
+msgstr "Edit Public LLM"
+
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:491
+msgid "Salvar alterações"
+msgstr "Save changes"
+
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:652
+msgid "Falha ao salvar."
+msgstr "Failed to save."
+
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:654
+msgid "LLM atualizada."
+msgstr "LLM updated."
+
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:662
+msgid "Remover a LLM"
+msgstr "Remove the LLM"
+
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:669
+msgid "Falha ao remover."
+msgstr "Failed to remove."
+
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:670
+msgid "LLM removida."
+msgstr "LLM removed."
+
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:684
+msgid "Falha ao alternar."
+msgstr "Failed to toggle."
+
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:685
+msgid "LLM ativada."
+msgstr "LLM activated."
+
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:685
+msgid "LLM desativada."
+msgstr "LLM deactivated."
+
+#: responsegenerator/templates/admin_pondersec/login.html:7
+msgid "PonderSEC — Admin"
+msgstr "PonderSEC — Admin"
+
+#: responsegenerator/templates/admin_pondersec/login.html:183
+msgid "Acesso Restrito"
+msgstr "Restricted Access"
+
+#: responsegenerator/templates/admin_pondersec/login.html:184
+msgid ""
+"Faça login com suas credenciais de administrador para gerenciar as LLMs do "
+"chat público."
+msgstr ""
+"Log in with your administrator credentials to manage the public chat LLMs."
+
+#: responsegenerator/templates/admin_pondersec/login.html:186
+#: usuarios/templates/login.html:304
+msgid "Tipo de acesso"
+msgstr "Access type"
+
+#: responsegenerator/templates/admin_pondersec/login.html:188
+#: usuarios/templates/login.html:306
+msgid "Pesquisador"
+msgstr "Researcher"
+
+#: responsegenerator/templates/admin_pondersec/login.html:191
+#: usuarios/templates/login.html:309
+msgid "Administrador"
+msgstr "Administrator"
+
+#: responsegenerator/templates/admin_pondersec/login.html:197
+msgid ""
+"Nenhum admin cadastrado ainda. Defina <strong>ADMIN_PONDERSEC_EMAIL</strong> "
+"e <strong>ADMIN_PONDERSEC_SENHA</strong> no <code>.env</code> e reinicie o "
+"stack — o admin é criado automaticamente. Veja <code>docs/ADMIN_PONDERSEC."
+"md</code>."
+msgstr ""
+"No admin registered yet. Set <strong>ADMIN_PONDERSEC_EMAIL</strong> and "
+"<strong>ADMIN_PONDERSEC_SENHA</strong> in <code>.env</code> and restart the "
+"stack - the admin is created automatically. See <code>docs/ADMIN_PONDERSEC."
+"md</code>."
+
+#: responsegenerator/templates/admin_pondersec/login.html:208
+#: usuarios/templates/cadastro.html:311
+msgid "E-mail"
+msgstr "Email"
+
+#: responsegenerator/templates/admin_pondersec/login.html:212
+#: usuarios/templates/cadastro.html:316 usuarios/templates/login.html:339
+msgid "Senha"
+msgstr "Password"
+
+#: responsegenerator/templates/admin_pondersec/login.html:215
+#: responsegenerator/templates/chat/chatpublico.html:284
+#: usuarios/templates/cadastro.html:375 usuarios/templates/login.html:301
+#: usuarios/templates/login.html:366
+msgid "Entrar"
+msgstr "Log In"
 
 #: responsegenerator/templates/avaliacao/avaliacao_lista.html:7
 msgid "PonderSEC — Formulários de Avaliação"
@@ -43,12 +339,6 @@ msgstr "Evaluation Forms"
 #: responsegenerator/templates/avaliacao/avaliacao_lista.html:332
 msgid "Agrupe questões e colete feedback profissional"
 msgstr "Group questions and collect professional feedback"
-
-#: responsegenerator/templates/avaliacao/avaliacao_lista.html:340
-#: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:338
-#: responsegenerator/templates/juizes/comparador.html:322
-msgid "Voltar"
-msgstr "Back"
 
 #: responsegenerator/templates/avaliacao/avaliacao_lista.html:363
 msgid "Buscar formulário..."
@@ -70,12 +360,6 @@ msgstr "linked question(s)"
 #: responsegenerator/templates/avaliacao/avaliacao_lista.html:388
 msgid "avaliação(ões) coletada(s)"
 msgstr "collected evaluation(s)"
-
-#: responsegenerator/templates/avaliacao/avaliacao_lista.html:393
-#: responsegenerator/templates/setup/setup-avaliacao.html:397
-#: responsegenerator/templates/setup/setup-llm.html:360
-msgid "Editar"
-msgstr "Edit"
 
 #: responsegenerator/templates/avaliacao/avaliacao_lista.html:398
 #: responsegenerator/templates/questoes/questoes.html:1443
@@ -117,22 +401,6 @@ msgstr "Linked Questions"
 #: responsegenerator/templates/avaliacao/avaliacao_lista.html:456
 msgid "Nenhuma questão registrada no sistema ainda."
 msgstr "No question has been registered in the system yet."
-
-#: responsegenerator/templates/avaliacao/avaliacao_lista.html:461
-#: responsegenerator/templates/avaliacao/avaliacao_lista.html:508
-#: responsegenerator/templates/avaliacao/avaliacao_lista.html:538
-#: responsegenerator/templates/questoes/questoes.html:1488
-#: responsegenerator/templates/questoes/questoes.html:1524
-#: responsegenerator/templates/questoes/questoes.html:1572
-#: responsegenerator/templates/setup/setup-avaliacao.html:518
-#: responsegenerator/templates/setup/setup-llm.html:443
-msgid "Cancelar"
-msgstr "Cancel"
-
-#: responsegenerator/templates/avaliacao/avaliacao_lista.html:477
-#: responsegenerator/templates/setup/setup-llm.html:395
-msgid "Configuração"
-msgstr "Configuration"
 
 #: responsegenerator/templates/avaliacao/avaliacao_lista.html:478
 msgid "Editar Formulário"
@@ -524,11 +792,6 @@ msgstr "Details by Model"
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:480
 msgid "Médias da métrica selecionada e volume de notas em cada lado."
 msgstr "Averages for the selected metric and number of scores on each side."
-
-#: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:487
-#: responsegenerator/templates/setup/setup-llm.html:423
-msgid "Modelo"
-msgstr "Model"
 
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:489
 msgid "Notas humanas"
@@ -951,7 +1214,7 @@ msgid "PDF gerado com sucesso!"
 msgstr "PDF generated successfully!"
 
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:1851
-#: responsegenerator/templates/chat/chatpublico.html:721
+#: responsegenerator/templates/chat/chatpublico.html:498
 msgid "Erro:"
 msgstr "Error:"
 
@@ -1069,104 +1332,94 @@ msgstr ""
 "style=\"color:#00cfff;\">Comparison</strong> and export PDF reports."
 
 #: responsegenerator/templates/chat/chatpublico.html:7
-#, fuzzy
-#| msgid "PonderSEC — Cadastro"
 msgid "PonderSEC | Chat Público"
-msgstr "PonderSEC — Sign Up"
+msgstr "PonderSEC | Public Chat"
 
-#: responsegenerator/templates/chat/chatpublico.html:528
+#: responsegenerator/templates/chat/chatpublico.html:250
+#: templates/partials/app_sidebar.html:61
 msgid "Chat Público"
-msgstr ""
+msgstr "Public Chat"
 
-#: responsegenerator/templates/chat/chatpublico.html:529
-msgid "Consulta aberta para perguntas sobre cibersegurança"
-msgstr "Open consultation for cybersecurity questions"
-
-#: responsegenerator/templates/chat/chatpublico.html:537
+#: responsegenerator/templates/chat/chatpublico.html:258
 #: templates/partials/language_switcher.html:59
 msgid "Selecionar idioma"
 msgstr "Select language"
 
-#: responsegenerator/templates/chat/chatpublico.html:544
-#: usuarios/templates/cadastro.html:375 usuarios/templates/login.html:253
-#: usuarios/templates/login.html:309
-msgid "Entrar"
-msgstr "Log In"
+#: responsegenerator/templates/chat/chatpublico.html:259
+msgid "PT"
+msgstr "PT"
 
-#: responsegenerator/templates/chat/chatpublico.html:551
+#: responsegenerator/templates/chat/chatpublico.html:260
+msgid "EN"
+msgstr "EN"
+
+#: responsegenerator/templates/chat/chatpublico.html:261
+msgid "ES"
+msgstr "ES"
+
+#: responsegenerator/templates/chat/chatpublico.html:267
+msgid "Menu do Usuário"
+msgstr "User menu"
+
+#: responsegenerator/templates/chat/chatpublico.html:275
+msgid "Ir ao sistema"
+msgstr "Go to system"
+
+#: responsegenerator/templates/chat/chatpublico.html:294
 msgid "Faça uma pergunta sobre"
 msgstr "Ask a question about"
 
-#: responsegenerator/templates/chat/chatpublico.html:551
+#: responsegenerator/templates/chat/chatpublico.html:294
 msgid "cibersegurança"
 msgstr "cybersecurity"
 
-#: responsegenerator/templates/chat/chatpublico.html:553
+#: responsegenerator/templates/chat/chatpublico.html:295
 msgid ""
-"Digite sua dúvida e receba respostas geradas pelos modelos configurados no "
-"PonderSEC."
-msgstr "Type your question and receive answers generated by the models configured in PonderSEC."
+"Digite sua dúvida e receba respostas geradas pelos modelos de Inteligência "
+"Artificial configurados no PonderSEC."
+msgstr ""
+"Type your question and receive answers generated by the AI models configured "
+"in PonderSEC."
 
-#: responsegenerator/templates/chat/chatpublico.html:559
-msgid ""
-"Digite sua pergunta... Ex.: Como reduzir riscos de phishing em uma "
-"organização?"
-msgstr "Type your question... Ex.: How can you reduce phishing risk in an organization?"
+#: responsegenerator/templates/chat/chatpublico.html:302
+msgid "Digite sua pergunta... Ex.: Como reduzir riscos de phishing?"
+msgstr "Type your question... Example: How can you reduce phishing risks?"
 
-#: responsegenerator/templates/chat/chatpublico.html:561
+#: responsegenerator/templates/chat/chatpublico.html:303
 msgid "Enviar pergunta"
 msgstr "Send question"
 
-#: responsegenerator/templates/chat/chatpublico.html:570
+#: responsegenerator/templates/chat/chatpublico.html:309
 msgid ""
-"As respostas são geradas automaticamente pelas LLMs configuradas pelos "
-"administradores."
-msgstr "Answers are automatically generated by the LLMs configured by administrators."
+"As respostas são geradas automaticamente por IAs e podem conter imprecisões."
+msgstr ""
+"Answers are automatically generated by AIs and may contain inaccuracies."
 
-#: responsegenerator/templates/chat/chatpublico.html:577
-msgid "Respostas dos modelos"
-msgstr "Model answers"
+#: responsegenerator/templates/chat/chatpublico.html:430
+#: responsegenerator/views.py:248
+msgid "Sistema"
+msgstr "System"
 
-#: responsegenerator/templates/chat/chatpublico.html:583
-msgid "PonderSEC · IA aplicada à cibersegurança"
-msgstr "PonderSEC · AI applied to cybersecurity"
-
-#: responsegenerator/templates/chat/chatpublico.html:614
-msgid "OK"
-msgstr "OK"
-
-#: responsegenerator/templates/chat/chatpublico.html:615
-#: responsegenerator/templates/chat/chatpublico.html:659
+#: responsegenerator/templates/chat/chatpublico.html:431
+#: responsegenerator/templates/chat/chatpublico.html:444
 msgid "Erro"
 msgstr "Error"
 
-#: responsegenerator/templates/chat/chatpublico.html:616
-msgid "Sem conteúdo."
-msgstr "No content."
-
-#: responsegenerator/templates/chat/chatpublico.html:617
-msgid "Consultando modelos..."
-msgstr "Querying models..."
-
-#: responsegenerator/templates/chat/chatpublico.html:658
-msgid "Nenhuma resposta"
-msgstr "No answers"
-
-#: responsegenerator/templates/chat/chatpublico.html:661
+#: responsegenerator/templates/chat/chatpublico.html:433
 msgid "Nenhum modelo retornou resposta."
 msgstr "No model returned a response."
 
-#: responsegenerator/templates/chat/chatpublico.html:688
-msgid "Digite uma pergunta antes de enviar."
-msgstr "Type a question before sending."
+#: responsegenerator/templates/chat/chatpublico.html:443
+msgid "Sem conteúdo."
+msgstr "No content."
 
-#: responsegenerator/templates/chat/chatpublico.html:714
+#: responsegenerator/templates/chat/chatpublico.html:444
+msgid "Concluído"
+msgstr "Completed"
+
+#: responsegenerator/templates/chat/chatpublico.html:489
 msgid "Erro ao consultar os modelos."
 msgstr "Error querying the models."
-
-#: responsegenerator/templates/chat/chatpublico.html:718
-msgid "Consulta finalizada."
-msgstr "Query completed."
 
 #: responsegenerator/templates/consulta/consulta-comparacao.html:7
 msgid "PonderSEC — Respostas por LLM"
@@ -1303,7 +1556,7 @@ msgstr "PonderSEC — Online Judges"
 
 #: responsegenerator/templates/juizes/comparador.html:312
 #: responsegenerator/templates/menu.html:292
-#: templates/partials/app_sidebar.html:52
+#: templates/partials/app_sidebar.html:39
 msgid "Avaliação"
 msgstr "Evaluation"
 
@@ -1570,6 +1823,7 @@ msgid "PonderSEC — Menu"
 msgstr "PonderSEC — Menu"
 
 #: responsegenerator/templates/menu.html:218
+#: templates/partials/app_sidebar.html:13
 msgid "Menu Principal"
 msgstr "Main Menu"
 
@@ -1578,13 +1832,12 @@ msgid "Escolha uma das opções abaixo para continuar"
 msgstr "Choose one of the options below to continue"
 
 #: responsegenerator/templates/menu.html:223
-#: templates/partials/app_sidebar.html:14
 msgid "Módulos"
 msgstr "Modules"
 
 #: responsegenerator/templates/menu.html:236
 #: responsegenerator/templates/questoes/questoes.html:1236
-#: templates/partials/app_sidebar.html:23
+#: templates/partials/app_sidebar.html:22
 msgid "Questões"
 msgstr "Questions"
 
@@ -1597,7 +1850,7 @@ msgid "Configure LLMs e métricas de avaliação da plataforma."
 msgstr "Configure LLMs and platform evaluation metrics."
 
 #: responsegenerator/templates/menu.html:272
-#: templates/partials/app_sidebar.html:33
+#: templates/partials/app_sidebar.html:32
 msgid "Consulta"
 msgstr "Query"
 
@@ -1608,12 +1861,6 @@ msgstr "Run questions and obtain comparative answers from LLMs."
 #: responsegenerator/templates/menu.html:293
 msgid "Gerencie seus formulários de avaliação e analise os resultados."
 msgstr "Manage your evaluation forms and analyze results."
-
-#: responsegenerator/templates/menu.html:311
-#: templates/partials/app_sidebar.html:64
-#: usuarios/templates/tela_inicial.html:165
-msgid "Sair"
-msgstr "Sign out"
 
 #: responsegenerator/templates/questoes/questoes.html:7
 msgid "PonderSEC | Questões"
@@ -2053,12 +2300,6 @@ msgstr "Manage LLMs"
 msgid "Configure suas chaves de API e modelos de Inteligência Artificial"
 msgstr "Configure your API keys and Artificial Intelligence models"
 
-#: responsegenerator/templates/setup/setup-llm.html:333
-#: responsegenerator/templates/setup/setup-llm.html:396
-#: responsegenerator/templates/setup/setup-llm.html:532
-msgid "Adicionar LLM"
-msgstr "Add LLM"
-
 #: responsegenerator/templates/setup/setup-llm.html:337
 msgid "Modelos Cadastrados"
 msgstr "Registered Models"
@@ -2071,39 +2312,13 @@ msgstr "Unknown provider"
 msgid "Nenhuma Inteligência Artificial cadastrada ainda."
 msgstr "No Artificial Intelligence has been registered yet."
 
-#: responsegenerator/templates/setup/setup-llm.html:407
-msgid "Dados da Conexão"
-msgstr "Connection Data"
-
-#: responsegenerator/templates/setup/setup-llm.html:410
-msgid "Provedor"
-msgstr "Provider"
-
-#: responsegenerator/templates/setup/setup-llm.html:412
-msgid "Selecione o provedor"
-msgstr "Select the provider"
-
-#: responsegenerator/templates/setup/setup-llm.html:425
-#: responsegenerator/templates/setup/setup-llm.html:518
-msgid "Selecione um provedor primeiro"
-msgstr "Select a provider first"
-
 #: responsegenerator/templates/setup/setup-llm.html:430
 msgid "Chave de API (API Key)"
 msgstr "API Key"
 
-#: responsegenerator/templates/setup/setup-llm.html:432
-msgid "Cole sua chave aqui..."
-msgstr "Paste your key here..."
-
 #: responsegenerator/templates/setup/setup-llm.html:433
 msgid "Mostrar ou ocultar chave de API"
 msgstr "Show or hide API key"
-
-#: responsegenerator/templates/setup/setup-llm.html:448
-#: responsegenerator/templates/setup/setup-llm.html:533
-msgid "Adicionar Modelo"
-msgstr "Add Model"
 
 #: responsegenerator/templates/setup/setup-llm.html:545
 msgid "Editar LLM"
@@ -2133,10 +2348,6 @@ msgstr "PonderSEC — Setup"
 msgid "Configure os parâmetros do sistema"
 msgstr "Configure system parameters"
 
-#: responsegenerator/templates/setup/setup.html:205
-msgid "Configurações"
-msgstr "Settings"
-
 #: responsegenerator/templates/setup/setup.html:222
 msgid ""
 "Gerencie e configure os modelos de linguagem integrados à plataforma de "
@@ -2152,155 +2363,151 @@ msgid ""
 msgstr ""
 "Define and adjust qualitative and quantitative response evaluation metrics."
 
-#: responsegenerator/views.py:232
-msgid "Sistema"
-msgstr "System"
-
-#: responsegenerator/views.py:233
+#: responsegenerator/views.py:249
 msgid "Nenhuma resposta vinculada a esta questão no banco de dados."
 msgstr "No answer linked to this question in the database."
 
-#: responsegenerator/views.py:251
+#: responsegenerator/views.py:267
 msgid "O histórico de questões e categorias foi limpo!"
 msgstr "The question and category history was cleared!"
 
-#: responsegenerator/views.py:322
+#: responsegenerator/views.py:338
 #, python-format
 msgid "Questão adicionada na categoria '%(categoria)s'!"
 msgstr "Question added to category '%(categoria)s'!"
 
-#: responsegenerator/views.py:364
+#: responsegenerator/views.py:380
 msgid "Arquivo JSON inválido ou mal formatado."
 msgstr "Invalid or malformed JSON file."
 
-#: responsegenerator/views.py:388
+#: responsegenerator/views.py:404
 #, python-format
 msgid "%(count)s perguntas importadas na categoria '%(categoria)s'!"
 msgstr "%(count)s questions imported into category '%(categoria)s'!"
 
-#: responsegenerator/views.py:393
+#: responsegenerator/views.py:409
 msgid "Nenhuma pergunta encontrada no arquivo."
 msgstr "No question found in the file."
 
-#: responsegenerator/views.py:395
+#: responsegenerator/views.py:411
 msgid "Nenhum arquivo foi enviado."
 msgstr "No file was uploaded."
 
-#: responsegenerator/views.py:412
+#: responsegenerator/views.py:428
 #, python-format
 msgid "Categoria '%(categoria)s' criada!"
 msgstr "Category '%(categoria)s' created!"
 
-#: responsegenerator/views.py:416
+#: responsegenerator/views.py:432
 msgid "O nome da categoria é obrigatório."
 msgstr "The category name is required."
 
-#: responsegenerator/views.py:432
+#: responsegenerator/views.py:448
 #, python-format
 msgid "Categoria '%(categoria)s' atualizada com sucesso!"
 msgstr "Category '%(categoria)s' updated successfully!"
 
-#: responsegenerator/views.py:436
+#: responsegenerator/views.py:452
 msgid "O nome da categoria não pode ficar vazio."
 msgstr "The category name cannot be empty."
 
-#: responsegenerator/views.py:522
+#: responsegenerator/views.py:538
 #, python-format
 msgid "Provedor '%(provedor)s' não reconhecido para execução automática."
 msgstr "Provider '%(provedor)s' is not recognized for automatic execution."
 
-#: responsegenerator/views.py:527
+#: responsegenerator/views.py:543
 #, python-format
 msgid "Erro na IA %(nome)s: %(erro)s"
 msgstr "Error in AI %(nome)s: %(erro)s"
 
-#: responsegenerator/views.py:550
+#: responsegenerator/views.py:566
 msgid "Método não permitido"
 msgstr "Method not allowed"
 
-#: responsegenerator/views.py:565
+#: responsegenerator/views.py:581
 #, python-format
 msgid "IA '%(nome)s' configurada com sucesso!"
 msgstr "AI '%(nome)s' configured successfully!"
 
-#: responsegenerator/views.py:607
+#: responsegenerator/views.py:623
 msgid "O nome da métrica é obrigatório."
 msgstr "The metric name is required."
 
-#: responsegenerator/views.py:622
+#: responsegenerator/views.py:638
 #, python-format
 msgid "Métrica '%(nome)s' adicionada com sucesso!"
 msgstr "Metric '%(nome)s' added successfully!"
 
-#: responsegenerator/views.py:636
+#: responsegenerator/views.py:652
 msgid "Configurações da métrica atualizadas!"
 msgstr "Metric settings updated!"
 
-#: responsegenerator/views.py:645
+#: responsegenerator/views.py:661
 msgid "Métrica deletada com sucesso."
 msgstr "Metric deleted successfully."
 
-#: responsegenerator/views.py:653
+#: responsegenerator/views.py:669
 msgid "LLM deletada com sucesso."
 msgstr "LLM deleted successfully."
 
-#: responsegenerator/views.py:654
+#: responsegenerator/views.py:670
 msgid "Erro ao deletar LLM."
 msgstr "Error deleting LLM."
 
-#: responsegenerator/views.py:668
+#: responsegenerator/views.py:684
 msgid "LLM atualizada com sucesso."
 msgstr "LLM updated successfully."
 
-#: responsegenerator/views.py:709
+#: responsegenerator/views.py:725
 msgid "Biblioteca google-genai não instalada."
 msgstr "google-genai library is not installed."
 
-#: responsegenerator/views.py:716
+#: responsegenerator/views.py:732
 msgid "Biblioteca groq não instalada."
 msgstr "groq library is not installed."
 
-#: responsegenerator/views.py:726 responsegenerator/views.py:739
+#: responsegenerator/views.py:742 responsegenerator/views.py:755
 msgid "Biblioteca openai não instalada."
 msgstr "openai library is not installed."
 
-#: responsegenerator/views.py:747
+#: responsegenerator/views.py:763
 #, python-format
 msgid "Provedor '%(provedor)s' não reconhecido."
 msgstr "Provider '%(provedor)s' is not recognized."
 
-#: responsegenerator/views.py:872
+#: responsegenerator/views.py:888
 msgid "JSON inválido."
 msgstr "Invalid JSON."
 
-#: responsegenerator/views.py:881
+#: responsegenerator/views.py:897
 msgid "Seleção inválida."
 msgstr "Invalid selection."
 
-#: responsegenerator/views.py:884
+#: responsegenerator/views.py:900
 msgid "Selecione ao menos uma pergunta."
 msgstr "Select at least one question."
 
-#: responsegenerator/views.py:887
+#: responsegenerator/views.py:903
 msgid "Selecione ao menos um juiz online."
 msgstr "Select at least one online judge."
 
-#: responsegenerator/views.py:893
+#: responsegenerator/views.py:909
 msgid ""
 "Nenhuma métrica ativa encontrada. Configure métricas no Setup antes de "
 "avaliar."
 msgstr "No active metric found. Configure metrics in Setup before evaluating."
 
-#: responsegenerator/views.py:911
+#: responsegenerator/views.py:927
 msgid ""
 "As LLMs selecionadas ainda não possuem respostas nas perguntas escolhidas."
 msgstr "The selected LLMs do not have answers for the chosen questions yet."
 
-#: responsegenerator/views.py:917
+#: responsegenerator/views.py:933
 msgid "Nenhuma LLM avaliadora ativa foi encontrada."
 msgstr "No active evaluator LLM was found."
 
-#: responsegenerator/views.py:930
+#: responsegenerator/views.py:946
 msgid ""
 "Não há pares válidos. Selecione ao menos duas LLMs que tenham respostas nas "
 "perguntas escolhidas."
@@ -2308,37 +2515,29 @@ msgstr ""
 "There are no valid pairs. Select at least two LLMs that have answers for the "
 "chosen questions."
 
-#: responsegenerator/views.py:936
+#: responsegenerator/views.py:952
 msgid ""
 "Seleção muito grande. Reduza a quantidade para até 40 avaliações por "
 "execução."
 msgstr "Selection too large. Reduce it to up to 40 evaluations per run."
 
-#: responsegenerator/views.py:1044
+#: responsegenerator/views.py:1060
 #, python-format
 msgid "Formulário '%(nome)s' criado com sucesso!"
 msgstr "Form '%(nome)s' created successfully!"
 
-#: responsegenerator/views.py:1061
+#: responsegenerator/views.py:1077
 #, python-format
 msgid "Formulário '%(nome)s' atualizado com sucesso!"
 msgstr "Form '%(nome)s' updated successfully!"
 
-#: responsegenerator/views.py:1073
+#: responsegenerator/views.py:1089
 msgid "Formulário removido!"
 msgstr "Form removed!"
 
 #: templates/partials/app_sidebar.html:2
-msgid "Navegação principal"
-msgstr "Main navigation"
-
-#: templates/partials/app_sidebar.html:9
-msgid "Workspace"
-msgstr "Workspace"
-
-#: templates/partials/app_sidebar.html:41
-msgid "Setup"
-msgstr "Setup"
+msgid "Menu lateral"
+msgstr "Side menu"
 
 #: usuarios/templates/cadastro.html:8
 msgid "PonderSEC — Cadastro"
@@ -2388,36 +2587,28 @@ msgstr "Create Account"
 msgid "Registre-se para acessar a <span>LLM ofensiva</span> da PonderSEC."
 msgstr "Sign up to access PonderSEC's <span>offensive LLM</span>."
 
-#: usuarios/templates/cadastro.html:306 usuarios/templates/login.html:277
+#: usuarios/templates/cadastro.html:306 usuarios/templates/login.html:334
 msgid "Nome de Usuário"
 msgstr "Username"
 
-#: usuarios/templates/cadastro.html:307 usuarios/templates/login.html:278
+#: usuarios/templates/cadastro.html:307 usuarios/templates/login.html:335
 msgid "ex: root.pentest"
 msgstr "e.g.: root.pentest"
-
-#: usuarios/templates/cadastro.html:311
-msgid "E-mail"
-msgstr "Email"
 
 #: usuarios/templates/cadastro.html:312
 msgid "voce@empresa.com"
 msgstr "you@company.com"
 
-#: usuarios/templates/cadastro.html:316 usuarios/templates/login.html:282
-msgid "Senha"
-msgstr "Password"
-
 #: usuarios/templates/cadastro.html:322 usuarios/templates/cadastro.html:323
 #: usuarios/templates/cadastro.html:325 usuarios/templates/cadastro.html:350
 #: usuarios/templates/cadastro.html:351 usuarios/templates/cadastro.html:353
-#: usuarios/templates/login.html:288 usuarios/templates/login.html:289
-#: usuarios/templates/login.html:291
+#: usuarios/templates/login.html:345 usuarios/templates/login.html:346
+#: usuarios/templates/login.html:348
 msgid "Mostrar senha"
 msgstr "Show password"
 
 #: usuarios/templates/cadastro.html:326 usuarios/templates/cadastro.html:354
-#: usuarios/templates/login.html:292
+#: usuarios/templates/login.html:349
 msgid "Ocultar senha"
 msgstr "Hide password"
 
@@ -2425,7 +2616,7 @@ msgstr "Hide password"
 msgid "Confirmar Senha"
 msgstr "Confirm Password"
 
-#: usuarios/templates/cadastro.html:371 usuarios/templates/login.html:312
+#: usuarios/templates/cadastro.html:371 usuarios/templates/login.html:369
 msgid "Cadastrar"
 msgstr "Sign Up"
 
@@ -2437,11 +2628,11 @@ msgstr "Already have an account?"
 msgid "PonderSEC — Login"
 msgstr "PonderSEC — Login"
 
-#: usuarios/templates/login.html:254
+#: usuarios/templates/login.html:302
 msgid "Bem-vindo! Por favor, <span>faça login</span> para continuar."
 msgstr "Welcome! Please <span>log in</span> to continue."
 
-#: usuarios/templates/login.html:312
+#: usuarios/templates/login.html:369
 msgid "Não está cadastrado?"
 msgstr "Don't have an account?"
 
@@ -2534,3 +2725,36 @@ msgstr "User not found in the system."
 #: usuarios/views.py:163
 msgid "Usuário inválido ou conta não ativada"
 msgstr "Invalid user or inactive account"
+
+#~ msgid "Consulta aberta para perguntas sobre cibersegurança"
+#~ msgstr "Open consultation for cybersecurity questions"
+
+#~ msgid "Respostas dos modelos"
+#~ msgstr "Model answers"
+
+#~ msgid "PonderSEC · IA aplicada à cibersegurança"
+#~ msgstr "PonderSEC · AI applied to cybersecurity"
+
+#~ msgid "OK"
+#~ msgstr "OK"
+
+#~ msgid "Consultando modelos..."
+#~ msgstr "Querying models..."
+
+#~ msgid "Nenhuma resposta"
+#~ msgstr "No answers"
+
+#~ msgid "Digite uma pergunta antes de enviar."
+#~ msgstr "Type a question before sending."
+
+#~ msgid "Consulta finalizada."
+#~ msgstr "Query completed."
+
+#~ msgid "Navegação principal"
+#~ msgstr "Main navigation"
+
+#~ msgid "Workspace"
+#~ msgstr "Workspace"
+
+#~ msgid "Setup"
+#~ msgstr "Setup"
