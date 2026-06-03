@@ -14,8 +14,10 @@
             background: radial-gradient(circle at top, #0b0510 0, #06020b 45%, #000000 100%);
             color: #e5fef6;
             min-height: 100vh;
+            padding: 20px;
             display: flex; align-items: center; justify-content: center;
-            overflow: hidden;
+            overflow-x: hidden;
+            overflow-y: auto;
         }
 
         .background-grid {
@@ -38,6 +40,7 @@
 
         .container {
             position: relative; width: 100%; max-width: 440px;
+            min-height: 640px;
             background: radial-gradient(circle at top, #14091d 0, #07030c 55%, #020509 100%);
             border-radius: 18px;
             padding: 32px 36px 40px;
@@ -50,7 +53,7 @@
 
         .badge-admin {
             display: inline-flex; align-items: center; gap: 6px;
-            padding: 4px 10px; margin-bottom: 16px;
+            padding: 4px 10px;
             background: rgba(187, 134, 252, 0.12);
             border: 1px solid rgba(187, 134, 252, 0.35);
             border-radius: 999px;
@@ -63,27 +66,51 @@
         }
 
         .admin-logo {
-            text-align: center;
-            margin-bottom: 18px;
+            height: 112px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
         }
         .admin-logo img {
             width: 150px;
+            height: 112px;
+            object-fit: contain;
             border-radius: 10px;
             filter:
                 drop-shadow(0 0 10px rgba(187, 134, 252, 0.8))
                 drop-shadow(0 0 30px rgba(187, 134, 252, 0.48));
         }
 
+        .badge-slot {
+            height: 28px;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
         .product-name {
+            text-align: center;
             color: #bb86fc; text-transform: uppercase;
-            letter-spacing: 0.28em; font-size: 11px; font-weight: 700;
+            letter-spacing: 0.28em; font-size: 13px; font-weight: 700;
+            line-height: 1.25;
             margin-bottom: 6px;
         }
         .headline {
-            color: #d9b8ff; font-size: 26px; font-weight: 700;
-            margin-bottom: 8px; letter-spacing: -0.01em;
+            text-align: center;
+            color: #d9b8ff; font-size: 23px; font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 8px;
         }
-        .subtitle { font-size: 13px; color: #8b7d9b; line-height: 1.5; margin-bottom: 26px; }
+        .subtitle {
+            text-align: center;
+            font-size: 12px;
+            color: #8b7d9b;
+            line-height: 1.45;
+            min-height: 35px;
+            margin-bottom: 16px;
+        }
 
         .erro {
             background: rgba(255, 80, 54, 0.12);
@@ -102,7 +129,7 @@
             margin-bottom: 8px;
         }
         .field-input {
-            width: 100%; padding: 14px 16px;
+            width: 100%; height: 46px; padding: 0 14px;
             background: rgba(0, 0, 0, 0.35);
             border: 1px solid rgba(187, 134, 252, 0.2);
             border-radius: 10px;
@@ -155,7 +182,7 @@
         }
 
         .btn-submit {
-            width: 100%; padding: 14px;
+            width: 100%; height: 46px; padding: 0 14px;
             background: linear-gradient(135deg, #bb86fc 0%, #9264e6 100%);
             border: none; border-radius: 10px;
             color: #0c0518; font-size: 14px; font-weight: 700;
@@ -184,6 +211,7 @@
             background: rgba(0, 0, 0, 0.35);
             border: 1px solid rgba(187, 134, 252, 0.18);
             border-radius: 12px;
+            min-height: 44px;
         }
         .role-btn {
             flex: 1;
@@ -215,7 +243,10 @@
         .role-btn .role-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; opacity: 0.7; }
 
         @media (max-width: 480px) {
-            .container { padding: 24px 22px 30px; }
+            .container {
+                min-height: auto;
+                padding: 24px 22px 30px;
+            }
             .headline { font-size: 22px; }
         }
     </style>
@@ -232,7 +263,9 @@
         <div class="admin-logo">
             <img src="{% static 'pondersecRoxo.jpeg' %}" alt="PonderSEC">
         </div>
-        <div class="badge-admin">{% translate "Painel Admin" %}</div>
+        <div class="badge-slot">
+            <div class="badge-admin">{% translate "Painel Admin" %}</div>
+        </div>
         <div class="product-name">PonderSEC</div>
         <div class="headline">{% translate "Acesso Restrito" %}</div>
         <div class="subtitle">{% translate "Faça login com suas credenciais de administrador para gerenciar as LLMs do chat público." %}</div>

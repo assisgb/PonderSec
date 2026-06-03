@@ -16,6 +16,7 @@ from responsegenerator.models import (
     Avaliacao,
     AvaliacaoFormulario,
     AvaliacaoJuiz,
+    AvaliacaoPublicaLLM,
     Avaliador,
     Categoria,
     Formulario,
@@ -23,11 +24,13 @@ from responsegenerator.models import (
     LLM,
     LLMPublica,
     Metrica,
+    PerguntaPublica,
     Questao,
     Resposta,
+    RespostaPublica,
 )
 from functools import wraps
-from django.db.models import Avg, Count, Prefetch
+from django.db.models import Avg, Count, Prefetch, Q
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -84,9 +87,9 @@ def usuario_final_chat_api(request):
         
         # Apenas LLMs cadastradas pelo admin no painel /admin-pondersec/ atendem o chat público.
         # As LLMs dos pesquisadores (model LLM) NUNCA são usadas aqui.
-        llms_ativos = LLMPublica.objects.filter(ativo=True)
+        llms_ativos = list(LLMPublica.objects.filter(ativo=True).order_by("nome"))
 
-        if not llms_ativos.exists():
+        if not llms_ativos:
             return JsonResponse({
                 'status': 'erro',
                 'mensagem': 'Nenhuma LLM foi configurada pelo administrador para o chat público.'
@@ -106,63 +109,18 @@ def usuario_final_chat_api(request):
         )
         prompt_final = f"{contexto}\n\n{pergunta}"
         
+        pergunta_publica = PerguntaPublica.objects.create(conteudo=pergunta)
+
         # Gera respostas em paralelo
         respostas = []
+        respostas_publicas = []
         
         def gerar_resposta_llm(llm):
             """Gera resposta para um LLM específico."""
             try:
-                texto_resposta = ""
-                provedor = llm.descricao.lower() if llm.descricao else ""
-                
-                if "gemini" in provedor or "google" in provedor:
-                    if genai:
-                        client = genai.Client(api_key=llm.api_key)
-                        resp = client.models.generate_content(model=llm.nome, contents=prompt_final)
-                        texto_resposta = resp.text
-                    else:
-                        texto_resposta = "Biblioteca Gemini não está instalada."
-                
-                elif "groq" in provedor:
-                    if Groq:
-                        client = Groq(api_key=llm.api_key)
-                        chat_completion = client.chat.completions.create(
-                            messages=[{"role": "user", "content": prompt_final}],
-                            model=llm.nome,
-                        )
-                        texto_resposta = chat_completion.choices[0].message.content
-                    else:
-                        texto_resposta = "Biblioteca Groq não está instalada."
-                
-                elif "openai" in provedor or "OpenAI" in provedor or "openAI" in provedor:
-                    if openai:
-                        client = openai.OpenAI(api_key=llm.api_key)
-                        response = client.chat.completions.create(
-                            model=llm.nome,
-                            messages=[{"role": "user", "content": prompt_final}]
-                        )
-                        texto_resposta = response.choices[0].message.content
-                    else:
-                        texto_resposta = "Biblioteca OpenAI não está instalada."
-                
-                elif "deepseek" in provedor:
-                    if openai:
-                        client = openai.OpenAI(
-                            api_key=llm.api_key, 
-                            base_url="https://integrate.api.nvidia.com/v1"
-                        )
-                        response = client.chat.completions.create(
-                            model=llm.nome, 
-                            messages=[{"role": "user", "content": prompt_final}]
-                        )
-                        texto_resposta = response.choices[0].message.content
-                    else:
-                        texto_resposta = "Biblioteca OpenAI não está instalada."
-                
-                else:
-                    texto_resposta = f"Provedor '{llm.descricao}' não reconhecido para execução automática."
-                
+                texto_resposta = _judgeai_call_configured_llm(llm, prompt_final)
                 return {
+                    'llm_id': llm.id,
                     'modelo': llm.nome,
                     'resposta': texto_resposta.strip(),
                     'ok': True
@@ -170,25 +128,63 @@ def usuario_final_chat_api(request):
             
             except Exception as e:
                 return {
+                    'llm_id': llm.id,
                     'modelo': llm.nome,
                     'resposta': f"Erro ao consultar: {str(e)}",
                     'ok': False
                 }
         
         # Executa em paralelo
-        with ThreadPoolExecutor(max_workers=3) as executor:
+        with ThreadPoolExecutor(max_workers=min(3, len(llms_ativos))) as executor:
             futures = {executor.submit(gerar_resposta_llm, llm): llm for llm in llms_ativos}
             
             for future in as_completed(futures):
+                llm = futures[future]
                 try:
                     resultado = future.result()
-                    respostas.append(resultado)
                 except Exception as e:
                     print(f"Erro ao processar LLM: {str(e)}")
+                    resultado = {
+                        'llm_id': llm.id,
+                        'modelo': llm.nome,
+                        'resposta': f"Erro ao consultar: {str(e)}",
+                        'ok': False,
+                    }
+
+                resposta_publica = RespostaPublica.objects.create(
+                    pergunta=pergunta_publica,
+                    llm_id=resultado["llm_id"],
+                    conteudo_resposta=resultado["resposta"],
+                    ok=resultado["ok"],
+                )
+                resultado["resposta_id"] = resposta_publica.id
+                respostas_publicas.append(resposta_publica)
+                respostas.append(resultado)
+
+        avaliacao_status = _executar_avaliacao_cruzada_publica(
+            pergunta_publica,
+            respostas_publicas,
+            llms_ativos,
+            _metricas_publicas_ativas(),
+        )
+        avaliacoes_por_resposta = _resumo_avaliacoes_publicas_por_resposta(
+            [resposta.id for resposta in respostas_publicas]
+        )
+        tabela_avaliacao_cruzada = _tabela_avaliacoes_publicas(
+            [resposta.id for resposta in respostas_publicas]
+        )
+
+        for resultado in respostas:
+            resultado["avaliacao"] = avaliacoes_por_resposta.get(
+                resultado["resposta_id"],
+                {"status": "sem_dados", "media_geral": None, "notas_total": 0, "metricas": []},
+            )
         
         return JsonResponse({
             'status': 'ok',
             'respostas': respostas,
+            'avaliacao_cruzada': avaliacao_status,
+            'tabela_avaliacao_cruzada': tabela_avaliacao_cruzada,
             'mensagem': 'Respostas geradas com sucesso.'
         })
     
@@ -773,12 +769,14 @@ def _judgeai_prompt(questao, resposta, juiz, metricas):
         "Você é uma LLM atuando como juiz técnico no PonderSec.\n"
         "Avalie a resposta de outro modelo para uma pergunta de cibersegurança.\n"
         "Use apenas as métricas informadas. Não crie métricas novas.\n"
+        "Para cada métrica, escreva uma justificativa em português com pontuação, entre 20 e 45 palavras.\n"
+        "Explique por que a nota foi atribuída, citando evidências da resposta avaliada e evitando frases genéricas.\n"
         "Retorne somente JSON válido, sem markdown, no formato:\n"
         "{\n"
         '  "notas": [\n'
-        '    {"metrica": "Nome da métrica", "nota": 0, "justificativa": "texto curto"}\n'
+        '    {"metrica": "Nome da métrica", "nota": 0, "justificativa": "Nota X/Y: frase completa explicando o motivo da nota."}\n'
         "  ],\n"
-        '  "justificativa": "síntese curta da avaliação"\n'
+        '  "justificativa": "síntese geral em uma frase completa"\n'
         "}\n\n"
         f"Juiz: {juiz.nome}\n\n"
         f"Métricas:\n{metricas_txt}\n\n"
@@ -836,6 +834,24 @@ def _parse_judgeai_result(raw_text, metricas):
 
     return resultado, justificativa
 
+
+def _formatar_justificativa_avaliacao(texto, nota=None, maximo=5):
+    texto = re.sub(r"\s+", " ", (texto or "").strip())
+
+    if not texto:
+        texto = "a LLM avaliadora não retornou uma justificativa detalhada para esta métrica"
+
+    if texto and texto[-1] not in ".!?":
+        texto += "."
+
+    if nota is not None:
+        prefixo = f"Nota {nota}/{maximo}: "
+        if not re.match(r"^nota\s+\d+\s*/\s*\d+\s*:", texto, re.IGNORECASE):
+            texto = prefixo + texto[:1].upper() + texto[1:]
+
+    return texto
+
+
 def _salvar_avaliacoes_juiz(usuario, resposta, juiz, metricas, notas, justificativa):
     metricas_por_nome = {metrica.nome.lower(): metrica for metrica in metricas}
     AvaliacaoJuiz.objects.filter(
@@ -859,11 +875,220 @@ def _salvar_avaliacoes_juiz(usuario, resposta, juiz, metricas, notas, justificat
             metrica=metrica,
             defaults={
                 "avaliacao_quanti": nota,
-                "avaliacao_quali": item.get("justificativa") or "",
+                "avaliacao_quali": _formatar_justificativa_avaliacao(
+                    item.get("justificativa"),
+                    nota,
+                    _metric_max(metrica),
+                ),
                 "justificativa_geral": justificativa,
                 "erro": False,
             }
         )
+
+PUBLIC_CROSS_EVAL_MAX_TASKS = 40
+
+
+def _metricas_publicas_ativas():
+    return list(Metrica.objects.filter(usuario__isnull=True, ativa=True).order_by("id"))
+
+
+def _public_judge_prompt(pergunta_publica, resposta_publica, juiz, metricas):
+    metricas_txt = "\n".join(
+        f"- {m.nome} (0 a {_metric_max(m)}): {m.descricao or m.criterio_texto or 'Avalie este critério.'}"
+        for m in metricas
+    )
+    respondente = resposta_publica.llm.nome if resposta_publica.llm else "LLM removida"
+    return (
+        "Você é uma LLM atuando como juiz no chat público do PonderSec.\n"
+        "O usuário final é leigo em cibersegurança. Avalie se a resposta de outro modelo é correta, clara, útil e segura para esse público.\n"
+        "Use apenas as métricas informadas. Não crie métricas novas.\n"
+        "Para cada métrica, a justificativa deve ser uma frase completa em português, com pontuação, entre 20 e 45 palavras.\n"
+        "Explique objetivamente por que aquela nota foi atribuída, citando um ponto forte e, quando existir, uma limitação da resposta.\n"
+        "Evite justificativas genéricas como 'é clara' ou 'está completa'; detalhe o que torna a resposta clara, incompleta, segura ou útil.\n"
+        "Retorne somente JSON válido, sem markdown, no formato:\n"
+        "{\n"
+        '  "notas": [\n'
+        '    {"metrica": "Nome da métrica", "nota": 0, "justificativa": "Nota X/Y: frase completa explicando o motivo da nota."}\n'
+        "  ],\n"
+        '  "justificativa": "síntese geral em uma frase completa"\n'
+        "}\n\n"
+        f"Juiz: {juiz.nome}\n\n"
+        f"Métricas:\n{metricas_txt}\n\n"
+        f"Pergunta do usuário público:\n{pergunta_publica.conteudo}\n\n"
+        f"Modelo respondente: {respondente}\n"
+        f"Resposta avaliada:\n{resposta_publica.conteudo_resposta}"
+    )
+
+
+def _salvar_avaliacoes_publicas(resposta_publica, juiz, metricas, notas, justificativa):
+    metricas_por_nome = {metrica.nome.lower(): metrica for metrica in metricas}
+    AvaliacaoPublicaLLM.objects.filter(
+        juiz=juiz,
+        resposta=resposta_publica,
+        metrica__in=metricas,
+    ).delete()
+
+    for item in notas:
+        metrica = metricas_por_nome.get((item.get("metrica") or "").lower())
+        nota = item.get("nota")
+
+        if not metrica or nota is None:
+            continue
+
+        AvaliacaoPublicaLLM.objects.update_or_create(
+            juiz=juiz,
+            resposta=resposta_publica,
+            metrica=metrica,
+            defaults={
+                "avaliacao_quanti": nota,
+                "avaliacao_quali": _formatar_justificativa_avaliacao(
+                    item.get("justificativa"),
+                    nota,
+                    _metric_max(metrica),
+                ),
+                "justificativa_geral": justificativa,
+                "erro": False,
+            },
+        )
+
+
+def _executar_avaliacao_cruzada_publica(pergunta_publica, respostas_publicas, juizes, metricas):
+    if not metricas:
+        return {"status": "sem_metricas", "total": 0, "notas_total": 0, "mensagem": "Nenhuma métrica pública ativa."}
+
+    if len(juizes) < 2:
+        return {"status": "sem_pares", "total": 0, "notas_total": 0, "mensagem": "É preciso ter ao menos duas LLMs públicas ativas."}
+
+    respostas_validas = [resposta for resposta in respostas_publicas if resposta.ok and resposta.llm_id]
+    tarefas = []
+    for resposta_publica in respostas_validas:
+        for juiz in juizes:
+            if resposta_publica.llm_id == juiz.id:
+                continue
+            tarefas.append((resposta_publica, juiz))
+
+    if not tarefas:
+        return {"status": "sem_pares", "total": 0, "notas_total": 0, "mensagem": "Não há pares válidos para avaliação cruzada."}
+
+    tarefas_limitadas = tarefas[:PUBLIC_CROSS_EVAL_MAX_TASKS]
+    limitou = len(tarefas_limitadas) < len(tarefas)
+
+    resultados = []
+    with ThreadPoolExecutor(max_workers=min(4, len(tarefas_limitadas))) as executor:
+        futures = {}
+        for resposta_publica, juiz in tarefas_limitadas:
+            prompt = _public_judge_prompt(pergunta_publica, resposta_publica, juiz, metricas)
+            futures[executor.submit(_judgeai_call_configured_llm, juiz, prompt)] = (resposta_publica, juiz)
+
+        for future in as_completed(futures):
+            resposta_publica, juiz = futures[future]
+            try:
+                raw = future.result()
+                notas, justificativa = _parse_judgeai_result(raw, metricas)
+                _salvar_avaliacoes_publicas(resposta_publica, juiz, metricas, notas, justificativa)
+                resultados.append({"erro": False, "notas": notas})
+            except Exception as exc:
+                resultados.append({"erro": True, "mensagem": str(exc), "notas": []})
+
+    notas_total = sum(
+        len([nota for nota in item.get("notas", []) if nota.get("nota") is not None])
+        for item in resultados
+        if not item.get("erro")
+    )
+    erros = sum(1 for item in resultados if item.get("erro"))
+
+    return {
+        "status": "ok" if notas_total else "sem_notas",
+        "total": len(resultados),
+        "notas_total": notas_total,
+        "erros": erros,
+        "limitado": limitou,
+    }
+
+
+def _resumo_avaliacoes_publicas_por_resposta(resposta_ids):
+    if not resposta_ids:
+        return {}
+
+    resumo = {
+        resposta_id: {
+            "status": "sem_dados",
+            "media_geral": None,
+            "notas_total": 0,
+            "metricas": [],
+        }
+        for resposta_id in resposta_ids
+    }
+
+    gerais = {
+        item["resposta_id"]: item
+        for item in (
+            AvaliacaoPublicaLLM.objects
+            .filter(resposta_id__in=resposta_ids, erro=False, avaliacao_quanti__isnull=False)
+            .values("resposta_id")
+            .annotate(media=Avg("avaliacao_quanti"), total=Count("id"))
+        )
+    }
+    por_metrica = (
+        AvaliacaoPublicaLLM.objects
+        .filter(resposta_id__in=resposta_ids, erro=False, avaliacao_quanti__isnull=False)
+        .values("resposta_id", "metrica_id", "metrica__nome", "metrica__pontuacao_maxima")
+        .annotate(media=Avg("avaliacao_quanti"), total=Count("id"))
+        .order_by("metrica__nome")
+    )
+
+    for resposta_id, item in gerais.items():
+        resumo[resposta_id].update({
+            "status": "ok",
+            "media_geral": round(item["media"], 2) if item["media"] is not None else None,
+            "notas_total": item["total"],
+        })
+
+    for item in por_metrica:
+        resposta_id = item["resposta_id"]
+        resumo[resposta_id]["metricas"].append({
+            "id": item["metrica_id"],
+            "nome": item["metrica__nome"] or "Métrica removida",
+            "media": round(item["media"], 2) if item["media"] is not None else None,
+            "max": item["metrica__pontuacao_maxima"] or 5,
+            "total": item["total"],
+        })
+
+    return resumo
+
+
+def _tabela_avaliacoes_publicas(resposta_ids, limite=None):
+    if not resposta_ids:
+        return []
+
+    qs = (
+        AvaliacaoPublicaLLM.objects
+        .filter(resposta_id__in=resposta_ids, erro=False, avaliacao_quanti__isnull=False)
+        .select_related("juiz", "resposta__llm", "metrica")
+        .order_by("resposta_id", "juiz__nome", "metrica__nome")
+    )
+    if limite:
+        qs = qs[:limite]
+
+    linhas = []
+    for avaliacao in qs:
+        maximo = _metric_max(avaliacao.metrica) if avaliacao.metrica else 5
+        linhas.append({
+            "resposta_id": avaliacao.resposta_id,
+            "modelo_respondente": avaliacao.resposta.llm.nome if avaliacao.resposta.llm else "LLM removida",
+            "modelo_avaliador": avaliacao.juiz.nome if avaliacao.juiz else "LLM avaliadora removida",
+            "metrica": avaliacao.metrica.nome if avaliacao.metrica else "Métrica removida",
+            "nota": avaliacao.avaliacao_quanti,
+            "max": maximo,
+            "justificativa": _formatar_justificativa_avaliacao(
+                avaliacao.avaliacao_quali or avaliacao.justificativa_geral,
+                avaliacao.avaliacao_quanti,
+                maximo,
+            ),
+        })
+
+    return linhas
+
 
 def _judgeai_error_result(questao, resposta, juiz, motivo):
     return {
@@ -1462,10 +1687,214 @@ def admin_pondersec_logout(request):
 def admin_pondersec_home(request):
     total_llms = LLMPublica.objects.count()
     llms_ativas = LLMPublica.objects.filter(ativo=True).count()
+    total_metricas_publicas = Metrica.objects.filter(usuario__isnull=True).count()
+    metricas_publicas_ativas = Metrica.objects.filter(usuario__isnull=True, ativa=True).count()
+    total_perguntas_publicas = PerguntaPublica.objects.count()
+    total_avaliacoes_publicas = AvaliacaoPublicaLLM.objects.filter(
+        erro=False,
+        avaliacao_quanti__isnull=False,
+    ).count()
     return render(request, "admin_pondersec/home.html", {
         "admin": request.admin_pondersec,
         "total_llms": total_llms,
         "llms_ativas": llms_ativas,
+        "total_metricas_publicas": total_metricas_publicas,
+        "metricas_publicas_ativas": metricas_publicas_ativas,
+        "total_perguntas_publicas": total_perguntas_publicas,
+        "total_avaliacoes_publicas": total_avaliacoes_publicas,
+    })
+
+
+def _normalizar_pontuacao_publica(valor):
+    try:
+        pontos = int(valor)
+    except (TypeError, ValueError):
+        pontos = 5
+    return max(2, min(pontos, 5))
+
+
+@admin_required
+def admin_pondersec_metricas_publicas(request):
+    if request.method == "POST":
+        nome = (request.POST.get("nome") or "").strip()
+        descricao = (request.POST.get("descricao") or "").strip()
+        criterio_texto = (request.POST.get("criterio_texto") or "").strip()
+        pontuacao_maxima = _normalizar_pontuacao_publica(request.POST.get("pontuacao_maxima"))
+
+        if not nome:
+            django_messages.error(request, "Nome da métrica é obrigatório.")
+            return redirect("admin_pondersec_metricas_publicas")
+
+        Metrica.objects.create(
+            usuario=None,
+            nome=nome,
+            descricao=descricao,
+            tipo="quantitativa",
+            pontuacao_maxima=pontuacao_maxima,
+            criterio_texto=criterio_texto,
+            ativa=True,
+        )
+        django_messages.success(request, f"Métrica pública '{nome}' criada.")
+        return redirect("admin_pondersec_metricas_publicas")
+
+    metricas = Metrica.objects.filter(usuario__isnull=True).order_by("-id")
+    return render(request, "admin_pondersec/metricas_publicas.html", {
+        "admin": request.admin_pondersec,
+        "metricas": metricas,
+    })
+
+
+@admin_required
+@require_http_methods(["PUT"])
+def admin_pondersec_metrica_publica_editar(request, id):
+    try:
+        dados = json.loads(request.body or "{}")
+    except json.JSONDecodeError:
+        return JsonResponse({"status": "erro", "mensagem": "JSON inválido."}, status=400)
+
+    metrica = get_object_or_404(Metrica, id=id, usuario__isnull=True)
+    nome = (dados.get("nome") or "").strip()
+    descricao = (dados.get("descricao") or "").strip()
+    criterio_texto = (dados.get("criterio_texto") or "").strip()
+
+    if not nome:
+        return JsonResponse({"status": "erro", "mensagem": "Nome da métrica é obrigatório."}, status=400)
+
+    metrica.nome = nome
+    metrica.descricao = descricao
+    metrica.criterio_texto = criterio_texto
+    metrica.pontuacao_maxima = _normalizar_pontuacao_publica(dados.get("pontuacao_maxima"))
+    if isinstance(dados.get("ativa"), bool):
+        metrica.ativa = dados["ativa"]
+    metrica.save()
+    return JsonResponse({"status": "ok", "mensagem": "Métrica atualizada."})
+
+
+@admin_required
+@require_http_methods(["DELETE"])
+def admin_pondersec_metrica_publica_deletar(request, id):
+    deleted, _ = Metrica.objects.filter(id=id, usuario__isnull=True).delete()
+    if not deleted:
+        return JsonResponse({"status": "erro", "mensagem": "Métrica não encontrada."}, status=404)
+    return JsonResponse({"status": "ok", "mensagem": "Métrica removida."})
+
+
+@admin_required
+@require_http_methods(["POST"])
+def admin_pondersec_metrica_publica_toggle(request, id):
+    try:
+        metrica = Metrica.objects.get(id=id, usuario__isnull=True)
+    except Metrica.DoesNotExist:
+        return JsonResponse({"status": "erro", "mensagem": "Métrica não encontrada."}, status=404)
+    metrica.ativa = not metrica.ativa
+    metrica.save(update_fields=["ativa"])
+    return JsonResponse({"status": "ok", "ativa": metrica.ativa})
+
+
+@admin_required
+def admin_pondersec_avaliacoes_publicas(request):
+    metricas = list(
+        Metrica.objects
+        .filter(usuario__isnull=True, ativa=True)
+        .order_by("id")
+        .values("id", "nome", "pontuacao_maxima")
+    )
+    llms = list(
+        LLMPublica.objects
+        .order_by("nome")
+        .values("id", "nome", "ativo")
+    )
+    agregados = {
+        (item["metrica_id"], item["resposta__llm_id"]): item
+        for item in (
+            AvaliacaoPublicaLLM.objects
+            .filter(erro=False, avaliacao_quanti__isnull=False)
+            .values("metrica_id", "resposta__llm_id")
+            .annotate(media=Avg("avaliacao_quanti"), total=Count("id"))
+        )
+    }
+
+    por_metrica = []
+    for metrica in metricas:
+        linhas = []
+        for llm in llms:
+            item = agregados.get((metrica["id"], llm["id"]), {"media": None, "total": 0})
+            linhas.append({
+                "llm": llm["nome"],
+                "ativa": llm["ativo"],
+                "media": round(item["media"], 2) if item["media"] is not None else None,
+                "total": item["total"],
+            })
+        por_metrica.append({
+            "nome": metrica["nome"],
+            "max": metrica["pontuacao_maxima"] or 5,
+            "linhas": linhas,
+        })
+
+    ranking = list(
+        AvaliacaoPublicaLLM.objects
+        .filter(erro=False, avaliacao_quanti__isnull=False, resposta__llm__isnull=False)
+        .values("resposta__llm__nome")
+        .annotate(media=Avg("avaliacao_quanti"), total=Count("id"))
+        .order_by("-media", "resposta__llm__nome")[:10]
+    )
+    ultimas_perguntas = (
+        PerguntaPublica.objects
+        .annotate(
+            respostas_total=Count("respostas", distinct=True),
+            avaliacoes_total=Count(
+                "respostas__avaliacoes_cruzadas",
+                filter=Q(
+                    respostas__avaliacoes_cruzadas__erro=False,
+                    respostas__avaliacoes_cruzadas__avaliacao_quanti__isnull=False,
+                ),
+            ),
+        )
+        .order_by("-criado_em")[:10]
+    )
+    media_geral = (
+        AvaliacaoPublicaLLM.objects
+        .filter(erro=False, avaliacao_quanti__isnull=False)
+        .aggregate(media=Avg("avaliacao_quanti"))
+        .get("media")
+    )
+    avaliacoes_detalhadas_qs = (
+        AvaliacaoPublicaLLM.objects
+        .filter(erro=False, avaliacao_quanti__isnull=False)
+        .select_related("juiz", "resposta__llm", "resposta__pergunta", "metrica")
+        .order_by("-atualizado_em")[:80]
+    )
+    avaliacoes_detalhadas = []
+    for avaliacao in avaliacoes_detalhadas_qs:
+        maximo = _metric_max(avaliacao.metrica) if avaliacao.metrica else 5
+        avaliacoes_detalhadas.append({
+            "pergunta": avaliacao.resposta.pergunta.conteudo,
+            "modelo_respondente": avaliacao.resposta.llm.nome if avaliacao.resposta.llm else "LLM removida",
+            "modelo_avaliador": avaliacao.juiz.nome if avaliacao.juiz else "LLM avaliadora removida",
+            "metrica": avaliacao.metrica.nome if avaliacao.metrica else "Métrica removida",
+            "nota": avaliacao.avaliacao_quanti,
+            "max": maximo,
+            "justificativa": _formatar_justificativa_avaliacao(
+                avaliacao.avaliacao_quali or avaliacao.justificativa_geral,
+                avaliacao.avaliacao_quanti,
+                maximo,
+            ),
+            "atualizado_em": avaliacao.atualizado_em,
+        })
+
+    return render(request, "admin_pondersec/avaliacoes_publicas.html", {
+        "admin": request.admin_pondersec,
+        "metricas": metricas,
+        "llms": llms,
+        "por_metrica": por_metrica,
+        "ranking": ranking,
+        "avaliacoes_detalhadas": avaliacoes_detalhadas,
+        "ultimas_perguntas": ultimas_perguntas,
+        "total_perguntas": PerguntaPublica.objects.count(),
+        "total_respostas": RespostaPublica.objects.count(),
+        "total_avaliacoes": AvaliacaoPublicaLLM.objects.filter(erro=False, avaliacao_quanti__isnull=False).count(),
+        "respostas_avaliadas": AvaliacaoPublicaLLM.objects.filter(erro=False, avaliacao_quanti__isnull=False).values("resposta_id").distinct().count(),
+        "media_geral": round(media_geral, 2) if media_geral is not None else None,
     })
 
 

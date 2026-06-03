@@ -1,0 +1,353 @@
+{% load static i18n %}
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE|default:'pt-br' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% translate "PonderSEC — Métricas Públicas" %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #0b0510;
+            --surface: rgba(20, 9, 29, 0.78);
+            --border: rgba(187, 134, 252, 0.2);
+            --border-strong: rgba(187, 134, 252, 0.4);
+            --accent: #bb86fc;
+            --accent-bright: #d9b8ff;
+            --text: #e5fef6;
+            --text-strong: #fff;
+            --muted: #8b7d9b;
+            --ok: #00ff9f;
+            --danger: #ff8a78;
+            --mono: "IBM Plex Mono", monospace;
+            --sans: "Space Grotesk", system-ui, -apple-system, sans-serif;
+        }
+        body {
+            min-height: 100vh; padding: 20px;
+            background: radial-gradient(circle at top, #0b0510 0, #06020b 45%, #000 100%);
+            color: var(--text); font-family: var(--sans);
+        }
+        .background-grid {
+            position: fixed; inset: 0; pointer-events: none;
+            background-image:
+                linear-gradient(90deg, rgba(187, 134, 252, 0.05) 1px, transparent 1px),
+                linear-gradient(180deg, rgba(187, 134, 252, 0.05) 1px, transparent 1px);
+            background-size: 40px 40px; opacity: 0.4;
+        }
+        .wrap { position: relative; z-index: 1; width: min(1180px, 100%); margin: 0 auto 60px; }
+        .hdr {
+            display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap;
+            margin-bottom: 24px; padding: 22px 28px;
+            border: 1px solid var(--border); border-radius: 18px;
+            background: radial-gradient(circle at top, #14091d 0, #07030c 55%, #020509 100%);
+        }
+        .hdr-left { display: flex; align-items: center; gap: 16px; min-width: 0; }
+        .logo-box { width: 52px; height: 52px; border: 1px solid rgba(187, 134, 252, 0.34); border-radius: 12px; overflow: hidden; flex-shrink: 0; }
+        .logo-box img { width: 100%; height: 100%; object-fit: cover; }
+        .badge-admin {
+            display: inline-flex; align-items: center; gap: 6px; width: fit-content;
+            padding: 3px 9px; border: 1px solid rgba(187, 134, 252, 0.35); border-radius: 999px;
+            background: rgba(187, 134, 252, 0.12); color: var(--accent);
+            font-family: var(--mono); font-size: 9px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase;
+        }
+        .badge-admin::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+        .hdr-info { display: flex; flex-direction: column; gap: 4px; }
+        .hdr-title { color: var(--accent-bright); font-size: 22px; font-weight: 800; }
+        .hdr-sub { color: var(--muted); font-size: 13px; line-height: 1.45; }
+        .header-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+            min-height: 42px; padding: 11px 18px; border-radius: 10px; border: 1px solid transparent;
+            cursor: pointer; text-decoration: none; white-space: nowrap;
+            font: 700 12px var(--sans); text-transform: uppercase; letter-spacing: 0.08em;
+        }
+        .btn-primary { background: linear-gradient(135deg, #bb86fc 0%, #9264e6 100%); color: #0c0518; }
+        .btn-ghost { border-color: rgba(187, 134, 252, 0.22); background: rgba(187, 134, 252, 0.05); color: var(--accent); }
+        .btn-danger { border-color: rgba(255, 80, 54, 0.3); background: rgba(255, 80, 54, 0.08); color: var(--danger); }
+        .layout { display: grid; grid-template-columns: minmax(280px, 380px) 1fr; gap: 18px; align-items: start; }
+        .panel {
+            border: 1px solid var(--border); border-radius: 16px; padding: 24px;
+            background: radial-gradient(circle at top, #14091d 0, #07030c 56%, #020509 100%);
+        }
+        .section-kicker {
+            display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+            color: var(--accent); font-family: var(--mono); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em;
+        }
+        .section-kicker::after { content: ""; flex: 1; height: 1px; background: linear-gradient(to right, rgba(187,134,252,0.24), transparent); }
+        .field-group { margin-bottom: 15px; }
+        .field-label { display: block; margin-bottom: 8px; color: var(--accent-bright); font-family: var(--mono); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+        .field-input, .field-select, .field-area {
+            width: 100%; border: 1px solid rgba(187, 134, 252, 0.25); border-radius: 10px;
+            background: rgba(0,0,0,0.42); color: var(--text); font: 14px var(--sans); outline: none;
+        }
+        .field-input, .field-select { height: 44px; padding: 0 14px; }
+        .field-area { min-height: 96px; padding: 12px 14px; resize: vertical; }
+        .field-input:focus, .field-select:focus, .field-area:focus { border-color: var(--accent); box-shadow: 0 0 10px rgba(187, 134, 252, 0.14); }
+        .metric-list { display: grid; gap: 14px; }
+        .metric-card {
+            display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: start;
+            padding: 20px; border: 1px solid rgba(187, 134, 252, 0.14); border-radius: 14px;
+            background: linear-gradient(135deg, rgba(20,9,29,0.9), rgba(7,3,12,0.96));
+        }
+        .metric-title { color: var(--text-strong); font-size: 16px; font-weight: 800; margin-bottom: 6px; }
+        .metric-desc { color: var(--muted); font-size: 13px; line-height: 1.5; margin-bottom: 10px; }
+        .metric-meta { display: flex; gap: 8px; flex-wrap: wrap; }
+        .badge { font-family: var(--mono); font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; padding: 4px 10px; border-radius: 20px; }
+        .badge-score { background: rgba(0,207,255,0.08); border: 1px solid rgba(0,207,255,0.25); color: #00cfff; }
+        .badge-on { background: rgba(0,255,160,0.08); border: 1px solid rgba(0,255,160,0.25); color: var(--ok); }
+        .badge-off { background: rgba(107,123,141,0.1); border: 1px solid rgba(107,123,141,0.3); color: var(--muted); }
+        .metric-actions { display: flex; gap: 8px; }
+        .btn-icon {
+            width: 38px; height: 38px; border-radius: 9px; border: 1px solid rgba(187, 134, 252, 0.2);
+            background: rgba(0,0,0,0.2); color: var(--accent); cursor: pointer;
+        }
+        .btn-icon.danger { border-color: rgba(255, 80, 54, 0.25); color: var(--danger); }
+        .empty-state {
+            min-height: 180px; display: grid; place-items: center; padding: 28px; text-align: center;
+            border: 1px dashed rgba(187, 134, 252, 0.25); border-radius: 14px; color: var(--muted);
+        }
+        #toast-container { position: fixed; top: 28px; right: 28px; z-index: 9999; display: grid; gap: 12px; pointer-events: none; }
+        .toast { padding: 14px 18px; border-radius: 12px; font-size: 13px; font-weight: 700; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+        .toast.success { background: rgba(0,255,160,0.12); border: 1px solid rgba(0,255,160,0.42); color: var(--ok); }
+        .toast.error { background: rgba(255,80,54,0.15); border: 1px solid rgba(255,80,54,0.5); color: var(--danger); }
+        .modal-overlay { position: fixed; inset: 0; z-index: 9000; display: none; align-items: center; justify-content: center; padding: 20px; background: rgba(2,4,9,0.85); }
+        .modal-overlay.active { display: flex; }
+        .modal { width: min(100%, 560px); max-height: 90vh; overflow-y: auto; padding: 28px; border: 1px solid rgba(187,134,252,0.3); border-radius: 16px; background: radial-gradient(circle at top, #14091d 0, #07030c 60%, #020509 100%); }
+        .modal-header { display: flex; justify-content: space-between; gap: 16px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid rgba(187,134,252,0.15); }
+        .modal-title { color: var(--accent-bright); font-size: 20px; font-weight: 800; }
+        .modal-close { width: 36px; height: 36px; border-radius: 9px; border: 1px solid rgba(255,80,54,0.3); background: rgba(255,80,54,0.08); color: var(--danger); cursor: pointer; }
+        .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; padding-top: 18px; border-top: 1px solid rgba(187,134,252,0.15); }
+        @media (max-width: 860px) {
+            body { padding: 12px; }
+            .layout { grid-template-columns: 1fr; }
+            .hdr { padding: 18px; }
+            .metric-card { grid-template-columns: 1fr; }
+            .metric-actions { justify-content: flex-end; }
+        }
+    </style>
+</head>
+<body>
+    {% include "partials/public_chat_button.html" %}
+    {% include "partials/language_switcher.html" %}
+    <div class="background-grid"></div>
+    <div class="wrap">
+        <header class="hdr">
+            <div class="hdr-left">
+                <div class="logo-box" aria-hidden="true"><img src="{% static 'pondersecRoxo.jpeg' %}" alt=""></div>
+                <div class="hdr-info">
+                    <span class="badge-admin">{% translate "Painel Admin" %}</span>
+                    <span class="hdr-title">{% translate "Métricas Públicas" %}</span>
+                    <span class="hdr-sub">{% translate "Critérios usados na avaliação cruzada das respostas do chat público." %}</span>
+                </div>
+            </div>
+            <div class="header-actions">
+                <a class="btn btn-ghost" href="{% url 'admin_pondersec_home' %}">{% translate "Voltar" %}</a>
+                <a class="btn btn-danger" href="{% url 'admin_pondersec_logout' %}">{% translate "Sair" %}</a>
+            </div>
+        </header>
+
+        {% if messages %}
+            <div id="toast-container">
+            {% for message in messages %}
+                <div class="toast {% if message.tags == 'error' %}error{% else %}success{% endif %}">{{ message }}</div>
+            {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="layout">
+            <section class="panel">
+                <div class="section-kicker">{% translate "Nova Métrica" %}</div>
+                <form method="POST" action="{% url 'admin_pondersec_metricas_publicas' %}">
+                    {% csrf_token %}
+                    <div class="field-group">
+                        <label class="field-label" for="nome">{% translate "Nome" %}</label>
+                        <input class="field-input" id="nome" name="nome" maxlength="100" required placeholder="{% translate 'Ex.: Clareza' %}">
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label" for="pontuacao_maxima">{% translate "Pontuação Máxima" %}</label>
+                        <select class="field-select" id="pontuacao_maxima" name="pontuacao_maxima">
+                            <option value="5">5</option>
+                            <option value="4">4</option>
+                            <option value="3">3</option>
+                            <option value="2">2</option>
+                        </select>
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label" for="descricao">{% translate "Descrição" %}</label>
+                        <textarea class="field-area" id="descricao" name="descricao" placeholder="{% translate 'Explique o que a LLM juíza deve observar.' %}"></textarea>
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label" for="criterio_texto">{% translate "Critério Detalhado" %}</label>
+                        <textarea class="field-area" id="criterio_texto" name="criterio_texto" placeholder="{% translate 'Opcional: detalhe sinais de boa ou má resposta.' %}"></textarea>
+                    </div>
+                    <button class="btn btn-primary" type="submit">{% translate "Adicionar Métrica" %}</button>
+                </form>
+            </section>
+
+            <section class="panel">
+                <div class="section-kicker">{% translate "Métricas Configuradas" %}</div>
+                <div class="metric-list">
+                    {% for metrica in metricas %}
+                        <article class="metric-card">
+                            <div>
+                                <div class="metric-title">{{ metrica.nome }}</div>
+                                <div class="metric-desc">
+                                    {% if metrica.descricao %}{{ metrica.descricao }}{% else %}{% translate "Sem descrição." %}{% endif %}
+                                </div>
+                                {% if metrica.criterio_texto %}
+                                    <div class="metric-desc">{{ metrica.criterio_texto }}</div>
+                                {% endif %}
+                                <div class="metric-meta">
+                                    <span class="badge badge-score">{% translate "Máx." %} {{ metrica.pontuacao_maxima|default:5 }}</span>
+                                    {% if metrica.ativa %}
+                                        <span class="badge badge-on">{% translate "Ativa" %}</span>
+                                    {% else %}
+                                        <span class="badge badge-off">{% translate "Inativa" %}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="metric-actions">
+                                <button class="btn-icon" title="{% if metrica.ativa %}{% translate 'Desativar' %}{% else %}{% translate 'Ativar' %}{% endif %}" onclick="toggleMetrica({{ metrica.id }})">⏻</button>
+                                <button class="btn-icon" title="{% translate 'Editar' %}" onclick="abrirEditar({{ metrica.id }}, '{{ metrica.nome|escapejs }}', '{{ metrica.descricao|default:''|escapejs }}', '{{ metrica.criterio_texto|default:''|escapejs }}', {{ metrica.pontuacao_maxima|default:5 }}, {{ metrica.ativa|yesno:'true,false' }})">✎</button>
+                                <button class="btn-icon danger" title="{% translate 'Remover' %}" onclick="deletarMetrica({{ metrica.id }}, '{{ metrica.nome|escapejs }}')">×</button>
+                            </div>
+                        </article>
+                    {% empty %}
+                        <div class="empty-state">{% translate "Nenhuma métrica pública cadastrada. Crie a primeira para ativar a avaliação cruzada no chat público." %}</div>
+                    {% endfor %}
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalEdit">
+        <div class="modal">
+            <div class="modal-header">
+                <div>
+                    <div class="badge-admin">{% translate "Configuração" %}</div>
+                    <div class="modal-title">{% translate "Editar Métrica Pública" %}</div>
+                </div>
+                <button class="modal-close" onclick="fecharModal()" type="button">×</button>
+            </div>
+            <form id="formEdit" onsubmit="salvarEdicao(event)">
+                <input type="hidden" id="editId">
+                <div class="field-group">
+                    <label class="field-label" for="editNome">{% translate "Nome" %}</label>
+                    <input class="field-input" id="editNome" required maxlength="100">
+                </div>
+                <div class="field-group">
+                    <label class="field-label" for="editPontuacao">{% translate "Pontuação Máxima" %}</label>
+                    <select class="field-select" id="editPontuacao">
+                        <option value="5">5</option>
+                        <option value="4">4</option>
+                        <option value="3">3</option>
+                        <option value="2">2</option>
+                    </select>
+                </div>
+                <div class="field-group">
+                    <label class="field-label" for="editDescricao">{% translate "Descrição" %}</label>
+                    <textarea class="field-area" id="editDescricao"></textarea>
+                </div>
+                <div class="field-group">
+                    <label class="field-label" for="editCriterio">{% translate "Critério Detalhado" %}</label>
+                    <textarea class="field-area" id="editCriterio"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-ghost" onclick="fecharModal()">{% translate "Cancelar" %}</button>
+                    <button type="submit" class="btn btn-primary">{% translate "Salvar alterações" %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const URL_EDITAR = (id) => `/admin-pondersec/metricas-publicas/${id}/editar/`;
+        const URL_DELETAR = (id) => `/admin-pondersec/metricas-publicas/${id}/deletar/`;
+        const URL_TOGGLE = (id) => `/admin-pondersec/metricas-publicas/${id}/toggle/`;
+
+        function csrfToken() {
+            const el = document.querySelector('[name=csrfmiddlewaretoken]');
+            return el ? el.value : '';
+        }
+        function toast(msg, type = 'success') {
+            let container = document.getElementById('toast-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'toast-container';
+                document.body.appendChild(container);
+            }
+            const t = document.createElement('div');
+            t.className = 'toast ' + type;
+            t.textContent = msg;
+            container.appendChild(t);
+            setTimeout(() => t.remove(), 3500);
+        }
+        function abrirEditar(id, nome, descricao, criterio, pontuacao, ativa) {
+            document.getElementById('editId').value = id;
+            document.getElementById('editNome').value = nome;
+            document.getElementById('editDescricao').value = descricao;
+            document.getElementById('editCriterio').value = criterio;
+            document.getElementById('editPontuacao').value = String(pontuacao || 5);
+            document.getElementById('modalEdit').dataset.ativa = ativa ? 'true' : 'false';
+            document.getElementById('modalEdit').classList.add('active');
+        }
+        function fecharModal() {
+            document.getElementById('modalEdit').classList.remove('active');
+        }
+        async function salvarEdicao(ev) {
+            ev.preventDefault();
+            const id = document.getElementById('editId').value;
+            const payload = {
+                nome: document.getElementById('editNome').value.trim(),
+                descricao: document.getElementById('editDescricao').value.trim(),
+                criterio_texto: document.getElementById('editCriterio').value.trim(),
+                pontuacao_maxima: document.getElementById('editPontuacao').value,
+                ativa: document.getElementById('modalEdit').dataset.ativa === 'true',
+            };
+            try {
+                const resp = await fetch(URL_EDITAR(id), {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken(), 'X-Requested-With': 'XMLHttpRequest' },
+                    body: JSON.stringify(payload),
+                });
+                const data = await resp.json();
+                if (!resp.ok || data.status !== 'ok') throw new Error(data.mensagem || '{% translate "Falha ao salvar." %}');
+                fecharModal();
+                toast('{% translate "Métrica atualizada." %}');
+                setTimeout(() => location.reload(), 600);
+            } catch (e) {
+                toast(e.message, 'error');
+            }
+        }
+        async function toggleMetrica(id) {
+            try {
+                const resp = await fetch(URL_TOGGLE(id), { method: 'POST', headers: { 'X-CSRFToken': csrfToken(), 'X-Requested-With': 'XMLHttpRequest' } });
+                const data = await resp.json();
+                if (!resp.ok || data.status !== 'ok') throw new Error(data.mensagem || '{% translate "Falha ao alternar." %}');
+                toast(data.ativa ? '{% translate "Métrica ativada." %}' : '{% translate "Métrica desativada." %}');
+                setTimeout(() => location.reload(), 500);
+            } catch (e) {
+                toast(e.message, 'error');
+            }
+        }
+        async function deletarMetrica(id, nome) {
+            if (!confirm(`{% translate "Remover a métrica" %} "${nome}"?`)) return;
+            try {
+                const resp = await fetch(URL_DELETAR(id), { method: 'DELETE', headers: { 'X-CSRFToken': csrfToken(), 'X-Requested-With': 'XMLHttpRequest' } });
+                const data = await resp.json();
+                if (!resp.ok || data.status !== 'ok') throw new Error(data.mensagem || '{% translate "Falha ao remover." %}');
+                toast('{% translate "Métrica removida." %}');
+                setTimeout(() => location.reload(), 600);
+            } catch (e) {
+                toast(e.message, 'error');
+            }
+        }
+        document.querySelectorAll('#toast-container .toast').forEach(t => setTimeout(() => t.remove(), 3500));
+        document.getElementById('modalEdit').addEventListener('click', function(e) {
+            if (e.target === this) fecharModal();
+        });
+    </script>
+</body>
+</html>
