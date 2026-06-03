@@ -1,341 +1,385 @@
-{% load static %}
+{% load static i18n %}
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="{{ LANGUAGE_CODE|default:'pt-br' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PonderSEC — LLMs Públicas</title>
+    <title>{% translate "PonderSEC — LLMs Públicas" %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        body {
-            font-family: "Space Grotesk", system-ui, sans-serif;
-            background: radial-gradient(circle at top, #0b0510 0, #06020b 45%, #000000 100%);
-            color: #e5fef6;
-            min-height: 100vh;
-            padding: 22px;
+        :root {
+            /* Paleta Admin (Roxa/Violeta) */
+            --bg: #0b0510;
+            --surface: rgba(20, 9, 29, 0.72);
+            --surface-strong: rgba(20, 9, 29, 0.95);
+            --surface-soft: rgba(187, 134, 252, 0.08);
+            --border: rgba(187, 134, 252, 0.2);
+            --border-strong: rgba(187, 134, 252, 0.4);
+            --accent: #bb86fc;
+            --accent-bright: #d9b8ff;
+            --text: #e5fef6;
+            --text-strong: #ffffff;
+            --muted: #8b7d9b;
+            --mono: "IBM Plex Mono", monospace;
+            --sans: "Space Grotesk", system-ui, -apple-system, sans-serif;
         }
+
+        body {
+            min-height: 100vh; padding: 20px; overflow-x: hidden;
+            background: radial-gradient(circle at top, #0b0510 0, #06020b 45%, #000000 100%);
+            color: var(--text); font-family: var(--sans);
+        }
+
         .background-grid {
-            position: fixed; inset: 0;
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
             background-image:
                 linear-gradient(90deg, rgba(187, 134, 252, 0.05) 1px, transparent 1px),
                 linear-gradient(180deg, rgba(187, 134, 252, 0.05) 1px, transparent 1px);
-            background-size: 40px 40px; opacity: 0.4; pointer-events: none; z-index: 0;
+            background-size: 40px 40px; opacity: 0.4;
         }
-        .container { position: relative; width: 100%; max-width: 1100px; margin: 18px auto; z-index: 2; }
 
-        .header {
-            display: flex; align-items: center; justify-content: space-between;
-            margin-bottom: 24px; padding: 24px 28px;
+        /* --- ESTRUTURA GERAL --- */
+        .app-shell {
+            position: relative; z-index: 1; display: flex; align-items: flex-start;
+            gap: 20px; width: min(1200px, 100%); margin: 0 auto; justify-content: center;
+        }
+
+        .wrap { width: 100%; min-width: 0; flex: 1; padding-bottom: 60px; }
+
+        /* --- HEADER --- */
+        .hdr {
+            display: flex; align-items: center; justify-content: space-between; gap: 18px;
+            margin-bottom: 24px; padding: 22px 28px;
+            border: 1px solid var(--border); border-radius: 18px;
             background: radial-gradient(circle at top, #14091d 0, #07030c 55%, #020509 100%);
-            border: 1px solid rgba(187, 134, 252, 0.2);
-            border-radius: 16px;
+            box-shadow: 0 10px 34px rgba(0, 0, 0, 0.4); flex-wrap: wrap;
         }
-        .header-left { display: flex; align-items: center; gap: 16px; }
-        .header-left img { width: 50px; border-radius: 10px; filter: drop-shadow(0 0 10px rgba(187,134,252,0.5)); }
+        .hdr-left { display: flex; align-items: center; gap: 18px; min-width: 0; }
+        .logo-box { width: 54px; height: 54px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; border: 1px solid rgba(187, 134, 252, 0.34); border-radius: 14px; background: rgba(187, 134, 252, 0.06); box-shadow: inset 0 0 24px rgba(187, 134, 252, 0.05), 0 0 18px rgba(187, 134, 252, 0.1); }
+        .logo-box img { width: 100%; height: 100%; object-fit: cover; }
+        .hdr-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+        
         .badge-admin {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 3px 9px;
-            background: rgba(187, 134, 252, 0.12);
-            border: 1px solid rgba(187, 134, 252, 0.35);
-            border-radius: 999px;
-            font-size: 10px; font-weight: 700; color: #bb86fc;
-            text-transform: uppercase; letter-spacing: 0.18em;
+            display: inline-flex; align-items: center; gap: 6px; align-self: flex-start;
+            padding: 3px 9px; background: rgba(187, 134, 252, 0.12); border: 1px solid rgba(187, 134, 252, 0.35);
+            border-radius: 999px; font-family: var(--mono); font-size: 9px; font-weight: 700; color: var(--accent);
+            text-transform: uppercase; letter-spacing: 0.15em;
         }
-        .badge-admin::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: #bb86fc; box-shadow: 0 0 6px #bb86fc; }
-        .page-title { color: #d9b8ff; font-size: 20px; font-weight: 700; margin-top: 4px; }
-        .page-sub  { color: #8b7d9b; font-size: 13px; margin-top: 4px; }
+        .badge-admin::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+        
+        .hdr-title { color: var(--accent-bright); font-size: 22px; font-weight: 800; line-height: 1.18; }
+        .hdr-sub { color: var(--muted); font-size: 13px; line-height: 1.4; }
 
-        .header-actions { display: flex; gap: 8px; align-items: center; }
+        .header-actions { display: flex; align-items: center; gap: 12px; }
+
+        /* --- BOTOES --- */
         .btn {
-            display: inline-flex; align-items: center; gap: 7px;
-            padding: 10px 16px;
-            border-radius: 8px;
-            font: 700 12px/1 "Space Grotesk", system-ui, sans-serif;
-            text-transform: uppercase; letter-spacing: 0.08em;
-            text-decoration: none; cursor: pointer; border: 1px solid; transition: all 0.2s;
+            display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+            min-height: 42px; padding: 11px 18px; border-radius: 10px; cursor: pointer;
+            text-decoration: none; white-space: nowrap; font-family: var(--sans);
+            font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+            transition: all 0.2s ease;
         }
-        .btn-back   { background: rgba(187,134,252,0.08); border-color: rgba(187,134,252,0.3); color: #bb86fc; }
-        .btn-back:hover { background: rgba(187,134,252,0.16); border-color: #bb86fc; }
-        .btn-logout { background: rgba(255,80,54,0.08); border-color: rgba(255,80,54,0.3); color: #ff8a78; }
-        .btn-logout:hover { background: rgba(255,80,54,0.15); border-color: #ff8a78; }
-
-        #toast-container { position: fixed; top: 30px; right: 30px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
-        .toast {
-            padding: 14px 22px; border-radius: 10px;
-            font-size: 13px; font-weight: 600;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.5); backdrop-filter: blur(5px);
-        }
-        .toast.success { background: rgba(0,255,160,0.15); border: 1px solid #00ff9f; color: #00ff9f; }
-        .toast.error   { background: rgba(255,80,54,0.15);  border: 1px solid #f55036; color: #f55036; }
-
-        .toolbar {
-            display: flex; gap: 12px; align-items: center; justify-content: space-between;
-            margin-bottom: 18px; flex-wrap: wrap;
-        }
-        .search-bar {
-            flex: 1; min-width: 240px;
-            display: flex; align-items: center; gap: 8px;
-            padding: 10px 14px;
-            background: rgba(20, 9, 29, 0.7);
-            border: 1px solid rgba(187, 134, 252, 0.16);
-            border-radius: 10px;
-        }
-        .search-bar input {
-            flex: 1; background: transparent; border: none; outline: none;
-            color: #e5fef6; font-family: inherit; font-size: 13px;
-        }
-        .btn-add {
-            padding: 10px 18px;
+        .btn:hover { transform: translateY(-1px); }
+        
+        .btn-primary {
             background: linear-gradient(135deg, #bb86fc 0%, #9264e6 100%);
-            border: none; border-radius: 10px;
-            color: #0c0518; font-weight: 700;
-            font-family: inherit; font-size: 12px;
-            text-transform: uppercase; letter-spacing: 0.08em;
-            cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
-            transition: transform 0.2s, box-shadow 0.2s;
+            border: none; color: #0c0518; box-shadow: 0 0 20px rgba(187, 134, 252, 0.15);
         }
-        .btn-add:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(187,134,252,0.35); }
+        .btn-primary:hover { box-shadow: 0 8px 24px rgba(187, 134, 252, 0.35); }
+        
+        .btn-ghost { border: 1px solid rgba(187, 134, 252, 0.2); background: rgba(187, 134, 252, 0.05); color: var(--accent); }
+        .btn-ghost:hover { border-color: rgba(187, 134, 252, 0.4); background: rgba(187, 134, 252, 0.12); color: var(--accent-bright); }
+        
+        .btn-danger { border: 1px solid rgba(255, 80, 54, 0.3); background: rgba(255, 80, 54, 0.08); color: #ff8a78; }
+        .btn-danger:hover { border-color: rgba(255, 80, 54, 0.5); background: rgba(255, 80, 54, 0.15); color: #ffb5ab; }
 
-        .section-label {
-            font-size: 10px; color: #bb86fc; font-weight: 700;
-            text-transform: uppercase; letter-spacing: 0.25em;
-            margin-bottom: 14px; display: flex; align-items: center; gap: 12px;
-        }
-        .section-label::after {
-            content: ''; flex: 1; height: 1px;
-            background: linear-gradient(to right, rgba(187,134,252,0.18), transparent);
+        /* --- CONTEÚDO PRINCIPAL --- */
+        .main-card {
+            border: 1px solid var(--border); border-radius: 18px;
+            background: radial-gradient(circle at top, #14091d 0, #07030c 55%, #020509 100%);
+            box-shadow: 0 10px 38px rgba(0, 0, 0, 0.4); padding: 34px 28px 44px;
         }
 
-        .llm-list { display: grid; gap: 10px; }
+        .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 24px; flex-wrap: wrap;}
+        .search-bar { position: relative; flex: 1; max-width: 400px; }
+        .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--accent); pointer-events: none; display: flex; }
+        .search-input {
+            width: 100%; height: 44px; padding: 0 14px 0 44px; border-radius: 10px; font-size: 13px;
+            color: var(--text); outline: none; border: 1px solid rgba(187, 134, 252, 0.16);
+            background: rgba(0, 0, 0, 0.42); transition: border-color 0.16s ease, background 0.16s ease;
+        }
+        .search-input::placeholder { color: var(--muted); }
+        .search-input:focus { border-color: var(--accent); background: rgba(0, 0, 0, 0.6); box-shadow: 0 0 10px rgba(187, 134, 252, 0.15); }
+
+        .section-kicker { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; color: var(--accent); font-family: var(--mono); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; }
+        .section-kicker::after { content: ""; flex: 1; height: 1px; background: linear-gradient(to right, rgba(187, 134, 252, 0.24), transparent); }
+
+        /* --- CARDS DE LLM --- */
+        .llm-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; }
+
         .llm-card {
-            display: flex; align-items: center; gap: 16px;
-            padding: 16px 22px;
+            display: flex; align-items: center; justify-content: space-between; gap: 16px;
+            padding: 22px 24px;
             background: linear-gradient(135deg, rgba(20,9,29,0.9) 0%, rgba(7,3,12,0.95) 100%);
-            border: 1px solid rgba(187, 134, 252, 0.14);
-            border-radius: 12px;
+            border: 1px solid rgba(187, 134, 252, 0.14); border-radius: 16px; transition: all 0.25s ease;
         }
-        .llm-card.inactive { opacity: 0.55; }
-        .llm-icon {
-            width: 42px; height: 42px;
-            background: rgba(187,134,252,0.1);
-            border: 1px solid rgba(187,134,252,0.3);
-            border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0;
-        }
-        .llm-info { flex: 1; min-width: 0; }
-        .llm-name { color: #e5fef6; font-size: 15px; font-weight: 700; }
-        .llm-meta { color: #8b7d9b; font-size: 12px; margin-top: 4px; display: flex; gap: 10px; flex-wrap: wrap; }
-        .badge-provider { padding: 2px 8px; background: rgba(0,207,255,0.1); border: 1px solid rgba(0,207,255,0.3); color: #00cfff; border-radius: 999px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
-        .badge-state-on  { padding: 2px 8px; background: rgba(0,255,160,0.1); border: 1px solid rgba(0,255,160,0.3); color: #00ff9f; border-radius: 999px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
-        .badge-state-off { padding: 2px 8px; background: rgba(107,123,141,0.1); border: 1px solid rgba(107,123,141,0.3); color: #8b7d9b; border-radius: 999px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
-        .api-key { font-family: monospace; color: #6b7b8d; font-size: 11px; }
+        .llm-card:hover { border-color: rgba(187, 134, 252, 0.34); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 15px rgba(187, 134, 252, 0.08); }
+        .llm-card.inactive { opacity: 0.6; filter: grayscale(40%); }
+        .llm-card.inactive:hover { opacity: 0.8; filter: grayscale(0%); }
 
-        .llm-actions { display: flex; gap: 8px; }
-        .btn-icon {
-            width: 36px; height: 36px;
-            background: transparent;
-            border: 1px solid rgba(187,134,252,0.2);
-            border-radius: 8px; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            color: #bb86fc; transition: all 0.2s;
+        .llm-icon {
+            width: 48px; height: 48px; flex-shrink: 0;
+            background: rgba(187, 134, 252, 0.08); border: 1px solid rgba(187, 134, 252, 0.2);
+            border-radius: 12px; display: flex; align-items: center; justify-content: center;
+            color: var(--accent-bright); transition: all 0.25s ease;
         }
-        .btn-icon:hover { background: rgba(187,134,252,0.12); border-color: #bb86fc; }
-        .btn-icon.danger { color: #ff8a78; border-color: rgba(255,80,54,0.25); }
-        .btn-icon.danger:hover { background: rgba(255,80,54,0.12); border-color: #ff8a78; }
+        .llm-card:hover .llm-icon { background: rgba(187, 134, 252, 0.15); border-color: var(--accent); }
+
+        .llm-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+        .llm-name { color: var(--text-strong); font-size: 16px; font-weight: 700; }
+        .llm-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+        .badge {
+            font-family: var(--mono); font-size: 9px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.08em; padding: 4px 10px; border-radius: 20px;
+        }
+        .badge-provider { background: rgba(0,207,255,0.08); border: 1px solid rgba(0,207,255,0.25); color: #00cfff; }
+        .badge-state-on { background: rgba(0,255,160,0.08); border: 1px solid rgba(0,255,160,0.25); color: #00ff9f; }
+        .badge-state-off { background: rgba(107,123,141,0.1); border: 1px solid rgba(107,123,141,0.3); color: #8b7d9b; }
+        
+        .api-key { font-family: var(--mono); color: var(--muted); font-size: 11px; margin-left: 4px; }
+
+        .llm-actions { display: flex; gap: 8px; flex-shrink: 0; }
+        .btn-icon {
+            width: 38px; height: 38px; border-radius: 9px; border: 1px solid;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s ease; background: rgba(0, 0, 0, 0.2);
+            border-color: rgba(187, 134, 252, 0.2); color: var(--accent);
+        }
+        .btn-icon:hover { background: rgba(187, 134, 252, 0.12); border-color: var(--accent); color: var(--accent-bright); }
+        .btn-icon.danger { border-color: rgba(255, 80, 54, 0.25); color: #ff8a78; }
+        .btn-icon.danger:hover { background: rgba(255, 80, 54, 0.12); border-color: rgba(255, 80, 54, 0.5); color: #ffb5ab; }
 
         .empty-state {
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            padding: 60px 20px;
-            background: rgba(20,9,29,0.5);
-            border: 1px dashed rgba(187,134,252,0.2);
-            border-radius: 14px;
+            grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center;
+            justify-content: center; min-height: 200px; padding: 34px 18px;
+            border: 1px dashed rgba(187, 134, 252, 0.25); border-radius: 16px;
+            background: rgba(0, 0, 0, 0.2); text-align: center; color: var(--muted);
         }
-        .empty-state .icon { font-size: 42px; margin-bottom: 14px; opacity: 0.6; }
-        .empty-state p { color: #8b7d9b; font-size: 14px; text-align: center; }
+        .empty-state svg { margin-bottom: 12px; opacity: 0.6; color: var(--muted); }
+        .empty-state p { font-size: 14px; line-height: 1.5; }
+        .empty-state strong { color: var(--accent-bright); font-weight: normal; }
 
-        /* MODAL */
+        /* --- MODAIS --- */
         .modal-overlay {
-            display: none;
-            position: fixed; inset: 0; z-index: 9000;
-            background: rgba(2,4,9,0.85);
-            backdrop-filter: blur(6px);
-            align-items: center; justify-content: center;
-            padding: 20px;
+            position: fixed; inset: 0; z-index: 9000; display: none; align-items: center;
+            justify-content: center; padding: 20px; background: rgba(2, 4, 9, 0.85); backdrop-filter: blur(6px);
         }
-        .modal-overlay.open { display: flex; }
+        .modal-overlay.active { display: flex; }
+
         .modal {
+            width: min(100%, 540px); max-height: 90vh; overflow-y: auto; padding: 30px;
+            border: 1px solid rgba(187, 134, 252, 0.3); border-radius: 18px;
             background: radial-gradient(circle at top, #14091d 0, #07030c 60%, #020509 100%);
-            border: 1px solid rgba(187,134,252,0.3);
-            border-radius: 16px;
-            padding: 28px 32px;
-            width: 100%; max-width: 480px;
-            box-shadow: 0 12px 60px rgba(0,0,0,0.9), 0 0 30px rgba(187,134,252,0.18);
+            box-shadow: 0 22px 80px rgba(0, 0, 0, 0.9), 0 0 32px rgba(187, 134, 252, 0.12);
         }
-        .modal-header {
-            display: flex; align-items: center; justify-content: space-between;
-            margin-bottom: 22px; padding-bottom: 18px;
-            border-bottom: 1px solid rgba(187,134,252,0.12);
-        }
-        .modal-title { color: #d9b8ff; font-size: 18px; font-weight: 700; }
-        .modal-product { color: #bb86fc; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.18em; }
+
+        .modal-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 22px; padding-bottom: 18px; border-bottom: 1px solid rgba(187, 134, 252, 0.15); }
+        .modal-title-wrap { display: flex; flex-direction: column; gap: 4px; }
+        .modal-product { color: var(--accent); font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+        .modal-title { color: var(--accent-bright); font-size: 21px; font-weight: 800; }
+
         .modal-close {
-            background: transparent; border: none; color: #8b7d9b;
-            font-size: 20px; cursor: pointer; line-height: 1;
+            display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; flex-shrink: 0;
+            border: 1px solid rgba(255, 80, 54, 0.3); border-radius: 9px; background: rgba(255, 80, 54, 0.08);
+            color: #ff8a78; cursor: pointer; transition: all 0.2s ease;
         }
-        .modal-close:hover { color: #ff8a78; }
+        .modal-close:hover { border-color: rgba(255, 80, 54, 0.6); background: rgba(255, 80, 54, 0.15); color: #ffb5ab; }
 
         .field-group { margin-bottom: 16px; }
-        .field-label { display: block; font-size: 11px; color: #d9b8ff; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 6px; }
+        .field-label { display: block; margin-bottom: 8px; color: #d9b8ff; font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+
         .field-input, .field-select {
-            width: 100%; padding: 11px 14px;
-            background: rgba(0,0,0,0.35);
-            border: 1px solid rgba(187,134,252,0.2);
-            border-radius: 10px;
-            color: #e5fef6; font-family: inherit; font-size: 13px;
-            transition: border-color 0.2s;
+            width: 100%; height: 44px; padding: 0 14px; border-radius: 10px; font-size: 14px; font-family: var(--sans);
+            color: var(--text); outline: none; border: 1px solid rgba(187, 134, 252, 0.25);
+            background: rgba(0, 0, 0, 0.4); transition: border-color 0.2s ease, background 0.2s ease;
         }
-        .field-input:focus, .field-select:focus { outline: none; border-color: #bb86fc; }
+        .field-input:focus, .field-select:focus { border-color: var(--accent); background: rgba(0, 0, 0, 0.6); box-shadow: 0 0 10px rgba(187, 134, 252, 0.15); }
+        .field-input::placeholder { color: rgba(139, 125, 155, 0.6); }
+        .field-select {
+            cursor: pointer; appearance: none;
+            background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+            background-position: calc(100% - 18px) 18px, calc(100% - 13px) 18px;
+            background-size: 5px 5px; background-repeat: no-repeat; padding-right: 32px;
+        }
+        .field-select option { background: #07030c; color: var(--text); }
 
-        .modal-footer {
-            display: flex; justify-content: flex-end; gap: 10px;
-            margin-top: 24px;
+        .password-container { position: relative; display: flex; align-items: center; }
+        .password-container .field-input { padding-right: 45px; }
+        .btn-toggle-password {
+            position: absolute; right: 12px; background: transparent; border: none;
+            cursor: pointer; color: var(--muted); transition: all 0.2s ease; display: flex;
+            align-items: center; justify-content: center; padding: 5px;
         }
-        .btn-modal-cancel {
-            padding: 11px 18px;
-            background: transparent;
-            border: 1px solid rgba(139, 125, 155, 0.4);
-            border-radius: 10px;
-            color: #8b7d9b; cursor: pointer;
-            font-family: inherit; font-size: 12px; font-weight: 600;
-            text-transform: uppercase; letter-spacing: 0.08em;
-        }
-        .btn-modal-cancel:hover { color: #e5fef6; border-color: #8b7d9b; }
-        .btn-modal-save {
-            padding: 11px 18px;
-            background: linear-gradient(135deg, #bb86fc 0%, #9264e6 100%);
-            border: none; border-radius: 10px;
-            color: #0c0518; cursor: pointer;
-            font-family: inherit; font-size: 12px; font-weight: 700;
-            text-transform: uppercase; letter-spacing: 0.08em;
-        }
-        .btn-modal-save:hover { transform: translateY(-1px); box-shadow: 0 4px 18px rgba(187,134,252,0.4); }
+        .btn-toggle-password:hover { color: var(--accent-bright); transform: scale(1.1); }
 
-        @media (max-width: 720px) {
-            .header { flex-direction: column; gap: 16px; align-items: flex-start; }
-            .header-actions { width: 100%; flex-wrap: wrap; }
-            .llm-card { flex-direction: column; align-items: stretch; gap: 12px; }
-            .llm-actions { justify-content: flex-end; }
+        .modal-footer { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; margin-top: 26px; padding-top: 20px; border-top: 1px solid rgba(187, 134, 252, 0.15); }
+
+        /* --- TOASTS --- */
+        #toast-container { position: fixed; top: 28px; right: 28px; z-index: 9999; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
+        .toast {
+            padding: 15px 18px; border-radius: 12px; font-size: 13px; font-weight: 700; line-height: 1.45;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+            animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .toast.success { background: rgba(0, 255, 160, 0.12); border: 1px solid rgba(0, 255, 160, 0.42); color: #00ff9f; }
+        .toast.error { background: rgba(255, 80, 54, 0.15); border: 1px solid rgba(255, 80, 54, 0.5); color: #ff8a78; }
+
+        @keyframes slideIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
+
+        /* Responsividade */
+        @media (max-width: 760px) { 
+            body { padding: 12px; } 
+            .hdr { align-items: flex-start; flex-direction: column; padding: 18px; } 
+            .header-actions { width: 100%; flex-wrap: wrap;}
+            .header-actions .btn { flex: 1; justify-content: center; }
+            .main-card { padding: 20px; } 
+            .llm-card { flex-direction: column; align-items: flex-start; }
+            .llm-actions { width: 100%; justify-content: flex-end; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.05); }
         }
     </style>
 </head>
 <body>
     <div class="background-grid"></div>
 
-    <div class="container">
-        <div class="header">
-            <div class="header-left">
-                <img src="{% static 'pondersec_logo.jpg' %}" alt="PonderSEC">
-                <div>
-                    <div class="badge-admin">Painel Admin</div>
-                    <div class="page-title">LLMs Públicas</div>
-                    <div class="page-sub">Estas API keys são usadas pelo chat público da página inicial.</div>
+    <div class="app-shell">
+        <div class="wrap">
+            <header class="hdr">
+                <div class="hdr-left">
+                    <div class="logo-box" aria-hidden="true">
+                        <img src="{% static 'pondersec_logo.jpg' %}" alt="">
+                    </div>
+                    <div class="hdr-info">
+                        <span class="badge-admin">{% translate "Painel Admin" %}</span>
+                        <span class="hdr-title">{% translate "LLMs Públicas" %}</span>
+                        <span class="hdr-sub">{% translate "Estas API keys são usadas pelo chat público da página inicial." %}</span>
+                    </div>
                 </div>
-            </div>
-            <div class="header-actions">
-                <a class="btn btn-back" href="{% url 'admin_pondersec_home' %}">← Voltar</a>
-                <a class="btn btn-logout" href="{% url 'admin_pondersec_logout' %}">Sair</a>
-            </div>
-        </div>
-
-        {% if messages %}
-            <div id="toast-container">
-            {% for message in messages %}
-                <div class="toast {% if message.tags == 'error' %}error{% else %}success{% endif %}">{{ message }}</div>
-            {% endfor %}
-            </div>
-        {% endif %}
-
-        <div class="toolbar">
-            <div class="search-bar">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#bb86fc" stroke-width="2" stroke-linecap="round">
-                    <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
-                </svg>
-                <input type="text" id="searchInput" placeholder="Buscar modelo..." onkeyup="filterLLMs()">
-            </div>
-            <button class="btn-add" onclick="abrirModal('modalAdd')">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-                    <path d="M12 5v14M5 12h14"/>
-                </svg>
-                Adicionar LLM
-            </button>
-        </div>
-
-        <div class="section-label">LLMs configuradas</div>
-
-        <div class="llm-list" id="llmList">
-            {% for llm in llms %}
-                <div class="llm-card {% if not llm.ativo %}inactive{% endif %}" data-search="{{ llm.nome|lower }} {{ llm.descricao|default:''|lower }}">
-                    <div class="llm-icon">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#bb86fc" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="3" y="4" width="18" height="16" rx="3"/>
-                            <circle cx="8" cy="10" r="1"/>
-                            <circle cx="16" cy="10" r="1"/>
-                            <path d="M8 16h8"/>
+                <div class="header-actions">
+                    <a class="btn btn-ghost" href="{% url 'admin_pondersec_home' %}">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                            <path d="M19 12H5M11 6l-6 6 6 6"/>
                         </svg>
-                    </div>
-                    <div class="llm-info">
-                        <div class="llm-name">{{ llm.nome }}</div>
-                        <div class="llm-meta">
-                            <span class="badge-provider">{{ llm.descricao|default:"sem provedor" }}</span>
-                            {% if llm.ativo %}
-                                <span class="badge-state-on">Ativa</span>
-                            {% else %}
-                                <span class="badge-state-off">Inativa</span>
-                            {% endif %}
-                            <span class="api-key">{{ llm.api_key|slice:":6" }}••••{{ llm.api_key|slice:"-4:" }}</span>
+                        {% translate "Voltar" %}
+                    </a>
+                    <a class="btn btn-danger" href="{% url 'admin_pondersec_logout' %}">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                        {% translate "Sair" %}
+                    </a>
+                </div>
+            </header>
+
+            {% if messages %}
+                <div id="toast-container">
+                {% for message in messages %}
+                    <div class="toast {% if message.tags == 'error' %}error{% else %}success{% endif %}">{{ message }}</div>
+                {% endfor %}
+                </div>
+            {% endif %}
+
+            <main>
+                <section class="main-card">
+                    <div class="toolbar">
+                        <div class="search-bar">
+                            <span class="search-icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                                    <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+                                </svg>
+                            </span>
+                            <input type="text" class="search-input" id="searchInput" placeholder="{% translate 'Buscar modelo...' %}" onkeyup="filterLLMs()">
                         </div>
-                    </div>
-                    <div class="llm-actions">
-                        <button class="btn-icon" title="{% if llm.ativo %}Desativar{% else %}Ativar{% endif %}"
-                                onclick="toggleLLM({{ llm.id }})">
-                            {% if llm.ativo %}
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                                    <rect x="3" y="7" width="18" height="10" rx="5"/>
-                                    <circle cx="16" cy="12" r="3" fill="currentColor"/>
-                                </svg>
-                            {% else %}
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                                    <rect x="3" y="7" width="18" height="10" rx="5"/>
-                                    <circle cx="8" cy="12" r="3" fill="currentColor"/>
-                                </svg>
-                            {% endif %}
-                        </button>
-                        <button class="btn-icon" title="Editar"
-                                onclick="abrirEditar({{ llm.id }}, '{{ llm.nome|escapejs }}', '{{ llm.descricao|default:''|escapejs }}', '{{ llm.api_key|escapejs }}')">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        <button class="btn btn-primary" onclick="abrirModalAdd()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                                <path d="M12 5v14M5 12h14"/>
                             </svg>
-                        </button>
-                        <button class="btn-icon danger" title="Remover" onclick="deletarLLM({{ llm.id }}, '{{ llm.nome|escapejs }}')">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                                <polyline points="3 6 5 6 21 6"/>
-                                <path d="M19 6l-1 14H6L5 6"/>
-                                <path d="M10 11v6M14 11v6"/>
-                                <path d="M9 6V4h6v2"/>
-                            </svg>
+                            {% translate "Adicionar LLM" %}
                         </button>
                     </div>
-                </div>
-            {% empty %}
-                <div class="empty-state">
-                    <div class="icon">🔑</div>
-                    <p>Nenhuma LLM pública cadastrada. Clique em <strong>Adicionar LLM</strong> para cadastrar a primeira.</p>
-                </div>
-            {% endfor %}
+
+                    <div class="section-kicker">{% translate "LLMs Configuradas" %}</div>
+
+                    <div class="llm-list" id="llmList">
+                        {% for llm in llms %}
+                            <div class="llm-card {% if not llm.ativo %}inactive{% endif %}" data-search="{{ llm.nome|lower }} {{ llm.descricao|default:''|lower }}">
+                                <div class="llm-icon">
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="3" y="4" width="18" height="16" rx="3"/>
+                                        <circle cx="8" cy="10" r="1"/>
+                                        <circle cx="16" cy="10" r="1"/>
+                                        <path d="M8 16h8"/>
+                                    </svg>
+                                </div>
+                                <div class="llm-info">
+                                    <div class="llm-name">{{ llm.nome }}</div>
+                                    <div class="llm-meta">
+                                        <span class="badge badge-provider">{{ llm.descricao|default:"sem provedor" }}</span>
+                                        {% if llm.ativo %}
+                                            <span class="badge badge-state-on">{% translate "Ativa" %}</span>
+                                        {% else %}
+                                            <span class="badge badge-state-off">{% translate "Inativa" %}</span>
+                                        {% endif %}
+                                        <span class="api-key">{{ llm.api_key|slice:":6" }}••••{{ llm.api_key|slice:"-4:" }}</span>
+                                    </div>
+                                </div>
+                                <div class="llm-actions">
+                                    <button class="btn-icon" title="{% if llm.ativo %}{% translate 'Desativar' %}{% else %}{% translate 'Ativar' %}{% endif %}"
+                                            onclick="toggleLLM({{ llm.id }})">
+                                        {% if llm.ativo %}
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                                <rect x="3" y="7" width="18" height="10" rx="5"/>
+                                                <circle cx="16" cy="12" r="3" fill="currentColor"/>
+                                            </svg>
+                                        {% else %}
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                                <rect x="3" y="7" width="18" height="10" rx="5"/>
+                                                <circle cx="8" cy="12" r="3" fill="currentColor"/>
+                                            </svg>
+                                        {% endif %}
+                                    </button>
+                                    <button class="btn-icon" title="{% translate 'Editar' %}"
+                                            onclick="abrirEditar({{ llm.id }}, '{{ llm.nome|escapejs }}', '{{ llm.descricao|default:''|escapejs }}', '{{ llm.api_key|escapejs }}')">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                        </svg>
+                                    </button>
+                                    <button class="btn-icon danger" title="{% translate 'Remover' %}" onclick="deletarLLM({{ llm.id }}, '{{ llm.nome|escapejs }}')">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                            <polyline points="3 6 5 6 21 6"/>
+                                            <path d="M19 6l-1 14H6L5 6"/>
+                                            <path d="M10 11v6M14 11v6"/>
+                                            <path d="M9 6V4h6v2"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <div class="empty-state">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                                    <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
+                                </svg>
+                                <p>{% translate "Nenhuma LLM pública cadastrada." %}<br>{% translate "Clique em" %} <strong>{% translate "Adicionar LLM" %}</strong> {% translate "para cadastrar a primeira." %}</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </section>
+            </main>
         </div>
     </div>
 
@@ -343,35 +387,52 @@
     <div class="modal-overlay" id="modalAdd">
         <div class="modal">
             <div class="modal-header">
-                <div>
-                    <div class="modal-product">Nova configuração</div>
-                    <div class="modal-title">Adicionar LLM Pública</div>
+                <div class="modal-title-wrap">
+                    <span class="modal-product">{% translate "Configuração" %}</span>
+                    <span class="modal-title">{% translate "Adicionar LLM" %}</span>
                 </div>
-                <button class="modal-close" onclick="fecharModal('modalAdd')">✕</button>
+                <button class="modal-close" onclick="fecharModal('modalAdd')" type="button">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M18 6L6 18"></path><path d="M6 6l12 12"></path></svg>
+                </button>
             </div>
             <form method="POST" action="{% url 'admin_pondersec_llms_publicas' %}">
                 {% csrf_token %}
+                <div class="section-kicker" style="margin-bottom: 12px; margin-top: 10px;">{% translate "Dados da Conexão" %}</div>
                 <div class="field-group">
-                    <label class="field-label" for="model">Nome do modelo</label>
-                    <input class="field-input" type="text" id="model" name="model" required placeholder="Ex: gpt-4o-mini">
-                </div>
-                <div class="field-group">
-                    <label class="field-label" for="provider">Provedor</label>
-                    <select class="field-select" id="provider" name="provider" required>
-                        <option value="">Selecione…</option>
-                        <option value="OpenAI">OpenAI (GPT)</option>
-                        <option value="Gemini">Google (Gemini)</option>
-                        <option value="Groq">Groq (Llama / Mixtral)</option>
-                        <option value="DeepSeek">DeepSeek (via NVIDIA)</option>
+                    <label class="field-label" for="provider">{% translate "Provedor" %}</label>
+                    <select class="field-select" id="provider" name="provider" onchange="atualizarModelos('provider', 'model')" required>
+                        <option value="">{% translate "Selecione o provedor" %}</option>
+                        <option value="OpenAI">OpenAI</option>
+                        <option value="Anthropic">Anthropic</option>
+                        <option value="Groq">Groq</option>
+                        <option value="DeepSeek">DeepSeek</option>
+                        <option value="Gemini">Gemini</option>
+                        <option value="Local">Local</option>
                     </select>
                 </div>
                 <div class="field-group">
-                    <label class="field-label" for="apiKey">API Key</label>
-                    <input class="field-input" type="password" id="apiKey" name="apiKey" required placeholder="sk-..." autocomplete="off">
+                    <label class="field-label" for="model">{% translate "Modelo" %}</label>
+                    <select class="field-select" id="model" name="model" required>
+                        <option value="">{% translate "Selecione um provedor primeiro" %}</option>
+                    </select>
+                </div>
+                <div class="field-group">
+                    <label class="field-label" for="apiKey">{% translate "API Key" %}</label>
+                    <div class="password-container">
+                        <input class="field-input" type="password" id="apiKey" name="apiKey" required placeholder="{% translate 'Cole sua chave aqui...' %}" autocomplete="off">
+                        <button type="button" class="btn-toggle-password" onclick="togglePassword('apiKey', this)">
+                            <svg class="eye-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                        </button>
+                    </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn-modal-cancel" onclick="fecharModal('modalAdd')">Cancelar</button>
-                    <button type="submit" class="btn-modal-save">Salvar</button>
+                    <button type="button" class="btn btn-ghost" onclick="fecharModal('modalAdd')">{% translate "Cancelar" %}</button>
+                    <button type="submit" class="btn btn-primary">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                            <path d="M12 5v14M5 12h14"/>
+                        </svg>
+                        {% translate "Adicionar Modelo" %}
+                    </button>
                 </div>
             </form>
         </div>
@@ -381,29 +442,52 @@
     <div class="modal-overlay" id="modalEdit">
         <div class="modal">
             <div class="modal-header">
-                <div>
-                    <div class="modal-product">Editar configuração</div>
-                    <div class="modal-title">Editar LLM Pública</div>
+                <div class="modal-title-wrap">
+                    <span class="modal-product">{% translate "Configuração" %}</span>
+                    <span class="modal-title">{% translate "Editar LLM Pública" %}</span>
                 </div>
-                <button class="modal-close" onclick="fecharModal('modalEdit')">✕</button>
+                <button class="modal-close" onclick="fecharModal('modalEdit')" type="button">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M18 6L6 18"></path><path d="M6 6l12 12"></path></svg>
+                </button>
             </div>
             <form id="formEdit" onsubmit="salvarEdicao(event)">
                 <input type="hidden" id="editId">
+                <div class="section-kicker" style="margin-bottom: 12px; margin-top: 10px;">{% translate "Dados da Conexão" %}</div>
                 <div class="field-group">
-                    <label class="field-label" for="editNome">Nome do modelo</label>
-                    <input class="field-input" type="text" id="editNome" required>
+                    <label class="field-label" for="editProvider">{% translate "Provedor" %}</label>
+                    <select class="field-select" id="editProvider" required onchange="atualizarModelos('editProvider', 'editNome')">
+                        <option value="">{% translate "Selecione o provedor" %}</option>
+                        <option value="OpenAI">OpenAI</option>
+                        <option value="Anthropic">Anthropic</option>
+                        <option value="Groq">Groq</option>
+                        <option value="DeepSeek">DeepSeek</option>
+                        <option value="Gemini">Gemini</option>
+                        <option value="Local">Local</option>
+                    </select>
                 </div>
                 <div class="field-group">
-                    <label class="field-label" for="editDescricao">Provedor</label>
-                    <input class="field-input" type="text" id="editDescricao">
+                    <label class="field-label" for="editNome">{% translate "Modelo" %}</label>
+                    <select class="field-select" id="editNome" required>
+                        <option value="">{% translate "Selecione um provedor primeiro" %}</option>
+                    </select>
                 </div>
                 <div class="field-group">
-                    <label class="field-label" for="editApiKey">API Key</label>
-                    <input class="field-input" type="password" id="editApiKey" required autocomplete="off">
+                    <label class="field-label" for="editApiKey">{% translate "API Key" %}</label>
+                    <div class="password-container">
+                        <input class="field-input" type="password" id="editApiKey" required placeholder="{% translate 'Cole sua chave aqui...' %}" autocomplete="off">
+                        <button type="button" class="btn-toggle-password" onclick="togglePassword('editApiKey', this)">
+                            <svg class="eye-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                        </button>
+                    </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn-modal-cancel" onclick="fecharModal('modalEdit')">Cancelar</button>
-                    <button type="submit" class="btn-modal-save">Salvar alterações</button>
+                    <button type="button" class="btn btn-ghost" onclick="fecharModal('modalEdit')">{% translate "Cancelar" %}</button>
+                    <button type="submit" class="btn btn-primary">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                        {% translate "Salvar alterações" %}
+                    </button>
                 </div>
             </form>
         </div>
@@ -413,6 +497,77 @@
         const URL_EDITAR = (id) => `/admin-pondersec/llms-publicas/${id}/editar/`;
         const URL_DELETAR = (id) => `/admin-pondersec/llms-publicas/${id}/deletar/`;
         const URL_TOGGLE = (id) => `/admin-pondersec/llms-publicas/${id}/toggle/`;
+
+        const modelosPorProvedor = {
+            "OpenAI": [
+                { value: "gpt-4o-mini", label: "GPT-4o Mini" },
+                { value: "gpt-4o", label: "GPT-4o" }
+            ],
+            "Anthropic": [
+                { value: "claude-3-5-sonnet-20240620", label: "Claude 3.5 Sonnet" },
+                { value: "claude-3-haiku-20240307", label: "Claude 3 Haiku" }
+            ],
+            "Groq": [
+                { value: "llama-3.3-70b-versatile", label: "Llama 3.3 70B (Versatile)" },
+                { value: "mixtral-8x7b-32768", label: "Mixtral 8x7B" }
+            ],
+            "Gemini": [
+                { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash" },
+                { value: "gemini-1.5-pro", label: "Gemini 1.5 Pro" }
+            ],
+            "DeepSeek": [
+                { value: "deepseek-v4-pro", label: "DeepSeek V4 Pro" },
+                { value: "deepseek-v4-flash", label: "DeepSeek V4 Flash" },
+                { value: "deepseek-v3", label: "DeepSeek V3" },
+                { value: "deepseek-reasoner", label: "DeepSeek Reasoner" }
+            ],
+            "Local": [
+                { value: "llama3", label: "Ollama (Llama 3)" }
+            ]
+        };
+
+        const eyeOpenSVG = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
+        const eyeClosedSVG = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`;
+
+        function togglePassword(inputId, btnElement) {
+            const input = document.getElementById(inputId);
+            if (input.type === "password") {
+                input.type = "text";
+                btnElement.innerHTML = eyeOpenSVG;
+                btnElement.style.color = "var(--accent-bright)";
+            } else {
+                input.type = "password";
+                btnElement.innerHTML = eyeClosedSVG;
+                btnElement.style.color = "var(--muted)";
+            }
+        }
+
+        function atualizarModelos(providerSelectId, modelSelectId) {
+            const provedorSelecionado = document.getElementById(providerSelectId).value;
+            const modelSelect = document.getElementById(modelSelectId);
+            modelSelect.innerHTML = "";
+            
+            if (provedorSelecionado && modelosPorProvedor[provedorSelecionado]) {
+                modelosPorProvedor[provedorSelecionado].forEach(modelo => {
+                    const option = document.createElement("option");
+                    option.value = modelo.value;
+                    option.textContent = modelo.label;
+                    modelSelect.appendChild(option);
+                });
+            } else {
+                const option = document.createElement("option");
+                option.value = "";
+                option.textContent = "{% translate 'Selecione um provedor primeiro' %}";
+                modelSelect.appendChild(option);
+            }
+        }
+
+        function descobrirProvedorPorModelo(modeloValor) {
+            for (const [provedor, modelos] of Object.entries(modelosPorProvedor)) {
+                if (modelos.some(m => m.value === modeloValor)) return provedor;
+            }
+            return "";
+        }
 
         function csrfToken() {
             const el = document.querySelector('[name=csrfmiddlewaretoken]');
@@ -433,8 +588,22 @@
             setTimeout(() => t.remove(), 3500);
         }
 
-        function abrirModal(id) { document.getElementById(id).classList.add('open'); }
-        function fecharModal(id) { document.getElementById(id).classList.remove('open'); }
+        function abrirModal(id) { document.getElementById(id).classList.add('active'); }
+        function fecharModal(id) { document.getElementById(id).classList.remove('active'); }
+
+        function abrirModalAdd() {
+            document.getElementById('model').innerHTML = '<option value="">{% translate "Selecione um provedor primeiro" %}</option>';
+            document.getElementById('provider').value = '';
+            document.getElementById('apiKey').value = '';
+            abrirModal('modalAdd');
+        }
+
+        // Fechar modais clicando fora
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', function(e) {
+                if (e.target === this) this.classList.remove("active");
+            });
+        });
 
         function filterLLMs() {
             const q = document.getElementById('searchInput').value.toLowerCase();
@@ -445,9 +614,21 @@
 
         function abrirEditar(id, nome, descricao, apiKey) {
             document.getElementById('editId').value = id;
-            document.getElementById('editNome').value = nome;
-            document.getElementById('editDescricao').value = descricao;
             document.getElementById('editApiKey').value = apiKey;
+            
+            let provedor = descricao;
+            if (!provedor || !modelosPorProvedor[provedor]) {
+                provedor = descobrirProvedorPorModelo(nome);
+            }
+            
+            const providerSelect = document.getElementById('editProvider');
+            providerSelect.value = provedor;
+            
+            atualizarModelos('editProvider', 'editNome');
+            
+            const modelSelect = document.getElementById('editNome');
+            modelSelect.value = nome;
+
             abrirModal('modalEdit');
         }
 
@@ -456,7 +637,7 @@
             const id = document.getElementById('editId').value;
             const payload = {
                 nome: document.getElementById('editNome').value.trim(),
-                descricao: document.getElementById('editDescricao').value.trim(),
+                descricao: document.getElementById('editProvider').value.trim(),
                 api_key: document.getElementById('editApiKey').value.trim(),
             };
             try {
@@ -466,9 +647,9 @@
                     body: JSON.stringify(payload),
                 });
                 const data = await resp.json();
-                if (!resp.ok || data.status !== 'ok') throw new Error(data.mensagem || 'Falha ao salvar.');
+                if (!resp.ok || data.status !== 'ok') throw new Error(data.mensagem || '{% translate "Falha ao salvar." %}');
                 fecharModal('modalEdit');
-                toast('LLM atualizada.');
+                toast('{% translate "LLM atualizada." %}');
                 setTimeout(() => location.reload(), 600);
             } catch (e) {
                 toast(e.message, 'error');
@@ -476,15 +657,15 @@
         }
 
         async function deletarLLM(id, nome) {
-            if (!confirm(`Remover a LLM "${nome}"?`)) return;
+            if (!confirm(`{% translate "Remover a LLM" %} "${nome}"?`)) return;
             try {
                 const resp = await fetch(URL_DELETAR(id), {
                     method: 'DELETE',
                     headers: { 'X-CSRFToken': csrfToken(), 'X-Requested-With': 'XMLHttpRequest' },
                 });
                 const data = await resp.json();
-                if (!resp.ok || data.status !== 'ok') throw new Error(data.mensagem || 'Falha ao remover.');
-                toast('LLM removida.');
+                if (!resp.ok || data.status !== 'ok') throw new Error(data.mensagem || '{% translate "Falha ao remover." %}');
+                toast('{% translate "LLM removida." %}');
                 setTimeout(() => location.reload(), 600);
             } catch (e) {
                 toast(e.message, 'error');
@@ -498,8 +679,8 @@
                     headers: { 'X-CSRFToken': csrfToken(), 'X-Requested-With': 'XMLHttpRequest' },
                 });
                 const data = await resp.json();
-                if (!resp.ok || data.status !== 'ok') throw new Error(data.mensagem || 'Falha ao alternar.');
-                toast(data.ativo ? 'LLM ativada.' : 'LLM desativada.');
+                if (!resp.ok || data.status !== 'ok') throw new Error(data.mensagem || '{% translate "Falha ao alternar." %}');
+                toast(data.ativo ? '{% translate "LLM ativada." %}' : '{% translate "LLM desativada." %}');
                 setTimeout(() => location.reload(), 500);
             } catch (e) {
                 toast(e.message, 'error');
