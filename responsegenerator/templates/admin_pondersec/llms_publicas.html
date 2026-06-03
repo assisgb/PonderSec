@@ -1,0 +1,515 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PonderSEC — LLMs Públicas</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: "Space Grotesk", system-ui, sans-serif;
+            background: radial-gradient(circle at top, #0b0510 0, #06020b 45%, #000000 100%);
+            color: #e5fef6;
+            min-height: 100vh;
+            padding: 22px;
+        }
+        .background-grid {
+            position: fixed; inset: 0;
+            background-image:
+                linear-gradient(90deg, rgba(187, 134, 252, 0.05) 1px, transparent 1px),
+                linear-gradient(180deg, rgba(187, 134, 252, 0.05) 1px, transparent 1px);
+            background-size: 40px 40px; opacity: 0.4; pointer-events: none; z-index: 0;
+        }
+        .container { position: relative; width: 100%; max-width: 1100px; margin: 18px auto; z-index: 2; }
+
+        .header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 24px; padding: 24px 28px;
+            background: radial-gradient(circle at top, #14091d 0, #07030c 55%, #020509 100%);
+            border: 1px solid rgba(187, 134, 252, 0.2);
+            border-radius: 16px;
+        }
+        .header-left { display: flex; align-items: center; gap: 16px; }
+        .header-left img { width: 50px; border-radius: 10px; filter: drop-shadow(0 0 10px rgba(187,134,252,0.5)); }
+        .badge-admin {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 3px 9px;
+            background: rgba(187, 134, 252, 0.12);
+            border: 1px solid rgba(187, 134, 252, 0.35);
+            border-radius: 999px;
+            font-size: 10px; font-weight: 700; color: #bb86fc;
+            text-transform: uppercase; letter-spacing: 0.18em;
+        }
+        .badge-admin::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: #bb86fc; box-shadow: 0 0 6px #bb86fc; }
+        .page-title { color: #d9b8ff; font-size: 20px; font-weight: 700; margin-top: 4px; }
+        .page-sub  { color: #8b7d9b; font-size: 13px; margin-top: 4px; }
+
+        .header-actions { display: flex; gap: 8px; align-items: center; }
+        .btn {
+            display: inline-flex; align-items: center; gap: 7px;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font: 700 12px/1 "Space Grotesk", system-ui, sans-serif;
+            text-transform: uppercase; letter-spacing: 0.08em;
+            text-decoration: none; cursor: pointer; border: 1px solid; transition: all 0.2s;
+        }
+        .btn-back   { background: rgba(187,134,252,0.08); border-color: rgba(187,134,252,0.3); color: #bb86fc; }
+        .btn-back:hover { background: rgba(187,134,252,0.16); border-color: #bb86fc; }
+        .btn-logout { background: rgba(255,80,54,0.08); border-color: rgba(255,80,54,0.3); color: #ff8a78; }
+        .btn-logout:hover { background: rgba(255,80,54,0.15); border-color: #ff8a78; }
+
+        #toast-container { position: fixed; top: 30px; right: 30px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+        .toast {
+            padding: 14px 22px; border-radius: 10px;
+            font-size: 13px; font-weight: 600;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.5); backdrop-filter: blur(5px);
+        }
+        .toast.success { background: rgba(0,255,160,0.15); border: 1px solid #00ff9f; color: #00ff9f; }
+        .toast.error   { background: rgba(255,80,54,0.15);  border: 1px solid #f55036; color: #f55036; }
+
+        .toolbar {
+            display: flex; gap: 12px; align-items: center; justify-content: space-between;
+            margin-bottom: 18px; flex-wrap: wrap;
+        }
+        .search-bar {
+            flex: 1; min-width: 240px;
+            display: flex; align-items: center; gap: 8px;
+            padding: 10px 14px;
+            background: rgba(20, 9, 29, 0.7);
+            border: 1px solid rgba(187, 134, 252, 0.16);
+            border-radius: 10px;
+        }
+        .search-bar input {
+            flex: 1; background: transparent; border: none; outline: none;
+            color: #e5fef6; font-family: inherit; font-size: 13px;
+        }
+        .btn-add {
+            padding: 10px 18px;
+            background: linear-gradient(135deg, #bb86fc 0%, #9264e6 100%);
+            border: none; border-radius: 10px;
+            color: #0c0518; font-weight: 700;
+            font-family: inherit; font-size: 12px;
+            text-transform: uppercase; letter-spacing: 0.08em;
+            cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn-add:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(187,134,252,0.35); }
+
+        .section-label {
+            font-size: 10px; color: #bb86fc; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.25em;
+            margin-bottom: 14px; display: flex; align-items: center; gap: 12px;
+        }
+        .section-label::after {
+            content: ''; flex: 1; height: 1px;
+            background: linear-gradient(to right, rgba(187,134,252,0.18), transparent);
+        }
+
+        .llm-list { display: grid; gap: 10px; }
+        .llm-card {
+            display: flex; align-items: center; gap: 16px;
+            padding: 16px 22px;
+            background: linear-gradient(135deg, rgba(20,9,29,0.9) 0%, rgba(7,3,12,0.95) 100%);
+            border: 1px solid rgba(187, 134, 252, 0.14);
+            border-radius: 12px;
+        }
+        .llm-card.inactive { opacity: 0.55; }
+        .llm-icon {
+            width: 42px; height: 42px;
+            background: rgba(187,134,252,0.1);
+            border: 1px solid rgba(187,134,252,0.3);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .llm-info { flex: 1; min-width: 0; }
+        .llm-name { color: #e5fef6; font-size: 15px; font-weight: 700; }
+        .llm-meta { color: #8b7d9b; font-size: 12px; margin-top: 4px; display: flex; gap: 10px; flex-wrap: wrap; }
+        .badge-provider { padding: 2px 8px; background: rgba(0,207,255,0.1); border: 1px solid rgba(0,207,255,0.3); color: #00cfff; border-radius: 999px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+        .badge-state-on  { padding: 2px 8px; background: rgba(0,255,160,0.1); border: 1px solid rgba(0,255,160,0.3); color: #00ff9f; border-radius: 999px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+        .badge-state-off { padding: 2px 8px; background: rgba(107,123,141,0.1); border: 1px solid rgba(107,123,141,0.3); color: #8b7d9b; border-radius: 999px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+        .api-key { font-family: monospace; color: #6b7b8d; font-size: 11px; }
+
+        .llm-actions { display: flex; gap: 8px; }
+        .btn-icon {
+            width: 36px; height: 36px;
+            background: transparent;
+            border: 1px solid rgba(187,134,252,0.2);
+            border-radius: 8px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            color: #bb86fc; transition: all 0.2s;
+        }
+        .btn-icon:hover { background: rgba(187,134,252,0.12); border-color: #bb86fc; }
+        .btn-icon.danger { color: #ff8a78; border-color: rgba(255,80,54,0.25); }
+        .btn-icon.danger:hover { background: rgba(255,80,54,0.12); border-color: #ff8a78; }
+
+        .empty-state {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 60px 20px;
+            background: rgba(20,9,29,0.5);
+            border: 1px dashed rgba(187,134,252,0.2);
+            border-radius: 14px;
+        }
+        .empty-state .icon { font-size: 42px; margin-bottom: 14px; opacity: 0.6; }
+        .empty-state p { color: #8b7d9b; font-size: 14px; text-align: center; }
+
+        /* MODAL */
+        .modal-overlay {
+            display: none;
+            position: fixed; inset: 0; z-index: 9000;
+            background: rgba(2,4,9,0.85);
+            backdrop-filter: blur(6px);
+            align-items: center; justify-content: center;
+            padding: 20px;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal {
+            background: radial-gradient(circle at top, #14091d 0, #07030c 60%, #020509 100%);
+            border: 1px solid rgba(187,134,252,0.3);
+            border-radius: 16px;
+            padding: 28px 32px;
+            width: 100%; max-width: 480px;
+            box-shadow: 0 12px 60px rgba(0,0,0,0.9), 0 0 30px rgba(187,134,252,0.18);
+        }
+        .modal-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 22px; padding-bottom: 18px;
+            border-bottom: 1px solid rgba(187,134,252,0.12);
+        }
+        .modal-title { color: #d9b8ff; font-size: 18px; font-weight: 700; }
+        .modal-product { color: #bb86fc; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.18em; }
+        .modal-close {
+            background: transparent; border: none; color: #8b7d9b;
+            font-size: 20px; cursor: pointer; line-height: 1;
+        }
+        .modal-close:hover { color: #ff8a78; }
+
+        .field-group { margin-bottom: 16px; }
+        .field-label { display: block; font-size: 11px; color: #d9b8ff; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 6px; }
+        .field-input, .field-select {
+            width: 100%; padding: 11px 14px;
+            background: rgba(0,0,0,0.35);
+            border: 1px solid rgba(187,134,252,0.2);
+            border-radius: 10px;
+            color: #e5fef6; font-family: inherit; font-size: 13px;
+            transition: border-color 0.2s;
+        }
+        .field-input:focus, .field-select:focus { outline: none; border-color: #bb86fc; }
+
+        .modal-footer {
+            display: flex; justify-content: flex-end; gap: 10px;
+            margin-top: 24px;
+        }
+        .btn-modal-cancel {
+            padding: 11px 18px;
+            background: transparent;
+            border: 1px solid rgba(139, 125, 155, 0.4);
+            border-radius: 10px;
+            color: #8b7d9b; cursor: pointer;
+            font-family: inherit; font-size: 12px; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 0.08em;
+        }
+        .btn-modal-cancel:hover { color: #e5fef6; border-color: #8b7d9b; }
+        .btn-modal-save {
+            padding: 11px 18px;
+            background: linear-gradient(135deg, #bb86fc 0%, #9264e6 100%);
+            border: none; border-radius: 10px;
+            color: #0c0518; cursor: pointer;
+            font-family: inherit; font-size: 12px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.08em;
+        }
+        .btn-modal-save:hover { transform: translateY(-1px); box-shadow: 0 4px 18px rgba(187,134,252,0.4); }
+
+        @media (max-width: 720px) {
+            .header { flex-direction: column; gap: 16px; align-items: flex-start; }
+            .header-actions { width: 100%; flex-wrap: wrap; }
+            .llm-card { flex-direction: column; align-items: stretch; gap: 12px; }
+            .llm-actions { justify-content: flex-end; }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-grid"></div>
+
+    <div class="container">
+        <div class="header">
+            <div class="header-left">
+                <img src="{% static 'pondersec_logo.jpg' %}" alt="PonderSEC">
+                <div>
+                    <div class="badge-admin">Painel Admin</div>
+                    <div class="page-title">LLMs Públicas</div>
+                    <div class="page-sub">Estas API keys são usadas pelo chat público da página inicial.</div>
+                </div>
+            </div>
+            <div class="header-actions">
+                <a class="btn btn-back" href="{% url 'admin_pondersec_home' %}">← Voltar</a>
+                <a class="btn btn-logout" href="{% url 'admin_pondersec_logout' %}">Sair</a>
+            </div>
+        </div>
+
+        {% if messages %}
+            <div id="toast-container">
+            {% for message in messages %}
+                <div class="toast {% if message.tags == 'error' %}error{% else %}success{% endif %}">{{ message }}</div>
+            {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="toolbar">
+            <div class="search-bar">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#bb86fc" stroke-width="2" stroke-linecap="round">
+                    <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+                </svg>
+                <input type="text" id="searchInput" placeholder="Buscar modelo..." onkeyup="filterLLMs()">
+            </div>
+            <button class="btn-add" onclick="abrirModal('modalAdd')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                    <path d="M12 5v14M5 12h14"/>
+                </svg>
+                Adicionar LLM
+            </button>
+        </div>
+
+        <div class="section-label">LLMs configuradas</div>
+
+        <div class="llm-list" id="llmList">
+            {% for llm in llms %}
+                <div class="llm-card {% if not llm.ativo %}inactive{% endif %}" data-search="{{ llm.nome|lower }} {{ llm.descricao|default:''|lower }}">
+                    <div class="llm-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#bb86fc" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="4" width="18" height="16" rx="3"/>
+                            <circle cx="8" cy="10" r="1"/>
+                            <circle cx="16" cy="10" r="1"/>
+                            <path d="M8 16h8"/>
+                        </svg>
+                    </div>
+                    <div class="llm-info">
+                        <div class="llm-name">{{ llm.nome }}</div>
+                        <div class="llm-meta">
+                            <span class="badge-provider">{{ llm.descricao|default:"sem provedor" }}</span>
+                            {% if llm.ativo %}
+                                <span class="badge-state-on">Ativa</span>
+                            {% else %}
+                                <span class="badge-state-off">Inativa</span>
+                            {% endif %}
+                            <span class="api-key">{{ llm.api_key|slice:":6" }}••••{{ llm.api_key|slice:"-4:" }}</span>
+                        </div>
+                    </div>
+                    <div class="llm-actions">
+                        <button class="btn-icon" title="{% if llm.ativo %}Desativar{% else %}Ativar{% endif %}"
+                                onclick="toggleLLM({{ llm.id }})">
+                            {% if llm.ativo %}
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                    <rect x="3" y="7" width="18" height="10" rx="5"/>
+                                    <circle cx="16" cy="12" r="3" fill="currentColor"/>
+                                </svg>
+                            {% else %}
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                    <rect x="3" y="7" width="18" height="10" rx="5"/>
+                                    <circle cx="8" cy="12" r="3" fill="currentColor"/>
+                                </svg>
+                            {% endif %}
+                        </button>
+                        <button class="btn-icon" title="Editar"
+                                onclick="abrirEditar({{ llm.id }}, '{{ llm.nome|escapejs }}', '{{ llm.descricao|default:''|escapejs }}', '{{ llm.api_key|escapejs }}')">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                            </svg>
+                        </button>
+                        <button class="btn-icon danger" title="Remover" onclick="deletarLLM({{ llm.id }}, '{{ llm.nome|escapejs }}')">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                <polyline points="3 6 5 6 21 6"/>
+                                <path d="M19 6l-1 14H6L5 6"/>
+                                <path d="M10 11v6M14 11v6"/>
+                                <path d="M9 6V4h6v2"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="empty-state">
+                    <div class="icon">🔑</div>
+                    <p>Nenhuma LLM pública cadastrada. Clique em <strong>Adicionar LLM</strong> para cadastrar a primeira.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- MODAL: Adicionar -->
+    <div class="modal-overlay" id="modalAdd">
+        <div class="modal">
+            <div class="modal-header">
+                <div>
+                    <div class="modal-product">Nova configuração</div>
+                    <div class="modal-title">Adicionar LLM Pública</div>
+                </div>
+                <button class="modal-close" onclick="fecharModal('modalAdd')">✕</button>
+            </div>
+            <form method="POST" action="{% url 'admin_pondersec_llms_publicas' %}">
+                {% csrf_token %}
+                <div class="field-group">
+                    <label class="field-label" for="model">Nome do modelo</label>
+                    <input class="field-input" type="text" id="model" name="model" required placeholder="Ex: gpt-4o-mini">
+                </div>
+                <div class="field-group">
+                    <label class="field-label" for="provider">Provedor</label>
+                    <select class="field-select" id="provider" name="provider" required>
+                        <option value="">Selecione…</option>
+                        <option value="OpenAI">OpenAI (GPT)</option>
+                        <option value="Gemini">Google (Gemini)</option>
+                        <option value="Groq">Groq (Llama / Mixtral)</option>
+                        <option value="DeepSeek">DeepSeek (via NVIDIA)</option>
+                    </select>
+                </div>
+                <div class="field-group">
+                    <label class="field-label" for="apiKey">API Key</label>
+                    <input class="field-input" type="password" id="apiKey" name="apiKey" required placeholder="sk-..." autocomplete="off">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-modal-cancel" onclick="fecharModal('modalAdd')">Cancelar</button>
+                    <button type="submit" class="btn-modal-save">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Editar -->
+    <div class="modal-overlay" id="modalEdit">
+        <div class="modal">
+            <div class="modal-header">
+                <div>
+                    <div class="modal-product">Editar configuração</div>
+                    <div class="modal-title">Editar LLM Pública</div>
+                </div>
+                <button class="modal-close" onclick="fecharModal('modalEdit')">✕</button>
+            </div>
+            <form id="formEdit" onsubmit="salvarEdicao(event)">
+                <input type="hidden" id="editId">
+                <div class="field-group">
+                    <label class="field-label" for="editNome">Nome do modelo</label>
+                    <input class="field-input" type="text" id="editNome" required>
+                </div>
+                <div class="field-group">
+                    <label class="field-label" for="editDescricao">Provedor</label>
+                    <input class="field-input" type="text" id="editDescricao">
+                </div>
+                <div class="field-group">
+                    <label class="field-label" for="editApiKey">API Key</label>
+                    <input class="field-input" type="password" id="editApiKey" required autocomplete="off">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-modal-cancel" onclick="fecharModal('modalEdit')">Cancelar</button>
+                    <button type="submit" class="btn-modal-save">Salvar alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const URL_EDITAR = (id) => `/admin-pondersec/llms-publicas/${id}/editar/`;
+        const URL_DELETAR = (id) => `/admin-pondersec/llms-publicas/${id}/deletar/`;
+        const URL_TOGGLE = (id) => `/admin-pondersec/llms-publicas/${id}/toggle/`;
+
+        function csrfToken() {
+            const el = document.querySelector('[name=csrfmiddlewaretoken]');
+            return el ? el.value : '';
+        }
+
+        function toast(msg, type = 'success') {
+            let container = document.getElementById('toast-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'toast-container';
+                document.body.appendChild(container);
+            }
+            const t = document.createElement('div');
+            t.className = 'toast ' + type;
+            t.textContent = msg;
+            container.appendChild(t);
+            setTimeout(() => t.remove(), 3500);
+        }
+
+        function abrirModal(id) { document.getElementById(id).classList.add('open'); }
+        function fecharModal(id) { document.getElementById(id).classList.remove('open'); }
+
+        function filterLLMs() {
+            const q = document.getElementById('searchInput').value.toLowerCase();
+            document.querySelectorAll('.llm-card').forEach(c => {
+                c.style.display = c.dataset.search.includes(q) ? '' : 'none';
+            });
+        }
+
+        function abrirEditar(id, nome, descricao, apiKey) {
+            document.getElementById('editId').value = id;
+            document.getElementById('editNome').value = nome;
+            document.getElementById('editDescricao').value = descricao;
+            document.getElementById('editApiKey').value = apiKey;
+            abrirModal('modalEdit');
+        }
+
+        async function salvarEdicao(ev) {
+            ev.preventDefault();
+            const id = document.getElementById('editId').value;
+            const payload = {
+                nome: document.getElementById('editNome').value.trim(),
+                descricao: document.getElementById('editDescricao').value.trim(),
+                api_key: document.getElementById('editApiKey').value.trim(),
+            };
+            try {
+                const resp = await fetch(URL_EDITAR(id), {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken(), 'X-Requested-With': 'XMLHttpRequest' },
+                    body: JSON.stringify(payload),
+                });
+                const data = await resp.json();
+                if (!resp.ok || data.status !== 'ok') throw new Error(data.mensagem || 'Falha ao salvar.');
+                fecharModal('modalEdit');
+                toast('LLM atualizada.');
+                setTimeout(() => location.reload(), 600);
+            } catch (e) {
+                toast(e.message, 'error');
+            }
+        }
+
+        async function deletarLLM(id, nome) {
+            if (!confirm(`Remover a LLM "${nome}"?`)) return;
+            try {
+                const resp = await fetch(URL_DELETAR(id), {
+                    method: 'DELETE',
+                    headers: { 'X-CSRFToken': csrfToken(), 'X-Requested-With': 'XMLHttpRequest' },
+                });
+                const data = await resp.json();
+                if (!resp.ok || data.status !== 'ok') throw new Error(data.mensagem || 'Falha ao remover.');
+                toast('LLM removida.');
+                setTimeout(() => location.reload(), 600);
+            } catch (e) {
+                toast(e.message, 'error');
+            }
+        }
+
+        async function toggleLLM(id) {
+            try {
+                const resp = await fetch(URL_TOGGLE(id), {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': csrfToken(), 'X-Requested-With': 'XMLHttpRequest' },
+                });
+                const data = await resp.json();
+                if (!resp.ok || data.status !== 'ok') throw new Error(data.mensagem || 'Falha ao alternar.');
+                toast(data.ativo ? 'LLM ativada.' : 'LLM desativada.');
+                setTimeout(() => location.reload(), 500);
+            } catch (e) {
+                toast(e.message, 'error');
+            }
+        }
+
+        // Auto-dismiss server toasts
+        document.querySelectorAll('#toast-container .toast').forEach(t => {
+            setTimeout(() => t.remove(), 3500);
+        });
+    </script>
+</body>
+</html>

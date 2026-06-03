@@ -233,6 +233,54 @@
             color: #00ff9f;
             text-decoration: none;
         }
+
+        /* SELETOR DE PAPEL (Pesquisador / Administrador) */
+        .role-switcher {
+            display: flex;
+            gap: 4px;
+            padding: 5px;
+            margin: 8px 0 22px;
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid rgba(0, 255, 160, 0.15);
+            border-radius: 12px;
+        }
+        .role-btn {
+            flex: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            padding: 9px 12px;
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            font: 700 11px/1 "Space Grotesk", system-ui, sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #6b7b8d;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .role-btn:hover {
+            color: #7df6c2;
+            background: rgba(0, 255, 160, 0.05);
+        }
+        .role-btn.active {
+            background: rgba(0, 255, 160, 0.16);
+            border-color: rgba(0, 255, 160, 0.45);
+            color: #00ff9f;
+            box-shadow: 0 0 12px rgba(0, 255, 160, 0.15);
+            pointer-events: none;
+        }
+        .role-btn[data-role="admin"]:hover {
+            color: #d9b8ff;
+            background: rgba(187, 134, 252, 0.06);
+        }
+        .role-btn .role-dot {
+            width: 7px; height: 7px; border-radius: 50%;
+            background: currentColor; opacity: 0.7;
+        }
     </style>
 </head>
 
@@ -252,6 +300,15 @@
         <div class="product-name">PONDERSEC</div>
         <div class="headline">{% translate "Entrar" %}</div>
         <div class="subtitle">{% blocktranslate %}Bem-vindo! Por favor, <span>faça login</span> para continuar.{% endblocktranslate %}</div>
+
+        <div class="role-switcher" role="tablist" aria-label="{% translate 'Tipo de acesso' %}">
+            <span class="role-btn active" role="tab" aria-selected="true">
+                <span class="role-dot"></span> {% translate "Pesquisador" %}
+            </span>
+            <a class="role-btn" data-role="admin" role="tab" href="{% url 'admin_pondersec_login' %}">
+                <span class="role-dot"></span> {% translate "Administrador" %}
+            </a>
+        </div>
 
         {% if error %}
             <div style="background: rgba(255, 80, 54, 0.1); border: 1px solid #f55036; color: #f55036; padding: 10px; border-radius: 8px; text-align: center; font-size: 13px; margin-bottom: 15px;">

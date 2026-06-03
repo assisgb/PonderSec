@@ -1,0 +1,205 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PonderSEC — Painel Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: "Space Grotesk", system-ui, sans-serif;
+            background: radial-gradient(circle at top, #0b0510 0, #06020b 45%, #000000 100%);
+            color: #e5fef6;
+            min-height: 100vh;
+            padding: 22px;
+        }
+
+        .background-grid {
+            position: fixed; inset: 0;
+            background-image:
+                linear-gradient(90deg, rgba(187, 134, 252, 0.05) 1px, transparent 1px),
+                linear-gradient(180deg, rgba(187, 134, 252, 0.05) 1px, transparent 1px);
+            background-size: 40px 40px; opacity: 0.4; pointer-events: none; z-index: 0;
+        }
+        .glow-orb {
+            position: fixed; width: 500px; height: 500px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(187, 134, 252, 0.22), transparent 70%);
+            top: -10%; right: -5%; filter: blur(80px); opacity: 0.65; pointer-events: none; z-index: 0;
+        }
+
+        .container {
+            position: relative; width: 100%; max-width: 1100px; margin: 18px auto;
+            z-index: 2;
+        }
+
+        .header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 28px; padding: 26px 32px;
+            background: radial-gradient(circle at top, #14091d 0, #07030c 55%, #020509 100%);
+            border: 1px solid rgba(187, 134, 252, 0.2);
+            border-radius: 16px;
+        }
+        .header-left { display: flex; align-items: center; gap: 18px; }
+        .header-left img {
+            width: 56px; border-radius: 10px;
+            filter: drop-shadow(0 0 10px rgba(187, 134, 252, 0.55));
+        }
+        .badge-admin {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 3px 9px;
+            background: rgba(187, 134, 252, 0.12);
+            border: 1px solid rgba(187, 134, 252, 0.35);
+            border-radius: 999px;
+            font-size: 10px; font-weight: 700; color: #bb86fc;
+            text-transform: uppercase; letter-spacing: 0.18em;
+        }
+        .badge-admin::before {
+            content: ''; width: 5px; height: 5px; border-radius: 50%;
+            background: #bb86fc; box-shadow: 0 0 6px #bb86fc;
+        }
+        .page-title { color: #d9b8ff; font-size: 22px; font-weight: 700; margin-top: 4px; }
+        .page-sub  { color: #8b7d9b; font-size: 13px; margin-top: 4px; }
+
+        .user-block {
+            display: flex; flex-direction: column; align-items: flex-end; gap: 8px;
+        }
+        .user-block .who { color: #d9b8ff; font-size: 13px; font-weight: 600; }
+        .user-block .when { color: #6b7b8d; font-size: 11px; }
+        .btn-logout {
+            padding: 9px 18px;
+            background: rgba(255, 80, 54, 0.08);
+            border: 1px solid rgba(255, 80, 54, 0.3);
+            border-radius: 8px;
+            color: #ff8a78; font-size: 12px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.08em;
+            text-decoration: none;
+            transition: all 0.2s;
+            display: inline-flex; align-items: center; gap: 6px;
+        }
+        .btn-logout:hover { background: rgba(255,80,54,0.15); border-color: #ff8a78; }
+
+        .stats-row {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 14px; margin-bottom: 26px;
+        }
+        .stat-card {
+            padding: 22px 26px;
+            background: rgba(20, 9, 29, 0.7);
+            border: 1px solid rgba(187, 134, 252, 0.16);
+            border-radius: 12px;
+        }
+        .stat-label {
+            font-size: 11px; font-weight: 700; color: #bb86fc;
+            text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 8px;
+        }
+        .stat-value { font-size: 32px; font-weight: 700; color: #e5fef6; }
+        .stat-sub { font-size: 12px; color: #8b7d9b; margin-top: 4px; }
+
+        .section-label {
+            font-size: 10px; color: #bb86fc; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.25em;
+            margin-bottom: 14px; display: flex; align-items: center; gap: 12px;
+        }
+        .section-label::after {
+            content: ''; flex: 1; height: 1px;
+            background: linear-gradient(to right, rgba(187,134,252,0.18), transparent);
+        }
+
+        .cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+        .card {
+            padding: 26px 26px;
+            background: linear-gradient(135deg, rgba(20,9,29,0.9) 0%, rgba(7,3,12,0.95) 100%);
+            border: 1px solid rgba(187, 134, 252, 0.12);
+            border-radius: 14px; cursor: pointer;
+            text-decoration: none;
+            display: flex; flex-direction: column; gap: 12px;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .card:hover { border-color: rgba(187,134,252,0.4); background: rgba(20,9,29,0.96); }
+        .card-icon {
+            width: 46px; height: 46px;
+            background: rgba(187,134,252,0.08);
+            border: 1px solid rgba(187,134,252,0.25);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .card-title {
+            color: #e5fef6; font-size: 15px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.1em;
+        }
+        .card-desc { color: #8b7d9b; font-size: 13px; line-height: 1.5; flex: 1; }
+        .card-footer {
+            color: rgba(187,134,252,0.6);
+            font-size: 11px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.1em;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .card:hover .card-footer { color: #bb86fc; gap: 12px; }
+
+        @media (max-width: 720px) {
+            .header { flex-direction: column; gap: 18px; align-items: flex-start; }
+            .user-block { align-items: flex-start; }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-grid"></div>
+    <div class="glow-orb"></div>
+
+    <div class="container">
+        <div class="header">
+            <div class="header-left">
+                <img src="{% static 'pondersec_logo.jpg' %}" alt="PonderSEC">
+                <div>
+                    <div class="badge-admin">Painel Admin</div>
+                    <div class="page-title">PonderSEC · Admin</div>
+                    <div class="page-sub">Gerencie as configurações compartilhadas do chat público.</div>
+                </div>
+            </div>
+            <div class="user-block">
+                <div class="who">{{ admin.nome }}</div>
+                <div class="when">{{ admin.email }}</div>
+                <a class="btn-logout" href="{% url 'admin_pondersec_logout' %}">Sair</a>
+            </div>
+        </div>
+
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-label">LLMs Públicas</div>
+                <div class="stat-value">{{ total_llms }}</div>
+                <div class="stat-sub">configuradas no sistema</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">LLMs Ativas</div>
+                <div class="stat-value">{{ llms_ativas }}</div>
+                <div class="stat-sub">disponíveis no chat público</div>
+            </div>
+        </div>
+
+        <div class="section-label">Configurações</div>
+        <div class="cards-grid">
+            <a href="{% url 'admin_pondersec_llms_publicas' %}" class="card">
+                <div class="card-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#bb86fc" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="4" width="18" height="6" rx="2"/>
+                        <rect x="3" y="14" width="18" height="6" rx="2"/>
+                        <circle cx="7" cy="7" r="0.5"/>
+                        <circle cx="7" cy="17" r="0.5"/>
+                    </svg>
+                </div>
+                <div class="card-title">LLMs Públicas</div>
+                <div class="card-desc">Cadastre as API keys que serão utilizadas para responder no chat público da página inicial.</div>
+                <div class="card-footer">
+                    Gerenciar
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                        <path d="M5 12h14M13 6l6 6-6 6"/>
+                    </svg>
+                </div>
+            </a>
+        </div>
+    </div>
+</body>
+</html>

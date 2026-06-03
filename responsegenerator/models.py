@@ -1,5 +1,59 @@
 from django.db import models
+from django.contrib.auth.hashers import check_password, make_password
 from django.contrib.auth.models import User
+from django.utils import timezone
+
+
+class AdminPonderSec(models.Model):
+    """Admin do painel /admin-pondersec/ — auth separada dos User (pesquisadores)."""
+    nome = models.CharField(max_length=120)
+    email = models.EmailField(unique=True)
+    senha_hash = models.CharField(max_length=128)
+    ativo = models.BooleanField(default=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
+    ultimo_acesso = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Admin PonderSec"
+        verbose_name_plural = "Admins PonderSec"
+
+    def __str__(self):
+        return f"{self.nome} <{self.email}>"
+
+    def set_senha(self, senha_em_texto):
+        self.senha_hash = make_password(senha_em_texto)
+
+    def verificar_senha(self, senha_em_texto):
+        return check_password(senha_em_texto, self.senha_hash)
+
+    def registrar_acesso(self):
+        self.ultimo_acesso = timezone.now()
+        self.save(update_fields=["ultimo_acesso"])
+
+
+class LLMPublica(models.Model):
+    """LLMs configuradas pelo admin para uso no chat público (não pertencem a pesquisadores)."""
+    nome = models.CharField(max_length=100)
+    descricao = models.TextField(blank=True, null=True)
+    api_key = models.CharField(max_length=255)
+    ativo = models.BooleanField(default=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
+    criado_por = models.ForeignKey(
+        AdminPonderSec,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="llms_criadas",
+    )
+
+    class Meta:
+        verbose_name = "LLM Pública"
+        verbose_name_plural = "LLMs Públicas"
+        ordering = ["-id"]
+
+    def __str__(self):
+        return self.nome
 
 
 class Metrica(models.Model):
