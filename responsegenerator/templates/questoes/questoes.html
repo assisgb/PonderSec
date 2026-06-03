@@ -6,6 +6,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{% translate "PonderSEC | Questões" %}</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -1070,17 +1072,33 @@ textarea:focus,
   text-align: center;
 }
 
-.details-question,
-.detail-response-body {
+/* FORMATAÇÃO DO MARKDOWN DENTRO DA MENSAGEM */
+.markdown-body { color: rgba(212, 245, 233, 0.9); font-size: 14px; line-height: 1.7; }
+.markdown-body p { margin-bottom: 1em; }
+.markdown-body p:last-child { margin-bottom: 0; }
+.markdown-body strong { color: var(--accent-bright); font-weight: 700; }
+.markdown-body h1, .markdown-body h2, .markdown-body h3 { color: var(--text-strong); margin: 1.2em 0 0.6em; font-weight: 700; }
+.markdown-body ul, .markdown-body ol { margin-left: 1.5em; margin-bottom: 1em; }
+.markdown-body li { margin-bottom: 0.4em; }
+.markdown-body a { color: #38bdf8; text-decoration: none; }
+.markdown-body a:hover { text-decoration: underline; }
+.markdown-body code {
+  font-family: var(--mono); font-size: 13px;
+  background: rgba(0, 0, 0, 0.5); padding: 3px 6px; border-radius: 6px; color: #7dd3fc;
+}
+.markdown-body pre {
+  background: #03080e; padding: 16px; border-radius: 12px; overflow-x: auto;
+  margin: 1em 0; border: 1px solid rgba(255,255,255,0.08);
+}
+.markdown-body pre code { background: transparent; padding: 0; color: #e2e8f0; }
+
+.details-question {
   padding: 16px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
   background: rgba(0, 0, 0, 0.32);
   color: var(--text);
   line-height: 1.65;
-}
-
-.details-question {
   max-height: 150px;
   overflow-y: auto;
   font-size: 14px;
@@ -1100,8 +1118,12 @@ textarea:focus,
   min-height: 150px;
   max-height: 350px;
   overflow-y: auto;
-  white-space: pre-wrap;
-  font-size: 13px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.32);
+  color: var(--text);
+  line-height: 1.65;
 }
 
 .toast-stack {
@@ -1775,10 +1797,6 @@ function submitUpload() {
   document.getElementById("uploadForm").submit();
 }
 
-function normalizeResponseText(text) {
-  return String(text || "").replace(/<br\s*\/?>/gi, "\n");
-}
-
 function abrirModalDetalhes(btn) {
   const url = btn.getAttribute("data-url");
   const detalhesPergunta = document.getElementById("detalhesPergunta");
@@ -1819,10 +1837,12 @@ function abrirModalDetalhes(btn) {
         label.style.color = resp.cor || "#00ff9f";
 
         const body = document.createElement("div");
-        body.className = "detail-response-body";
+        body.className = "detail-response-body markdown-body"; 
         body.style.borderColor = (resp.cor || "#00ff9f") + "66";
         body.style.background = (resp.cor || "#00ff9f") + "10";
-        body.textContent = normalizeResponseText(resp.texto);
+        
+        const rawMarkdown = resp.texto || "{% translate 'Sem conteúdo.' %}";
+        body.innerHTML = marked.parse(rawMarkdown);
 
         card.appendChild(label);
         card.appendChild(body);
