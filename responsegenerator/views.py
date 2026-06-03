@@ -11,7 +11,22 @@ from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
 import json
 from django.views.decorators.http import require_http_methods
-from responsegenerator.models import Historico, Categoria, LLM, Questao, Resposta, Avaliacao, Metrica, Formulario, Avaliador, AvaliacaoFormulario, AvaliacaoJuiz
+from responsegenerator.models import (
+    AdminPonderSec,
+    Avaliacao,
+    AvaliacaoFormulario,
+    AvaliacaoJuiz,
+    Avaliador,
+    Categoria,
+    Formulario,
+    Historico,
+    LLM,
+    LLMPublica,
+    Metrica,
+    Questao,
+    Resposta,
+)
+from functools import wraps
 from django.db.models import Avg, Count, Prefetch
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -67,13 +82,14 @@ def usuario_final_chat_api(request):
                 'mensagem': 'Pergunta não pode estar vazia.'
             }, status=400)
         
-        # Pega todas as LLMs ativas (de qualquer usuário admin)
-        llms_ativos = LLM.objects.filter(ativo=True)
-        
+        # Apenas LLMs cadastradas pelo admin no painel /admin-pondersec/ atendem o chat público.
+        # As LLMs dos pesquisadores (model LLM) NUNCA são usadas aqui.
+        llms_ativos = LLMPublica.objects.filter(ativo=True)
+
         if not llms_ativos.exists():
             return JsonResponse({
                 'status': 'erro',
-                'mensagem': 'Nenhum modelo de IA foi configurado no sistema.'
+                'mensagem': 'Nenhuma LLM foi configurada pelo administrador para o chat público.'
             }, status=400)
         
         # Contexto para as LLMs
@@ -1373,3 +1389,160 @@ def juizes_comparador(request):
         ],
         "categorias": categorias,
     })
+
+
+# ═══════════════════════════════════════════════════════════════════
+# PAINEL /admin-pondersec/  —  auth separada via tabela AdminPonderSec
+# ═══════════════════════════════════════════════════════════════════
+
+ADMIN_SESSION_KEY = "admin_pondersec_id"
+
+
+def _get_admin_logado(request):
+    admin_id = request.session.get(ADMIN_SESSION_KEY)
+    if not admin_id:
+        return None
+    try:
+        return AdminPonderSec.objects.get(id=admin_id, ativo=True)
+    except AdminPonderSec.DoesNotExist:
+        request.session.pop(ADMIN_SESSION_KEY, None)
+        return None
+
+
+def admin_required(view_func):
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        admin = _get_admin_logado(request)
+        if admin is None:
+            if request.method != "GET" or request.headers.get("x-requested-with") == "XMLHttpRequest":
+                return JsonResponse({"status": "erro", "mensagem": "Sessão de admin expirada."}, status=401)
+            return redirect("admin_pondersec_login")
+        request.admin_pondersec = admin
+        return view_func(request, *args, **kwargs)
+    return wrapper
+
+
+@ensure_csrf_cookie
+def admin_pondersec_login(request):
+    if _get_admin_logado(request):
+        return redirect("admin_pondersec_home")
+
+    sem_admins = not AdminPonderSec.objects.exists()
+
+    if request.method == "POST":
+        email = (request.POST.get("email") or "").strip().lower()
+        senha = request.POST.get("senha") or ""
+        try:
+            admin = AdminPonderSec.objects.get(email=email, ativo=True)
+        except AdminPonderSec.DoesNotExist:
+            admin = None
+
+        if admin and admin.verificar_senha(senha):
+            request.session[ADMIN_SESSION_KEY] = admin.id
+            admin.registrar_acesso()
+            return redirect("admin_pondersec_home")
+
+        return render(request, "admin_pondersec/login.html", {
+            "erro": "E-mail ou senha inválidos.",
+            "email": email,
+            "sem_admins": sem_admins,
+        })
+
+    return render(request, "admin_pondersec/login.html", {
+        "sem_admins": sem_admins,
+    })
+
+
+def admin_pondersec_logout(request):
+    request.session.pop(ADMIN_SESSION_KEY, None)
+    return redirect("admin_pondersec_login")
+
+
+@admin_required
+def admin_pondersec_home(request):
+    total_llms = LLMPublica.objects.count()
+    llms_ativas = LLMPublica.objects.filter(ativo=True).count()
+    return render(request, "admin_pondersec/home.html", {
+        "admin": request.admin_pondersec,
+        "total_llms": total_llms,
+        "llms_ativas": llms_ativas,
+    })
+
+
+@admin_required
+def admin_pondersec_llms_publicas(request):
+    if request.method == "POST":
+        nome = (request.POST.get("model") or "").strip()
+        provedor = (request.POST.get("provider") or "").strip()
+        api_key = (request.POST.get("apiKey") or "").strip()
+
+        if not nome or not api_key:
+            django_messages.error(request, "Nome do modelo e API key são obrigatórios.")
+            return redirect("admin_pondersec_llms_publicas")
+
+        LLMPublica.objects.create(
+            nome=nome,
+            descricao=provedor,
+            api_key=api_key,
+            criado_por=request.admin_pondersec,
+        )
+        django_messages.success(request, f"LLM pública '{nome}' configurada.")
+        return redirect("admin_pondersec_llms_publicas")
+
+    llms = LLMPublica.objects.all().order_by("-id")
+    return render(request, "admin_pondersec/llms_publicas.html", {
+        "admin": request.admin_pondersec,
+        "llms": llms,
+    })
+
+
+@admin_required
+@require_http_methods(["DELETE"])
+def admin_pondersec_llm_publica_deletar(request, id):
+    deleted, _ = LLMPublica.objects.filter(id=id).delete()
+    if not deleted:
+        return JsonResponse({"status": "erro", "mensagem": "LLM não encontrada."}, status=404)
+    return JsonResponse({"status": "ok", "mensagem": "LLM removida."})
+
+
+@admin_required
+@require_http_methods(["PUT"])
+def admin_pondersec_llm_publica_editar(request, id):
+    try:
+        dados = json.loads(request.body or "{}")
+    except json.JSONDecodeError:
+        return JsonResponse({"status": "erro", "mensagem": "JSON inválido."}, status=400)
+
+    try:
+        llm = LLMPublica.objects.get(id=id)
+    except LLMPublica.DoesNotExist:
+        return JsonResponse({"status": "erro", "mensagem": "LLM não encontrada."}, status=404)
+
+    nome = (dados.get("nome") or "").strip()
+    api_key = (dados.get("api_key") or "").strip()
+    descricao = dados.get("descricao")
+    ativo = dados.get("ativo")
+
+    if not nome or not api_key:
+        return JsonResponse({"status": "erro", "mensagem": "Nome e API key são obrigatórios."}, status=400)
+
+    llm.nome = nome
+    llm.api_key = api_key
+    if descricao is not None:
+        llm.descricao = descricao.strip()
+    if isinstance(ativo, bool):
+        llm.ativo = ativo
+    llm.save()
+    return JsonResponse({"status": "ok", "mensagem": "LLM atualizada."})
+
+
+@admin_required
+@require_http_methods(["POST"])
+def admin_pondersec_llm_publica_toggle(request, id):
+    try:
+        llm = LLMPublica.objects.get(id=id)
+    except LLMPublica.DoesNotExist:
+        return JsonResponse({"status": "erro", "mensagem": "LLM não encontrada."}, status=404)
+    llm.ativo = not llm.ativo
+    llm.save(update_fields=["ativo"])
+    return JsonResponse({"status": "ok", "ativo": llm.ativo})

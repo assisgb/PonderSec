@@ -44,4 +44,13 @@ urlpatterns = [
     path('juizes/comparador/', views.juizes_comparador, name='juizes_comparador'),
     path('juizes/avaliar/', views.juizes_executar_avaliacao, name='juizes_executar_avaliacao'),
     path('setup-configurar-metrica/', views.setup_configurar_metrica, name='setup_configurar_metrica'),
+
+    # ===== PAINEL ADMIN (auth separada via AdminPonderSec) =====
+    path('admin-pondersec/login/',  views.admin_pondersec_login,  name='admin_pondersec_login'),
+    path('admin-pondersec/logout/', views.admin_pondersec_logout, name='admin_pondersec_logout'),
+    path('admin-pondersec/',        views.admin_pondersec_home,   name='admin_pondersec_home'),
+    path('admin-pondersec/llms-publicas/',                       views.admin_pondersec_llms_publicas,         name='admin_pondersec_llms_publicas'),
+    path('admin-pondersec/llms-publicas/<int:id>/editar/',       views.admin_pondersec_llm_publica_editar,    name='admin_pondersec_llm_publica_editar'),
+    path('admin-pondersec/llms-publicas/<int:id>/deletar/',      views.admin_pondersec_llm_publica_deletar,   name='admin_pondersec_llm_publica_deletar'),
+    path('admin-pondersec/llms-publicas/<int:id>/toggle/',       views.admin_pondersec_llm_publica_toggle,    name='admin_pondersec_llm_publica_toggle'),
 ]
