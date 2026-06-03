@@ -1,0 +1,71 @@
+{% load i18n %}
+
+<style>
+    .public-chat-button {
+        position: fixed;
+        top: 16px;
+        left: 16px;
+        z-index: 9999;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 38px;
+        padding: 0 14px;
+        border: 1px solid rgba(0, 207, 255, 0.28);
+        border-radius: 999px;
+        background: rgba(2, 6, 11, 0.82);
+        color: #38bdf8;
+        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.38);
+        backdrop-filter: blur(10px);
+        font: 700 11px/1 "Space Grotesk", system-ui, sans-serif;
+        letter-spacing: 0.08em;
+        text-decoration: none;
+        text-transform: uppercase;
+        transition: border-color 0.2s, background 0.2s, color 0.2s, box-shadow 0.2s;
+    }
+
+    .public-chat-button:hover,
+    .public-chat-button:focus-visible {
+        border-color: rgba(56, 189, 248, 0.55);
+        background: rgba(14, 165, 233, 0.12);
+        color: #7dd3fc;
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45), inset 0 0 0 1px rgba(56, 189, 248, 0.16);
+        outline: none;
+    }
+
+    .public-chat-button svg {
+        width: 15px;
+        height: 15px;
+        flex-shrink: 0;
+    }
+
+    @media (max-width: 600px) {
+        .public-chat-button {
+            top: 10px;
+            left: 10px;
+            min-height: 34px;
+            padding: 0 11px;
+            font-size: 10px;
+        }
+    }
+
+    @media (max-width: 420px) {
+        .public-chat-button {
+            width: 34px;
+            padding: 0;
+            justify-content: center;
+        }
+
+        .public-chat-button span {
+            display: none;
+        }
+    }
+</style>
+
+<a class="public-chat-button" href="{% url 'usuario_final_chat' %}" aria-label="{% translate 'Voltar ao Chat Público' %}">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M19 12H5"></path>
+        <path d="M11 6l-6 6 6 6"></path>
+    </svg>
+    <span>{% translate "Voltar ao Chat Público" %}</span>
+</a>

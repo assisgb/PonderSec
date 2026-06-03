@@ -146,6 +146,7 @@
     </style>
 </head>
 <body>
+    {% include "partials/public_chat_button.html" %}
     {% include "partials/language_switcher.html" %}
 
     <div class="background-grid"></div>
@@ -154,7 +155,7 @@
     <div class="container">
         <div class="header">
             <div class="header-left">
-                <img src="{% static 'pondersec_logo.jpg' %}" alt="PonderSEC">
+                <img src="{% static 'pondersecRoxo.jpeg' %}" alt="PonderSEC">
                 <div>
                     <div class="badge-admin">{% translate "Painel Admin" %}</div>
                     <div class="page-title">PonderSEC · Admin</div>
