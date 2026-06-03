@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PonderSEC\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-03 16:50+0000\n"
+"POT-Creation-Date: 2026-06-03 17:05+0000\n"
 "PO-Revision-Date: 2026-05-27 15:28+0000\n"
 "Last-Translator: PonderSEC Team\n"
 "Language-Team: Spanish\n"
@@ -34,18 +34,18 @@ msgstr "Español"
 msgid "PonderSEC — Painel Admin"
 msgstr "PonderSEC — Panel admin"
 
-#: responsegenerator/templates/admin_pondersec/home.html:159
-#: responsegenerator/templates/admin_pondersec/llms_publicas.html:269
-#: responsegenerator/templates/admin_pondersec/login.html:181
+#: responsegenerator/templates/admin_pondersec/home.html:160
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:270
+#: responsegenerator/templates/admin_pondersec/login.html:220
 msgid "Painel Admin"
 msgstr "Panel admin"
 
-#: responsegenerator/templates/admin_pondersec/home.html:161
+#: responsegenerator/templates/admin_pondersec/home.html:162
 msgid "Gerencie as configurações compartilhadas do chat público."
 msgstr "Gestiona las configuraciones compartidas del chat público."
 
-#: responsegenerator/templates/admin_pondersec/home.html:167
-#: responsegenerator/templates/admin_pondersec/llms_publicas.html:285
+#: responsegenerator/templates/admin_pondersec/home.html:168
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:286
 #: responsegenerator/templates/chat/chatpublico.html:279
 #: responsegenerator/templates/menu.html:311
 #: templates/partials/app_sidebar.html:70
@@ -53,30 +53,30 @@ msgstr "Gestiona las configuraciones compartidas del chat público."
 msgid "Sair"
 msgstr "Salir"
 
-#: responsegenerator/templates/admin_pondersec/home.html:173
-#: responsegenerator/templates/admin_pondersec/home.html:195
-#: responsegenerator/templates/admin_pondersec/llms_publicas.html:270
+#: responsegenerator/templates/admin_pondersec/home.html:174
+#: responsegenerator/templates/admin_pondersec/home.html:196
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:271
 msgid "LLMs Públicas"
 msgstr "LLMs públicas"
 
-#: responsegenerator/templates/admin_pondersec/home.html:175
+#: responsegenerator/templates/admin_pondersec/home.html:176
 msgid "configuradas no sistema"
 msgstr "configuradas en el sistema"
 
-#: responsegenerator/templates/admin_pondersec/home.html:178
+#: responsegenerator/templates/admin_pondersec/home.html:179
 msgid "LLMs Ativas"
 msgstr "LLMs activas"
 
-#: responsegenerator/templates/admin_pondersec/home.html:180
+#: responsegenerator/templates/admin_pondersec/home.html:181
 msgid "disponíveis no chat público"
 msgstr "disponibles en el chat público"
 
-#: responsegenerator/templates/admin_pondersec/home.html:184
+#: responsegenerator/templates/admin_pondersec/home.html:185
 #: responsegenerator/templates/setup/setup.html:205
 msgid "Configurações"
 msgstr "Configuraciones"
 
-#: responsegenerator/templates/admin_pondersec/home.html:196
+#: responsegenerator/templates/admin_pondersec/home.html:197
 msgid ""
 "Cadastre as API keys que serão utilizadas para responder no chat público da "
 "página inicial."
@@ -84,7 +84,7 @@ msgstr ""
 "Registra las API keys que se utilizarán para responder en el chat público de "
 "la página inicial."
 
-#: responsegenerator/templates/admin_pondersec/home.html:198
+#: responsegenerator/templates/admin_pondersec/home.html:199
 msgid "Gerenciar"
 msgstr "Gestionar"
 
@@ -92,127 +92,127 @@ msgstr "Gestionar"
 msgid "PonderSEC — LLMs Públicas"
 msgstr "PonderSEC — LLMs públicas"
 
-#: responsegenerator/templates/admin_pondersec/llms_publicas.html:271
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:272
 msgid "Estas API keys são usadas pelo chat público da página inicial."
 msgstr "Estas API keys se usan en el chat público de la página inicial."
 
-#: responsegenerator/templates/admin_pondersec/llms_publicas.html:279
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:280
 #: responsegenerator/templates/avaliacao/avaliacao_lista.html:340
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:338
 #: responsegenerator/templates/juizes/comparador.html:322
 msgid "Voltar"
 msgstr "Volver"
 
-#: responsegenerator/templates/admin_pondersec/llms_publicas.html:307
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:308
 msgid "Buscar modelo..."
 msgstr "Buscar modelo..."
 
-#: responsegenerator/templates/admin_pondersec/llms_publicas.html:313
-#: responsegenerator/templates/admin_pondersec/llms_publicas.html:379
-#: responsegenerator/templates/admin_pondersec/llms_publicas.html:394
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:314
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:380
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:395
 #: responsegenerator/templates/setup/setup-llm.html:333
 #: responsegenerator/templates/setup/setup-llm.html:396
 #: responsegenerator/templates/setup/setup-llm.html:532
 msgid "Adicionar LLM"
 msgstr "Agregar LLM"
 
-#: responsegenerator/templates/admin_pondersec/llms_publicas.html:317
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:318
 msgid "LLMs Configuradas"
 msgstr "LLMs configuradas"
 
-#: responsegenerator/templates/admin_pondersec/llms_publicas.html:335
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:336
 msgid "Ativa"
 msgstr "Activa"
 
-#: responsegenerator/templates/admin_pondersec/llms_publicas.html:337
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:338
 msgid "Inativa"
 msgstr "Inactiva"
 
-#: responsegenerator/templates/admin_pondersec/llms_publicas.html:343
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:344
 msgid "Desativar"
 msgstr "Desactivar"
 
-#: responsegenerator/templates/admin_pondersec/llms_publicas.html:343
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:344
 msgid "Ativar"
 msgstr "Activar"
 
-#: responsegenerator/templates/admin_pondersec/llms_publicas.html:357
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:358
 #: responsegenerator/templates/avaliacao/avaliacao_lista.html:393
 #: responsegenerator/templates/setup/setup-avaliacao.html:397
 #: responsegenerator/templates/setup/setup-llm.html:360
 msgid "Editar"
 msgstr "Editar"
 
-#: responsegenerator/templates/admin_pondersec/llms_publicas.html:364
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:365
 msgid "Remover"
 msgstr "Eliminar"
 
-#: responsegenerator/templates/admin_pondersec/llms_publicas.html:379
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:380
 msgid "Nenhuma LLM pública cadastrada."
 msgstr "No hay ninguna LLM pública registrada."
 
-#: responsegenerator/templates/admin_pondersec/llms_publicas.html:379
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:380
 msgid "Clique em"
 msgstr "Haz clic en"
 
-#: responsegenerator/templates/admin_pondersec/llms_publicas.html:379
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:380
 msgid "para cadastrar a primeira."
 msgstr "para registrar la primera."
 
-#: responsegenerator/templates/admin_pondersec/llms_publicas.html:393
-#: responsegenerator/templates/admin_pondersec/llms_publicas.html:448
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:394
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:449
 #: responsegenerator/templates/avaliacao/avaliacao_lista.html:477
 #: responsegenerator/templates/setup/setup-llm.html:395
 msgid "Configuração"
 msgstr "Configuración"
 
-#: responsegenerator/templates/admin_pondersec/llms_publicas.html:402
-#: responsegenerator/templates/admin_pondersec/llms_publicas.html:457
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:403
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:458
 #: responsegenerator/templates/setup/setup-llm.html:407
 msgid "Dados da Conexão"
 msgstr "Datos de la conexión"
 
-#: responsegenerator/templates/admin_pondersec/llms_publicas.html:404
-#: responsegenerator/templates/admin_pondersec/llms_publicas.html:459
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:405
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:460
 #: responsegenerator/templates/setup/setup-llm.html:410
 msgid "Provedor"
 msgstr "Proveedor"
 
-#: responsegenerator/templates/admin_pondersec/llms_publicas.html:406
-#: responsegenerator/templates/admin_pondersec/llms_publicas.html:461
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:407
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:462
 #: responsegenerator/templates/setup/setup-llm.html:412
 msgid "Selecione o provedor"
 msgstr "Selecciona el proveedor"
 
-#: responsegenerator/templates/admin_pondersec/llms_publicas.html:416
-#: responsegenerator/templates/admin_pondersec/llms_publicas.html:471
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:417
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:472
 #: responsegenerator/templates/avaliacao/dashboard_avaliacoes.html:487
 #: responsegenerator/templates/setup/setup-llm.html:423
 msgid "Modelo"
 msgstr "Modelo"
 
-#: responsegenerator/templates/admin_pondersec/llms_publicas.html:418
-#: responsegenerator/templates/admin_pondersec/llms_publicas.html:473
-#: responsegenerator/templates/admin_pondersec/llms_publicas.html:562
-#: responsegenerator/templates/admin_pondersec/llms_publicas.html:597
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:419
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:474
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:563
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:598
 #: responsegenerator/templates/setup/setup-llm.html:425
 #: responsegenerator/templates/setup/setup-llm.html:518
 msgid "Selecione um provedor primeiro"
 msgstr "Selecciona un proveedor primero"
 
-#: responsegenerator/templates/admin_pondersec/llms_publicas.html:422
-#: responsegenerator/templates/admin_pondersec/llms_publicas.html:477
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:423
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:478
 msgid "API Key"
 msgstr "API Key"
 
-#: responsegenerator/templates/admin_pondersec/llms_publicas.html:424
-#: responsegenerator/templates/admin_pondersec/llms_publicas.html:479
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:425
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:480
 #: responsegenerator/templates/setup/setup-llm.html:432
 msgid "Cole sua chave aqui..."
 msgstr "Pega tu clave aquí..."
 
-#: responsegenerator/templates/admin_pondersec/llms_publicas.html:431
-#: responsegenerator/templates/admin_pondersec/llms_publicas.html:486
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:432
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:487
 #: responsegenerator/templates/avaliacao/avaliacao_lista.html:461
 #: responsegenerator/templates/avaliacao/avaliacao_lista.html:508
 #: responsegenerator/templates/avaliacao/avaliacao_lista.html:538
@@ -224,49 +224,49 @@ msgstr "Pega tu clave aquí..."
 msgid "Cancelar"
 msgstr "Cancelar"
 
-#: responsegenerator/templates/admin_pondersec/llms_publicas.html:436
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:437
 #: responsegenerator/templates/setup/setup-llm.html:448
 #: responsegenerator/templates/setup/setup-llm.html:533
 msgid "Adicionar Modelo"
 msgstr "Agregar modelo"
 
-#: responsegenerator/templates/admin_pondersec/llms_publicas.html:449
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:450
 msgid "Editar LLM Pública"
 msgstr "Editar LLM pública"
 
-#: responsegenerator/templates/admin_pondersec/llms_publicas.html:491
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:492
 msgid "Salvar alterações"
 msgstr "Guardar cambios"
 
-#: responsegenerator/templates/admin_pondersec/llms_publicas.html:652
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:653
 msgid "Falha ao salvar."
 msgstr "Error al guardar."
 
-#: responsegenerator/templates/admin_pondersec/llms_publicas.html:654
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:655
 msgid "LLM atualizada."
 msgstr "LLM actualizada."
 
-#: responsegenerator/templates/admin_pondersec/llms_publicas.html:662
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:663
 msgid "Remover a LLM"
 msgstr "Eliminar la LLM"
 
-#: responsegenerator/templates/admin_pondersec/llms_publicas.html:669
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:670
 msgid "Falha ao remover."
 msgstr "Error al eliminar."
 
-#: responsegenerator/templates/admin_pondersec/llms_publicas.html:670
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:671
 msgid "LLM removida."
 msgstr "LLM eliminada."
 
-#: responsegenerator/templates/admin_pondersec/llms_publicas.html:684
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:685
 msgid "Falha ao alternar."
 msgstr "Error al alternar."
 
-#: responsegenerator/templates/admin_pondersec/llms_publicas.html:685
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:686
 msgid "LLM ativada."
 msgstr "LLM activada."
 
-#: responsegenerator/templates/admin_pondersec/llms_publicas.html:685
+#: responsegenerator/templates/admin_pondersec/llms_publicas.html:686
 msgid "LLM desativada."
 msgstr "LLM desactivada."
 
@@ -274,11 +274,11 @@ msgstr "LLM desactivada."
 msgid "PonderSEC — Admin"
 msgstr "PonderSEC — Admin"
 
-#: responsegenerator/templates/admin_pondersec/login.html:183
+#: responsegenerator/templates/admin_pondersec/login.html:222
 msgid "Acesso Restrito"
 msgstr "Acceso restringido"
 
-#: responsegenerator/templates/admin_pondersec/login.html:184
+#: responsegenerator/templates/admin_pondersec/login.html:223
 msgid ""
 "Faça login com suas credenciais de administrador para gerenciar as LLMs do "
 "chat público."
@@ -286,48 +286,64 @@ msgstr ""
 "Inicia sesión con tus credenciales de administrador para gestionar las LLMs "
 "del chat público."
 
-#: responsegenerator/templates/admin_pondersec/login.html:186
-#: usuarios/templates/login.html:304
+#: responsegenerator/templates/admin_pondersec/login.html:225
+#: usuarios/templates/login.html:305
 msgid "Tipo de acesso"
 msgstr "Tipo de acceso"
 
-#: responsegenerator/templates/admin_pondersec/login.html:188
-#: usuarios/templates/login.html:306
+#: responsegenerator/templates/admin_pondersec/login.html:227
+#: usuarios/templates/login.html:307
 msgid "Pesquisador"
 msgstr "Investigador"
 
-#: responsegenerator/templates/admin_pondersec/login.html:191
-#: usuarios/templates/login.html:309
+#: responsegenerator/templates/admin_pondersec/login.html:230
+#: usuarios/templates/login.html:310
 msgid "Administrador"
 msgstr "Administrador"
 
-#: responsegenerator/templates/admin_pondersec/login.html:197
+#: responsegenerator/templates/admin_pondersec/login.html:236
 msgid ""
 "Nenhum admin cadastrado ainda. Defina <strong>ADMIN_PONDERSEC_EMAIL</strong> "
 "e <strong>ADMIN_PONDERSEC_SENHA</strong> no <code>.env</code> e reinicie o "
 "stack — o admin é criado automaticamente. Veja <code>docs/ADMIN_PONDERSEC."
 "md</code>."
 msgstr ""
-"Aún no hay ningún admin registrado. Define "
-"<strong>ADMIN_PONDERSEC_EMAIL</strong> y "
-"<strong>ADMIN_PONDERSEC_SENHA</strong> en <code>.env</code> y reinicia el "
-"stack; el admin se crea automáticamente. Consulta "
-"<code>docs/ADMIN_PONDERSEC.md</code>."
+"Aún no hay ningún admin registrado. Define <strong>ADMIN_PONDERSEC_EMAIL</"
+"strong> y <strong>ADMIN_PONDERSEC_SENHA</strong> en <code>.env</code> y "
+"reinicia el stack; el admin se crea automáticamente. Consulta <code>docs/"
+"ADMIN_PONDERSEC.md</code>."
 
-#: responsegenerator/templates/admin_pondersec/login.html:208
-#: usuarios/templates/cadastro.html:311
+#: responsegenerator/templates/admin_pondersec/login.html:247
+#: usuarios/templates/cadastro.html:312
 msgid "E-mail"
 msgstr "Correo"
 
-#: responsegenerator/templates/admin_pondersec/login.html:212
-#: usuarios/templates/cadastro.html:316 usuarios/templates/login.html:339
+#: responsegenerator/templates/admin_pondersec/login.html:251
+#: usuarios/templates/cadastro.html:317 usuarios/templates/login.html:340
 msgid "Senha"
 msgstr "Contraseña"
 
-#: responsegenerator/templates/admin_pondersec/login.html:215
+#: responsegenerator/templates/admin_pondersec/login.html:257
+#: responsegenerator/templates/admin_pondersec/login.html:258
+#: responsegenerator/templates/admin_pondersec/login.html:260
+#: usuarios/templates/cadastro.html:323 usuarios/templates/cadastro.html:324
+#: usuarios/templates/cadastro.html:326 usuarios/templates/cadastro.html:351
+#: usuarios/templates/cadastro.html:352 usuarios/templates/cadastro.html:354
+#: usuarios/templates/login.html:346 usuarios/templates/login.html:347
+#: usuarios/templates/login.html:349
+msgid "Mostrar senha"
+msgstr "Mostrar contraseña"
+
+#: responsegenerator/templates/admin_pondersec/login.html:261
+#: usuarios/templates/cadastro.html:327 usuarios/templates/cadastro.html:355
+#: usuarios/templates/login.html:350
+msgid "Ocultar senha"
+msgstr "Ocultar contraseña"
+
+#: responsegenerator/templates/admin_pondersec/login.html:277
 #: responsegenerator/templates/chat/chatpublico.html:284
-#: usuarios/templates/cadastro.html:375 usuarios/templates/login.html:301
-#: usuarios/templates/login.html:366
+#: usuarios/templates/cadastro.html:376 usuarios/templates/login.html:302
+#: usuarios/templates/login.html:367
 msgid "Entrar"
 msgstr "Iniciar sesión"
 
@@ -2567,15 +2583,20 @@ msgstr "¡Formulario eliminado!"
 msgid "Menu lateral"
 msgstr "Menú lateral"
 
+#: templates/partials/public_chat_button.html:53
+#: templates/partials/public_chat_button.html:58
+msgid "Voltar ao Chat Público"
+msgstr "Volver al chat público"
+
 #: usuarios/templates/cadastro.html:8
 msgid "PonderSEC — Cadastro"
 msgstr "PonderSEC — Registro"
 
-#: usuarios/templates/cadastro.html:262
+#: usuarios/templates/cadastro.html:263
 msgid "Verificação de Segurança"
 msgstr "Verificación de seguridad"
 
-#: usuarios/templates/cadastro.html:265
+#: usuarios/templates/cadastro.html:266
 #, python-format
 msgid ""
 "O firewall exige autenticação. Enviamos um token para <span>%(email)s</span>."
@@ -2583,7 +2604,7 @@ msgstr ""
 "El firewall requiere autenticación. Enviamos un token a <span>%(email)s</"
 "span>."
 
-#: usuarios/templates/cadastro.html:267
+#: usuarios/templates/cadastro.html:268
 msgid ""
 "O firewall exige autenticação. Enviamos um token para <span>seu e-mail</"
 "span>."
@@ -2591,64 +2612,51 @@ msgstr ""
 "El firewall requiere autenticación. Enviamos un token a <span>tu correo</"
 "span>."
 
-#: usuarios/templates/cadastro.html:274
+#: usuarios/templates/cadastro.html:275
 msgid "Código de 6 dígitos"
 msgstr "Código de 6 dígitos"
 
-#: usuarios/templates/cadastro.html:278
+#: usuarios/templates/cadastro.html:279
 msgid "Autenticar Sistema"
 msgstr "Autenticar sistema"
 
-#: usuarios/templates/cadastro.html:282
+#: usuarios/templates/cadastro.html:283
 msgid "Não recebeu o e-mail?"
 msgstr "¿No recibiste el correo?"
 
-#: usuarios/templates/cadastro.html:292
+#: usuarios/templates/cadastro.html:293
 msgid "Reenviar código"
 msgstr "Reenviar código"
 
-#: usuarios/templates/cadastro.html:297
+#: usuarios/templates/cadastro.html:298
 msgid "Criar Conta"
 msgstr "Crear cuenta"
 
-#: usuarios/templates/cadastro.html:300
+#: usuarios/templates/cadastro.html:301
 msgid "Registre-se para acessar a <span>LLM ofensiva</span> da PonderSEC."
 msgstr "Regístrate para acceder a la <span>LLM ofensiva</span> de PonderSEC."
 
-#: usuarios/templates/cadastro.html:306 usuarios/templates/login.html:334
+#: usuarios/templates/cadastro.html:307 usuarios/templates/login.html:335
 msgid "Nome de Usuário"
 msgstr "Nombre de usuario"
 
-#: usuarios/templates/cadastro.html:307 usuarios/templates/login.html:335
+#: usuarios/templates/cadastro.html:308 usuarios/templates/login.html:336
 msgid "ex: root.pentest"
 msgstr "ej.: root.pentest"
 
-#: usuarios/templates/cadastro.html:312
+#: usuarios/templates/cadastro.html:313
 msgid "voce@empresa.com"
 msgstr "tu@empresa.com"
 
-#: usuarios/templates/cadastro.html:322 usuarios/templates/cadastro.html:323
-#: usuarios/templates/cadastro.html:325 usuarios/templates/cadastro.html:350
-#: usuarios/templates/cadastro.html:351 usuarios/templates/cadastro.html:353
-#: usuarios/templates/login.html:345 usuarios/templates/login.html:346
-#: usuarios/templates/login.html:348
-msgid "Mostrar senha"
-msgstr "Mostrar contraseña"
-
-#: usuarios/templates/cadastro.html:326 usuarios/templates/cadastro.html:354
-#: usuarios/templates/login.html:349
-msgid "Ocultar senha"
-msgstr "Ocultar contraseña"
-
-#: usuarios/templates/cadastro.html:344
+#: usuarios/templates/cadastro.html:345
 msgid "Confirmar Senha"
 msgstr "Confirmar contraseña"
 
-#: usuarios/templates/cadastro.html:371 usuarios/templates/login.html:369
+#: usuarios/templates/cadastro.html:372 usuarios/templates/login.html:370
 msgid "Cadastrar"
 msgstr "Registrarse"
 
-#: usuarios/templates/cadastro.html:375
+#: usuarios/templates/cadastro.html:376
 msgid "Já possui conta?"
 msgstr "¿Ya tienes cuenta?"
 
@@ -2656,11 +2664,11 @@ msgstr "¿Ya tienes cuenta?"
 msgid "PonderSEC — Login"
 msgstr "PonderSEC — Login"
 
-#: usuarios/templates/login.html:302
+#: usuarios/templates/login.html:303
 msgid "Bem-vindo! Por favor, <span>faça login</span> para continuar."
 msgstr "¡Bienvenido! Por favor, <span>inicia sesión</span> para continuar."
 
-#: usuarios/templates/login.html:369
+#: usuarios/templates/login.html:370
 msgid "Não está cadastrado?"
 msgstr "¿No estás registrado?"
 

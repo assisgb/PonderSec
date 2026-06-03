@@ -254,6 +254,7 @@
     </style>
 </head>
 <body>
+    {% include "partials/public_chat_button.html" %}
     {% include "partials/language_switcher.html" %}
 
     <div class="background-grid"></div>
@@ -263,7 +264,7 @@
             <header class="hdr">
                 <div class="hdr-left">
                     <div class="logo-box" aria-hidden="true">
-                        <img src="{% static 'pondersec_logo.jpg' %}" alt="">
+                        <img src="{% static 'pondersecRoxo.jpeg' %}" alt="">
                     </div>
                     <div class="hdr-info">
                         <span class="badge-admin">{% translate "Painel Admin" %}</span>
