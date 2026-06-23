@@ -1,6 +1,15 @@
-{% load i18n %}
+{% load i18n static %}
 {% get_current_language as CURRENT_LANGUAGE %}
 {% get_available_languages as AVAILABLE_LANGUAGES %}
+
+<script>
+  (function() {
+    var t = localStorage.getItem('pondersec-theme');
+    if (t === 'light') document.documentElement.setAttribute('data-theme', 'light');
+  })();
+</script>
+
+<link rel="stylesheet" href="{% static 'light-theme.css' %}">
 
 <style>
     .language-switcher {
@@ -42,6 +51,18 @@
         box-shadow: inset 0 0 0 1px rgba(0, 255, 160, 0.2);
     }
 
+    .lang-divider {
+        width: 1px;
+        height: 16px;
+        background: rgba(0, 255, 160, 0.15);
+        margin: 0 2px;
+        flex-shrink: 0;
+    }
+
+    [data-theme="light"] .lang-divider {
+        background: rgba(5, 150, 105, 0.15) !important;
+    }
+
     @media (max-width: 600px) {
         .language-switcher {
             top: 10px;
@@ -73,5 +94,44 @@
                 {{ code|slice:":2"|upper }}
             </button>
         {% endfor %}
+
+        <span class="lang-divider" aria-hidden="true"></span>
+
+        <button
+            type="button"
+            class="theme-toggle-btn"
+            id="themeSwitcherBtn"
+            onclick="togglePonderTheme()"
+            title="Alternar tema claro/escuro"
+            aria-label="Alternar tema"
+        >
+            <span id="themeIcon">☀</span>
+        </button>
     </form>
 </div>
+
+<script>
+  (function () {
+    function applyTheme(t) {
+      if (t === 'light') {
+        document.documentElement.setAttribute('data-theme', 'light');
+        var ic = document.getElementById('themeIcon');
+        if (ic) ic.textContent = '☽';
+      } else {
+        document.documentElement.removeAttribute('data-theme');
+        var ic = document.getElementById('themeIcon');
+        if (ic) ic.textContent = '☀';
+      }
+    }
+
+    var saved = localStorage.getItem('pondersec-theme') || 'dark';
+    applyTheme(saved);
+
+    window.togglePonderTheme = function () {
+      var current = localStorage.getItem('pondersec-theme') || 'dark';
+      var next = current === 'light' ? 'dark' : 'light';
+      localStorage.setItem('pondersec-theme', next);
+      applyTheme(next);
+    };
+  })();
+</script>
