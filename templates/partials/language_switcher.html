@@ -780,6 +780,74 @@
         color: #6b7280 !important;
     }
 
+    /* ══════════════════════════════════════════
+       SIDEBAR — side-nav e classes relacionadas
+       (questoes.html define o CSS inline, então
+       os overrides precisam estar aqui também)
+       ══════════════════════════════════════════ */
+
+    [data-theme="light"] .side-nav {
+        background: #ffffff !important;
+        border-color: rgba(5, 150, 105, 0.18) !important;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.07) !important;
+    }
+    [data-theme="light"] .side-brand {
+        border-bottom-color: rgba(5, 150, 105, 0.12) !important;
+    }
+    [data-theme="light"] .side-logo {
+        border-color: rgba(5, 150, 105, 0.28) !important;
+        background: rgba(5, 150, 105, 0.06) !important;
+        box-shadow: 0 0 14px rgba(5, 150, 105, 0.1) !important;
+    }
+    [data-theme="light"] .side-kicker {
+        color: rgba(5, 150, 105, 0.8) !important;
+    }
+    [data-theme="light"] .side-title {
+        color: #047857 !important;
+    }
+    [data-theme="light"] .side-section {
+        color: #9ca3af !important;
+    }
+    [data-theme="light"] .side-link,
+    [data-theme="light"] .side-logout {
+        background: rgba(0, 0, 0, 0.02) !important;
+        border-color: rgba(5, 150, 105, 0.1) !important;
+        color: #4b5563 !important;
+    }
+    [data-theme="light"] .side-link.active {
+        border-color: rgba(5, 150, 105, 0.4) !important;
+        background: rgba(5, 150, 105, 0.09) !important;
+        color: #047857 !important;
+        box-shadow: 0 0 16px rgba(5, 150, 105, 0.07) !important;
+    }
+    [data-theme="light"] .side-link:not(.active):hover {
+        border-color: rgba(5, 150, 105, 0.3) !important;
+        background: rgba(5, 150, 105, 0.06) !important;
+        color: #065f46 !important;
+    }
+    [data-theme="light"] .side-footer {
+        border-top-color: rgba(5, 150, 105, 0.12) !important;
+    }
+    [data-theme="light"] .side-footer .side-link[href="/"] {
+        border-color: rgba(2, 132, 199, 0.28) !important;
+        color: #0284c7 !important;
+        background: rgba(2, 132, 199, 0.05) !important;
+    }
+    [data-theme="light"] .side-footer .side-link[href="/"]:hover {
+        background: rgba(2, 132, 199, 0.1) !important;
+        border-color: rgba(2, 132, 199, 0.45) !important;
+    }
+    [data-theme="light"] .side-logout {
+        border-color: rgba(220, 38, 38, 0.22) !important;
+        background: rgba(220, 38, 38, 0.04) !important;
+        color: #dc2626 !important;
+    }
+    [data-theme="light"] .side-logout:hover {
+        border-color: rgba(220, 38, 38, 0.42) !important;
+        background: rgba(220, 38, 38, 0.09) !important;
+        color: #b91c1c !important;
+    }
+
     /* Language switcher no tema claro */
     [data-theme="light"] .language-switcher form {
         background: rgba(255,255,255,0.92) !important;
