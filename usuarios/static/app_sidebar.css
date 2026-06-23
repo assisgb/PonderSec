@@ -206,3 +206,83 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* ══════════════════════════════════════════
+   TEMA CLARO — sidebar
+   ══════════════════════════════════════════ */
+
+[data-theme="light"] .side-nav {
+    background: #ffffff;
+    border-color: rgba(5, 150, 105, 0.18);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.07);
+}
+
+[data-theme="light"] .side-brand {
+    border-bottom-color: rgba(5, 150, 105, 0.12);
+}
+
+[data-theme="light"] .side-logo {
+    border-color: rgba(5, 150, 105, 0.28);
+    background: rgba(5, 150, 105, 0.06);
+    box-shadow: 0 0 14px rgba(5, 150, 105, 0.1);
+}
+
+[data-theme="light"] .side-kicker {
+    color: rgba(5, 150, 105, 0.8);
+}
+
+[data-theme="light"] .side-title {
+    color: #047857;
+}
+
+[data-theme="light"] .side-section {
+    color: #9ca3af;
+}
+
+[data-theme="light"] .side-link,
+[data-theme="light"] .side-logout {
+    background: rgba(0, 0, 0, 0.02);
+    border-color: rgba(5, 150, 105, 0.1);
+    color: #4b5563;
+}
+
+[data-theme="light"] .side-link.active {
+    border-color: rgba(5, 150, 105, 0.4);
+    background: rgba(5, 150, 105, 0.09);
+    color: #047857;
+    box-shadow: 0 0 16px rgba(5, 150, 105, 0.07);
+}
+
+[data-theme="light"] .side-link:not(.active):hover {
+    border-color: rgba(5, 150, 105, 0.3);
+    background: rgba(5, 150, 105, 0.06);
+    color: #065f46;
+}
+
+/* Public Chat — link azul com estilos inline, precisa de !important */
+[data-theme="light"] .side-footer .side-link[href="/"] {
+    border-color: rgba(2, 132, 199, 0.28) !important;
+    color: #0284c7 !important;
+    background: rgba(2, 132, 199, 0.05) !important;
+}
+
+[data-theme="light"] .side-footer .side-link[href="/"]:hover {
+    background: rgba(2, 132, 199, 0.1) !important;
+    border-color: rgba(2, 132, 199, 0.45) !important;
+}
+
+[data-theme="light"] .side-footer {
+    border-top-color: rgba(5, 150, 105, 0.12);
+}
+
+[data-theme="light"] .side-logout {
+    border-color: rgba(220, 38, 38, 0.22);
+    background: rgba(220, 38, 38, 0.04);
+    color: #dc2626;
+}
+
+[data-theme="light"] .side-logout:hover {
+    border-color: rgba(220, 38, 38, 0.42);
+    background: rgba(220, 38, 38, 0.09);
+    color: #b91c1c;
+}
