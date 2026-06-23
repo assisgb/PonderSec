@@ -8,6 +8,25 @@ from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from django.utils.translation import gettext as _
+from django.core.cache import cache
+
+LOGIN_MAX_ATTEMPTS = 5
+LOGIN_LOCKOUT_SECONDS = 15 * 60  # 15 minutos
+
+
+def _login_cache_key(username):
+    return f"login_attempts_{username.lower()}"
+
+
+def _get_client_ip(request):
+    x_forwarded = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded:
+        return x_forwarded.split(',')[0].strip()
+    return request.META.get('REMOTE_ADDR', '')
+
+
+def _login_ip_cache_key(ip):
+    return f"login_attempts_ip_{ip}"
 
 def cadastro(request):
     user_id = request.session.get('usuario_inativo_id')
@@ -144,24 +163,48 @@ def reenviar_codigo(request):
 def login_view(request):
     if request.method == "GET":
         return render(request, 'login.html')
-    else:
-        username = request.POST.get('username')
-        senha = request.POST.get('password')
-        user = authenticate(username=username, password=senha)
 
-        if user:
-            login(request, user)
-            # 🔹 respeita ?next= se existir
-            next_url = request.GET.get('next')
+    username = request.POST.get('username', '').strip()
+    senha = request.POST.get('password', '')
+    ip = _get_client_ip(request)
 
-            if next_url:
-                return redirect(next_url)
+    user_key = _login_cache_key(username)
+    ip_key = _login_ip_cache_key(ip)
 
-            return redirect('questoes')
+    user_attempts = cache.get(user_key, 0)
+    ip_attempts = cache.get(ip_key, 0)
 
+    if user_attempts >= LOGIN_MAX_ATTEMPTS or ip_attempts >= LOGIN_MAX_ATTEMPTS:
         return render(request, 'login.html', {
-            'error': _('Usuário inválido ou conta não ativada')
+            'error': _('Conta bloqueada por excesso de tentativas. Tente novamente em 15 minuto(s).')
         })
+
+    user = authenticate(username=username, password=senha)
+
+    if user:
+        cache.delete(user_key)
+        cache.delete(ip_key)
+        login(request, user)
+        next_url = request.GET.get('next')
+        if next_url:
+            return redirect(next_url)
+        return redirect('questoes')
+
+    new_user_attempts = user_attempts + 1
+    new_ip_attempts = ip_attempts + 1
+    cache.set(user_key, new_user_attempts, LOGIN_LOCKOUT_SECONDS)
+    cache.set(ip_key, new_ip_attempts, LOGIN_LOCKOUT_SECONDS)
+
+    remaining = LOGIN_MAX_ATTEMPTS - max(new_user_attempts, new_ip_attempts)
+
+    if remaining <= 0:
+        return render(request, 'login.html', {
+            'error': _('Conta bloqueada por excesso de tentativas. Tente novamente em 15 minuto(s).')
+        })
+
+    return render(request, 'login.html', {
+        'error': _('Usuário inválido ou conta não ativada. %(rem)d tentativa(s) restante(s).') % {'rem': remaining}
+    })
 
 def logout_view(request):
     logout(request)
