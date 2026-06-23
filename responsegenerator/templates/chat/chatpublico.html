@@ -79,6 +79,13 @@ button { transition: transform 0.2s ease, box-shadow 0.2s ease; cursor: pointer;
 }
 .lang-select option { background: #04101c; }
 
+.btn-theme-chat {
+  width: 36px; height: 36px; border-radius: 50%; border: 1px solid rgba(0, 220, 130, 0.28);
+  background: rgba(0, 0, 0, 0.14); color: var(--accent-bright); display: inline-flex;
+  align-items: center; justify-content: center; font-size: 16px; cursor: pointer; transition: all 0.3s;
+}
+.btn-theme-chat:hover { background: rgba(0, 220, 130, 0.12); border-color: var(--accent-bright); }
+
 /* MENU DO UTILIZADOR */
 .btn-login {
   padding: 8px 18px; border: 1px solid rgba(0, 220, 130, 0.34); border-radius: 8px;
@@ -291,7 +298,8 @@ textarea::placeholder { color: rgba(122, 150, 140, 0.6); }
 }
 </style>
 </head>
-<body>
+<body id="chatPublica">
+    {% include "partials/language_switcher.html" %}
 
 <header class="header">
   <div class="header-left">
@@ -312,7 +320,11 @@ textarea::placeholder { color: rgba(122, 150, 140, 0.6); }
         <option value="es" {% if LANGUAGE_CODE == 'es' %}selected{% endif %}>{% trans "ES" %}</option>
       </select>
     </form>
-    
+
+    <button type="button" class="btn-theme-chat" onclick="togglePonderTheme()" title="{% trans 'Alternar tema' %}" aria-label="{% trans 'Alternar tema claro/escuro' %}">
+      <span class="theme-icon-glyph">☀</span>
+    </button>
+
     {% if user.is_authenticated %}
       <div class="user-menu-container">
         <button class="btn-user" id="userMenuBtn" aria-label="{% trans 'Menu do Usuário' %}">

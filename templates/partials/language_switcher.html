@@ -486,7 +486,7 @@
     [data-theme="light"] .status { background: rgba(5,150,105,0.08) !important; color: #047857 !important; }
     [data-theme="light"] .status-answered { color: #059669 !important; }
     [data-theme="light"] .status-pending  { color: #b45309 !important; }
-    [data-theme="light"] .status-bar      { background: #e5e7eb !important; }
+    [data-theme="light"] .status-bar      { background: #e5e7eb !important; border-color: #d1d5db !important; color: #374151 !important; }
 
     /* Alertas */
     [data-theme="light"] .aviso,
@@ -781,6 +781,198 @@
     }
 
     /* ══════════════════════════════════════════
+       CHAT PÚBLICO — chatpublico.html
+       ══════════════════════════════════════════ */
+
+    /* Header */
+    [data-theme="light"] .header {
+        background: rgba(255, 255, 255, 0.92) !important;
+        border-bottom-color: rgba(5, 150, 105, 0.12) !important;
+        backdrop-filter: blur(10px);
+    }
+    [data-theme="light"] .logo {
+        border-color: rgba(5, 150, 105, 0.28) !important;
+        background: rgba(5, 150, 105, 0.06) !important;
+    }
+    [data-theme="light"] .product { color: #059669 !important; }
+    [data-theme="light"] .header-title { color: #047857 !important; }
+
+    /* Seletor de idioma e botão tema no header do chat */
+    [data-theme="light"] .lang-select {
+        border-color: rgba(5, 150, 105, 0.28) !important;
+        background: rgba(255, 255, 255, 0.85) !important;
+        color: #374151 !important;
+    }
+    [data-theme="light"] .lang-select option { background: #ffffff !important; color: #111827 !important; }
+    [data-theme="light"] .btn-theme-chat {
+        border-color: rgba(5, 150, 105, 0.28) !important;
+        background: rgba(5, 150, 105, 0.06) !important;
+        color: #047857 !important;
+    }
+    [data-theme="light"] .btn-theme-chat:hover {
+        background: rgba(5, 150, 105, 0.12) !important;
+        border-color: #059669 !important;
+    }
+
+    /* Botão login / user */
+    [data-theme="light"] .btn-login {
+        border-color: rgba(5, 150, 105, 0.3) !important;
+        background: rgba(5, 150, 105, 0.06) !important;
+        color: #047857 !important;
+    }
+    [data-theme="light"] .btn-login:hover {
+        background: rgba(5, 150, 105, 0.12) !important;
+        border-color: #059669 !important;
+    }
+    [data-theme="light"] .btn-user {
+        border-color: rgba(5, 150, 105, 0.28) !important;
+        background: rgba(5, 150, 105, 0.06) !important;
+        color: #047857 !important;
+    }
+    [data-theme="light"] .btn-user:hover,
+    [data-theme="light"] .btn-user.active {
+        background: rgba(5, 150, 105, 0.14) !important;
+        border-color: #059669 !important;
+        box-shadow: 0 0 12px rgba(5, 150, 105, 0.12) !important;
+    }
+
+    /* Dropdown do usuário */
+    [data-theme="light"] .user-dropdown {
+        background: rgba(255, 255, 255, 0.99) !important;
+        border-color: rgba(5, 150, 105, 0.2) !important;
+        box-shadow: 0 14px 34px rgba(0, 0, 0, 0.1) !important;
+    }
+    [data-theme="light"] .dropdown-item {
+        color: #111827 !important;
+    }
+    [data-theme="light"] .dropdown-item:hover {
+        background: rgba(5, 150, 105, 0.08) !important;
+        color: #047857 !important;
+    }
+    [data-theme="light"] .dropdown-logout {
+        color: #dc2626 !important;
+        border-top-color: rgba(0, 0, 0, 0.07) !important;
+    }
+    [data-theme="light"] .dropdown-logout:hover {
+        background: rgba(220, 38, 38, 0.07) !important;
+        color: #b91c1c !important;
+    }
+
+    /* Área do chat */
+    [data-theme="light"] .chat-history::-webkit-scrollbar-thumb {
+        background: rgba(5, 150, 105, 0.2) !important;
+    }
+
+    /* Hero */
+    [data-theme="light"] .hero h1 { color: #111827 !important; }
+    [data-theme="light"] .hero h1 span { color: #059669 !important; }
+    [data-theme="light"] .hero p { color: #6b7280 !important; }
+
+    /* Mensagem do usuário */
+    [data-theme="light"] .message-user {
+        background: rgba(5, 150, 105, 0.07) !important;
+        border-color: rgba(5, 150, 105, 0.22) !important;
+        color: #111827 !important;
+    }
+
+    /* Mensagem da IA */
+    [data-theme="light"] .message-ai {
+        background: #ffffff !important;
+        border-color: rgba(0, 0, 0, 0.08) !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+    [data-theme="light"] .message-ai-header {
+        border-bottom-color: rgba(0, 0, 0, 0.07) !important;
+    }
+    [data-theme="light"] .ai-icon {
+        background: rgba(5, 150, 105, 0.08) !important;
+        border-color: rgba(5, 150, 105, 0.25) !important;
+        color: #059669 !important;
+    }
+    [data-theme="light"] .ai-name { color: #111827 !important; }
+    [data-theme="light"] .ai-status {
+        background: rgba(0, 0, 0, 0.05) !important;
+        color: #6b7280 !important;
+    }
+    [data-theme="light"] .ai-status.error {
+        background: rgba(220, 38, 38, 0.08) !important;
+        color: #dc2626 !important;
+    }
+
+    /* Markdown */
+    [data-theme="light"] .markdown-body { color: #374151 !important; }
+    [data-theme="light"] .markdown-body strong { color: #047857 !important; }
+    [data-theme="light"] .markdown-body h1,
+    [data-theme="light"] .markdown-body h2,
+    [data-theme="light"] .markdown-body h3 { color: #111827 !important; }
+    [data-theme="light"] .markdown-body a { color: #0284c7 !important; }
+    [data-theme="light"] .markdown-body code {
+        background: rgba(0, 0, 0, 0.06) !important;
+        color: #0369a1 !important;
+    }
+    [data-theme="light"] .markdown-body pre {
+        background: #f3f4f6 !important;
+        border-color: rgba(0, 0, 0, 0.08) !important;
+    }
+    [data-theme="light"] .markdown-body pre code {
+        background: transparent !important;
+        color: #374151 !important;
+    }
+
+    /* Cross-eval */
+    [data-theme="light"] .cross-eval-panel {
+        background: #ffffff !important;
+        border-color: rgba(5, 150, 105, 0.14) !important;
+    }
+    [data-theme="light"] .cross-eval-title strong { color: #059669 !important; }
+    [data-theme="light"] .cross-eval-title span { color: #6b7280 !important; }
+    [data-theme="light"] .cross-eval-table-wrap {
+        border-color: rgba(0, 0, 0, 0.08) !important;
+    }
+    [data-theme="light"] .cross-eval-table th,
+    [data-theme="light"] .cross-eval-table td {
+        border-bottom-color: rgba(0, 0, 0, 0.06) !important;
+    }
+    [data-theme="light"] .cross-eval-table th {
+        color: #059669 !important;
+        background: rgba(5, 150, 105, 0.05) !important;
+    }
+    [data-theme="light"] .cross-eval-model { color: #111827 !important; }
+    [data-theme="light"] .cross-eval-judge { color: #6d28d9 !important; }
+    [data-theme="light"] .cross-eval-score { color: #047857 !important; }
+    [data-theme="light"] .cross-eval-note { color: #374151 !important; }
+
+    /* Typing indicator */
+    [data-theme="light"] .typing-indicator span { background: #059669 !important; }
+
+    /* Input area */
+    [data-theme="light"] .input-area-wrapper {
+        background: linear-gradient(to top, #f0f5fb 60%, transparent) !important;
+    }
+    [data-theme="light"] .input-box {
+        background: rgba(255, 255, 255, 0.97) !important;
+        border-color: rgba(5, 150, 105, 0.22) !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
+    }
+    [data-theme="light"] .input-box:focus-within {
+        border-color: #059669 !important;
+    }
+    [data-theme="light"] textarea { color: #111827 !important; }
+    [data-theme="light"] textarea::placeholder { color: rgba(107, 114, 128, 0.6) !important; }
+    [data-theme="light"] .btn-send {
+        background: #059669 !important;
+        color: #ffffff !important;
+    }
+    [data-theme="light"] .btn-send:hover:not(:disabled) {
+        background: #047857 !important;
+    }
+    [data-theme="light"] .btn-send:disabled {
+        background: rgba(0, 0, 0, 0.08) !important;
+        color: rgba(0, 0, 0, 0.3) !important;
+    }
+    [data-theme="light"] .footer-hint { color: #9ca3af !important; }
+
+    /* ══════════════════════════════════════════
        SIDEBAR — side-nav e classes relacionadas
        (questoes.html define o CSS inline, então
        os overrides precisam estar aqui também)
@@ -849,6 +1041,9 @@
     }
 
     /* Language switcher no tema claro */
+    /* Ocultar widget fixo na página de chat público (já tem seletor próprio no header) */
+    #chatPublica .language-switcher { display: none !important; }
+
     [data-theme="light"] .language-switcher form {
         background: rgba(255,255,255,0.92) !important;
         border-color: rgba(5,150,105,0.2) !important;
@@ -868,6 +1063,95 @@
         color: #059669 !important;
         box-shadow: inset 0 0 0 1px rgba(5,150,105,0.2) !important;
     }
+
+    /* ── T1: setup-llm ── */
+    [data-theme="light"] .metric-card { background: #ffffff !important; border-color: rgba(5,150,105,0.12) !important; box-shadow: 0 2px 8px rgba(0,0,0,0.04) !important; }
+    [data-theme="light"] .metric-card:hover { background: #f9fafb !important; border-color: rgba(5,150,105,0.28) !important; box-shadow: 0 4px 16px rgba(0,0,0,0.07) !important; }
+    [data-theme="light"] .metric-card:hover .metric-icon-box { background: rgba(5,150,105,0.14) !important; border-color: rgba(5,150,105,0.38) !important; }
+    [data-theme="light"] .metric-icon-box { background: rgba(5,150,105,0.06) !important; border-color: rgba(5,150,105,0.18) !important; color: #047857 !important; }
+    [data-theme="light"] .btn-icon { background: #ffffff !important; border-color: rgba(5,150,105,0.18) !important; }
+    [data-theme="light"] .btn-edit { border-color: rgba(5,150,105,0.28) !important; color: #047857 !important; }
+    [data-theme="light"] .btn-edit:hover { border-color: rgba(5,150,105,0.44) !important; color: #065f46 !important; background: rgba(5,150,105,0.06) !important; }
+    [data-theme="light"] .btn-delete { border-color: rgba(220,38,38,0.28) !important; color: #dc2626 !important; }
+    [data-theme="light"] .btn-delete:hover { border-color: rgba(220,38,38,0.44) !important; color: #b91c1c !important; background: rgba(220,38,38,0.08) !important; }
+    [data-theme="light"] .modal { background: #ffffff !important; border-color: rgba(5,150,105,0.2) !important; box-shadow: 0 22px 80px rgba(0,0,0,0.18) !important; }
+    [data-theme="light"] .modal-header { border-bottom-color: rgba(5,150,105,0.16) !important; }
+    [data-theme="light"] .modal-title { color: #047857 !important; }
+    [data-theme="light"] .modal-product { color: rgba(5,150,105,0.75) !important; }
+    [data-theme="light"] .modal-close { background: rgba(220,38,38,0.06) !important; border-color: rgba(220,38,38,0.22) !important; color: #dc2626 !important; }
+    [data-theme="light"] .modal-close:hover { background: rgba(220,38,38,0.12) !important; border-color: rgba(220,38,38,0.44) !important; color: #b91c1c !important; }
+    [data-theme="light"] .modal-footer { border-top-color: rgba(5,150,105,0.16) !important; }
+    [data-theme="light"] .field-select { background: #f9fafb !important; border-color: #d1d5db !important; color: #111827 !important; }
+    [data-theme="light"] .field-select option { background: #ffffff !important; color: #111827 !important; }
+    [data-theme="light"] .field-select:focus { background: #ffffff !important; border-color: #059669 !important; box-shadow: 0 0 0 3px rgba(5,150,105,0.12) !important; }
+    [data-theme="light"] .field-input::placeholder { color: #9ca3af !important; }
+    [data-theme="light"] .btn-toggle-password { color: #6b7280 !important; }
+    [data-theme="light"] .toast-message { background: rgba(5,150,105,0.1) !important; border-color: rgba(5,150,105,0.35) !important; color: #047857 !important; }
+    [data-theme="light"] .toast-message.error { background: rgba(220,38,38,0.08) !important; border-color: rgba(220,38,38,0.3) !important; color: #991b1b !important; }
+    [data-theme="light"] .empty-state { background: rgba(5,150,105,0.03) !important; border-color: rgba(5,150,105,0.2) !important; }
+    [data-theme="light"] .logo-box { background: rgba(5,150,105,0.06) !important; border-color: rgba(5,150,105,0.28) !important; box-shadow: none !important; }
+
+    /* ── T2: setup-avaliacao ── */
+    [data-theme="light"] .badge-quanti { background: rgba(5,150,105,0.08) !important; border-color: rgba(5,150,105,0.2) !important; color: #047857 !important; }
+    [data-theme="light"] .badge-quali { background: rgba(124,58,237,0.08) !important; border-color: rgba(124,58,237,0.2) !important; color: #6d28d9 !important; }
+    [data-theme="light"] .metric-score { background: #f3f4f6 !important; border-color: #d1d5db !important; color: #374151 !important; }
+    [data-theme="light"] .modal-section-label { color: #047857 !important; }
+    [data-theme="light"] .modal-section-label::after { background: linear-gradient(to right, rgba(5,150,105,0.18), transparent) !important; }
+    [data-theme="light"] .tipo-option label { background: #f9fafb !important; border-color: #d1d5db !important; color: #374151 !important; }
+    [data-theme="light"] .tipo-option input:checked + label { background: rgba(5,150,105,0.1) !important; border-color: rgba(5,150,105,0.38) !important; color: #047857 !important; }
+    [data-theme="light"] .field-textarea::placeholder { color: #9ca3af !important; }
+
+    /* ── T3: avaliacao_lista ── */
+    [data-theme="light"] .questions-select::-webkit-scrollbar-thumb { background: #d1d5db !important; }
+    [data-theme="light"] .questions-select { background: #ffffff !important; border-color: rgba(5,150,105,0.16) !important; }
+    [data-theme="light"] .question-option { background: #ffffff !important; border-color: rgba(5,150,105,0.12) !important; }
+    [data-theme="light"] .question-option:hover { background: rgba(5,150,105,0.05) !important; border-color: rgba(5,150,105,0.28) !important; }
+    [data-theme="light"] .question-option.selected { background: rgba(5,150,105,0.09) !important; border-color: #059669 !important; box-shadow: 0 0 8px rgba(5,150,105,0.08) !important; }
+    [data-theme="light"] .custom-checkbox { border-color: #9ca3af !important; }
+    [data-theme="light"] .question-option.selected .custom-checkbox { background: rgba(5,150,105,0.18) !important; border-color: #059669 !important; }
+    [data-theme="light"] .share-box { background: rgba(5,150,105,0.04) !important; border-color: rgba(5,150,105,0.18) !important; }
+    [data-theme="light"] .question-option-text { color: #111827 !important; }
+    [data-theme="light"] .question-option-meta { color: #6b7280 !important; }
+
+    /* ── T4: comparador ── */
+    [data-theme="light"] .panel { background: #ffffff !important; border-color: rgba(5,150,105,0.12) !important; box-shadow: 0 4px 16px rgba(0,0,0,0.05) !important; }
+    [data-theme="light"] .field { background: #f9fafb !important; border-color: #d1d5db !important; color: #111827 !important; }
+    [data-theme="light"] select.field option { background: #ffffff !important; color: #111827 !important; }
+    [data-theme="light"] .field:focus { background: #ffffff !important; border-color: #059669 !important; box-shadow: 0 0 0 3px rgba(5,150,105,0.12) !important; }
+    [data-theme="light"] .question-card,
+    [data-theme="light"] .judge-card { background: #ffffff !important; border-color: rgba(5,150,105,0.1) !important; }
+    [data-theme="light"] .question-card:hover:not(.is-disabled),
+    [data-theme="light"] .judge-card:hover { background: rgba(5,150,105,0.04) !important; border-color: rgba(5,150,105,0.28) !important; }
+    [data-theme="light"] .question-card.is-selected,
+    [data-theme="light"] .judge-card.is-selected { background: rgba(5,150,105,0.09) !important; border-color: #059669 !important; box-shadow: 0 0 8px rgba(5,150,105,0.08) !important; }
+    [data-theme="light"] .chip { background: #f3f4f6 !important; border-color: #e5e7eb !important; color: #6b7280 !important; }
+    [data-theme="light"] .chip.good { background: rgba(5,150,105,0.08) !important; border-color: rgba(5,150,105,0.22) !important; color: #047857 !important; }
+    [data-theme="light"] .chip.warn { background: rgba(217,119,6,0.08) !important; border-color: rgba(217,119,6,0.22) !important; color: #92400e !important; }
+    [data-theme="light"] .chip.blue { background: rgba(2,132,199,0.08) !important; border-color: rgba(2,132,199,0.2) !important; color: #0284c7 !important; }
+    [data-theme="light"] .empty { background: rgba(5,150,105,0.03) !important; border-color: rgba(5,150,105,0.18) !important; color: #9ca3af !important; }
+    [data-theme="light"] .response-group { background: #f9fafb !important; border-color: rgba(5,150,105,0.1) !important; }
+    [data-theme="light"] .response-card { background: #ffffff !important; border-color: rgba(5,150,105,0.1) !important; }
+    [data-theme="light"] .response-card.is-participant { background: rgba(5,150,105,0.07) !important; border-color: rgba(5,150,105,0.38) !important; }
+    [data-theme="light"] .result-row { background: #ffffff !important; border-color: rgba(5,150,105,0.1) !important; }
+    [data-theme="light"] .result-row:hover,
+    [data-theme="light"] .result-row.is-active { background: rgba(5,150,105,0.07) !important; border-color: rgba(5,150,105,0.3) !important; }
+    [data-theme="light"] .detail-text { background: #f9fafb !important; border-color: #e5e7eb !important; color: #374151 !important; }
+    [data-theme="light"] .detail-table { border-color: rgba(5,150,105,0.12) !important; }
+    [data-theme="light"] .detail-table th { background: rgba(5,150,105,0.06) !important; color: #047857 !important; }
+    [data-theme="light"] .detail-table td { color: #374151 !important; }
+    [data-theme="light"] .detail-score { color: #047857 !important; }
+    [data-theme="light"] .panel .summary-card { background: #f9fafb !important; border-color: rgba(5,150,105,0.1) !important; }
+
+    /* ── T5: questoes ── */
+    [data-theme="light"] .history-card:hover { background: #f9fafb !important; border-color: rgba(5,150,105,0.28) !important; }
+    [data-theme="light"] .upload-callout { background: linear-gradient(135deg, rgba(2,132,199,0.06), rgba(5,150,105,0.04)) !important; border-color: rgba(2,132,199,0.2) !important; }
+    [data-theme="light"] .upload-icon { background: rgba(5,150,105,0.08) !important; border-color: rgba(5,150,105,0.22) !important; }
+    [data-theme="light"] .empty-icon { background: rgba(2,132,199,0.08) !important; border-color: rgba(2,132,199,0.22) !important; color: #0284c7 !important; }
+    [data-theme="light"] .send-question-btn { background: rgba(5,150,105,0.1) !important; border-color: rgba(5,150,105,0.32) !important; color: #047857 !important; }
+    [data-theme="light"] .send-question-btn:hover { background: rgba(5,150,105,0.16) !important; border-color: rgba(5,150,105,0.44) !important; color: #065f46 !important; }
+    [data-theme="light"] .status-bar.erro { background: rgba(220,38,38,0.06) !important; border-color: rgba(220,38,38,0.22) !important; color: #991b1b !important; }
+    [data-theme="light"] .status-bar.aviso { background: rgba(217,119,6,0.06) !important; border-color: rgba(217,119,6,0.22) !important; color: #92400e !important; }
+    [data-theme="light"] .filter-select option { background: #ffffff !important; color: #111827 !important; }
 </style>
 
 <div class="language-switcher" aria-label="{% translate 'Selecionar idioma' %}">
@@ -898,7 +1182,7 @@
             title="Alternar tema claro/escuro"
             aria-label="Alternar tema"
         >
-            <span id="themeIcon">☀</span>
+            <span class="theme-icon-glyph">☀</span>
         </button>
     </form>
 </div>
@@ -906,13 +1190,13 @@
 <script>
   (function () {
     function applyTheme(t) {
-      var icon = document.getElementById('themeIcon');
+      var icons = document.querySelectorAll('.theme-icon-glyph');
       if (t === 'light') {
         document.documentElement.setAttribute('data-theme', 'light');
-        if (icon) icon.textContent = '☽';
+        icons.forEach(function(ic) { ic.textContent = '☽'; });
       } else {
         document.documentElement.removeAttribute('data-theme');
-        if (icon) icon.textContent = '☀';
+        icons.forEach(function(ic) { ic.textContent = '☀'; });
       }
     }
 

@@ -10,3 +10,5 @@ __pycache__/
 *.key
 *.crt
 CLAUDE.md
+.planning/
+docs/

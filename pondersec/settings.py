@@ -14,6 +14,7 @@ import os
 from pathlib import Path
 import mimetypes
 from django.utils.translation import gettext_lazy as _
+import ssl
 
 try:
     from dotenv import load_dotenv
@@ -91,6 +92,8 @@ EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True').lower() in ('1', 'true',
 EMAIL_HOST_USER = os.environ.get('HOST_API_EMAIL') or os.environ.get('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.environ.get('SENHA_API_EMAIL') or os.environ.get('EMAIL_HOST_PASSWORD')
 
+# Diz para o backend de email do Django não validar estritamente o hostname
+EMAIL_SSL_CONTEXT = ssl._create_unverified_context()
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'PonderSec <naoresp00@gmail.com>')
 
 ROOT_URLCONF = 'pondersec.urls'
