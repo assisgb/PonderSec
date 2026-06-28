@@ -1,8 +1,9 @@
 venv
-.dockerignore
 rebuild.sh
 .env
-db.sqlite3
+*.sqlite3
+certificados/
+/static/
 __pycache__/
 *.pyc
 *.pyo

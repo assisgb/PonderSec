@@ -2,4 +2,5 @@ from django.apps import AppConfig
 
 
 class ResponsegeneratorConfig(AppConfig):
-    name = 'responsegenerator'
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "responsegenerator"

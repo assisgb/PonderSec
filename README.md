@@ -1,100 +1,95 @@
-# 🔐 PonderSEC
+# PonderSEC
 
-Plataforma para **avaliação de Large Language Models (LLMs) em tarefas de cibersegurança**.
+Plataforma web para execução, avaliação e comparação de modelos de linguagem em tarefas de cibersegurança. O projeto foi desenvolvido no contexto de Iniciação Científica PIBITI/CNPq na Universidade Federal do Amazonas (UFAM).
 
-O objetivo do projeto é permitir a **execução, análise e comparação de respostas de modelos de linguagem** quando submetidos a **prompts relacionados a segurança da informação**, auxiliando pesquisas na área de **IA aplicada à cibersegurança**.
+## Funcionalidades
 
-Este projeto foi desenvolvido no contexto de **Iniciação Científica (PIBITI/CNPq)** na **Universidade Federal do Amazonas (UFAM)**.
+- chat público com múltiplas LLMs;
+- cadastro de questões e categorias de segurança;
+- comparação de respostas entre modelos;
+- avaliações humanas quantitativas e qualitativas;
+- avaliação cruzada com LLMs atuando como juízes;
+- dashboards para análise dos resultados;
+- painel administrativo separado para o chat público.
 
----
+## Tecnologias
 
-# 🎯 Objetivo
+- Python 3.11 e Django;
+- PostgreSQL;
+- Gunicorn e WhiteNoise;
+- Docker e Docker Compose.
 
-O **PonderSEC** busca fornecer um ambiente para:
+## Estrutura
 
-* Testar **LLMs em cenários de segurança**
-* Avaliar **respostas geradas pelos modelos**
-* Organizar **datasets de prompts de cibersegurança**
-* Facilitar **análises experimentais em pesquisas acadêmicas**
-
----
-
-# 🏗️ Arquitetura
-
-O sistema utiliza uma arquitetura baseada em containers para facilitar a execução e reprodução do ambiente.
-
-Principais tecnologias utilizadas:
-
-* **Python**
-* **Django**
-* **PostgreSQL**
-* **Docker**
-* **Docker Compose**
-
----
-
-# ⚙️ Requisitos
-
-Antes de executar o projeto, certifique-se de possuir instalado:
-
-* Docker
-* Docker Compose
-
----
-
-# 🚀 Instruções de Uso
-
-## 1️⃣ Gerar a imagem Docker
-
-```bash
-sudo docker compose build
-```
-
----
-
-## 2️⃣ Rodar os contêineres
-
-```bash
-sudo docker compose up
-```
-
-O sistema iniciará automaticamente os serviços definidos no `docker-compose.yml`.
-
----
-
-# 📂 Estrutura do Projeto
-
-```
-pondersec/
-│
-├── docker-compose.yml
+```text
+PonderSec/
+├── pondersec/            # Configurações centrais do Django
+├── responsegenerator/    # Chat, questões, avaliações e dashboards
+├── usuarios/             # Cadastro, autenticação e arquivos estáticos
+├── templates/partials/   # Componentes compartilhados
+├── locale/               # Traduções
 ├── Dockerfile
-├── app/
-│   ├── models
-│   ├── views
-│   ├── services
-│   └── prompts
-│
-├── database/
-└── README.md
+├── docker-compose.yml
+└── requirements.txt
 ```
 
----
+## Execução local
 
-# 🔬 Contexto Acadêmico
+1. Crie o arquivo de ambiente:
 
-Este projeto está sendo desenvolvido como parte de uma **pesquisa em Inteligência Artificial aplicada à Cibersegurança**, no programa de **Iniciação Científica PIBITI/CNPq**.
+   ```bash
+   cp .env.exemplo .env
+   ```
 
-Instituição: **Universidade Federal do Amazonas (UFAM)**
+2. Substitua as credenciais de exemplo e gere uma chave Django:
 
----
+   ```bash
+   python -c "import secrets; print(secrets.token_urlsafe(64))"
+   ```
 
-# 👥 Autores
+3. Construa e inicie os serviços:
 
-* **Gabriel Assis**
-* **Miguel Moraes**
-* **Luiz Barbosa**
+   ```bash
+   docker compose up --build
+   ```
 
----
+4. Acesse:
 
+   - aplicação: <http://localhost:8000>;
+   - pgAdmin: <http://localhost:5050>;
+   - painel PonderSEC: <http://localhost:8000/admin-pondersec/>.
 
+O administrador do painel é criado de forma idempotente pelas variáveis `ADMIN_PONDERSEC_*`. Também é possível gerenciá-lo manualmente:
+
+```bash
+docker compose exec web python manage.py criar_admin --email admin@example.com
+```
+
+## Validação
+
+```bash
+docker compose exec web python manage.py check
+docker compose exec web python manage.py test
+```
+
+Antes de criar migrations, revise os modelos e execute explicitamente:
+
+```bash
+docker compose exec web python manage.py makemigrations
+docker compose exec web python manage.py migrate
+```
+
+## Publicação
+
+- defina `DEBUG=False`;
+- use uma `SECRET_KEY` longa e exclusiva;
+- limite `ALLOWED_HOSTS` e `CSRF_TRUSTED_ORIGINS` ao domínio publicado;
+- sirva a aplicação atrás de HTTPS;
+- não versione `.env`, bancos locais, certificados ou chaves de API;
+- rotacione qualquer credencial que já tenha aparecido no histórico Git.
+
+## Autores
+
+- Gabriel Assis
+- Miguel Moraes
+- Luiz Barbosa

@@ -1,26 +1,26 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.urls import reverse
-from django.utils import timezone
-from django.utils.translation import gettext as _
+import json
+import re
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from functools import wraps
+
 from django.contrib import messages as django_messages
 from django.contrib.auth.decorators import login_required
-import os
-import re
-from datetime import timedelta
-from django.http import JsonResponse, HttpResponse
+from django.db.models import Avg, Count, Prefetch, Q
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
+from django.utils.translation import gettext as _
 from django.views.decorators.csrf import ensure_csrf_cookie
-import json
 from django.views.decorators.http import require_http_methods
+
 from responsegenerator.models import (
     AdminPonderSec,
-    Avaliacao,
     AvaliacaoFormulario,
     AvaliacaoJuiz,
     AvaliacaoPublicaLLM,
     Avaliador,
     Categoria,
     Formulario,
-    Historico,
     LLM,
     LLMPublica,
     Metrica,
@@ -29,10 +29,6 @@ from responsegenerator.models import (
     Resposta,
     RespostaPublica,
 )
-from functools import wraps
-from django.db.models import Avg, Count, Prefetch, Q
-from collections import defaultdict
-from concurrent.futures import ThreadPoolExecutor, as_completed
 
 try:
     from google import genai
@@ -48,17 +44,6 @@ try:
     from groq import Groq
 except ImportError:
     Groq = None
-
-
-def salvar_no_historico(user, pergunta, resposta):
-    q_obj = Questao.objects.create(conteudo=pergunta, usuario=user)  
-    resp_obj = Resposta.objects.create(conteudo_resposta=resposta, questao=q_obj)
-
-    Historico.objects.create(
-        usuario=user,
-        questao=q_obj
-    )
-
 
 # ===== VIEWS PÚBLICAS (SEM LOGIN) =====
 
@@ -263,11 +248,6 @@ def limpar_questoes(request):
         django_messages.success(request, _("O histórico de questões e categorias foi limpo!"))
     return redirect('questoes')
  
-@login_required
-def historico(request):
-    historico = Historico.objects.filter(usuario=request.user).order_by('-data')
-    return render(request, 'historico.html', {'historico': historico})
-
 @login_required
 def questoes(request):
     respostas_prefetch = Prefetch(
@@ -581,10 +561,6 @@ def setup_llm(request):
 
     llms_cadastradas = LLM.objects.filter(usuario=request.user)
     return render(request, 'setup/setup-llm.html',{"llms_cadastradas": llms_cadastradas})
-
-@login_required
-def setup_configurar_llm(request):
-    return render(request, 'setup/setup-configurar-llm.html')
 
 @login_required
 def setup_avaliacao(request):
@@ -1247,34 +1223,6 @@ def avaliacao(request):
     })
 
 @login_required
-def avaliacao_respostas(request, formulario_id, questao_id):
-    # BLINDADO
-    formulario = get_object_or_404(Formulario, id=formulario_id, usuario=request.user)
-    questao = get_object_or_404(Questao, id=questao_id, usuario=request.user)
-    
-    respostas = Resposta.objects.filter(questao=questao)
-    metricas = Metrica.objects.filter(usuario=request.user, ativa=True)
-
-    if request.method == 'POST':
-        data = json.loads(request.body)
-        for item in data:
-            Avaliacao.objects.create(
-                usuario=request.user,
-                resposta_id=item['resposta_id'],
-                metrica_id=item['metrica_id'],
-                avaliacao_quanti=item.get('quanti'),
-                avaliacao_quali=item.get('quali'),
-            )
-        return JsonResponse({'status': 'ok'})
-
-    return render(request, 'avaliacao/avaliacao_respostas.html', {
-        'questao': questao,
-        'respostas': respostas,
-        'metricas': metricas,
-        'formulario': formulario,
-    })
-
-@login_required
 def avaliacao_adicionar_formulario(request):
     if request.method == 'POST':
         nome = request.POST.get('nome')
@@ -1376,20 +1324,39 @@ def responder_avaliacao_publica(request, formulario_id):
             avaliador.save()
 
         avaliacoes = []
-        for chave, valor in request.POST.items():
-            if chave.startswith('quanti_') and valor:
-                partes = chave.split('_')
-                resposta_id = partes[1]
-                metrica_id = partes[2]
-                texto_quali = request.POST.get(f'quali_{resposta_id}_{metrica_id}', '')
+        respostas_ids = {
+            resposta.id
+            for questao in formulario.questoes_cache
+            for resposta in questao.respostas_cache
+        }
+
+        for resposta_id in respostas_ids:
+            for metrica in metricas:
+                nome_campo = f'{resposta_id}_{metrica.id}'
+                texto_quali = request.POST.get(f'quali_{nome_campo}', '').strip()
+                valor_quanti = None
+
+                if metrica.tipo == 'quantitativa':
+                    valor_recebido = request.POST.get(f'quanti_{nome_campo}')
+                    if not valor_recebido:
+                        continue
+                    try:
+                        valor_quanti = int(valor_recebido)
+                    except (TypeError, ValueError):
+                        continue
+
+                    pontuacao_maxima = metrica.pontuacao_maxima or 5
+                    valor_quanti = max(1, min(valor_quanti, pontuacao_maxima))
+                elif not texto_quali:
+                    continue
 
                 avaliacoes.append(AvaliacaoFormulario(
-                    usuario_id=formulario.usuario_id, # BLINDADO: Vincula a avaliação gerada ao dono do formulário
+                    usuario_id=formulario.usuario_id,  # Vincula a avaliação ao dono do formulário
                     avaliador=avaliador,
                     resposta_id=resposta_id,
-                    metrica_id=metrica_id,
-                    avaliacao_quanti=valor,
-                    avaliacao_quali=texto_quali
+                    metrica_id=metrica.id,
+                    avaliacao_quanti=valor_quanti,
+                    avaliacao_quali=texto_quali,
                 ))
 
         if avaliacoes:

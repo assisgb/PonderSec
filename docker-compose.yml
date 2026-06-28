@@ -16,18 +16,17 @@ services:
   web:
     build:
       context: .
-      network: host
     command: >
-      sh -c "python manage.py makemigrations &&
-             python manage.py migrate &&
+      sh -c "python manage.py migrate &&
+             python manage.py collectstatic --noinput &&
              python manage.py bootstrap_admin &&
              gunicorn pondersec.wsgi:application --bind 0.0.0.0:8000 --workers 3"
 
     ports:
-      - "8000:8000"
+      - "${DJANGO_PORT:-8000}:8000"
     volumes:
       - .:/app
-      - static_volume:/usuarios/static
+      - static_volume:/app/static
     env_file:
       - .env
     depends_on:
@@ -59,9 +58,9 @@ services:
   #    - "80:80"
   #    - "443:443"
   #  volumes:
-  #    - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
-  #    - static_volume:/usuarios/static # Só adicione essa linha se você usar arquivos estáticos via volume
-  #    - ./certificados:/etc/letsencrypt
+  #    - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+  #    - static_volume:/static:ro
+  #    - ./certificados:/etc/letsencrypt:ro
   #  depends_on:
   #    - web
 

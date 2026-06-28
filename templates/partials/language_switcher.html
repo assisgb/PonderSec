@@ -702,6 +702,15 @@
     }
     [data-theme="light"] .metric-label { color: #059669 !important; }
     [data-theme="light"] .metric-desc  { color: #6b7280 !important; }
+    [data-theme="light"] .metric-block.qualitative {
+        background: rgba(124,58,237,0.04) !important;
+        border-color: rgba(124,58,237,0.22) !important;
+    }
+    [data-theme="light"] .metric-block.qualitative:hover {
+        border-color: #7c3aed !important;
+        box-shadow: 0 0 10px rgba(124,58,237,0.1) !important;
+    }
+    [data-theme="light"] .metric-block.qualitative .metric-label { color: #7c3aed !important; }
 
     /* Likert slider */
     [data-theme="light"] .likert-rail  { background: #d1d5db !important; }
@@ -731,6 +740,11 @@
     }
     [data-theme="light"] .comment-field:focus { border-color: rgba(5,150,105,0.5) !important; }
     [data-theme="light"] .comment-field::placeholder { color: #9ca3af !important; }
+    [data-theme="light"] .comment-label { color: #374151 !important; }
+    [data-theme="light"] .qualitative-comment-field:focus {
+        border-color: #7c3aed !important;
+        box-shadow: 0 0 10px rgba(124,58,237,0.1) !important;
+    }
 
     /* Botões de navegação */
     [data-theme="light"] .btn-start {

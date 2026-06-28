@@ -476,8 +476,16 @@ const chatHistory = document.getElementById("chatHistory");
 const heroSection = document.getElementById("heroSection");
 let isFirstMessage = true;
 
-function scrollToBottom() {
-  chatHistory.scrollTo({ top: chatHistory.scrollHeight, behavior: 'smooth' });
+function revealNewMessage(messageElement) {
+  if (!messageElement) return;
+
+  requestAnimationFrame(() => {
+    messageElement.scrollIntoView({
+      behavior: 'smooth',
+      block: 'nearest',
+      inline: 'nearest'
+    });
+  });
 }
 
 function addUserMessage(text) {
@@ -487,7 +495,7 @@ function addUserMessage(text) {
   div.className = 'message-wrapper user-group';
   div.innerHTML = `<div class="message-user">${escapeHtml(text).replace(/\n/g, '<br>')}</div>`;
   chatHistory.appendChild(div);
-  scrollToBottom();
+  revealNewMessage(div);
 }
 
 function addLoadingBubble() {
@@ -511,7 +519,7 @@ function addLoadingBubble() {
     </div>
   `;
   chatHistory.appendChild(div);
-  scrollToBottom();
+  revealNewMessage(div);
   return id;
 }
 
@@ -568,6 +576,7 @@ function addAIBubblesGroup(respostas, tabelaAvaliacaoCruzada = []) {
   html += renderCrossEvaluationTable(tabelaAvaliacaoCruzada);
   div.innerHTML = html;
   chatHistory.appendChild(div);
+  revealNewMessage(div);
 }
 
 async function sendPublicQuestion() {
@@ -597,12 +606,10 @@ async function sendPublicQuestion() {
 
     const respostas = data.respostas || data.responses || [];
     addAIBubblesGroup(respostas, data.tabela_avaliacao_cruzada || []);
-    scrollToBottom();
 
   } catch (error) {
     removeBubble(loadingId);
     addAIBubblesGroup([{ modelo: "Sistema", resposta: `{% trans "Erro:" %} ${error.message}`, ok: false }]);
-    scrollToBottom();
   }
 }
 </script>

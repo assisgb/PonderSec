@@ -1,14 +1,15 @@
 import random
-from django.contrib import messages
-from django.shortcuts import redirect, render
-from django.core.mail import send_mail
-from usuarios.models import CodigoVerificacao
-from django.http import HttpResponse
-from django.contrib.auth.models import User
-from django.contrib.auth.decorators import login_required
+
 from django.contrib.auth import authenticate, login, logout
-from django.utils.translation import gettext as _
+from django.contrib.auth.models import User
+from django.contrib import messages
 from django.core.cache import cache
+from django.core.mail import send_mail
+from django.shortcuts import redirect, render
+from django.utils.http import url_has_allowed_host_and_scheme
+from django.utils.translation import gettext as _
+
+from usuarios.models import CodigoVerificacao
 
 LOGIN_MAX_ATTEMPTS = 5
 LOGIN_LOCKOUT_SECONDS = 15 * 60  # 15 minutos
@@ -99,32 +100,6 @@ def cadastro(request):
 
     return render(request, 'cadastro.html')
 
-def verificar_codigo(request):
-    user_id = request.session.get('usuario_inativo_id')
-    
-    if not user_id:
-        return redirect('login')
-
-    if request.method == "POST":
-        codigo_digitado = request.POST.get('codigo_input').strip()
-        
-        try:
-            registro = CodigoVerificacao.objects.get(usuario_id=user_id, codigo=codigo_digitado)
-            user = registro.usuario
-            user.is_active = True
-            user.save()
-            
-            registro.delete()
-            del request.session['usuario_inativo_id']
-            
-            return redirect('login')
-            
-        except CodigoVerificacao.DoesNotExist:
-            return HttpResponse(_("Código inválido ou expirado. Tente novamente."))
-
-    return render(request, 'verificar_codigo.html')
-
-
 def reenviar_codigo(request):
     user_id = request.session.get('usuario_inativo_id')
     
@@ -186,7 +161,11 @@ def login_view(request):
         cache.delete(ip_key)
         login(request, user)
         next_url = request.GET.get('next')
-        if next_url:
+        if next_url and url_has_allowed_host_and_scheme(
+            next_url,
+            allowed_hosts={request.get_host()},
+            require_https=request.is_secure(),
+        ):
             return redirect(next_url)
         return redirect('questoes')
 
