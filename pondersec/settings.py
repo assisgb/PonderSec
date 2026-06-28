@@ -92,8 +92,11 @@ EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True').lower() in ('1', 'true',
 EMAIL_HOST_USER = os.environ.get('HOST_API_EMAIL') or os.environ.get('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.environ.get('SENHA_API_EMAIL') or os.environ.get('EMAIL_HOST_PASSWORD')
 
+<<<<<<< HEAD
 # Diz para o backend de email do Django não validar estritamente o hostname
 EMAIL_SSL_CONTEXT = ssl._create_unverified_context()
+=======
+>>>>>>> d9be9d9 (atualizando)
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'PonderSec <naoresp00@gmail.com>')
 
 ROOT_URLCONF = 'pondersec.urls'
@@ -222,4 +225,8 @@ if not DEBUG:
     # Proteção extra contra navegadores tentando "adivinhar" o tipo do arquivo
     SECURE_CONTENT_TYPE_NOSNIFF = True
 
+<<<<<<< HEAD
 mimetypes.add_type("text/css", ".css", True)
+=======
+mimetypes.add_type("text/css", ".css", True)
+>>>>>>> d9be9d9 (atualizando)
