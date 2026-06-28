@@ -52,7 +52,7 @@ if not SECRET_KEY:
 
 ALLOWED_HOSTS = env_list(
     "ALLOWED_HOSTS",
-    default="localhost,127.0.0.1,testserver,pondersec.icomp.ufam.edu.br",
+    default="localhost,127.0.0.1,0.0.0.0,testserver,pondersec.icomp.ufam.edu.br",
 )
 
 
