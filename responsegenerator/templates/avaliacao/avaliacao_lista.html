@@ -442,13 +442,32 @@ body::before {
                 </div>
 
                 <div class="modal-section-label" style="margin-top: 24px;">{% translate "Questões Vinculadas" %}</div>
-                <div class="questions-select">
+                <div style="margin-bottom: 12px;">
+                    <select class="field-input" id="filtroTipoAdicionar" onchange="filtrarQuestoesModal('filtroTipoAdicionar', 'questoesAdicionar')" style="height: 38px; font-size: 12px;">
+                        <option value="all">{% translate "Todas as questões" %}</option>
+                        <option value="ia">{% translate "Apenas com resposta IA" %}</option>
+                        <option value="humana">{% translate "Apenas com resposta humana" %}</option>
+                        <option value="ambas">{% translate "IA + Humana" %}</option>
+                    </select>
+                </div>
+                <div class="questions-select" id="questoesAdicionar">
                     {% for questao in questoes %}
-                    <div class="question-option" onclick="toggleQuestao(this)">
+                    <div class="question-option" onclick="toggleQuestao(this)"
+                         data-has-ai="{% if questao.respostas_cache %}true{% else %}false{% endif %}"
+                         data-has-human="{% if questao.resposta_humana %}true{% else %}false{% endif %}">
                         <div class="custom-checkbox"><span class="checkmark">✓</span></div>
                         <div>
                             <div class="question-option-text">{{ questao.conteudo }}</div>
-                            <div class="question-option-meta">{{ questao.categoria.nome_categoria }}</div>
+                            <div class="question-option-meta">
+                                {{ questao.categoria.nome_categoria }}
+                                {% if questao.respostas_cache and questao.resposta_humana %}
+                                    · <span style="color: #c4b5fd;">IA + Humana</span>
+                                {% elif questao.respostas_cache %}
+                                    · <span style="color: #00ff9f;">IA</span>
+                                {% elif questao.resposta_humana %}
+                                    · <span style="color: #c4b5fd;">Humana</span>
+                                {% endif %}
+                            </div>
                         </div>
                         <input type="checkbox" name="questoes" value="{{ questao.id }}" style="display:none;">
                     </div>
@@ -489,13 +508,32 @@ body::before {
                 </div>
 
                 <div class="modal-section-label" style="margin-top: 24px;">{% translate "Questões Vinculadas" %}</div>
-                <div class="questions-select">
+                <div style="margin-bottom: 12px;">
+                    <select class="field-input" id="filtroTipoEditar" onchange="filtrarQuestoesModal('filtroTipoEditar', 'questoesEditar')" style="height: 38px; font-size: 12px;">
+                        <option value="all">{% translate "Todas as questões" %}</option>
+                        <option value="ia">{% translate "Apenas com resposta IA" %}</option>
+                        <option value="humana">{% translate "Apenas com resposta humana" %}</option>
+                        <option value="ambas">{% translate "IA + Humana" %}</option>
+                    </select>
+                </div>
+                <div class="questions-select" id="questoesEditar">
                     {% for questao in questoes %}
-                        <div class="question-option" onclick="toggleQuestao(this)" data-id="{{ questao.id }}">
+                        <div class="question-option" onclick="toggleQuestao(this)" data-id="{{ questao.id }}"
+                             data-has-ai="{% if questao.respostas_cache %}true{% else %}false{% endif %}"
+                             data-has-human="{% if questao.resposta_humana %}true{% else %}false{% endif %}">
                             <div class="custom-checkbox"><span class="checkmark">✓</span></div>
                             <div>
                                 <div class="question-option-text">{{ questao.conteudo }}</div>
-                                <div class="question-option-meta">{{ questao.categoria.nome_categoria }}</div>
+                                <div class="question-option-meta">
+                                    {{ questao.categoria.nome_categoria }}
+                                    {% if questao.respostas_cache and questao.resposta_humana %}
+                                        · <span style="color: #c4b5fd;">IA + Humana</span>
+                                    {% elif questao.respostas_cache %}
+                                        · <span style="color: #00ff9f;">IA</span>
+                                    {% elif questao.resposta_humana %}
+                                        · <span style="color: #c4b5fd;">Humana</span>
+                                    {% endif %}
+                                </div>
                             </div>
                             <input type="checkbox" name="questoes" value="{{ questao.id }}" style="display:none;">
                         </div>
@@ -644,6 +682,28 @@ body::before {
             cb.checked = !cb.checked;
         }
 
+        function filtrarQuestoesModal(selectId, containerId) {
+            const filtro = document.getElementById(selectId).value;
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            container.querySelectorAll('.question-option').forEach(opt => {
+                const hasAi = opt.getAttribute('data-has-ai') === 'true';
+                const hasHuman = opt.getAttribute('data-has-human') === 'true';
+                let show = true;
+
+                if (filtro === 'ia') {
+                    show = hasAi && !hasHuman;
+                } else if (filtro === 'humana') {
+                    show = hasHuman && !hasAi;
+                } else if (filtro === 'ambas') {
+                    show = hasAi && hasHuman;
+                }
+
+                opt.style.display = show ? '' : 'none';
+            });
+        }
+
         function abrirModal(id) { document.getElementById(id).classList.add('active'); }
         function fecharModal(id) { document.getElementById(id).classList.remove('active'); }
 
@@ -651,7 +711,11 @@ body::before {
             document.getElementById('nomeEditar').value = nome;
             document.getElementById('formEditar').action = `/avaliacao/editar/${id}/`;
 
-            document.querySelectorAll('#modalEditar .question-option').forEach(el => {
+            const filtroEditar = document.getElementById('filtroTipoEditar');
+            if (filtroEditar) filtroEditar.value = 'all';
+
+            document.querySelectorAll('#questoesEditar .question-option').forEach(el => {
+                el.style.display = '';
                 const qId = parseInt(el.getAttribute('data-id'));
                 const cb = el.querySelector('input[type="checkbox"]');
                 if (questoesIds.includes(qId)) {

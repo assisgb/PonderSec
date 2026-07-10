@@ -1,0 +1,25 @@
+[
+  {
+    "pergunta": "O que é phishing e quais são suas principais técnicas?",
+    "categoria": "Fundamentos de Segurança",
+    "resposta": "Phishing é uma técnica de engenharia social onde atacantes se passam por entidades confiáveis para induzir vítimas a revelar informações sensíveis. Principais técnicas incluem: e-mails falsos imitando bancos, sites falsos (spoofing), spear phishing direcionado a indivíduos específicos, vishing (phishing por voz) e smishing (phishing por SMS)."
+  },
+  {
+    "pergunta": "Quais controles podem reduzir o risco de phishing em uma organização?",
+    "categoria": "Fundamentos de Segurança",
+    "resposta": "Controles efetivos incluem: filtros de e-mail com anti-spam e verificação de domínio (SPF, DKIM, DMARC), treinamento contínuo de conscientização de segurança, autenticação multifator (MFA), segmentação de rede, monitoramento de tráfego, políticas de uso de dispositivos e simulações periódicas de phishing."
+  },
+  {
+    "pergunta": "Explique a diferença entre autenticação e autorização.",
+    "categoria": "Fundamentos de Segurança"
+  },
+  {
+    "pergunta": "O que é SQL Injection e como preveni-la?",
+    "categoria": "Vulnerabilidades Web",
+    "resposta": "SQL Injection é uma vulnerabilidade que permite a um atacante injetar comandos SQL maliciosos em consultas de banco de dados. Prevenção: usar prepared statements/parameterized queries, aplicar principle of least privilege no banco, sanitizar entradas do usuário, validar tipos de dados e manter o SGBD atualizado."
+  },
+  {
+    "pergunta": "Descreva o que é criptografia simétrica e assimétrica.",
+    "categoria": "Vulnerabilidades Web"
+  }
+]

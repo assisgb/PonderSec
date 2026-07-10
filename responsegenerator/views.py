@@ -246,10 +246,15 @@ def ver_detalhes_questao(request, id):
                 'cor': '#8ba1b0'
             })
 
+        resposta_humana_texto = None
+        if questao.resposta_humana:
+            resposta_humana_texto = questao.resposta_humana.replace('\n', '<br>')
+
         return JsonResponse({
             'pergunta': questao.conteudo,
             'data': '', 
-            'respostas': respostas_encontradas
+            'respostas': respostas_encontradas,
+            'resposta_humana': resposta_humana_texto,
         })
     except Exception as e:
         print(f"Erro em ver_detalhes_questao: {str(e)}")
@@ -310,6 +315,7 @@ def questoes(request):
 def add_questoes(request):
     if request.method == "POST":
         pergunta_texto = request.POST.get('pergunta')
+        resposta_humana = request.POST.get('resposta_humana', '').strip()
         
         if pergunta_texto:
             categoria_id = request.POST.get('categoria_id')
@@ -329,6 +335,7 @@ def add_questoes(request):
                 conteudo=pergunta_texto,
                 usuario=request.user,
                 categoria=categoria_obj,
+                resposta_humana=resposta_humana if resposta_humana else None,
             )
 
             django_messages.success(request, _("Questão adicionada na categoria '%(categoria)s'!") % {
@@ -368,33 +375,71 @@ def upload_perguntas(request):
 
                     for item in dados:
                         texto_pergunta = item.get("pergunta", "").strip()
+                        resposta = item.get("resposta", "").strip() or item.get("RESPOSTA", "").strip()
+                        nome_categoria_item = item.get("categoria", "").strip() or item.get("Categoria", "").strip()
+
                         if texto_pergunta:
+                            cat_obj = categoria_padrao
+                            if nome_categoria_item:
+                                cat_obj, _created = Categoria.objects.get_or_create(
+                                    nome_categoria=nome_categoria_item,
+                                    usuario=request.user,
+                                    defaults={'descricao_categoria': ''}
+                                )
+
                             perguntas.append(texto_pergunta)
-                            Questao.objects.create(conteudo=texto_pergunta, usuario=request.user, categoria=categoria_padrao)
+                            Questao.objects.create(
+                                conteudo=texto_pergunta,
+                                usuario=request.user,
+                                categoria=cat_obj,
+                                resposta_humana=resposta if resposta else None,
+                            )
 
                 except (json.JSONDecodeError, AttributeError):
                     django_messages.error(request, _("Arquivo JSON inválido ou mal formatado."))
                     return redirect('questoes')
 
             else:
-                # splitlines() é melhor aqui para evitar problemas com quebras de linha
-                for linha in conteudo_texto.splitlines():
-                    linha = linha.strip()
+                linhas = conteudo_texto.splitlines()
+                categoria_atual = categoria_padrao
+                i = 0
+                while i < len(linhas):
+                    linha = linhas[i].strip()
 
-                    # Ignora linhas em branco
                     if not linha:
+                        i += 1
                         continue
 
-                    # Se a linha for um Eixo, trata como cabeçalho e mantém a categoria escolhida.
                     if linha.lower().startswith("eixo"):
+                        nome_cat = re.sub(r'^eixo\s*\d+\s*[-–—:]\s*', '', linha, flags=re.IGNORECASE).strip()
+                        if nome_cat:
+                            categoria_atual, _created = Categoria.objects.get_or_create(
+                                nome_categoria=nome_cat,
+                                usuario=request.user,
+                                defaults={'descricao_categoria': ''}
+                            )
+                        i += 1
                         continue
 
-                    # Se chegou aqui, é uma pergunta. Remove números, pontos e parênteses do início.
                     texto_pergunta = re.sub(r'^\d+[\.\)]\s*', '', linha).strip()
+                    resposta = None
 
                     if texto_pergunta:
+                        if i + 1 < len(linhas):
+                            proxima_linha = linhas[i + 1].strip()
+                            if proxima_linha.upper().startswith("RESPOSTA:"):
+                                resposta = proxima_linha[len("RESPOSTA:"):].strip()
+                                i += 1
+
                         perguntas.append(texto_pergunta)
-                        Questao.objects.create(conteudo=texto_pergunta, usuario=request.user, categoria=categoria_padrao)
+                        Questao.objects.create(
+                            conteudo=texto_pergunta,
+                            usuario=request.user,
+                            categoria=categoria_atual,
+                            resposta_humana=resposta if resposta else None,
+                        )
+
+                    i += 1
 
             if perguntas:
                 django_messages.success(request, _("%(count)s perguntas importadas na categoria '%(categoria)s'!") % {
@@ -1235,9 +1280,16 @@ def avaliacao(request):
     )
     questoes_respondidas = (
         Questao.objects
-        .filter(usuario=request.user, respostas__isnull=False)
+        .filter(usuario=request.user)
         .select_related("categoria")
-        .only("id", "conteudo", "categoria_id", "categoria__id", "categoria__nome_categoria")
+        .prefetch_related(
+            Prefetch(
+                "respostas",
+                queryset=Resposta.objects.only("id", "questao_id"),
+                to_attr="respostas_cache",
+            )
+        )
+        .only("id", "conteudo", "categoria_id", "categoria__id", "categoria__nome_categoria", "resposta_humana")
         .distinct()
         .order_by("-id")
     )
@@ -1329,7 +1381,7 @@ def responder_avaliacao_publica(request, formulario_id):
     )
     questoes_prefetch = Prefetch(
         "questoes",
-        queryset=Questao.objects.only("id", "conteudo").prefetch_related(respostas_prefetch),
+        queryset=Questao.objects.only("id", "conteudo", "resposta_humana").prefetch_related(respostas_prefetch),
         to_attr="questoes_cache",
     )
     formulario = get_object_or_404(
@@ -1356,6 +1408,17 @@ def responder_avaliacao_publica(request, formulario_id):
                 (4, '🙂', 'Bom'),
                 (5, '😄', 'Excelente'),
             ]
+
+    for questao in formulario.questoes_cache:
+        if questao.resposta_humana:
+            ja_existe = any(r.llm is None for r in questao.respostas_cache)
+            if not ja_existe:
+                resp_humana = Resposta.objects.create(
+                    questao=questao,
+                    llm=None,
+                    conteudo_resposta=questao.resposta_humana,
+                )
+                questao.respostas_cache.append(resp_humana)
 
     if request.method == 'POST':
         nome = request.POST.get('nome')

@@ -290,6 +290,7 @@ msgid "Tipo de acesso"
 msgstr "Access type"
 
 #: responsegenerator/templates/admin_pondersec/login.html:227
+#: templates/partials/app_sidebar.html:9
 #: usuarios/templates/login.html:307
 msgid "Pesquisador"
 msgstr "Researcher"

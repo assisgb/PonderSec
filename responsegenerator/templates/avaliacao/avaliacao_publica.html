@@ -478,14 +478,17 @@
                                 <div class="slide-meta">
                                     <span class="badge-q">{% blocktranslate %}Pergunta {{ question_number }} de {{ question_total }}{% endblocktranslate %}</span>
                                     <span class="badge-answer">{% blocktranslate with response_number=forloop.counter %}Resposta {{ response_number }} de {{ response_total }}{% endblocktranslate %}</span>
+                                    {% if not blind_mode %}
+                                    {% if resp.llm %}
                                     <span class="badge-ai">
-                                        ✦
-                                        {% if blind_mode %}
-                                            {% blocktranslate with response_number=forloop.counter %}Resposta IA #{{ response_number }}{% endblocktranslate %}
-                                        {% else %}
-                                            {{ resp.llm.nome }}
-                                        {% endif %}
+                                        ✦ {{ resp.llm.nome }}
                                     </span>
+                                    {% else %}
+                                    <span class="badge-ai" style="background: rgba(196, 181, 253, 0.15); color: #c4b5fd; border-color: rgba(196, 181, 253, 0.3);">
+                                        ✦ Humano
+                                    </span>
+                                    {% endif %}
+                                    {% endif %}
                                 </div>
                                 <div class="question-text">{{ questao.conteudo }}</div>
                                 <div class="response-box">

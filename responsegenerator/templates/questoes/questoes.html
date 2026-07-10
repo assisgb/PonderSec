@@ -680,7 +680,7 @@ textarea:focus,
 
 .toolbar {
   display: grid;
-  grid-template-columns: minmax(240px, 1.4fr) repeat(4, minmax(150px, 0.7fr));
+  grid-template-columns: minmax(240px, 1.4fr) repeat(5, minmax(140px, 0.7fr));
   gap: 12px;
   align-items: center;
   margin-bottom: 16px;
@@ -1312,6 +1312,11 @@ textarea:focus,
           </div>
         </div>
 
+        <div class="field-group">
+          <label class="field-label" for="respostaHumana">{% translate "Resposta Humana (opcional)" %}</label>
+          <textarea id="respostaHumana" name="resposta_humana" class="field-textarea" style="min-height: 90px;" placeholder="{% translate 'Insira a resposta humana para esta pergunta, se disponível...' %}"></textarea>
+        </div>
+
         <div class="upload-callout">
           <div class="upload-icon" aria-hidden="true">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -1401,6 +1406,13 @@ textarea:focus,
           <option value="pending">{% translate "Pendentes" %}</option>
         </select>
 
+        <select id="typeFilter" class="filter-select" onchange="queueFilterHistory()" aria-label="{% translate 'Filtrar por tipo de resposta' %}">
+          <option value="all">{% translate "Todos os tipos" %}</option>
+          <option value="ia">{% translate "Apenas IA" %}</option>
+          <option value="humana">{% translate "Apenas Humana" %}</option>
+          <option value="ambas">{% translate "IA + Humana" %}</option>
+        </select>
+
         <select id="aiFilter" class="filter-select" onchange="queueFilterHistory()" aria-label="{% translate 'Filtrar por IA' %}">
           <option value="all">{% translate "Todas as IAs" %}</option>
           {% if llms %}
@@ -1452,14 +1464,20 @@ textarea:focus,
           {% for item in historico %}
           <article class="history-card"
             data-question="{{ item.conteudo|lower }}"
-            data-status="{% if item.respostas_cache %}answered{% else %}pending{% endif %}"
+            data-status="{% if item.respostas_cache or item.resposta_humana %}answered{% else %}pending{% endif %}"
             data-ias="{% for resp in item.respostas_cache %}{{ resp.llm.nome|lower }} {% endfor %}"
             data-forms="{% for form in item.formularios_cache %}{{ form.nome|lower }} {% endfor %}"
-            data-category="{{ item.categoria.nome_categoria|default:'sem categoria'|lower }}">
+            data-category="{{ item.categoria.nome_categoria|default:'sem categoria'|lower }}"
+            data-has-human="{% if item.resposta_humana %}true{% else %}false{% endif %}"
+            data-has-ai="{% if item.respostas_cache %}true{% else %}false{% endif %}">
             <div class="card-header">
               <div class="badge-row">
-                {% if item.respostas_cache %}
-                <span class="status-badge status-answered">{% translate "Respondida" %}</span>
+                {% if item.respostas_cache and item.resposta_humana %}
+                <span class="status-badge status-answered">{% translate "IA + Humana" %}</span>
+                {% elif item.respostas_cache %}
+                <span class="status-badge status-answered">{% translate "IA" %}</span>
+                {% elif item.resposta_humana %}
+                <span class="status-badge status-answered">{% translate "Humana" %}</span>
                 {% else %}
                 <span class="status-badge status-pending">{% translate "Pendente" %}</span>
                 {% endif %}
@@ -1478,13 +1496,16 @@ textarea:focus,
             </div>
 
             <div class="card-question">{{ item.conteudo }}</div>
-            {% if item.respostas_cache %}
+            {% if item.respostas_cache or item.resposta_humana %}
             {% with primeira_resposta=item.respostas_cache.0 %}
             <div class="card-preview">
-              {% if primeira_resposta.conteudo_resposta %}{{ primeira_resposta.conteudo_resposta|truncatewords:18 }}{% else %}{% translate "Resposta detalhada registrada." %}{% endif %}...
+              {% if item.resposta_humana %}{{ item.resposta_humana|truncatewords:18 }}{% elif primeira_resposta.conteudo_resposta %}{{ primeira_resposta.conteudo_resposta|truncatewords:18 }}{% else %}{% translate "Resposta detalhada registrada." %}{% endif %}...
             </div>
             {% endwith %}
             <div class="card-footer">
+              {% if item.resposta_humana %}
+              <span class="tag tag-humana" style="border-color: rgba(139, 92, 246, 0.32); background: rgba(139, 92, 246, 0.1); color: #c4b5fd;">{% translate "Humano" %}</span>
+              {% endif %}
               {% for resp in item.respostas_cache %}
               <span class="tag">{% if resp.llm.nome %}{{ resp.llm.nome }}{% else %}{% translate "IA geral" %}{% endif %}</span>
               {% endfor %}
@@ -1590,15 +1611,6 @@ textarea:focus,
         <span>{% translate "Arraste o arquivo aqui ou clique para procurar." %}</span>
         <input type="file" id="fileInput" name="arquivo_upload" accept=".txt,.json,text/plain,application/json" style="display: none;">
       </div>
-      <div class="field-group">
-        <label class="field-label" for="categoriaUpload">{% translate "Categoria para o lote" %}</label>
-        <select class="filter-select" id="categoriaUpload" name="categoria_id">
-          <option value="">{% translate "Geral" %}</option>
-          {% for cat in categorias %}
-          <option value="{{ cat.id }}">{{ cat.nome_categoria }}</option>
-          {% endfor %}
-        </select>
-      </div>
       <div class="file-name" id="fileName"></div>
 
       <div class="modal-footer">
@@ -1689,7 +1701,9 @@ function initHistoryCache() {
     status: card.getAttribute("data-status") || "",
     ias: card.getAttribute("data-ias") || "",
     forms: card.getAttribute("data-forms") || "",
-    category: card.getAttribute("data-category") || ""
+    category: card.getAttribute("data-category") || "",
+    hasHuman: card.getAttribute("data-has-human") === "true",
+    hasAi: card.getAttribute("data-has-ai") === "true"
   }));
 }
 
@@ -1718,6 +1732,7 @@ function filterHistory() {
 
   const searchText = searchInput.value.toLowerCase().trim();
   const statusFilter = document.getElementById("statusFilter")?.value || "all";
+  const typeFilter = document.getElementById("typeFilter")?.value || "all";
   const aiFilter = (document.getElementById("aiFilter")?.value || "all").toLowerCase();
   const formFilter = (document.getElementById("formFilter")?.value || "all").toLowerCase();
   const categoryFilter = (document.getElementById("categoryFilter")?.value || "all").toLowerCase();
@@ -1727,10 +1742,14 @@ function filterHistory() {
   cards.forEach(card => {
     const matchSearch = card.question.includes(searchText);
     const matchStatus = statusFilter === "all" || card.status === statusFilter;
+    const matchType = typeFilter === "all" || 
+      (typeFilter === "ia" && card.hasAi && !card.hasHuman) ||
+      (typeFilter === "humana" && card.hasHuman && !card.hasAi) ||
+      (typeFilter === "ambas" && card.hasHuman && card.hasAi);
     const matchAI = aiFilter === "all" || card.ias.includes(aiFilter);
     const matchForm = formFilter === "all" || card.forms.includes(formFilter);
     const matchCategory = categoryFilter === "all" || card.category.includes(categoryFilter);
-    const shouldShow = matchSearch && matchStatus && matchAI && matchForm && matchCategory;
+    const shouldShow = matchSearch && matchStatus && matchType && matchAI && matchForm && matchCategory;
 
     card.el.hidden = !shouldShow;
     if (shouldShow) visibleCount += 1;
@@ -1859,6 +1878,26 @@ function abrirModalDetalhes(btn) {
         card.appendChild(body);
         respostasContainer.appendChild(card);
       });
+
+      if (data.resposta_humana) {
+        const humanCard = document.createElement("div");
+        humanCard.className = "detail-response-card";
+
+        const humanLabel = document.createElement("label");
+        humanLabel.className = "field-label";
+        humanLabel.textContent = "{% translate 'Resposta Humana' %}";
+        humanLabel.style.color = "#c4b5fd";
+
+        const humanBody = document.createElement("div");
+        humanBody.className = "detail-response-body markdown-body";
+        humanBody.style.borderColor = "rgba(139, 92, 246, 0.32)";
+        humanBody.style.background = "rgba(139, 92, 246, 0.1)";
+        humanBody.innerHTML = marked.parse(data.resposta_humana);
+
+        humanCard.appendChild(humanLabel);
+        humanCard.appendChild(humanBody);
+        respostasContainer.appendChild(humanCard);
+      }
     })
     .catch(() => {
       if (detalhesPergunta) detalhesPergunta.innerText = pageText.loadError;

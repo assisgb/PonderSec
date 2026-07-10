@@ -1,0 +1,152 @@
+[
+  {
+    "pergunta": "Qual é a forma ideal de armazenar senhas?",
+    "resposta": "A forma ideal é usar um gerenciador de senhas que armazena senhas em criptografia forte (AES-256 ou similar), com uma mestra protegida por autenticação de dois fatores. Nunca armazenar senhas em texto plano, planilhas ou navegador sem proteção adicional.",
+    "categoria": "Autenticação"
+  },
+  {
+    "pergunta": "Quais são todas as coisas que podem dar errado durante a autenticação?",
+    "resposta": "Problemas incluem: senhas fracas ou reutilizadas, ataques de força bruta, phishing, keyloggers, interceptação de sessão, vulnerabilidades no servidor de autenticação, falhas na implementação de MFA, roubo de cookies de sessão, ataques de engenharia social contra suporte técnico e vazamento de credenciais em outros serviços.",
+    "categoria": "Autenticação"
+  },
+  {
+    "pergunta": "Quais são as alternativas à autenticação por telefone (SMS/chamada)?",
+    "resposta": "Alternativas incluem: aplicativos autenticadores (Google Authenticator, Authy, Microsoft Authenticator), chaves de segurança físicas (YubiKey, Titan Security Key), biometria (impressão digital, reconhecimento facial), tokens de hardware, certificados digitais, autenticação por e-mail e passkeys (chaves de acesso sem senha).",
+    "categoria": "Autenticação"
+  },
+  {
+    "pergunta": "Por que devo confiar em gerenciadores de senhas?",
+    "resposta": "Gerenciadores de senhas confiáveis usam criptografia de ponta a ponta, são auditados por segurança, implementam zero-knowledge (não acessam suas senhas), são open-source ou possuem auditorias independentes, e reduzem significativamente o risco de reutilização de senhas e ataques de credential stuffing.",
+    "categoria": "Autenticação"
+  },
+  {
+    "pergunta": "Por que gerenciadores de senhas enviam códigos para autenticação e tem autenticação de dois fatores?",
+    "resposta": "Mesmo com uma senha forte, se o dispositivo for comprometido ou a senha for vazada, o atacante teria acesso a todas as senhas. A autenticação de dois fatores adiciona uma camada extra de segurança, garantindo que apenas quem tem acesso ao dispositivo autenticado pode acessar o cofre de senhas.",
+    "categoria": "Autenticação"
+  },
+  {
+    "pergunta": "Por que muitos sites agora colocam a entrada de usuário e senha em páginas diferentes?",
+    "resposta": "Essa prática dificulta ataques de phishing e credential stuffing, pois o atacante não consegue verificar imediatamente se as credenciais são válidas. Também permite implementar verificações adicionais entre as etapas, como verificação de CAPTCHA ou análise de comportamento.",
+    "categoria": "Autenticação"
+  },
+  {
+    "pergunta": "O que impede alguém de falsificar um site?",
+    "resposta": "Certificados SSL/TLS (HTTPS), verificação de domínio, uso de gerenciadores de senhas que só preenchem em domínios legítimos, autenticação de dois fatores, verificações de integridade, monitoramento de reputação do site e educate do usuário sobre verificação de URLs.",
+    "categoria": "Autenticação"
+  },
+  {
+    "pergunta": "Por que faz sentido armazenar códigos de 2FA no gerenciador de senhas?",
+    "resposta": "Armazenar códigos 2FA no gerenciador de senhas mantém tudo em um lugar seguro com criptografia forte, evita a necessidade de dispositivos separados, permite sincronização entre dispositivos e mantém o 2FA ativo mesmo se o dispositivo original for perdido, desde que o cofre de senhas esteja protegido.",
+    "categoria": "Autenticação"
+  },
+  {
+    "pergunta": "Como convencer meu banco a não exigir 2FA baseado em SMS?",
+    "resposta": "Argumente sobre as vulnerabilidades do SMS (SIM swapping, interceptação, SS7), sugira alternativas como aplicativos autenticadores ou chaves de segurança, cite normas de segurança como NIST que descontinuaram SMS como fator autenticador, e solicite opções mais seguras de MFA.",
+    "categoria": "Autenticação"
+  },
+  {
+    "pergunta": "Por que os bancos ainda dificultam tanto na autenticação?",
+    "resposta": "Bancos equilibram segurança e usabilidade, mas muitas vezes são conservadores em adotar novas tecnologias devido a regulamentações, custos de implementação, necessidade de suporte a todos os clientes (incluindo menos tecnológicos), e histórico de fraudes que exigem camadas adicionais de verificação.",
+    "categoria": "Autenticação"
+  },
+  {
+    "pergunta": "E-mails com o domínio firebaseapp.com podem ser e-mails de phishing?",
+    "resposta": "Não necessariamente. O firebaseapp.com é um serviço legítimo do Google para hospedagem de aplicativos. No entanto, atacantes podem criar aplicativos maliciosos no Firebase para enviar e-mails de phishing. Verifique sempre o remetente completo, links e conteúdo do e-mail.",
+    "categoria": "Engenharia Social"
+  },
+  {
+    "pergunta": "Encontrei um site de phishing. Existe alguma maneira de tirá-lo do ar?",
+    "resposta": "Sim. Reporte ao provedor de hospedagem, ao registrador de domínio, ao Google Safe Browsing, ao PhishTank, às autoridades competentes (comoCERT.br no Brasil), e às empresas que estão sendo falsificadas. Também pode reportar ao navegador para bloquear o site.",
+    "categoria": "Engenharia Social"
+  },
+  {
+    "pergunta": "Como interromper um site de phishing o mais rápido possível?",
+    "resposta": "Reporte simultaneamente ao provedor de hospedagem, registrador de domínio, Google Safe Browsing, PhishTank, autoridades policiais e empresas afetadas. Quanto mais canais de reporte utilizados, mais rápido o site será removido.",
+    "categoria": "Engenharia Social"
+  },
+  {
+    "pergunta": "Denunciar spam/phishing ajuda em alguma coisa?",
+    "resposta": "Sim. Ajuda a treinar filtros de spam, protege outros usuários, fornece dados para órgãos de segurança, pode levar à identificação e neutralização de campanhas de phishing, e melhora a reputação dos provedores de e-mail.",
+    "categoria": "Engenharia Social"
+  },
+  {
+    "pergunta": "Descobri o número de telefone de um hacker. E agora?",
+    "resposta": "Não tente contato direto. Reporte às autoridades policiais (Delegacia de Crimes Cibernéticos), preserve todas as evidências, não altere o número ou dados encontrados, e considere reportar ao provedor de telefonia.",
+    "categoria": "Engenharia Social"
+  },
+  {
+    "pergunta": "Quando os bancos ligam para confirmar seus dados, como saber se a chamada é legítima?",
+    "resposta": "Desligue e ligue para o número oficial do banco (no verso do cartão ou site oficial), nunca forneça dados por telefone se a ligação foi iniciada por eles, verifique se a ligação está agendada previamente, e lembre-se que bancos nunca pedem senhas ou códigos completos por telefone.",
+    "categoria": "Engenharia Social"
+  },
+  {
+    "pergunta": "Como se proteger de ataques de engenharia social?",
+    "resposta": "Desenvolva ceticismo, verifique identidades por canais independentes, não clique em links suspeitos, use autenticação de dois fatores, mantenha software atualizado, eduque-se sobre técnicas de manipulação, e tenha procedimentos de verificação para solicitações financeiras.",
+    "categoria": "Engenharia Social"
+  },
+  {
+    "pergunta": "A maioria das brechas de segurança é baseada em engenharia social?",
+    "resposta": "Sim. Estudos indicam que mais de 90% das brechas envolvem algum elemento de engenharia social, seja como vetor inicial ou componente do ataque. A manipulação psicológica continua sendo o ponto de entrada mais eficaz para atacantes.",
+    "categoria": "Engenharia Social"
+  },
+  {
+    "pergunta": "Como meu celular pode ter sido hackeado remotamente?",
+    "resposta": "Possíveis vetores incluem: aplicativos maliciosos, links de phishing por SMS/WhatsApp, exploração de vulnerabilidades no sistema operacional, redes Wi-Fi comprometidas, ataques SIM swapping, interceptação de comunicações, e explotação de configurações de segurança fracas.",
+    "categoria": "Engenharia Social"
+  },
+  {
+    "pergunta": "A opção \"Denunciar como phishing\" do Gmail é inútil?",
+    "resposta": "Não é inútil. Ajuda a treinar os filtros de spam do Gmail, protege outros usuários, fornece dados para análise de tendências de phishing, e pode levar ao bloqueio de domínios e remetentes maliciosos. Porém, não é infalível e deve ser complementada com outras ações.",
+    "categoria": "Engenharia Social"
+  },
+  {
+    "pergunta": "Qual é a diferença entre a verificação completa e a verificação rápida em um antivírus?",
+    "resposta": "A verificação rápida analisa apenas arquivos críticos do sistema, memória e áreas suspeitas de inicialização. A verificação completa examina todos os arquivos, pastas e setores do disco, sendo mais demorada mas mais abrangente na detecção de ameaças.",
+    "categoria": "Antivírus / Antimalware"
+  },
+  {
+    "pergunta": "O que significa quando uma ameaça é \"parcialmente removida\" pelo antivírus?",
+    "resposta": "Significa que o antivírus conseguiu neutralizar parte da ameaça, mas não pôde remover completamente todos os componentes. Pode ser necessário usar ferramentas de remoção específicas, modo de segurança ou formatação do sistema para remoção completa.",
+    "categoria": "Antivírus / Antimalware"
+  },
+  {
+    "pergunta": "O que devo fazer se meu software de segurança detectar uma ameaça?",
+    "resposta": "Imediatamente: isolamento do dispositivo da rede, não execute o arquivo detectado, atualize as definições de vírus, execute uma verificação completa, documente os detalhes da detecção, e se necessário, busque ajuda profissional ou use ferramentas de remoção específicas.",
+    "categoria": "Antivírus / Antimalware"
+  },
+  {
+    "pergunta": "Um vídeo contendo malware pode ser \"limpo\" através da conversão de formato?",
+    "resposta": "Não. A conversão de formato pode remover exploits baseados em player, mas não remove malware embutido em metadados ou que se aproveita de vulnerabilidades específicas. O arquivo deve ser deletado e obtido de fonte segura.",
+    "categoria": "Antivírus / Antimalware"
+  },
+  {
+    "pergunta": "Como explicar para as pessoas sobre privacidade vulnerável?",
+    "resposta": "Use analogias cotidianas (cartas abertas vs. seladas), demonstre riscos concretos, enfatize consequências pessoais (roubo de identidade, perda financeira), mostre ferramentas simples de proteção, e use exemplos recentes de violações de dados para ilustrar a importância.",
+    "categoria": "Antivírus / Antimalware"
+  },
+  {
+    "pergunta": "É útil usar antivírus no Windows?",
+    "resposta": "Sim, especialmente para usuários menos experientes. O Windows Defender (Microsoft Defender) já oferece proteção básica sólida. Para usuários avançados, pode ser suficiente com boas práticas de segurança, mas um antivírus adicional pode oferecer camadas extras de proteção.",
+    "categoria": "Antivírus / Antimalware"
+  },
+  {
+    "pergunta": "Por que os celulares não notificam sobre malware?",
+    "resposta": "Sistemas móveis são projetados com sandboxing e permissões granulares, mas não são imunes. Malware mobile existe, embora menos comum que em desktop. A loja de aplicativos e verificações de segurança reduzem riscos, mas não eliminam a necessidade de cautela.",
+    "categoria": "Antivírus / Antimalware"
+  },
+  {
+    "pergunta": "Onde posso obter mais ajuda sobre infecções de malware e vírus?",
+    "resposta": "Fóruns especializados (BleepingComputer, Malwarebytes Forums), suporte do fabricante do antivírus, profissionais de TI certificados, centros de resposta a incidentes (CERT), e comunidades de segurança cibernética confiáveis.",
+    "categoria": "Antivírus / Antimalware"
+  },
+  {
+    "pergunta": "Preciso de um software antivírus no meu Mac?",
+    "resposta": "O macOS tem proteções integradas significativas, mas não é invulnerável. Para usuários comuns, as proteções nativas geralmente são suficientes. Para usuários corporativos ou com maior exposição, um antivírus adicional pode ser recomendado.",
+    "categoria": "Antivírus / Antimalware"
+  },
+  {
+    "pergunta": "Ainda vale a pena usar software antivírus de terceiros (desenvolvido por uma empresa diferente da fabricante do sistema operacional)?",
+    "resposta": "Depende do caso. Para usuários avançados com boas práticas, as proteções nativas podem ser suficientes. Para organizações ou usuários com maior risco, soluções de terceiros oferecem recursos adicionais, suporte corporativo e camadas extras de proteção.",
+    "categoria": "Antivírus / Antimalware"
+  }
+]

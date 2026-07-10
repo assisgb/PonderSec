@@ -144,6 +144,7 @@ class Questao(models.Model):
     usuario = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     conteudo = models.TextField()
     categoria = models.ForeignKey(Categoria, on_delete=models.SET_NULL, null=True)
+    resposta_humana = models.TextField(blank=True, null=True, verbose_name="Resposta Humana")
 
     def __str__(self):
         return self.conteudo[:50]

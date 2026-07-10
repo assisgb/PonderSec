@@ -1,0 +1,16 @@
+Eixo 1 - Fundamentos de Segurança
+
+1. O que é phishing e quais são suas principais técnicas?
+RESPOSTA: Phishing é uma técnica de engenharia social onde atacantes se passam por entidades confiáveis para induzir vítimas a revelar informações sensíveis. Principais técnicas incluem: e-mails falsos imitando bancos, sites falsos (spoofing), spear phishing direcionado a indivíduos específicos, vishing (phishing por voz) e smishing (phishing por SMS).
+
+2. Quais controles podem reduzir o risco de phishing em uma organização?
+RESPOSTA: Controles efetivos incluem: filtros de e-mail com anti-spam e verificação de domínio (SPF, DKIM, DMARC), treinamento contínuo de conscientização de segurança, autenticação multifator (MFA), segmentação de rede, monitoramento de tráfego, políticas de uso de dispositivos e simulações periódicas de phishing.
+
+3. Explique a diferença entre autenticação e autorização.
+
+Eixo 2 - Vulnerabilidades Web
+
+4. O que é SQL Injection e como preveni-la?
+RESPOSTA: SQL Injection é uma vulnerabilidade que permite a um atacante injetar comandos SQL maliciosos em consultas de banco de dados. Prevenção: usar prepared statements/parameterized queries, aplicar principle of least privilege no banco, sanitizar entradas do usuário, validar tipos de dados e manter o SGBD atualizado.
+
+5. Descreva o que é criptografia simétrica e assimétrica.
