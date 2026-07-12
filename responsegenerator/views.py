@@ -811,23 +811,54 @@ def _judgeai_prompt(questao, resposta, juiz, metricas):
         for m in metricas
     )
     return (
-        "Você é uma LLM atuando como juiz técnico no PonderSec.\n"
-        "Avalie a resposta de outro modelo para uma pergunta de cibersegurança.\n"
-        "Use apenas as métricas informadas. Não crie métricas novas.\n"
-        "Para cada métrica, escreva uma justificativa em português com pontuação, entre 20 e 45 palavras.\n"
-        "Explique por que a nota foi atribuída, citando evidências da resposta avaliada e evitando frases genéricas.\n"
-        "Retorne somente JSON válido, sem markdown, no formato:\n"
-        "{\n"
-        '  "notas": [\n'
-        '    {"metrica": "Nome da métrica", "nota": 0, "justificativa": "Nota X/Y: frase completa explicando o motivo da nota."}\n'
-        "  ],\n"
-        '  "justificativa": "síntese geral em uma frase completa"\n'
-        "}\n\n"
-        f"Juiz: {juiz.nome}\n\n"
-        f"Métricas:\n{metricas_txt}\n\n"
-        f"Pergunta:\n{questao.conteudo}\n\n"
-        f"Modelo respondente: {resposta.llm.nome if resposta.llm else 'IA desconhecida'}\n"
-        f"Resposta avaliada:\n{resposta.conteudo_resposta}"
+        "Você é uma LLM atuando como juiz técnico especializado em cibersegurança no PonderSec.\n"
+    "Sua tarefa é avaliar, de forma objetiva e criteriosa, a resposta de outro modelo (o 'respondente') "
+    "a uma pergunta técnica de cibersegurança.\n\n"
+ 
+    "REGRAS DE AVALIAÇÃO:\n"
+    "1. Use exclusivamente as métricas fornecidas na lista abaixo. Não crie, renomeie ou combine métricas.\n"
+    "2. Avalie cada métrica de forma independente: um problema em uma métrica não deve automaticamente "
+    "reduzir a nota de outra, a menos que sejam diretamente relacionadas (ex.: precisão técnica x correção).\n"
+    "3. Antes de decidir a nota, releia a resposta avaliada em busca de evidências concretas (trechos, "
+    "afirmações, exemplos, comandos, códigos) que sustentem ou contradigam a qualidade descrita pela métrica.\n"
+    "4. Evite viés de verbosidade: uma resposta mais longa não é automaticamente melhor. Avalie precisão, "
+    "correção técnica e utilidade, não o tamanho do texto.\n"
+    "5. Evite viés de complacência: não dê notas altas por padrão. Se a resposta for genérica, incompleta, "
+    "tecnicamente incorreta, ou evitar responder a pergunta, isso deve refletir em notas baixas.\n"
+    "6. Se a resposta avaliada for vazia, sem sentido, um recusa (refusal) sem justificativa técnica, ou "
+    "completamente fora do escopo da pergunta, atribua nota mínima em todas as métricas aplicáveis e explique "
+    "isso explicitamente na justificativa.\n"
+    "7. Se a métrica não for aplicável ao tipo de pergunta ou resposta (ex.: métrica sobre código quando não "
+    "há código na resposta), atribua a nota mínima da escala e explique por que não há evidência para nota maior.\n\n"
+ 
+    "FORMATO DAS JUSTIFICATIVAS:\n"
+    "- Escreva em português, entre 20 e 45 palavras por métrica.\n"
+    "- Comece citando ou parafraseando uma evidência específica da resposta avaliada (o que ela disse, fez, "
+    "ou deixou de fazer).\n"
+    "- Em seguida, conecte essa evidência à nota atribuída, explicando o motivo de forma clara.\n"
+    "- Não use frases genéricas como 'a resposta foi boa', 'faltou detalhamento' ou 'está correta' sem "
+    "explicar o quê especificamente foi bom, faltou ou está correto.\n"
+    "- Não repita o enunciado da métrica como se fosse a justificativa.\n\n"
+ 
+    "FORMATO DE SAÍDA:\n"
+    "Retorne SOMENTE um JSON válido, sem markdown, sem texto antes ou depois, sem blocos de código (```), "
+    "seguindo exatamente esta estrutura:\n"
+    "{\n"
+    '  "notas": [\n'
+    '    {"metrica": "Nome exato da métrica", "nota": 0, "justificativa": "Nota X/Y: frase completa explicando o motivo da nota, com evidência da resposta."}\n'
+    "  ],\n"
+    '  "justificativa": "síntese geral em uma frase completa, mencionando o principal ponto forte e a principal fraqueza da resposta avaliada"\n'
+    "}\n"
+    "- O campo 'nota' deve ser um número dentro da escala definida para cada métrica (consulte a lista de métricas).\n"
+    "- A ordem das métricas no array 'notas' deve seguir a ordem em que foram apresentadas.\n"
+    "- Não inclua métricas que não estejam na lista fornecida.\n"
+    "- Não adicione campos extras ao JSON.\n\n"
+ 
+    f"Juiz: {juiz.nome}\n\n"
+    f"Métricas (nome, escala e critério de avaliação):\n{metricas_txt}\n\n"
+    f"Pergunta de cibersegurança avaliada:\n{questao.conteudo}\n\n"
+    f"Modelo respondente: {resposta.llm.nome if resposta.llm else 'IA desconhecida'}\n"
+    f"Resposta avaliada:\n{resposta.conteudo_resposta}"
     )
 
 def _parse_judgeai_result(raw_text, metricas):
