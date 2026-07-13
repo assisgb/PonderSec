@@ -659,6 +659,7 @@
     })();
     /* ── App principal ── */
     (function () {
+        var STORAGE_KEY = 'avaliacao_state_{{ formulario.id }}';
         var btnStart      = document.getElementById('btnStart');
         var screenIdent   = document.getElementById('screenIdent');
         var screenEval    = document.getElementById('screenEval');
@@ -677,16 +678,59 @@
         var total   = slides.length;
         var current = 0;
         counterTotal.textContent = total;
-        btnStart.addEventListener('click', function() {
-            var inputs = screenIdent.querySelectorAll('input[required]');
-            var ok = true;
-            inputs.forEach(function(i) { if (!i.value.trim()) { i.focus(); ok = false; } });
-            if (!ok) return;
+
+        function saveState() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                    current: current,
+                    identDone: screenEval.classList.contains('active')
+                }));
+            } catch(e) {}
+        }
+        function loadState() {
+            try {
+                var raw = localStorage.getItem(STORAGE_KEY);
+                return raw ? JSON.parse(raw) : null;
+            } catch(e) { return null; }
+        }
+        function clearState() {
+            try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
+        }
+
+        function startEvaluation() {
             screenIdent.style.display = 'none';
             screenEval.classList.add('active');
             buildQuestionMap();
             buildDots();
             render();
+        }
+
+        btnStart.addEventListener('click', function() {
+            var inputs = screenIdent.querySelectorAll('input[required]');
+            var ok = true;
+            inputs.forEach(function(i) { if (!i.value.trim()) { i.focus(); ok = false; } });
+            if (!ok) return;
+            startEvaluation();
+            saveState();
+        });
+
+        screenIdent.querySelectorAll('input[required]').forEach(function(input) {
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    btnStart.click();
+                }
+            });
+        });
+
+        document.getElementById('evalForm').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+                e.preventDefault();
+            }
+        });
+
+        document.getElementById('evalForm').addEventListener('submit', function() {
+            clearState();
         });
         function buildDots() {
             dotsRow.innerHTML = '';
@@ -755,7 +799,7 @@
             var pct = (e.clientX - r.left) / r.width;
             goTo(Math.round(Math.max(0, Math.min(total - 1, pct * (total - 1)))));
         });
-        function goTo(i) { current = Math.max(0, Math.min(total - 1, i)); render(); }
+        function goTo(i) { current = Math.max(0, Math.min(total - 1, i)); render(); saveState(); }
         btnPrev.addEventListener('click', function() { goTo(current - 1); });
         btnNext.addEventListener('click', function() { goTo(current + 1); });
         document.addEventListener('keydown', function(e) {
@@ -783,6 +827,15 @@
             btnNext.style.display = last ? 'none' : '';
             btnSubmit.classList.toggle('visible', last);
             completionMsg.classList.toggle('visible', last);
+        }
+
+        var saved = loadState();
+        if (saved && saved.identDone) {
+            startEvaluation();
+            if (saved.current > 0 && saved.current < total) {
+                current = saved.current;
+                render();
+            }
         }
     })();
     </script>
