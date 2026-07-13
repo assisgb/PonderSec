@@ -87,6 +87,12 @@
             font-family: "Space Grotesk", sans-serif; outline: none; transition: all 0.2s;
         }
         .field-input:focus { border-color: var(--green); box-shadow: 0 0 12px var(--green-dim); }
+        .form-error {
+            margin-bottom: 16px; padding: 11px 13px;
+            border: 1px solid rgba(255,85,102,0.45); border-radius: 9px;
+            background: rgba(255,85,102,0.09); color: #ff9aa5;
+            font-size: 12px; line-height: 1.45;
+        }
         .btn-start {
             width: 100%; margin-top: 8px; padding: 14px;
             background: linear-gradient(90deg, #00ff9f, #00e87a);
@@ -228,16 +234,19 @@
         }
         .slide {
             min-width: 100%; height: 100%; flex-shrink: 0;
-            display: flex; flex-direction: column; overflow: hidden;
+            display: flex; flex-direction: column;
+            overflow-y: auto; overflow-x: hidden;
         }
+        .slide::-webkit-scrollbar { width: 5px; }
+        .slide::-webkit-scrollbar-thumb { background: #1b2635; border-radius: 3px; }
         .slide-top {
             flex-shrink: 0;
             padding: 18px var(--slide-pad-x) 0;
-            height: 42%;
+            height: auto;
             width: 100%;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            overflow: visible;
             min-width: 0;
         }
         .slide-meta {
@@ -275,9 +284,9 @@
             overflow-wrap: anywhere;
         }
         .response-box {
-            flex: 1;
-            min-height: 0;
-            overflow-y: auto;
+            flex: 0 0 auto;
+            min-height: clamp(110px, 18vh, 190px);
+            overflow-y: visible;
             overflow-x: hidden;
             background: #020509;
             border: 1px solid var(--input-border);
@@ -293,9 +302,9 @@
         .response-text { color: var(--text-label); font-size: 13px; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }
         .divider { flex-shrink: 0; height: 1px; background: rgba(0,255,160,0.08); margin: 0 var(--slide-pad-x); }
         .slide-metrics {
-            flex: 1;
+            flex: 1 0 auto;
             min-height: 0;
-            overflow-y: auto;
+            overflow-y: visible;
             padding: 14px var(--slide-pad-x) 18px;
             display: flex;
             flex-wrap: wrap;
@@ -318,10 +327,14 @@
             overflow-wrap: anywhere;
         }
         .metric-block:hover { border-color: var(--green); box-shadow: 0 0 10px var(--green-dim); }
+        .metric-block.is-missing {
+            border-color: rgba(255,85,102,0.75);
+            box-shadow: 0 0 12px rgba(255,85,102,0.12);
+        }
         .metric-label { font-size: 10px; font-weight: 700; color: var(--green); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 2px; }
         .metric-desc { font-size: 10px; color: var(--text-muted); margin-bottom: 10px; line-height: 1.4; overflow-wrap: anywhere; }
         .likert-drag { margin-bottom: 10px; user-select: none; }
-        .likert-track-wrap { position: relative; height: 36px; display: flex; align-items: center; cursor: grab; margin-bottom: 4px; }
+        .likert-track-wrap { position: relative; height: 36px; display: flex; align-items: center; cursor: grab; margin-bottom: 4px; touch-action: none; }
         .likert-track-wrap:active { cursor: grabbing; }
         .likert-rail { width: 100%; height: 4px; background: var(--input-border); border-radius: 99px; position: relative; }
         .likert-fill { position: absolute; left: 0; top: 0; height: 100%; background: linear-gradient(90deg, var(--green), #00e87a); border-radius: 99px; transition: width 0.12s; pointer-events: none; }
@@ -336,7 +349,9 @@
             border: 3px solid #050a11; transition: left 0.12s, transform 0.1s;
             cursor: grab; display: flex; align-items: center; justify-content: center;
             font-size: 11px; font-weight: 700; color: #000; z-index: 2;
+            opacity: 0;
         }
+        .likert-drag.is-rated .likert-thumb { opacity: 1; }
         .likert-thumb:active { transform: translate(-50%, -50%) scale(1.15); cursor: grabbing; }
         
         .likert-labels { display: flex; justify-content: space-between; padding: 0 2px; }
@@ -367,6 +382,10 @@
         .btn-prev:disabled { opacity: 0.3; cursor: not-allowed; }
         .btn-next { flex: 1; background: linear-gradient(90deg, #00ff9f, #00e87a); color: #000; }
         .btn-next:hover { box-shadow: 0 0 20px rgba(0,255,160,0.4); transform: translateY(-1px); }
+        .btn-next.is-disabled,
+        .btn-next:disabled,
+        .btn-submit-final.is-disabled,
+        .btn-submit-final:disabled { opacity: 0.38; cursor: not-allowed; box-shadow: none; transform: none; }
         .btn-submit-final {
             flex: 1; padding: 11px 18px;
             background: linear-gradient(90deg, #00ff9f, #00ff57);
@@ -376,6 +395,10 @@
         }
         .btn-submit-final.visible { display: block; }
         .btn-submit-final:hover { box-shadow: 0 0 22px rgba(0,255,160,0.45); transform: translateY(-1px); }
+        .btn-submit-final.is-disabled,
+        .btn-submit-final.is-disabled:hover,
+        .btn-submit-final:disabled,
+        .btn-submit-final:disabled:hover { opacity: 0.38; cursor: not-allowed; box-shadow: none; transform: none; }
         .completion-msg {
             display: none; flex-shrink: 0; text-align: center;
             background: var(--green-dim); border: 1px solid rgba(0,255,160,0.22);
@@ -384,6 +407,14 @@
         .completion-msg.visible { display: block; }
         .completion-msg h3 { color: var(--green); font-size: 13px; margin-bottom: 1px; }
         .completion-msg p  { color: var(--text-muted); font-size: 11px; }
+        .evaluation-alert {
+            display: none; flex-shrink: 0;
+            margin-bottom: 6px; padding: 8px 12px;
+            border: 1px solid rgba(255,85,102,0.5); border-radius: 8px;
+            background: rgba(255,85,102,0.09); color: #ff9aa5;
+            font-size: 11px; text-align: center;
+        }
+        .evaluation-alert.visible { display: block; }
         .kbd-hint { flex-shrink: 0; font-size: 10px; color: #2a3848; text-align: center; margin-top: 4px; }
         .kbd { display: inline-block; background: #0d1a24; border: 1px solid #1b2635; border-radius: 3px; padding: 1px 5px; font-size: 9px; color: #3a5062; }
         @media (max-width: 700px) {
@@ -402,7 +433,7 @@
             .question-map { max-height: 112px; gap: 6px; }
             .dots-row { max-height: 34px; overflow-y: auto; padding: 3px 0; }
             .carousel-shell { border-radius: 10px; }
-            .slide-top { height: auto; min-height: 225px; max-height: 48%; }
+            .slide-top { height: auto; min-height: 0; max-height: none; }
             .question-text { font-size: 13px; }
             .response-box { min-height: 128px; }
             .response-text { font-size: 12px; line-height: 1.65; }
@@ -416,7 +447,7 @@
         @media (max-height: 620px) and (min-width: 701px) {
             .screen-eval { padding: 10px 16px 8px; }
             .question-map { max-height: 46px; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); }
-            .slide-top { height: 48%; }
+            .slide-top { height: auto; }
             .metric-block { flex: 1 1 calc((100% - 24px) / 3); min-width: min(170px, 100%); }
             .kbd-hint { display: none; }
         }
@@ -436,17 +467,20 @@
                     <h1>{{ formulario.nome }}</h1>
                     <p>{% translate "Painel de Avaliação de Inteligência Artificial" %}</p>
                 </div>
+                {% if form_error %}
+                <div class="form-error" role="alert">{{ form_error }}</div>
+                {% endif %}
                 <div class="field-group">
                     <label class="field-label">{% translate "Nome Completo" %}</label>
-                    <input type="text" name="nome" class="field-input" required placeholder="{% translate 'Digite seu nome completo' %}">
+                    <input type="text" name="nome" class="field-input" required value="{{ nome_informado|default:'' }}" placeholder="{% translate 'Digite seu nome completo' %}">
                 </div>
                 <div class="field-group">
                     <label class="field-label">{% translate "E-mail Profissional" %}</label>
-                    <input type="email" name="email" class="field-input" required placeholder="exemplo@empresa.com">
+                    <input type="email" name="email" class="field-input" required value="{{ email_informado|default:'' }}" placeholder="exemplo@empresa.com">
                 </div>
                 <div class="field-group">
                     <label class="field-label">{% translate "Profissão / Cargo" %}</label>
-                    <input type="text" name="profissao" class="field-input" required placeholder="{% translate 'Ex: Engenheiro de Segurança, Dev...' %}">
+                    <input type="text" name="profissao" class="field-input" required value="{{ profissao_informada|default:'' }}" placeholder="{% translate 'Ex: Engenheiro de Segurança, Dev...' %}">
                 </div>
                 <button type="button" class="btn-start" id="btnStart">{% translate "Iniciar Avaliação" %} →</button>
             </div>
@@ -505,39 +539,40 @@
                                     <div class="likert-drag"
                                          data-resp="{{ resp.id }}"
                                          data-metrica="{{ metrica.id }}"
-                                         data-val="3">
+                                         data-max="{{ metrica.pontuacao_maxima|default:5 }}"
+                                         data-val="">
                                         <div class="likert-emoji-row">
-                                            <span class="likert-emo" data-pos="1">😡</span>
-                                            <span class="likert-emo" data-pos="2">😕</span>
-                                            <span class="likert-emo active" data-pos="3">😐</span>
-                                            <span class="likert-emo" data-pos="4">🙂</span>
-                                            <span class="likert-emo" data-pos="5">😄</span>
+                                            {% for valor, emoji, label in metrica.opcoes_likert %}
+                                            <span class="likert-emo" data-pos="{{ valor }}">{{ emoji }}</span>
+                                            {% endfor %}
                                         </div>
-                                        <div class="likert-track-wrap">
+                                        <div class="likert-track-wrap"
+                                             role="slider"
+                                             tabindex="0"
+                                             aria-label="{{ metrica.nome }}"
+                                             aria-valuemin="1"
+                                             aria-valuemax="{{ metrica.pontuacao_maxima|default:5 }}"
+                                             aria-valuetext="{% translate 'Sem pontuação' %}">
                                             <div class="likert-rail">
-                                                <div class="likert-fill" style="width:50%"></div>
+                                                <div class="likert-fill" style="width:0"></div>
                                                 <div class="likert-ticks">
+                                                    {% for valor, emoji, label in metrica.opcoes_likert %}
                                                     <div class="likert-tick"></div>
-                                                    <div class="likert-tick"></div>
-                                                    <div class="likert-tick"></div>
-                                                    <div class="likert-tick"></div>
-                                                    <div class="likert-tick"></div>
+                                                    {% endfor %}
                                                 </div>
                                             </div>
-                                            <div class="likert-thumb" style="left:50%">3</div>
+                                            <div class="likert-thumb" style="left:0"></div>
                                         </div>
                                         <div class="likert-labels">
-                                            <span class="likert-lbl" data-pos="1">{% translate "Muito" %}<br>{% translate "ruim" %}</span>
-                                            <span class="likert-lbl" data-pos="2">{% translate "Ruim" %}</span>
-                                            <span class="likert-lbl active" data-pos="3">{% translate "Regular" %}</span>
-                                            <span class="likert-lbl" data-pos="4">{% translate "Bom" %}</span>
-                                            <span class="likert-lbl" data-pos="5">{% translate "Excelente" %}</span>
+                                            {% for valor, emoji, label in metrica.opcoes_likert %}
+                                            <span class="likert-lbl" data-pos="{{ valor }}">{{ label }}</span>
+                                            {% endfor %}
                                         </div>
                                     </div>
                                     <input type="hidden"
                                            name="quanti_{{ resp.id }}_{{ metrica.id }}"
                                            id="likert_{{ resp.id }}_{{ metrica.id }}"
-                                           value="3">
+                                           value="">
                                     {% endif %}
                                     <textarea
                                         name="quali_{{ resp.id }}_{{ metrica.id }}"
@@ -563,13 +598,14 @@
                         {% endfor %}
                     </div>
                 </div>
+                <div class="evaluation-alert" id="evaluationAlert" role="alert"></div>
                 <div class="completion-msg" id="completionMsg">
                     <h3>✦ {% translate "Todas as respostas avaliadas" %}</h3>
                     <p>{% translate "Revise e clique em Enviar abaixo." %}</p>
                 </div>
                 <div class="eval-nav">
                     <button type="button" class="btn-nav btn-prev" id="btnPrev" disabled>← {% translate "Anterior" %}</button>
-                    <button type="button" class="btn-nav btn-next" id="btnNext">{% translate "Próximo" %} →</button>
+                    <button type="button" class="btn-nav btn-next is-disabled" id="btnNext" aria-disabled="true">{% translate "Próximo" %} →</button>
                     <button type="submit" class="btn-submit-final" id="btnSubmit">{% translate "Enviar Avaliação" %} ✓</button>
                 </div>
                 <div class="kbd-hint">
@@ -586,6 +622,9 @@
     {% translate "sem respostas" as txt_no_answers %}
     {% translate "Ir para a pergunta" as txt_go_to_question %}
     {% translate "de" as txt_of %}
+    {% translate "Selecione uma pontuação em cada métrica antes de continuar." as txt_rate_before_continue %}
+    {% translate "Avalie todas as respostas antes de enviar o formulário." as txt_rate_before_submit %}
+    {% translate "Este formulário não possui respostas e métricas quantitativas para avaliar." as txt_no_items %}
     var PONDERSEC_I18N = {
         item: "{{ txt_item|escapejs }}",
         question: "{{ txt_question|escapejs }}",
@@ -593,16 +632,28 @@
         answers: "{{ txt_answers|escapejs }}",
         noAnswers: "{{ txt_no_answers|escapejs }}",
         goToQuestion: "{{ txt_go_to_question|escapejs }}",
-        of: "{{ txt_of|escapejs }}"
+        of: "{{ txt_of|escapejs }}",
+        rateBeforeContinue: "{{ txt_rate_before_continue|escapejs }}",
+        rateBeforeSubmit: "{{ txt_rate_before_submit|escapejs }}",
+        noItems: "{{ txt_no_items|escapejs }}"
     };
 
     /* ── Likert drag slider ── */
     (function () {
-        var STEPS = [1, 2, 3, 4, 5];
-        function pctFromVal(val) { return (val - 1) / 4; }
+        function maxFromWidget(widget) {
+            return Number(widget.getAttribute('data-max')) || 5;
+        }
+        function pctFromVal(widget, val) {
+            return (val - 1) / (maxFromWidget(widget) - 1);
+        }
         function updateDrag(widget, val) {
-            var pct = pctFromVal(val);
+            var max = maxFromWidget(widget);
+            val = Math.max(1, Math.min(max, val));
+            var pct = pctFromVal(widget, val);
             widget.setAttribute('data-val', val);
+            widget.classList.add('is-rated');
+            var metricBlock = widget.closest('.metric-block');
+            if (metricBlock) metricBlock.classList.remove('is-missing');
             var thumb = widget.querySelector('.likert-thumb');
             var fill  = widget.querySelector('.likert-fill');
             thumb.style.left = (pct * 100) + '%';
@@ -617,42 +668,52 @@
             widget.querySelectorAll('.likert-tick').forEach(function(t, i) {
                 t.style.background = (i < val) ? 'var(--green)' : '';
             });
+            var control = widget.querySelector('.likert-track-wrap');
+            control.setAttribute('aria-valuenow', val);
+            control.setAttribute('aria-valuetext', String(val));
             var resp    = widget.getAttribute('data-resp');
             var metrica = widget.getAttribute('data-metrica');
             var hidden  = document.getElementById('likert_' + resp + '_' + metrica);
             if (hidden) hidden.value = val;
+            widget.dispatchEvent(new CustomEvent('pondersec:rating-change', { bubbles: true }));
         }
         function valFromEvent(widget, clientX) {
             var rail = widget.querySelector('.likert-rail');
             var rect = rail.getBoundingClientRect();
             var pct  = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-            return Math.round(pct * 4) + 1;
+            return Math.round(pct * (maxFromWidget(widget) - 1)) + 1;
         }
         function initWidget(widget) {
-            updateDrag(widget, 3);
             var dragging = false;
+            var control = widget.querySelector('.likert-track-wrap');
             function onMove(clientX) {
                 if (!dragging) return;
                 updateDrag(widget, valFromEvent(widget, clientX));
             }
-            widget.querySelector('.likert-track-wrap').addEventListener('mousedown', function(e) {
+            control.addEventListener('pointerdown', function(e) {
                 dragging = true;
                 updateDrag(widget, valFromEvent(widget, e.clientX));
+                control.setPointerCapture(e.pointerId);
                 e.preventDefault();
             });
-            document.addEventListener('mousemove', function(e) { onMove(e.clientX); });
-            document.addEventListener('mouseup',   function()  { dragging = false; });
-            widget.querySelector('.likert-track-wrap').addEventListener('touchstart', function(e) {
-                dragging = true;
-                updateDrag(widget, valFromEvent(widget, e.touches[0].clientX));
+            control.addEventListener('pointermove', function(e) { onMove(e.clientX); });
+            control.addEventListener('pointerup', function() { dragging = false; });
+            control.addEventListener('pointercancel', function() { dragging = false; });
+            control.addEventListener('keydown', function(e) {
+                var max = maxFromWidget(widget);
+                var atual = Number(widget.getAttribute('data-val'));
+                if (!atual) {
+                    if (e.key === 'End') atual = max;
+                    else if (['ArrowRight', 'ArrowUp', 'ArrowLeft', 'ArrowDown', 'Home'].includes(e.key)) atual = 1;
+                    else return;
+                } else if (e.key === 'ArrowRight' || e.key === 'ArrowUp') atual += 1;
+                else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') atual -= 1;
+                else if (e.key === 'Home') atual = 1;
+                else if (e.key === 'End') atual = max;
+                else return;
+                updateDrag(widget, atual);
                 e.preventDefault();
-            }, { passive: false });
-            document.addEventListener('touchmove', function(e) {
-                if (dragging) onMove(e.touches[0].clientX);
-            }, { passive: true });
-            document.addEventListener('touchend', function() { dragging = false; });
-            widget.querySelector('.likert-rail').addEventListener('click', function(e) {
-                updateDrag(widget, valFromEvent(widget, e.clientX));
+                e.stopPropagation();
             });
         }
         document.querySelectorAll('.likert-drag').forEach(initWidget);
@@ -672,22 +733,34 @@
         var btnNext       = document.getElementById('btnNext');
         var btnSubmit     = document.getElementById('btnSubmit');
         var completionMsg = document.getElementById('completionMsg');
+        var evaluationAlert = document.getElementById('evaluationAlert');
         var progressTrack = document.getElementById('progressTrack');
+        var evalForm      = document.getElementById('evalForm');
         var slides  = Array.from(track.querySelectorAll('.slide'));
         var total   = slides.length;
         var current = 0;
         counterTotal.textContent = total;
-        btnStart.addEventListener('click', function() {
+
+        function startEvaluation() {
             var inputs = screenIdent.querySelectorAll('input[required]');
-            var ok = true;
-            inputs.forEach(function(i) { if (!i.value.trim()) { i.focus(); ok = false; } });
-            if (!ok) return;
+            var firstInvalid = Array.from(inputs).find(function(input) {
+                return !input.value.trim() || !input.checkValidity();
+            });
+            if (firstInvalid) {
+                firstInvalid.focus();
+                evalForm.reportValidity();
+                return false;
+            }
             screenIdent.style.display = 'none';
             screenEval.classList.add('active');
             buildQuestionMap();
             buildDots();
             render();
-        });
+            if (!hasAssessableItems()) showAlert(PONDERSEC_I18N.noItems);
+            return true;
+        }
+
+        btnStart.addEventListener('click', startEvaluation);
         function buildDots() {
             dotsRow.innerHTML = '';
             slides.forEach(function(slide, i) {
@@ -737,6 +810,7 @@
                 btn.type = 'button';
                 btn.className = 'question-chip';
                 btn.setAttribute('data-question-index', group.index);
+                btn.setAttribute('data-first-slide', group.firstSlide);
                 btn.setAttribute('data-last-slide', group.lastSlide);
                 var t = PONDERSEC_I18N;
                 btn.title = t.goToQuestion + ' ' + group.number;
@@ -755,34 +829,138 @@
             var pct = (e.clientX - r.left) / r.width;
             goTo(Math.round(Math.max(0, Math.min(total - 1, pct * (total - 1)))));
         });
-        function goTo(i) { current = Math.max(0, Math.min(total - 1, i)); render(); }
+
+        function slideIsComplete(slide) {
+            if (!slide) return false;
+            if (slide.getAttribute('data-response-total') === '0') return true;
+            var ratings = Array.from(slide.querySelectorAll('.likert-drag'));
+            return ratings.length > 0 && ratings.every(function(widget) {
+                return Boolean(widget.getAttribute('data-val'));
+            });
+        }
+        function hasAssessableItems() {
+            return slides.some(function(slide) {
+                return slide.querySelector('.likert-drag');
+            });
+        }
+        function allSlidesComplete() {
+            return hasAssessableItems() && slides.every(slideIsComplete);
+        }
+        function showAlert(message, slide) {
+            evaluationAlert.textContent = message;
+            evaluationAlert.classList.add('visible');
+            (slide || slides[current])?.querySelectorAll('.likert-drag').forEach(function(widget) {
+                if (!widget.getAttribute('data-val')) {
+                    widget.closest('.metric-block').classList.add('is-missing');
+                }
+            });
+        }
+        function clearAlert() {
+            evaluationAlert.classList.remove('visible');
+            evaluationAlert.textContent = '';
+        }
+        function goTo(i) {
+            if (!total) return false;
+            var target = Math.max(0, Math.min(total - 1, i));
+            if (target > current) {
+                for (var index = current; index < target; index += 1) {
+                    if (!slideIsComplete(slides[index])) {
+                        current = index;
+                        render();
+                        showAlert(PONDERSEC_I18N.rateBeforeContinue, slides[index]);
+                        return false;
+                    }
+                }
+            }
+            current = target;
+            clearAlert();
+            render();
+            return true;
+        }
         btnPrev.addEventListener('click', function() { goTo(current - 1); });
-        btnNext.addEventListener('click', function() { goTo(current + 1); });
+        btnNext.addEventListener('click', function() {
+            if (!slideIsComplete(slides[current])) {
+                showAlert(PONDERSEC_I18N.rateBeforeContinue);
+                return;
+            }
+            goTo(current + 1);
+        });
+        evalForm.addEventListener('pondersec:rating-change', function() {
+            clearAlert();
+            render();
+        });
+        evalForm.addEventListener('submit', function(e) {
+            if (!screenEval.classList.contains('active')) {
+                e.preventDefault();
+                startEvaluation();
+                return;
+            }
+            if (!allSlidesComplete()) {
+                e.preventDefault();
+                var firstIncomplete = slides.findIndex(function(slide) {
+                    return !slideIsComplete(slide);
+                });
+                if (firstIncomplete >= 0) {
+                    current = firstIncomplete;
+                    render();
+                    showAlert(PONDERSEC_I18N.rateBeforeSubmit, slides[firstIncomplete]);
+                } else {
+                    showAlert(PONDERSEC_I18N.noItems);
+                }
+                return;
+            }
+            btnSubmit.disabled = true;
+        });
         document.addEventListener('keydown', function(e) {
             if (!screenEval.classList.contains('active')) return;
-            if (e.key === 'ArrowRight') goTo(current + 1);
-            if (e.key === 'ArrowLeft')  goTo(current - 1);
+            if (e.target.matches('input, textarea, [role="slider"]')) return;
+            if (e.key === 'ArrowRight') {
+                btnNext.click();
+                e.preventDefault();
+            }
+            if (e.key === 'ArrowLeft') {
+                goTo(current - 1);
+                e.preventDefault();
+            }
         });
         function render() {
+            if (!total) {
+                counterCurr.textContent = 0;
+                fill.style.width = '0%';
+                btnPrev.disabled = true;
+                btnNext.classList.add('is-disabled');
+                btnNext.setAttribute('aria-disabled', 'true');
+                btnSubmit.classList.remove('visible');
+                completionMsg.classList.remove('visible');
+                return;
+            }
             track.style.transform = 'translateX(-' + (current * 100) + '%)';
             counterCurr.textContent = current + 1;
             fill.style.width = (total > 1 ? (current / (total - 1)) * 100 : 100) + '%';
             dotsRow.querySelectorAll('.dot').forEach(function(d, i) {
                 d.classList.toggle('active', i === current);
-                d.classList.toggle('done',   i < current);
+                d.classList.toggle('done', slideIsComplete(slides[i]));
             });
             var activeQuestion = slides[current] ? Number(slides[current].getAttribute('data-question-index')) : -1;
             questionMap.querySelectorAll('.question-chip').forEach(function(btn) {
                 var questionIndex = Number(btn.getAttribute('data-question-index'));
+                var firstSlide = Number(btn.getAttribute('data-first-slide'));
                 var lastSlide = Number(btn.getAttribute('data-last-slide'));
                 btn.classList.toggle('active', questionIndex === activeQuestion);
-                btn.classList.toggle('done', lastSlide < current);
+                var questionComplete = slides.slice(firstSlide, lastSlide + 1).every(slideIsComplete);
+                btn.classList.toggle('done', questionComplete);
             });
             btnPrev.disabled = current === 0;
             var last = current === total - 1;
             btnNext.style.display = last ? 'none' : '';
+            var currentComplete = slideIsComplete(slides[current]);
+            btnNext.classList.toggle('is-disabled', !currentComplete);
+            btnNext.setAttribute('aria-disabled', String(!currentComplete));
             btnSubmit.classList.toggle('visible', last);
-            completionMsg.classList.toggle('visible', last);
+            var complete = allSlidesComplete();
+            btnSubmit.classList.toggle('is-disabled', !complete);
+            btnSubmit.setAttribute('aria-disabled', String(!complete));
+            completionMsg.classList.toggle('visible', last && complete);
         }
     })();
     </script>

@@ -4,6 +4,7 @@ from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.contrib import messages as django_messages
 from django.contrib.auth.decorators import login_required
+from django.db import transaction
 import os
 import re
 from datetime import timedelta
@@ -1422,8 +1423,19 @@ def responder_avaliacao_publica(request, formulario_id):
     
     metricas = list(Metrica.objects.filter(usuario_id=formulario.usuario_id, ativa=True))
 
+    escala_padrao = [
+        ('😞', _('Muito Ruim')),
+        ('😕', _('Ruim')),
+        ('😐', _('Regular')),
+        ('🙂', _('Bom')),
+        ('😄', _('Excelente')),
+    ]
+
     for metrica in metricas:
-        if metrica.pontuacao_maxima == 2:
+        maximo = max(2, min(metrica.pontuacao_maxima or 5, 5))
+        metrica.pontuacao_maxima = maximo
+
+        if maximo == 2:
             label_1 = getattr(metrica, 'label_opcao_1', 'Ruim') or 'Ruim'
             label_2 = getattr(metrica, 'label_opcao_2', 'Bom')  or 'Bom'
             
@@ -1432,12 +1444,10 @@ def responder_avaliacao_publica(request, formulario_id):
                 (2, '👍', label_2),
             ]
         else:
+            indices_escala = [round(i * 4 / (maximo - 1)) for i in range(maximo)]
             metrica.opcoes_likert = [
-                (1, '😞', 'Muito Ruim'),
-                (2, '😕', 'Ruim'),
-                (3, '😐', 'Regular'),
-                (4, '🙂', 'Bom'),
-                (5, '😄', 'Excelente'),
+                (valor, *escala_padrao[indice])
+                for valor, indice in enumerate(indices_escala, start=1)
             ]
 
     for questao in formulario.questoes_cache:
@@ -1452,41 +1462,89 @@ def responder_avaliacao_publica(request, formulario_id):
                 questao.respostas_cache.append(resp_humana)
 
     if request.method == 'POST':
-        nome = request.POST.get('nome')
-        email = request.POST.get('email')
-        profissao = request.POST.get('profissao')
+        nome = request.POST.get('nome', '').strip()
+        email = request.POST.get('email', '').strip()
+        profissao = request.POST.get('profissao', '').strip()
+        respostas_ids = [
+            resposta.id
+            for questao in formulario.questoes_cache
+            for resposta in questao.respostas_cache
+        ]
+        metricas_quantitativas = [
+            metrica for metrica in metricas if metrica.tipo == 'quantitativa'
+        ]
 
-        avaliador, created = Avaliador.objects.get_or_create(
-            email=email,
-            defaults={
-                'nome': nome,
-                'profissao': profissao,
-                'formulario': formulario
-            }
-        )
-
-        if not created:
-            avaliador.formulario = formulario
-            avaliador.save()
+        form_error = None
+        if not nome or not email or not profissao:
+            form_error = _('Preencha seus dados de identificação antes de iniciar a avaliação.')
+        elif not respostas_ids or not metricas_quantitativas:
+            form_error = _('Este formulário não possui respostas e métricas quantitativas para avaliar.')
 
         avaliacoes = []
-        for chave, valor in request.POST.items():
-            if chave.startswith('quanti_') and valor:
-                partes = chave.split('_')
-                resposta_id = partes[1]
-                metrica_id = partes[2]
-                texto_quali = request.POST.get(f'quali_{resposta_id}_{metrica_id}', '')
+        if not form_error:
+            for resposta_id in respostas_ids:
+                for metrica in metricas_quantitativas:
+                    chave = f'quanti_{resposta_id}_{metrica.id}'
+                    valor = request.POST.get(chave, '').strip()
 
-                avaliacoes.append(AvaliacaoFormulario(
-                    usuario_id=formulario.usuario_id, # BLINDADO: Vincula a avaliação gerada ao dono do formulário
-                    avaliador=avaliador,
-                    resposta_id=resposta_id,
-                    metrica_id=metrica_id,
-                    avaliacao_quanti=valor,
-                    avaliacao_quali=texto_quali
-                ))
+                    try:
+                        nota = int(valor)
+                    except (TypeError, ValueError):
+                        form_error = _('Avalie todas as respostas antes de enviar o formulário.')
+                        break
 
-        if avaliacoes:
+                    maximo = metrica.pontuacao_maxima or 5
+                    if nota < 1 or nota > maximo:
+                        form_error = _('Uma das notas informadas está fora da escala permitida.')
+                        break
+
+                    avaliacoes.append(AvaliacaoFormulario(
+                        usuario_id=formulario.usuario_id,
+                        resposta_id=resposta_id,
+                        metrica_id=metrica.id,
+                        avaliacao_quanti=nota,
+                        avaliacao_quali=request.POST.get(
+                            f'quali_{resposta_id}_{metrica.id}', ''
+                        ).strip(),
+                    ))
+                if form_error:
+                    break
+
+        if form_error:
+            contexto = {
+                'formulario': formulario,
+                'metricas': metricas,
+                'blind_mode': request.GET.get('blind') == 'true',
+                'form_error': form_error,
+                'nome_informado': nome,
+                'email_informado': email,
+                'profissao_informada': profissao,
+            }
+            return render(
+                request,
+                'avaliacao/avaliacao_publica.html',
+                contexto,
+                status=400,
+            )
+
+        with transaction.atomic():
+            avaliador, created = Avaliador.objects.get_or_create(
+                email=email,
+                defaults={
+                    'nome': nome,
+                    'profissao': profissao,
+                    'formulario': formulario,
+                },
+            )
+
+            if not created:
+                avaliador.nome = nome
+                avaliador.profissao = profissao
+                avaliador.formulario = formulario
+                avaliador.save(update_fields=['nome', 'profissao', 'formulario'])
+
+            for avaliacao_formulario in avaliacoes:
+                avaliacao_formulario.avaliador = avaliador
             AvaliacaoFormulario.objects.bulk_create(avaliacoes)
 
         return render(request, 'avaliacao/avaliacao_sucesso.html')
