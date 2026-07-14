@@ -1643,8 +1643,28 @@ textarea:focus,
 
     <div id="respostasContainer" class="responses-grid"></div>
 
-    <div class="modal-footer" style="justify-content: center;">
+    <div id="humanResponseSection" style="display:none; margin-top: 18px;">
+      <p id="humanNoResponseMsg" class="modal-desc" style="display:none; margin-bottom: 10px; color: #c4b5fd;">{% translate "Nenhuma resposta humana vinculada a esta questão." %}</p>
+      <div id="humanResponseList"></div>
+      <div id="humanAddArea" style="display:none; margin-top: 10px;">
+        <div class="field-group" style="margin-bottom: 0;">
+          <textarea id="humanResponseInput" class="field-textarea" style="min-height: 80px; background: rgba(139,92,246,0.06); border-color: rgba(139,92,246,0.28); color: var(--text);" placeholder="{% translate 'Digite a resposta humana para esta questão...' %}"></textarea>
+        </div>
+        <div style="display: flex; gap: 8px; margin-top: 8px;">
+          <button type="button" class="btn btn-primary" style="border-color: rgba(139,92,246,0.44); background: rgba(139,92,246,0.12); color: #c4b5fd;" onclick="salvarRespostaHumana()">{% translate "Salvar" %}</button>
+          <button type="button" class="btn btn-ghost" onclick="toggleHumanAddArea(false)">{% translate "Cancelar" %}</button>
+        </div>
+      </div>
+      <button type="button" id="btnAddHuman" class="btn btn-ghost" style="display:none; margin-top: 10px; border-color: rgba(139,92,246,0.3); color: #c4b5fd; font-size: 18px; font-weight: 700; min-height: 36px;" onclick="toggleHumanAddArea(true)">+ {% translate "Adicionar Resposta Humana" %}</button>
+    </div>
+
+    <div class="modal-footer" style="justify-content: space-between;">
       <button type="button" class="btn btn-ghost" onclick="fecharModalDetalhes()">{% translate "Fechar visualização" %}</button>
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <button type="button" class="btn btn-primary" id="btnReconsultar" style="display: none; border-color: rgba(234,179,8,0.44); background: rgba(234,179,8,0.12); color: #facc15;">
+          {% translate "Re-consultar IAs faltantes" %}
+        </button>
+      </div>
     </div>
   </div>
 </div>
@@ -1659,6 +1679,8 @@ const pageText = {
   fetchingResponses: "{% translate 'Buscando respostas registradas...' %}",
   unavailableQuestion: "{% translate 'Pergunta indisponível.' %}",
   noLinkedResponse: "{% translate 'Nenhuma resposta vinculada a esta questão.' %}",
+  noIaResponse: "{% translate 'Nenhuma resposta de IA vinculada a esta questão.' %}",
+  noHumanResponse: "{% translate 'Nenhuma resposta humana vinculada a esta questão.' %}",
   answerPrefix: "{% translate 'Resposta' %} ",
   loadError: "{% translate 'Houve um erro ao carregar os dados.' %}"
 };
@@ -1831,6 +1853,12 @@ function abrirModalDetalhes(btn) {
   const url = btn.getAttribute("data-url");
   const detalhesPergunta = document.getElementById("detalhesPergunta");
   const respostasContainer = document.getElementById("respostasContainer");
+  const humanSection = document.getElementById("humanResponseSection");
+  const humanList = document.getElementById("humanResponseList");
+  const humanAddArea = document.getElementById("humanAddArea");
+  const btnAddHuman = document.getElementById("btnAddHuman");
+  const humanInput = document.getElementById("humanResponseInput");
+  const humanMsg = document.getElementById("humanNoResponseMsg");
 
   document.getElementById("detalhesModal")?.classList.add("active");
   if (detalhesPergunta) detalhesPergunta.innerText = pageText.loadingDetails;
@@ -1841,6 +1869,12 @@ function abrirModalDetalhes(btn) {
     loading.textContent = pageText.fetchingResponses;
     respostasContainer.appendChild(loading);
   }
+  if (humanSection) humanSection.style.display = "none";
+  if (humanList) humanList.innerHTML = "";
+  if (humanAddArea) humanAddArea.style.display = "none";
+  if (btnAddHuman) btnAddHuman.style.display = "none";
+  if (humanInput) humanInput.value = "";
+  if (humanMsg) humanMsg.style.display = "none";
 
   fetch(url)
     .then(response => response.json())
@@ -1849,54 +1883,112 @@ function abrirModalDetalhes(btn) {
       detalhesPergunta.innerText = data.pergunta || pageText.unavailableQuestion;
       respostasContainer.innerHTML = "";
 
+      detalhesPergunta.dataset.questaoId = data.questao_id || "";
+
       if (!data.respostas || data.respostas.length === 0) {
         const empty = document.createElement("p");
         empty.className = "modal-desc";
-        empty.textContent = pageText.noLinkedResponse;
+        if (!data.tem_resposta_humana) {
+          empty.textContent = pageText.noLinkedResponse;
+        } else {
+          empty.textContent = pageText.noIaResponse;
+        }
         respostasContainer.appendChild(empty);
-        return;
+      } else {
+        data.respostas.forEach(resp => {
+          const card = document.createElement("div");
+          card.className = "detail-response-card";
+
+          const labelRow = document.createElement("div");
+          labelRow.style.cssText = "display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;";
+
+          const label = document.createElement("label");
+          label.className = "field-label";
+          label.textContent = pageText.answerPrefix + (resp.ia || "");
+          label.style.color = resp.cor || "#00ff9f";
+
+          labelRow.appendChild(label);
+
+          if (resp.id) {
+            const delBtn = document.createElement("button");
+            delBtn.type = "button";
+            delBtn.className = "btn btn-danger";
+            delBtn.style.cssText = "min-height: 28px; padding: 4px 10px; font-size: 10px; font-weight: 700;";
+            delBtn.textContent = "{% translate 'Deletar' %}";
+            delBtn.onclick = function() { deletarRespostaIA(resp.id, delBtn); };
+            labelRow.appendChild(delBtn);
+          }
+
+          const body = document.createElement("div");
+          body.className = "detail-response-body markdown-body"; 
+          body.style.borderColor = (resp.cor || "#00ff9f") + "66";
+          body.style.background = (resp.cor || "#00ff9f") + "10";
+          
+          const rawMarkdown = resp.texto || "{% translate 'Sem conteúdo.' %}";
+          body.innerHTML = marked.parse(rawMarkdown);
+
+          card.appendChild(labelRow);
+          card.appendChild(body);
+          respostasContainer.appendChild(card);
+        });
       }
 
-      data.respostas.forEach(resp => {
-        const card = document.createElement("div");
-        card.className = "detail-response-card";
+      humanSection.style.display = "block";
+      humanList.innerHTML = "";
 
-        const label = document.createElement("label");
-        label.className = "field-label";
-        label.textContent = pageText.answerPrefix + (resp.ia || "");
-        label.style.color = resp.cor || "#00ff9f";
+      const humanas = data.respostas_humanas || [];
+      if (humanas.length === 0) {
+        if (humanMsg) humanMsg.style.display = "block";
+      } else {
+        if (humanMsg) humanMsg.style.display = "none";
+        humanas.forEach(h => {
+          const card = document.createElement("div");
+          card.className = "detail-response-card";
+          card.style.marginBottom = "10px";
 
-        const body = document.createElement("div");
-        body.className = "detail-response-body markdown-body"; 
-        body.style.borderColor = (resp.cor || "#00ff9f") + "66";
-        body.style.background = (resp.cor || "#00ff9f") + "10";
-        
-        const rawMarkdown = resp.texto || "{% translate 'Sem conteúdo.' %}";
-        body.innerHTML = marked.parse(rawMarkdown);
+          const labelRow = document.createElement("div");
+          labelRow.style.cssText = "display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;";
 
-        card.appendChild(label);
-        card.appendChild(body);
-        respostasContainer.appendChild(card);
-      });
+          const label = document.createElement("label");
+          label.className = "field-label";
+          label.textContent = "{% translate 'Resposta Humana' %}";
+          label.style.color = "#c4b5fd";
 
-      if (data.resposta_humana) {
-        const humanCard = document.createElement("div");
-        humanCard.className = "detail-response-card";
+          labelRow.appendChild(label);
 
-        const humanLabel = document.createElement("label");
-        humanLabel.className = "field-label";
-        humanLabel.textContent = "{% translate 'Resposta Humana' %}";
-        humanLabel.style.color = "#c4b5fd";
+          if (h.id) {
+            const delBtn = document.createElement("button");
+            delBtn.type = "button";
+            delBtn.className = "btn btn-danger";
+            delBtn.style.cssText = "min-height: 28px; padding: 4px 10px; font-size: 10px; font-weight: 700;";
+            delBtn.textContent = "{% translate 'Deletar' %}";
+            delBtn.onclick = function() { deletarRespostaIA(h.id, delBtn); };
+            labelRow.appendChild(delBtn);
+          }
 
-        const humanBody = document.createElement("div");
-        humanBody.className = "detail-response-body markdown-body";
-        humanBody.style.borderColor = "rgba(139, 92, 246, 0.32)";
-        humanBody.style.background = "rgba(139, 92, 246, 0.1)";
-        humanBody.innerHTML = marked.parse(data.resposta_humana);
+          const body = document.createElement("div");
+          body.className = "detail-response-body markdown-body";
+          body.style.borderColor = "rgba(139, 92, 246, 0.32)";
+          body.style.background = "rgba(139, 92, 246, 0.1)";
+          body.innerHTML = marked.parse(h.texto || "");
 
-        humanCard.appendChild(humanLabel);
-        humanCard.appendChild(humanBody);
-        respostasContainer.appendChild(humanCard);
+          card.appendChild(labelRow);
+          card.appendChild(body);
+          humanList.appendChild(card);
+        });
+      }
+
+      if (btnAddHuman) btnAddHuman.style.display = "inline-flex";
+
+      const btnReconsultar = document.getElementById("btnReconsultar");
+      const qtdRespostasIA = (data.respostas || []).length;
+      if (btnReconsultar && data.total_llms && qtdRespostasIA < data.total_llms) {
+        btnReconsultar.style.display = "inline-flex";
+        btnReconsultar.disabled = false;
+        btnReconsultar.textContent = "{% translate 'Re-consultar IAs faltantes' %}";
+        btnReconsultar.onclick = function() { reconsultarIaFaltante(data.questao_id, btnReconsultar); };
+      } else if (btnReconsultar) {
+        btnReconsultar.style.display = "none";
       }
     })
     .catch(() => {
@@ -1907,6 +1999,91 @@ function abrirModalDetalhes(btn) {
 
 function fecharModalDetalhes() {
   document.getElementById("detalhesModal")?.classList.remove("active");
+}
+
+function getCsrfToken() {
+  const cookie = document.cookie.split(';').find(c => c.trim().startsWith('csrftoken='));
+  return cookie ? cookie.split('=')[1] : '';
+}
+
+function toggleHumanAddArea(show) {
+  const area = document.getElementById("humanAddArea");
+  const btn = document.getElementById("btnAddHuman");
+  const input = document.getElementById("humanResponseInput");
+  if (show) {
+    area.style.display = "block";
+    btn.style.display = "none";
+    if (input) { input.value = ""; input.focus(); }
+  } else {
+    area.style.display = "none";
+    btn.style.display = "inline-flex";
+    if (input) input.value = "";
+  }
+}
+
+function salvarRespostaHumana() {
+  const questaoId = document.getElementById("detalhesPergunta")?.dataset.questaoId;
+  const input = document.getElementById("humanResponseInput");
+  const texto = input?.value.trim();
+  if (!questaoId || !texto) return;
+
+  const formData = new FormData();
+  formData.append('resposta_humana', texto);
+
+  fetch(`/questoes/${questaoId}/adicionar-resposta-humana/`, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': getCsrfToken() },
+    body: formData
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.ok) {
+      toggleHumanAddArea(false);
+      const fakeBtn = document.querySelector(`[data-url="/questoes/ver/${questaoId}/"]`);
+      if (fakeBtn) abrirModalDetalhes(fakeBtn);
+    }
+  });
+}
+
+function deletarRespostaIA(respostaId, btn) {
+  if (!confirm("{% translate 'Tem certeza que deseja deletar esta resposta da IA?' %}")) return;
+
+  fetch(`/questoes/resposta/${respostaId}/deletar/`, {
+    method: 'DELETE',
+    headers: { 'X-CSRFToken': getCsrfToken() }
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.ok && data.questao_id) {
+      const url = `/questoes/ver/${data.questao_id}/`;
+      const fakeBtn = document.querySelector(`[data-url="${url}"]`);
+      if (fakeBtn) abrirModalDetalhes(fakeBtn);
+    }
+  });
+}
+
+function reconsultarIaFaltante(questaoId, btn) {
+  btn.disabled = true;
+  btn.textContent = "{% translate 'Consultando...' %}";
+
+  fetch(`/questoes/${questaoId}/gerar-ia-faltantes/`, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': getCsrfToken() }
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.status === 'ok') {
+      const url = `/questoes/ver/${questaoId}/`;
+      const fakeBtn = document.querySelector(`[data-url="${url}"]`);
+      if (fakeBtn) abrirModalDetalhes(fakeBtn);
+      btn.style.display = "none";
+    } else {
+      btn.textContent = data.mensagem || "{% translate 'Erro ao consultar IA' %}";
+    }
+  })
+  .catch(() => {
+    btn.textContent = "{% translate 'Erro de rede' %}";
+  });
 }
 
 function bindModalDismiss() {

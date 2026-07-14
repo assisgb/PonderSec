@@ -414,7 +414,10 @@ body::before {
 
             try {
                 const requisicoes = Array.from(selectedQuestions).map(id => 
-                    fetch(`/gerar_resposta/${id}`)
+                    fetch(`/questoes/${id}/gerar-ia-faltantes/`, {
+                        method: 'POST',
+                        headers: { 'X-CSRFToken': getCookie('csrftoken') }
+                    })
                 );
 
                 await Promise.all(requisicoes);
