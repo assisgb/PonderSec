@@ -11,6 +11,7 @@ urlpatterns = [
     path('questoes/', views.questoes, name="questoes"),
     path('add_questoes/', views.add_questoes, name="add_questoes"),
     path('upload-perguntas/', views.upload_perguntas, name='upload_perguntas'),
+    path('download-template-perguntas/<str:formato>/', views.download_template_perguntas, name='download_template_perguntas'),
     path('questoes-cadastro-categoria/', views.questoes_cadastro_categoria, name="questoes_cadastro_categoria"),
     path('questoes/ver/<int:id>/', views.ver_detalhes_questao, name='ver_detalhes_questao'),
     path('questoes/deletar/<int:id>/', views.deletar_questao_historico, name='deletar_questao_historico'),

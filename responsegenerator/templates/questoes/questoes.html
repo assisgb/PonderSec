@@ -1601,6 +1601,25 @@ textarea:focus,
     <form id="uploadForm" method="POST" action="{% url 'upload_perguntas' %}" enctype="multipart/form-data">
       {% csrf_token %}
       
+      <div style="display:flex; gap:8px; margin-bottom:14px;">
+        <a href="{% url 'download_template_perguntas' 'json' %}" class="btn btn-ghost" style="flex:1; text-align:center; font-size:12px;" download>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right:5px;">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <path d="M7 10l5 5 5-5"></path>
+            <path d="M12 15V3"></path>
+          </svg>
+          {% translate "Baixar modelo JSON" %}
+        </a>
+        <a href="{% url 'download_template_perguntas' 'txt' %}" class="btn btn-ghost" style="flex:1; text-align:center; font-size:12px;" download>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right:5px;">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <path d="M7 10l5 5 5-5"></path>
+            <path d="M12 15V3"></path>
+          </svg>
+          {% translate "Baixar modelo TXT" %}
+        </a>
+      </div>
+
       <div class="drop-zone" id="dropZone" role="button" tabindex="0">
         <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#7dd3fc" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
