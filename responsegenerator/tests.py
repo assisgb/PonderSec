@@ -1,15 +1,21 @@
 import json
 from unittest import mock
 
+from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
 
 from responsegenerator.models import (
     AdminPonderSec,
+    AvaliacaoFormulario,
     AvaliacaoPublicaLLM,
+    Avaliador,
+    Formulario,
     LLMPublica,
     Metrica,
     PerguntaPublica,
+    Questao,
+    Resposta,
     RespostaPublica,
 )
 from responsegenerator.views import ADMIN_SESSION_KEY
@@ -129,3 +135,109 @@ class AdminPublicMetricTests(TestCase):
 
         self.assertEqual(metricas_response.status_code, 200)
         self.assertEqual(avaliacoes_response.status_code, 200)
+
+
+class PublicFormEvaluationTests(TestCase):
+    def setUp(self):
+        self.owner = User.objects.create_user(
+            username="pesquisador",
+            password="senha-segura",
+        )
+        self.metric = Metrica.objects.create(
+            usuario=self.owner,
+            nome="Clareza",
+            descricao="A resposta é clara?",
+            tipo="quantitativa",
+            pontuacao_maxima=5,
+            ativa=True,
+        )
+        self.question = Questao.objects.create(
+            usuario=self.owner,
+            conteudo="Como evitar phishing?",
+        )
+        self.answer = Resposta.objects.create(
+            questao=self.question,
+            conteudo_resposta="Verifique o remetente e não abra links suspeitos.",
+        )
+        self.form = Formulario.objects.create(
+            nome="Avaliação de segurança",
+            usuario=self.owner,
+        )
+        self.form.questoes.add(self.question)
+        self.url = reverse("responder_avaliacao_publica", args=[self.form.id])
+        self.identity = {
+            "nome": "Especialista",
+            "email": "especialista@example.com",
+            "profissao": "Analista de segurança",
+        }
+
+    def test_scores_start_empty(self):
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-max="5"')
+        self.assertContains(response, 'data-val=""')
+        self.assertContains(
+            response,
+            f'name="quanti_{self.answer.id}_{self.metric.id}"',
+        )
+        self.assertNotContains(response, 'data-val="3"')
+
+    def test_identification_only_does_not_finish_evaluation(self):
+        response = self.client.post(self.url, data=self.identity)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertContains(
+            response,
+            "Avalie todas as respostas antes de enviar o formulário.",
+            status_code=400,
+        )
+        self.assertEqual(Avaliador.objects.count(), 0)
+        self.assertEqual(AvaliacaoFormulario.objects.count(), 0)
+
+    def test_all_answers_must_be_scored(self):
+        second_answer = Resposta.objects.create(
+            questao=self.question,
+            conteudo_resposta="Use autenticação multifator.",
+        )
+        data = {
+            **self.identity,
+            f"quanti_{self.answer.id}_{self.metric.id}": "4",
+        }
+
+        response = self.client.post(self.url, data=data)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(Avaliador.objects.count(), 0)
+        self.assertEqual(AvaliacaoFormulario.objects.count(), 0)
+        self.assertFalse(
+            AvaliacaoFormulario.objects.filter(resposta=second_answer).exists()
+        )
+
+    def test_score_outside_metric_range_is_rejected(self):
+        data = {
+            **self.identity,
+            f"quanti_{self.answer.id}_{self.metric.id}": "6",
+        }
+
+        response = self.client.post(self.url, data=data)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(Avaliador.objects.count(), 0)
+        self.assertEqual(AvaliacaoFormulario.objects.count(), 0)
+
+    def test_complete_evaluation_is_saved(self):
+        data = {
+            **self.identity,
+            f"quanti_{self.answer.id}_{self.metric.id}": "4",
+            f"quali_{self.answer.id}_{self.metric.id}": "Resposta objetiva.",
+        }
+
+        response = self.client.post(self.url, data=data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "avaliacao/avaliacao_sucesso.html")
+        avaliacao = AvaliacaoFormulario.objects.get()
+        self.assertEqual(avaliacao.avaliacao_quanti, 4)
+        self.assertEqual(avaliacao.avaliacao_quali, "Resposta objetiva.")
+        self.assertEqual(avaliacao.avaliador.email, self.identity["email"])

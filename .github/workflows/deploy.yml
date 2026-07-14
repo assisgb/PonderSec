@@ -1,0 +1,23 @@
+name: Deploy para VPS
+
+on:
+  push:
+    branches:
+      - main          
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Conectar na VPS e fazer deploy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            cd /home/pondersec_cod/PonderSec
+            git pull origin main
+            docker compose up --build -d
