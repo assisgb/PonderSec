@@ -547,6 +547,50 @@ def add_questoes(request):
     return redirect('questoes')
     
 @login_required
+def download_template_perguntas(request, formato):
+    if formato == 'json':
+        conteudo = json.dumps([
+            {
+                "pergunta": "What is a SQL injection attack?",
+                "categoria": "Web Security",
+                "resposta": "A SQL injection inserts malicious SQL code into a query... (optional field)"
+            },
+            {
+                "pergunta": "What controls reduce phishing risk in an organization?",
+                "categoria": "Web Security",
+                "resposta": ""
+            },
+            {
+                "pergunta": "What is the difference between IDS and IPS?",
+                "categoria": "Network Security",
+                "resposta": ""
+            }
+        ], ensure_ascii=False, indent=2)
+        response = HttpResponse(conteudo, content_type='application/json')
+        response['Content-Disposition'] = 'attachment; filename="template_perguntas.json"'
+        return response
+
+    if formato == 'txt':
+        conteudo = (
+            "Eixo 1 - Web Security\n"
+            "1. What is a SQL injection attack?\n"
+            "RESPOSTA: A SQL injection inserts malicious SQL code into a query... (optional)\n"
+            "\n"
+            "2. What controls reduce phishing risk in an organization?\n"
+            "\n"
+            "Eixo 2 - Network Security\n"
+            "1. What is the difference between IDS and IPS?\n"
+            "\n"
+            "2. What is a VPN and how does it protect network traffic?\n"
+        )
+        response = HttpResponse(conteudo, content_type='text/plain; charset=utf-8')
+        response['Content-Disposition'] = 'attachment; filename="template_perguntas.txt"'
+        return response
+
+    return HttpResponse(status=404)
+
+
+@login_required
 def upload_perguntas(request):
     if request.method == "POST":
         arquivo = request.FILES.get("arquivo_upload")
