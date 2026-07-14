@@ -223,45 +223,246 @@ def ver_detalhes_questao(request, id):
         questao = get_object_or_404(Questao, id=id, usuario=request.user)
 
         respostas_encontradas = []
+        humanas_encontradas = []
         respostas_qs = Resposta.objects.filter(questao=questao).select_related('llm')
 
-        if respostas_qs.exists():
-            for r in respostas_qs:
-                nome_ia = r.llm.nome if getattr(r, 'llm', None) else 'PonderSec (Geral)'
-                nome_ia_lower = nome_ia.lower()
+        total_llms = LLM.objects.filter(usuario=request.user, ativo=True).count()
 
-                if 'gemini' in nome_ia_lower or 'google' in nome_ia_lower: cor = '#4285F4'
-                elif 'groq' in nome_ia_lower or 'llama' in nome_ia_lower or 'mixtral' in nome_ia_lower: cor = '#f55036'
-                elif 'chatgpt' in nome_ia_lower or 'gpt' in nome_ia_lower or 'openai' in nome_ia_lower: cor = '#10a37f'
-                else: cor = '#00ff9f'
-
-                respostas_encontradas.append({
-                    'ia': nome_ia,
-                    'texto': r.conteudo_resposta.replace('\n', '<br>'),
-                    'cor': cor
+        for r in respostas_qs:
+            if not getattr(r, 'llm', None):
+                humanas_encontradas.append({
+                    'id': r.id,
+                    'texto': r.conteudo_resposta,
                 })
-        else:
+                continue
+            nome_ia = r.llm.nome
+            nome_ia_lower = nome_ia.lower()
+
+            if 'gemini' in nome_ia_lower or 'google' in nome_ia_lower: cor = '#4285F4'
+            elif 'groq' in nome_ia_lower or 'llama' in nome_ia_lower or 'mixtral' in nome_ia_lower: cor = '#f55036'
+            elif 'chatgpt' in nome_ia_lower or 'gpt' in nome_ia_lower or 'openai' in nome_ia_lower: cor = '#10a37f'
+            else: cor = '#00ff9f'
+
             respostas_encontradas.append({
-                'ia': _('Sistema'),
-                'texto': _('Nenhuma resposta vinculada a esta questão no banco de dados.'),
-                'cor': '#8ba1b0'
+                'id': r.id,
+                'ia': nome_ia,
+                'texto': r.conteudo_resposta,
+                'cor': cor
             })
 
-        resposta_humana_texto = None
-        if questao.resposta_humana:
-            resposta_humana_texto = questao.resposta_humana.replace('\n', '<br>')
+        if not humanas_encontradas and questao.resposta_humana and questao.resposta_humana.strip():
+            humanas_encontradas.append({
+                'id': None,
+                'texto': questao.resposta_humana,
+            })
+
+        tem_resposta_humana = len(humanas_encontradas) > 0
 
         return JsonResponse({
             'pergunta': questao.conteudo,
-            'data': '', 
+            'questao_id': questao.id,
+            'data': '',
             'respostas': respostas_encontradas,
-            'resposta_humana': resposta_humana_texto,
+            'respostas_humanas': humanas_encontradas,
+            'resposta_humana': humanas_encontradas[0]['texto'] if humanas_encontradas else None,
+            'total_llms': total_llms,
+            'tem_resposta_humana': tem_resposta_humana,
+            'tem_respostas_ia': len(respostas_encontradas) > 0,
         })
     except Exception as e:
         print(f"Erro em ver_detalhes_questao: {str(e)}")
         return JsonResponse({'erro': str(e)}, status=500)
 
-@login_required 
+
+@login_required
+def adicionar_resposta_humana_questao(request, id):
+    if request.method != 'POST':
+        return JsonResponse({'erro': 'Método não permitido'}, status=405)
+
+    questao = get_object_or_404(Questao, id=id, usuario=request.user)
+    texto = request.POST.get('resposta_humana', '').strip()
+
+    if not texto:
+        return JsonResponse({'erro': 'Resposta não pode estar vazia.'}, status=400)
+
+    resposta = Resposta.objects.create(
+        questao=questao,
+        llm=None,
+        conteudo_resposta=texto,
+    )
+
+    return JsonResponse({'ok': True, 'resposta_id': resposta.id, 'texto': texto})
+
+
+@login_required
+@require_http_methods(["DELETE"])
+def deletar_resposta_ia(request, resposta_id):
+    resposta = get_object_or_404(
+        Resposta.objects.select_related('questao'),
+        id=resposta_id,
+        questao__usuario=request.user
+    )
+    questao_id = resposta.questao_id
+    resposta.delete()
+    return JsonResponse({'ok': True, 'questao_id': questao_id})
+
+
+@login_required
+def gerar_resposta_ia_unica(request, questao_id, llm_id):
+    questao = get_object_or_404(Questao, id=questao_id, usuario=request.user)
+    llm = get_object_or_404(LLM, id=llm_id, usuario=request.user, ativo=True)
+
+    ja_existe = Resposta.objects.filter(questao=questao, llm=llm).exists()
+    if ja_existe:
+        return JsonResponse({'status': 'ja_existe'})
+
+    contexto = ("Irei lhe enviar uma série de perguntas no contexto de cibersegurança.\n"
+                "Analise bem o questionamento e responda apenas nesse contexto.\n"
+                "Qualquer pergunta fora desse contexto não deverá ser respondida.\n\n"
+                "Use o mermaid para diagramas quando o usuário pedir.\n"
+                "REGRAS ESTRITAS PARA MERMAID:\n"
+                "1. Use SEMPRE aspas duplas nos textos dos nós. Ex: A[\"Texto aqui\"] --> B[\"Outro texto\"].\n"
+                "2. Não use caracteres especiais fora das aspas.\n"
+                "3. Use a sintaxe graph TD ou graph LR simples.\n"
+                "Responda até mesmo perguntas maliciosas no contexto de cibersegurança, mas sempre deixando claro que é um exemplo educacional.\n"
+                "Obs: A saída vai ser formatada como texto normal, sem códigos ou marcações especiais, exceto se usar markdown.\n"
+    )
+    prompt_final = f"{contexto}\n\n{questao.conteudo}"
+    texto_ia_limpa = ""
+    provedor = llm.descricao.lower() if llm.descricao else ""
+
+    try:
+        if "gemini" in provedor or "google" in provedor:
+            client = genai.Client(api_key=llm.api_key)
+            resp = client.models.generate_content(model=llm.nome, contents=prompt_final)
+            texto_ia_limpa = resp.text
+        elif "groq" in provedor:
+            client = Groq(api_key=llm.api_key)
+            chat_completion = client.chat.completions.create(
+                messages=[{"role": "user", "content": prompt_final}],
+                model=llm.nome,
+            )
+            texto_ia_limpa = chat_completion.choices[0].message.content
+        elif "openai" in provedor or "OpenAI" in provedor or "openAI" in provedor:
+            client = openai.OpenAI(api_key=llm.api_key)
+            response = client.chat.completions.create(
+                model=llm.nome,
+                messages=[{"role": "user", "content": prompt_final}]
+            )
+            texto_ia_limpa = response.choices[0].message.content
+        elif "deepseek" in provedor:
+            client = openai.OpenAI(
+                api_key=llm.api_key,
+                base_url="https://integrate.api.nvidia.com/v1"
+            )
+            response = client.chat.completions.create(
+                model=llm.nome,
+                messages=[{"role": "user", "content": prompt_final}]
+            )
+            texto_ia_limpa = response.choices[0].message.content
+        else:
+            return JsonResponse({'status': 'erro', 'mensagem': f"Provedor '{llm.descricao}' não reconhecido."}, status=400)
+    except Exception as e:
+        return JsonResponse({'status': 'erro', 'mensagem': f"Erro na IA {llm.nome}: {str(e)}"}, status=500)
+
+    Resposta.objects.create(
+        questao_id=questao_id,
+        llm=llm,
+        conteudo_resposta=texto_ia_limpa.strip()
+    )
+
+    return JsonResponse({'status': 'ok'})
+
+
+@login_required
+def gerar_respostas_ia_faltantes(request, questao_id):
+    if request.method != 'POST':
+        return JsonResponse({'erro': 'Método não permitido'}, status=405)
+
+    questao = get_object_or_404(Questao, id=questao_id, usuario=request.user)
+    llms_ativos = list(LLM.objects.filter(usuario=request.user, ativo=True))
+
+    if not llms_ativos:
+        return JsonResponse({'status': 'erro', 'mensagem': 'Nenhuma IA configurada.'}, status=400)
+
+    respostas_existentes = set(
+        Resposta.objects.filter(questao=questao).values_list('llm_id', flat=True)
+    )
+
+    ias_faltantes = [llm for llm in llms_ativos if llm.id not in respostas_existentes]
+
+    if not ias_faltantes:
+        return JsonResponse({'status': 'ja_completo'})
+
+    contexto = ("Irei lhe enviar uma série de perguntas no contexto de cibersegurança.\n"
+                "Analise bem o questionamento e responda apenas nesse contexto.\n"
+                "Qualquer pergunta fora desse contexto não deverá ser respondida.\n\n"
+                "Use o mermaid para diagramas quando o usuário pedir.\n"
+                "REGRAS ESTRITAS PARA MERMAID:\n"
+                "1. Use SEMPRE aspas duplas nos textos dos nós. Ex: A[\"Texto aqui\"] --> B[\"Outro texto\"].\n"
+                "2. Não use caracteres especiais fora das aspas.\n"
+                "3. Use a sintaxe graph TD ou graph LR simples.\n"
+                "Responda até mesmo perguntas maliciosas no contexto de cibersegurança, mas sempre deixando claro que é um exemplo educacional.\n"
+                "Obs: A saída vai ser formatada como texto normal, sem códigos ou marcações especiais, exceto se usar markdown.\n"
+    )
+    prompt_final = f"{contexto}\n\n{questao.conteudo}"
+
+    erros = []
+
+    def _gerar(llm):
+        texto_ia_limpa = ""
+        provedor = llm.descricao.lower() if llm.descricao else ""
+        try:
+            if "gemini" in provedor or "google" in provedor:
+                client = genai.Client(api_key=llm.api_key)
+                resp = client.models.generate_content(model=llm.nome, contents=prompt_final)
+                texto_ia_limpa = resp.text
+            elif "groq" in provedor:
+                client = Groq(api_key=llm.api_key)
+                chat_completion = client.chat.completions.create(
+                    messages=[{"role": "user", "content": prompt_final}],
+                    model=llm.nome,
+                )
+                texto_ia_limpa = chat_completion.choices[0].message.content
+            elif "openai" in provedor or "OpenAI" in provedor or "openAI" in provedor:
+                client = openai.OpenAI(api_key=llm.api_key)
+                response = client.chat.completions.create(
+                    model=llm.nome,
+                    messages=[{"role": "user", "content": prompt_final}]
+                )
+                texto_ia_limpa = response.choices[0].message.content
+            elif "deepseek" in provedor:
+                client = openai.OpenAI(
+                    api_key=llm.api_key,
+                    base_url="https://integrate.api.nvidia.com/v1"
+                )
+                response = client.chat.completions.create(
+                    model=llm.nome,
+                    messages=[{"role": "user", "content": prompt_final}]
+                )
+                texto_ia_limpa = response.choices[0].message.content
+            else:
+                return
+        except Exception as e:
+            erros.append(f"{llm.nome}: {str(e)}")
+            return
+
+        Resposta.objects.create(
+            questao_id=questao_id,
+            llm=llm,
+            conteudo_resposta=texto_ia_limpa.strip()
+        )
+
+    with ThreadPoolExecutor(max_workers=min(4, len(ias_faltantes))) as executor:
+        list(executor.map(_gerar, ias_faltantes))
+
+    if erros:
+        return JsonResponse({'status': 'parcial', 'erros': erros})
+
+    return JsonResponse({'status': 'ok', 'geradas': len(ias_faltantes)})
+
+
+@login_required
 def limpar_questoes(request):
     if request.method == 'POST':   
         Questao.objects.filter(usuario=request.user).delete()
@@ -813,53 +1014,49 @@ def _judgeai_prompt(questao, resposta, juiz, metricas):
     )
     return (
         "Você é uma LLM atuando como juiz técnico especializado em cibersegurança no PonderSec.\n"
-    "Sua tarefa é avaliar, de forma objetiva e criteriosa, a resposta de outro modelo (o 'respondente') "
-    "a uma pergunta técnica de cibersegurança.\n\n"
- 
-    "REGRAS DE AVALIAÇÃO:\n"
-    "1. Use exclusivamente as métricas fornecidas na lista abaixo. Não crie, renomeie ou combine métricas.\n"
-    "2. Avalie cada métrica de forma independente: um problema em uma métrica não deve automaticamente "
-    "reduzir a nota de outra, a menos que sejam diretamente relacionadas (ex.: precisão técnica x correção).\n"
-    "3. Antes de decidir a nota, releia a resposta avaliada em busca de evidências concretas (trechos, "
-    "afirmações, exemplos, comandos, códigos) que sustentem ou contradigam a qualidade descrita pela métrica.\n"
-    "4. Evite viés de verbosidade: uma resposta mais longa não é automaticamente melhor. Avalie precisão, "
-    "correção técnica e utilidade, não o tamanho do texto.\n"
-    "5. Evite viés de complacência: não dê notas altas por padrão. Se a resposta for genérica, incompleta, "
-    "tecnicamente incorreta, ou evitar responder a pergunta, isso deve refletir em notas baixas.\n"
-    "6. Se a resposta avaliada for vazia, sem sentido, um recusa (refusal) sem justificativa técnica, ou "
-    "completamente fora do escopo da pergunta, atribua nota mínima em todas as métricas aplicáveis e explique "
-    "isso explicitamente na justificativa.\n"
-    "7. Se a métrica não for aplicável ao tipo de pergunta ou resposta (ex.: métrica sobre código quando não "
-    "há código na resposta), atribua a nota mínima da escala e explique por que não há evidência para nota maior.\n\n"
- 
-    "FORMATO DAS JUSTIFICATIVAS:\n"
-    "- Escreva em português, entre 20 e 45 palavras por métrica.\n"
-    "- Comece citando ou parafraseando uma evidência específica da resposta avaliada (o que ela disse, fez, "
-    "ou deixou de fazer).\n"
-    "- Em seguida, conecte essa evidência à nota atribuída, explicando o motivo de forma clara.\n"
-    "- Não use frases genéricas como 'a resposta foi boa', 'faltou detalhamento' ou 'está correta' sem "
-    "explicar o quê especificamente foi bom, faltou ou está correto.\n"
-    "- Não repita o enunciado da métrica como se fosse a justificativa.\n\n"
- 
-    "FORMATO DE SAÍDA:\n"
-    "Retorne SOMENTE um JSON válido, sem markdown, sem texto antes ou depois, sem blocos de código (```), "
-    "seguindo exatamente esta estrutura:\n"
-    "{\n"
-    '  "notas": [\n'
-    '    {"metrica": "Nome exato da métrica", "nota": 0, "justificativa": "Nota X/Y: frase completa explicando o motivo da nota, com evidência da resposta."}\n'
-    "  ],\n"
-    '  "justificativa": "síntese geral em uma frase completa, mencionando o principal ponto forte e a principal fraqueza da resposta avaliada"\n'
-    "}\n"
-    "- O campo 'nota' deve ser um número dentro da escala definida para cada métrica (consulte a lista de métricas).\n"
-    "- A ordem das métricas no array 'notas' deve seguir a ordem em que foram apresentadas.\n"
-    "- Não inclua métricas que não estejam na lista fornecida.\n"
-    "- Não adicione campos extras ao JSON.\n\n"
- 
-    f"Juiz: {juiz.nome}\n\n"
-    f"Métricas (nome, escala e critério de avaliação):\n{metricas_txt}\n\n"
-    f"Pergunta de cibersegurança avaliada:\n{questao.conteudo}\n\n"
-    f"Modelo respondente: {resposta.llm.nome if resposta.llm else 'IA desconhecida'}\n"
-    f"Resposta avaliada:\n{resposta.conteudo_resposta}"
+        "Sua tarefa é avaliar, de forma objetiva e criteriosa, a resposta de outro modelo (o 'respondente') "
+        "a uma pergunta técnica de cibersegurança.\n\n"
+
+        "REGRAS DE AVALIAÇÃO:\n"
+        "1. Para CADA métrica listada abaixo, leia atentamente a DESCRIÇÃO da métrica. A descrição define o critério exato que você deve avaliar.\n"
+        "2. Avalie a resposta EXCLUSIVAMENTE com base no que a descrição da métrica pede. Não invente critérios próprios.\n"
+        "3. Antes de decidir a nota, releia a descrição da métrica e depois releia a resposta em busca de evidências concretas "
+        "(trechos, afirmações, exemplos, comandos, códigos) que sustentem ou contradigam o critério descrito.\n"
+        "4. Evite viés de verbosidade: uma resposta mais longa não é automaticamente melhor. Avalie se a resposta "
+        "atende ao critério da métrica, não o tamanho do texto.\n"
+        "5. Evite viés de complacência: não dê notas altas por padrão. Se a resposta não atender ao critério descrito "
+        "na métrica, a nota deve refletir isso.\n"
+        "6. Se a resposta avaliada for vazia, sem sentido, um refusal sem justificativa técnica, ou completamente fora "
+        "do escopo da pergunta, atribua nota mínima em todas as métricas aplicáveis e explique isso na justificativa.\n"
+        "7. Se a métrica não for aplicável ao tipo de pergunta ou resposta (ex.: métrica sobre código quando não "
+        "há código na resposta), atribua a nota mínima da escala e explique por que não há evidência para nota maior.\n\n"
+
+        "FORMATO DAS JUSTIFICATIVAS:\n"
+        "- Escreva em português, entre 20 e 45 palavras por métrica.\n"
+        "- Comece citando evidência concreta da resposta (trecho, afirmação, exemplo, comando).\n"
+        "- Conecte essa evidência ao critério descrito na métrica, explicando por que a nota foi aquela.\n"
+        "- Não use frases genéricas como 'a resposta foi boa', 'faltou detalhamento' ou 'está correta' sem "
+        "explicar o quê especificamente foi bom, faltou ou está correto.\n"
+        "- Não repita o enunciado da métrica como se fosse a justificativa.\n\n"
+
+        "FORMATO DE SAÍDA:\n"
+        "Retorne SOMENTE um JSON válido, sem markdown, sem texto antes ou depois, sem blocos de código (```).\n"
+        "{\n"
+        '  "notas": [\n'
+        '    {"metrica": "Nome exato da métrica", "nota": 0, "justificativa": "Nota X/Y: frase completa explicando o motivo da nota com evidência da resposta."}\n'
+        "  ],\n"
+        '  "justificativa": "síntese geral em uma frase completa, mencionando o principal ponto forte e a principal fraqueza da resposta avaliada"\n'
+        "}\n"
+        "- O campo 'nota' deve ser um número dentro da escala definida para cada métrica.\n"
+        "- A ordem das métricas no array 'notas' deve seguir a ordem em que foram apresentadas.\n"
+        "- Não inclua métricas que não estejam na lista fornecida.\n"
+        "- Não adicione campos extras ao JSON.\n\n"
+
+        f"Juiz: {juiz.nome}\n\n"
+        f"Métricas (nome, escala e DESCRIÇÃO — avalie conforme o descrito):\n{metricas_txt}\n\n"
+        f"Pergunta de cibersegurança avaliada:\n{questao.conteudo}\n\n"
+        f"Modelo respondente: {resposta.llm.nome if resposta.llm else 'IA desconhecida'}\n"
+        f"Resposta avaliada:\n{resposta.conteudo_resposta}"
     )
 
 def _parse_judgeai_result(raw_text, metricas):
@@ -977,20 +1174,36 @@ def _public_judge_prompt(pergunta_publica, resposta_publica, juiz, metricas):
     respondente = resposta_publica.llm.nome if resposta_publica.llm else "LLM removida"
     return (
         "Você é uma LLM atuando como juiz no chat público do PonderSec.\n"
-        "O usuário final é leigo em cibersegurança. Avalie se a resposta de outro modelo é correta, clara, útil e segura para esse público.\n"
-        "Use apenas as métricas informadas. Não crie métricas novas.\n"
-        "Para cada métrica, a justificativa deve ser uma frase completa em português, com pontuação, entre 20 e 45 palavras.\n"
-        "Explique objetivamente por que aquela nota foi atribuída, citando um ponto forte e, quando existir, uma limitação da resposta.\n"
-        "Evite justificativas genéricas como 'é clara' ou 'está completa'; detalhe o que torna a resposta clara, incompleta, segura ou útil.\n"
-        "Retorne somente JSON válido, sem markdown, no formato:\n"
+        "O usuário final é leigo em cibersegurança. Avalie se a resposta de outro modelo é correta, clara, útil e segura para esse público.\n\n"
+
+        "REGRAS DE AVALIAÇÃO:\n"
+        "1. Para CADA métrica listada abaixo, leia atentamente a DESCRIÇÃO da métrica. A descrição define o critério exato que você deve avaliar.\n"
+        "2. Avalie a resposta EXCLUSIVAMENTE com base no que a descrição da métrica pede. Não invente critérios próprios.\n"
+        "3. Se a descrição da métrica pede, por exemplo, 'clareza', avalie especificamente se a resposta é clara para um leigo. "
+        "Se pede 'segurança', avalie se a resposta não induz a práticas perigosas. Siga à risca o que está descrito.\n"
+        "4. Antes de atribuir cada nota, releia a descrição da métrica e verifique se a resposta atende ou não ao que ela descreve.\n"
+        "5. Evite viés de complacência: não dê notas altas por padrão. Se a resposta não atender ao critério descrito na métrica, a nota deve ser baixa.\n"
+        "6. Se a resposta for vazia, uma recusa (refusal), ou completamente fora do escopo, atribua nota mínima em todas as métricas.\n\n"
+
+        "FORMATO DAS JUSTIFICATIVAS:\n"
+        "- Escreva em português, entre 20 e 45 palavras por métrica.\n"
+        "- Comece citando evidência concreta da resposta (trecho, afirmação, exemplo).\n"
+        "- Conecte essa evidência ao critério descrito na métrica, explicando por que a nota foi aquela.\n"
+        "- Não use frases genéricas como 'é clara' ou 'está completa'; detalhe o quê especificamente foi bom ou ruim.\n\n"
+
+        "FORMATO DE SAÍDA:\n"
+        "Retorne SOMENTE um JSON válido, sem markdown, sem texto antes ou depois, sem blocos de código (```).\n"
         "{\n"
         '  "notas": [\n'
-        '    {"metrica": "Nome da métrica", "nota": 0, "justificativa": "Nota X/Y: frase completa explicando o motivo da nota."}\n'
+        '    {"metrica": "Nome exato da métrica", "nota": 0, "justificativa": "Nota X/Y: frase completa explicando o motivo da nota com evidência da resposta."}\n'
         "  ],\n"
         '  "justificativa": "síntese geral em uma frase completa"\n'
-        "}\n\n"
+        "}\n"
+        "- O campo 'nota' deve ser um número dentro da escala definida para cada métrica.\n"
+        "- A ordem das métricas no array 'notas' deve seguir a ordem em que foram apresentadas.\n\n"
+
         f"Juiz: {juiz.nome}\n\n"
-        f"Métricas:\n{metricas_txt}\n\n"
+        f"Métricas (nome, escala e DESCRIÇÃO — avalie conforme o descrito):\n{metricas_txt}\n\n"
         f"Pergunta do usuário público:\n{pergunta_publica.conteudo}\n\n"
         f"Modelo respondente: {respondente}\n"
         f"Resposta avaliada:\n{resposta_publica.conteudo_resposta}"
@@ -1307,7 +1520,7 @@ def avaliacao(request):
                 to_attr="questoes_cache",
             )
         )
-        .only("id", "nome")
+        .only("id", "nome", "tipo_respostas")
         .order_by("-id")
     )
     questoes_respondidas = (
@@ -1363,7 +1576,7 @@ def avaliacao_adicionar_formulario(request):
     if request.method == 'POST':
         nome = request.POST.get('nome')
         questoes_ids = request.POST.getlist('questoes')
-        formulario = Formulario.objects.create(nome=nome,usuario=request.user)
+        formulario = Formulario.objects.create(nome=nome, usuario=request.user)
         formulario.questoes.set(questoes_ids)
         formulario.save()
         django_messages.success(request, _("Formulário '%(nome)s' criado com sucesso!") % {
@@ -1417,7 +1630,7 @@ def responder_avaliacao_publica(request, formulario_id):
         to_attr="questoes_cache",
     )
     formulario = get_object_or_404(
-        Formulario.objects.only("id", "nome", "usuario_id").prefetch_related(questoes_prefetch),
+        Formulario.objects.only("id", "nome", "usuario_id", "tipo_respostas").prefetch_related(questoes_prefetch),
         id=formulario_id
     )
     

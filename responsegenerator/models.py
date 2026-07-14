@@ -196,10 +196,21 @@ class Historico(models.Model):
 
 
 class Formulario(models.Model):
-    
+    TIPO_RESPOSTAS_CHOICES = [
+        ('todas', 'Todas'),
+        ('humana', 'Apenas Humana'),
+        ('ia', 'Apenas IA'),
+        ('ambas', 'IA + Humana'),
+    ]
+
     nome = models.CharField(max_length=200)
     questoes = models.ManyToManyField(Questao, blank=True, related_name='formularios')
     usuario = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    tipo_respostas = models.CharField(
+        max_length=10,
+        choices=TIPO_RESPOSTAS_CHOICES,
+        default='todas',
+    )
 
     def __str__(self):
         return self.nome
