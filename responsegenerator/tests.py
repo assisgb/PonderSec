@@ -47,7 +47,7 @@ class PublicChatCrossEvaluationTests(TestCase):
     @mock.patch("responsegenerator.views._judgeai_call_configured_llm")
     def test_public_chat_generates_cross_evaluations(self, mocked_call):
         def fake_call(llm, prompt):
-            if "Retorne somente JSON válido" in prompt:
+            if "atuando como juiz no chat público" in prompt:
                 return json.dumps({
                     "notas": [
                         {"metrica": "Clareza", "nota": 4, "justificativa": "Clara para público leigo."}
@@ -60,7 +60,10 @@ class PublicChatCrossEvaluationTests(TestCase):
 
         response = self.client.post(
             reverse("usuario_final_chat_api"),
-            data=json.dumps({"pergunta": "Como evitar phishing?"}),
+            data=json.dumps({
+                "pergunta": "Como evitar phishing?",
+                "modelo_id": self.llm_a.id,
+            }),
             content_type="application/json",
         )
 
@@ -68,11 +71,20 @@ class PublicChatCrossEvaluationTests(TestCase):
         payload = response.json()
         self.assertEqual(payload["status"], "ok")
         self.assertEqual(payload["avaliacao_cruzada"]["status"], "ok")
-        self.assertEqual(len(payload["respostas"]), 2)
+        self.assertEqual(len(payload["respostas"]), 1)
+        self.assertEqual(payload["respostas"][0]["llm_id"], self.llm_a.id)
         self.assertEqual(PerguntaPublica.objects.count(), 1)
-        self.assertEqual(RespostaPublica.objects.count(), 2)
-        self.assertEqual(AvaliacaoPublicaLLM.objects.count(), 2)
-        self.assertEqual(len(payload["tabela_avaliacao_cruzada"]), 2)
+        self.assertEqual(RespostaPublica.objects.count(), 1)
+        self.assertEqual(AvaliacaoPublicaLLM.objects.count(), 1)
+        self.assertEqual(len(payload["tabela_avaliacao_cruzada"]), 1)
+
+        chamadas_de_resposta = [
+            chamada
+            for chamada in mocked_call.call_args_list
+            if "atuando como juiz no chat público" not in chamada.args[1]
+        ]
+        self.assertEqual(len(chamadas_de_resposta), 1)
+        self.assertEqual(chamadas_de_resposta[0].args[0].id, self.llm_a.id)
 
         primeira_linha = payload["tabela_avaliacao_cruzada"][0]
         self.assertIn("modelo_respondente", primeira_linha)
@@ -86,6 +98,108 @@ class PublicChatCrossEvaluationTests(TestCase):
             self.assertEqual(resposta["avaliacao"]["status"], "ok")
             self.assertEqual(resposta["avaliacao"]["media_geral"], 4)
             self.assertEqual(resposta["avaliacao"]["metricas"][0]["nome"], "Clareza")
+
+    @mock.patch("responsegenerator.views._judgeai_call_configured_llm")
+    def test_public_chat_requires_model_selection(self, mocked_call):
+        response = self.client.post(
+            reverse("usuario_final_chat_api"),
+            data=json.dumps({"pergunta": "Como evitar phishing?"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["status"], "erro")
+        self.assertEqual(PerguntaPublica.objects.count(), 0)
+        mocked_call.assert_not_called()
+
+    @mock.patch("responsegenerator.views._judgeai_call_configured_llm")
+    def test_public_chat_rejects_unavailable_model(self, mocked_call):
+        self.llm_a.ativo = False
+        self.llm_a.save(update_fields=["ativo"])
+
+        response = self.client.post(
+            reverse("usuario_final_chat_api"),
+            data=json.dumps({
+                "pergunta": "Como evitar phishing?",
+                "modelo_id": self.llm_a.id,
+            }),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["status"], "erro")
+        self.assertEqual(PerguntaPublica.objects.count(), 0)
+        mocked_call.assert_not_called()
+
+    def test_public_chat_page_lists_active_models(self):
+        llm_inativa = LLMPublica.objects.create(
+            nome="modelo-inativo",
+            descricao="OpenAI",
+            api_key="key-inativa",
+            ativo=False,
+        )
+
+        response = self.client.get(reverse("usuario_final_chat"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'id="modelSelect"')
+        self.assertContains(response, f'value="{self.llm_a.id}"')
+        self.assertContains(response, f'value="{self.llm_b.id}"')
+        self.assertNotContains(response, f'value="{llm_inativa.id}"')
+
+    @mock.patch("responsegenerator.views._judgeai_call_configured_llm")
+    @mock.patch("responsegenerator.views._judgeai_stream_configured_llm")
+    def test_public_chat_streams_only_selected_model(self, mocked_stream, mocked_judge):
+        mocked_stream.return_value = iter(["Use autenticação ", "em dois fatores."])
+        mocked_judge.return_value = json.dumps({
+            "notas": [
+                {"metrica": "Clareza", "nota": 4, "justificativa": "A orientação é clara e direta."}
+            ],
+            "justificativa": "Resposta adequada.",
+        })
+
+        response = self.client.post(
+            reverse("usuario_final_chat_stream_api"),
+            data=json.dumps({
+                "pergunta": "Como proteger minha conta?",
+                "modelo_id": self.llm_a.id,
+            }),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.streaming)
+        eventos = [
+            json.loads(linha)
+            for linha in b"".join(response.streaming_content).decode("utf-8").splitlines()
+        ]
+
+        self.assertEqual(
+            [evento["tipo"] for evento in eventos],
+            ["inicio", "trecho", "trecho", "resposta_concluida", "concluido"],
+        )
+        self.assertEqual(
+            "".join(evento.get("conteudo", "") for evento in eventos),
+            "Use autenticação em dois fatores.",
+        )
+        mocked_stream.assert_called_once()
+        self.assertEqual(mocked_stream.call_args.args[0].id, self.llm_a.id)
+        self.assertEqual(RespostaPublica.objects.count(), 1)
+        self.assertEqual(RespostaPublica.objects.get().llm_id, self.llm_a.id)
+        self.assertEqual(AvaliacaoPublicaLLM.objects.count(), 1)
+
+    @mock.patch("responsegenerator.views._judgeai_stream_configured_llm")
+    def test_public_chat_stream_requires_model_selection(self, mocked_stream):
+        response = self.client.post(
+            reverse("usuario_final_chat_stream_api"),
+            data=json.dumps({"pergunta": "Como proteger minha conta?"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(response.streaming)
+        self.assertEqual(PerguntaPublica.objects.count(), 0)
+        mocked_stream.assert_not_called()
 
 
 class AdminPublicMetricTests(TestCase):

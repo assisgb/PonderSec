@@ -2763,6 +2763,18 @@ msgstr "Usuario no encontrado en el sistema."
 msgid "Usuário inválido ou conta não ativada"
 msgstr "Usuario inválido o cuenta no activada"
 
+#: responsegenerator/templates/chat/chatpublico.html
+msgid "Selecione um modelo"
+msgstr "Selecciona un modelo"
+
+#: responsegenerator/templates/chat/chatpublico.html
+msgid "Nenhum modelo disponível"
+msgstr "No hay modelos disponibles"
+
+#: responsegenerator/templates/chat/chatpublico.html
+msgid "Respondendo"
+msgstr "Respondiendo"
+
 #~ msgid "Consulta aberta para perguntas sobre cibersegurança"
 #~ msgstr "Consulta abierta para preguntas sobre ciberseguridad"
 

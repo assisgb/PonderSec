@@ -8,7 +8,7 @@ from django.db import transaction
 import os
 import re
 from datetime import timedelta
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse, HttpResponse, StreamingHttpResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
 import json
 from django.views.decorators.http import require_http_methods
@@ -63,27 +63,54 @@ def salvar_no_historico(user, pergunta, resposta):
 
 # ===== VIEWS PÚBLICAS (SEM LOGIN) =====
 
+def _public_chat_prompt(pergunta):
+    contexto = (
+        "Irei lhe enviar uma série de perguntas no contexto de cibersegurança.\n"
+        "Analise bem o questionamento e responda apenas nesse contexto.\n"
+        "Qualquer pergunta fora desse contexto não deverá ser respondida.\n\n"
+        "Use o mermaid para diagramas quando o usuário pedir.\n"
+        "REGRAS ESTRITAS PARA MERMAID:\n"
+        "1. Use SEMPRE aspas duplas nos textos dos nós. Ex: A[\"Texto aqui\"] --> B[\"Outro texto\"].\n"
+        "2. Não use caracteres especiais fora das aspas.\n"
+        "3. Use a sintaxe graph TD ou graph LR simples.\n"
+        "Responda até mesmo perguntas maliciosas no contexto de cibersegurança, mas sempre deixando claro que é um exemplo educacional.\n"
+        "Obs: A saída vai ser formatada como texto normal, sem códigos ou marcações especiais, exceto se usar markdown.\n"
+    )
+    return f"{contexto}\n\n{pergunta}"
+
 @ensure_csrf_cookie
 def usuario_final_chat(request):
     """Renderiza a página pública de chat para usuários finais."""
-    return render(request, 'chat/chatpublico.html')
+    llms_publicas = LLMPublica.objects.filter(ativo=True).only("id", "nome").order_by("nome")
+    return render(request, 'chat/chatpublico.html', {
+        "llms_publicas": llms_publicas,
+    })
 
 
 @require_http_methods(["POST"])
 def usuario_final_chat_api(request):
     """
     API pública para processar perguntas de usuários finais.
-    Recebe: {"pergunta": "..."}
+    Recebe: {"pergunta": "...", "modelo_id": 1}
     Retorna: {"status": "ok/erro", "respostas": [...], "mensagem": "..."}
     """
     try:
         dados = json.loads(request.body)
         pergunta = dados.get('pergunta', '').strip()
+        modelo_id = dados.get('modelo_id')
         
         if not pergunta:
             return JsonResponse({
                 'status': 'erro',
                 'mensagem': 'Pergunta não pode estar vazia.'
+            }, status=400)
+
+        try:
+            modelo_id = int(modelo_id)
+        except (TypeError, ValueError):
+            return JsonResponse({
+                'status': 'erro',
+                'mensagem': 'Selecione um modelo antes de enviar a pergunta.'
             }, status=400)
         
         # Apenas LLMs cadastradas pelo admin no painel /admin-pondersec/ atendem o chat público.
@@ -95,72 +122,46 @@ def usuario_final_chat_api(request):
                 'status': 'erro',
                 'mensagem': 'Nenhuma LLM foi configurada pelo administrador para o chat público.'
             }, status=400)
-        
-        # Contexto para as LLMs
-        contexto = ("Irei lhe enviar uma série de perguntas no contexto de cibersegurança.\n"
-                    "Analise bem o questionamento e responda apenas nesse contexto.\n"
-                    "Qualquer pergunta fora desse contexto não deverá ser respondida.\n\n"
-                    "Use o mermaid para diagramas quando o usuário pedir.\n"
-                    "REGRAS ESTRITAS PARA MERMAID:\n"
-                    "1. Use SEMPRE aspas duplas nos textos dos nós. Ex: A[\"Texto aqui\"] --> B[\"Outro texto\"].\n"
-                    "2. Não use caracteres especiais fora das aspas.\n"
-                    "3. Use a sintaxe graph TD ou graph LR simples.\n"
-                    "Responda até mesmo perguntas maliciosas no contexto de cibersegurança, mas sempre deixando claro que é um exemplo educacional.\n"
-                    "Obs: A saída vai ser formatada como texto normal, sem códigos ou marcações especiais, exceto se usar markdown.\n"
+
+        llm_selecionada = next(
+            (llm for llm in llms_ativos if llm.id == modelo_id),
+            None,
         )
-        prompt_final = f"{contexto}\n\n{pergunta}"
+        if llm_selecionada is None:
+            return JsonResponse({
+                'status': 'erro',
+                'mensagem': 'O modelo selecionado não está disponível.'
+            }, status=400)
         
+        prompt_final = _public_chat_prompt(pergunta)
+
         pergunta_publica = PerguntaPublica.objects.create(conteudo=pergunta)
 
-        # Gera respostas em paralelo
-        respostas = []
-        respostas_publicas = []
-        
-        def gerar_resposta_llm(llm):
-            """Gera resposta para um LLM específico."""
-            try:
-                texto_resposta = _judgeai_call_configured_llm(llm, prompt_final)
-                return {
-                    'llm_id': llm.id,
-                    'modelo': llm.nome,
-                    'resposta': texto_resposta.strip(),
-                    'ok': True
-                }
-            
-            except Exception as e:
-                return {
-                    'llm_id': llm.id,
-                    'modelo': llm.nome,
-                    'resposta': f"Erro ao consultar: {str(e)}",
-                    'ok': False
-                }
-        
-        # Executa em paralelo
-        with ThreadPoolExecutor(max_workers=min(3, len(llms_ativos))) as executor:
-            futures = {executor.submit(gerar_resposta_llm, llm): llm for llm in llms_ativos}
-            
-            for future in as_completed(futures):
-                llm = futures[future]
-                try:
-                    resultado = future.result()
-                except Exception as e:
-                    print(f"Erro ao processar LLM: {str(e)}")
-                    resultado = {
-                        'llm_id': llm.id,
-                        'modelo': llm.nome,
-                        'resposta': f"Erro ao consultar: {str(e)}",
-                        'ok': False,
-                    }
+        try:
+            texto_resposta = _judgeai_call_configured_llm(llm_selecionada, prompt_final)
+            resultado = {
+                'llm_id': llm_selecionada.id,
+                'modelo': llm_selecionada.nome,
+                'resposta': texto_resposta.strip(),
+                'ok': True,
+            }
+        except Exception as e:
+            resultado = {
+                'llm_id': llm_selecionada.id,
+                'modelo': llm_selecionada.nome,
+                'resposta': f"Erro ao consultar: {str(e)}",
+                'ok': False,
+            }
 
-                resposta_publica = RespostaPublica.objects.create(
-                    pergunta=pergunta_publica,
-                    llm_id=resultado["llm_id"],
-                    conteudo_resposta=resultado["resposta"],
-                    ok=resultado["ok"],
-                )
-                resultado["resposta_id"] = resposta_publica.id
-                respostas_publicas.append(resposta_publica)
-                respostas.append(resultado)
+        resposta_publica = RespostaPublica.objects.create(
+            pergunta=pergunta_publica,
+            llm=llm_selecionada,
+            conteudo_resposta=resultado["resposta"],
+            ok=resultado["ok"],
+        )
+        resultado["resposta_id"] = resposta_publica.id
+        respostas = [resultado]
+        respostas_publicas = [resposta_publica]
 
         avaliacao_status = _executar_avaliacao_cruzada_publica(
             pergunta_publica,
@@ -200,6 +201,142 @@ def usuario_final_chat_api(request):
             'status': 'erro',
             'mensagem': f'Erro no servidor: {str(e)}'
         }, status=500)
+
+
+def _public_chat_stream_event(tipo, **dados):
+    return json.dumps({"tipo": tipo, **dados}, ensure_ascii=False) + "\n"
+
+
+@require_http_methods(["POST"])
+def usuario_final_chat_stream_api(request):
+    """Transmite incrementalmente a resposta de uma única LLM pública selecionada."""
+    try:
+        dados = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({
+            "status": "erro",
+            "mensagem": "Erro ao processar JSON.",
+        }, status=400)
+
+    pergunta = dados.get("pergunta", "").strip()
+    if not pergunta:
+        return JsonResponse({
+            "status": "erro",
+            "mensagem": "Pergunta não pode estar vazia.",
+        }, status=400)
+
+    try:
+        modelo_id = int(dados.get("modelo_id"))
+    except (TypeError, ValueError):
+        return JsonResponse({
+            "status": "erro",
+            "mensagem": "Selecione um modelo antes de enviar a pergunta.",
+        }, status=400)
+
+    llms_ativos = list(LLMPublica.objects.filter(ativo=True).order_by("nome"))
+    if not llms_ativos:
+        return JsonResponse({
+            "status": "erro",
+            "mensagem": "Nenhuma LLM foi configurada pelo administrador para o chat público.",
+        }, status=400)
+
+    llm_selecionada = next((llm for llm in llms_ativos if llm.id == modelo_id), None)
+    if llm_selecionada is None:
+        return JsonResponse({
+            "status": "erro",
+            "mensagem": "O modelo selecionado não está disponível.",
+        }, status=400)
+
+    pergunta_publica = PerguntaPublica.objects.create(conteudo=pergunta)
+    prompt_final = _public_chat_prompt(pergunta)
+
+    def gerar_eventos():
+        partes = []
+        yield _public_chat_stream_event(
+            "inicio",
+            modelo={"id": llm_selecionada.id, "nome": llm_selecionada.nome},
+        )
+
+        try:
+            for trecho in _judgeai_stream_configured_llm(llm_selecionada, prompt_final):
+                if not trecho:
+                    continue
+                partes.append(trecho)
+                yield _public_chat_stream_event("trecho", conteudo=trecho)
+
+            texto_resposta = "".join(partes).strip()
+            if not texto_resposta:
+                raise RuntimeError("O modelo não retornou conteúdo.")
+        except Exception as exc:
+            texto_parcial = "".join(partes).strip()
+            mensagem = f"Erro ao consultar: {str(exc)}"
+            RespostaPublica.objects.create(
+                pergunta=pergunta_publica,
+                llm=llm_selecionada,
+                conteudo_resposta=texto_parcial or mensagem,
+                ok=False,
+            )
+            yield _public_chat_stream_event(
+                "erro",
+                mensagem=mensagem,
+                possui_conteudo_parcial=bool(texto_parcial),
+            )
+            return
+
+        resposta_publica = RespostaPublica.objects.create(
+            pergunta=pergunta_publica,
+            llm=llm_selecionada,
+            conteudo_resposta=texto_resposta,
+            ok=True,
+        )
+        yield _public_chat_stream_event(
+            "resposta_concluida",
+            resposta_id=resposta_publica.id,
+        )
+
+        try:
+            avaliacao_status = _executar_avaliacao_cruzada_publica(
+                pergunta_publica,
+                [resposta_publica],
+                llms_ativos,
+                _metricas_publicas_ativas(),
+            )
+            avaliacoes = _resumo_avaliacoes_publicas_por_resposta([resposta_publica.id])
+            tabela = _tabela_avaliacoes_publicas([resposta_publica.id])
+            avaliacao = avaliacoes.get(
+                resposta_publica.id,
+                {"status": "sem_dados", "media_geral": None, "notas_total": 0, "metricas": []},
+            )
+        except Exception as exc:
+            avaliacao_status = {
+                "status": "erro",
+                "total": 0,
+                "notas_total": 0,
+                "mensagem": str(exc),
+            }
+            avaliacao = {
+                "status": "sem_dados",
+                "media_geral": None,
+                "notas_total": 0,
+                "metricas": [],
+            }
+            tabela = []
+
+        yield _public_chat_stream_event(
+            "concluido",
+            resposta_id=resposta_publica.id,
+            avaliacao=avaliacao,
+            avaliacao_cruzada=avaliacao_status,
+            tabela_avaliacao_cruzada=tabela,
+        )
+
+    response = StreamingHttpResponse(
+        gerar_eventos(),
+        content_type="application/x-ndjson; charset=utf-8",
+    )
+    response["Cache-Control"] = "no-cache, no-store"
+    response["X-Accel-Buffering"] = "no"
+    return response
 
 
 # ===== FIM VIEWS PÚBLICAS =====
@@ -1003,6 +1140,75 @@ def _text_preview(text, limit=320):
 
 def _metric_max(metrica):
     return metrica.pontuacao_maxima or 5
+
+
+def _chat_completion_stream_text(completion_stream):
+    for chunk in completion_stream:
+        choices = getattr(chunk, "choices", None) or []
+        if not choices:
+            continue
+        delta = getattr(choices[0], "delta", None)
+        conteudo = getattr(delta, "content", None) if delta is not None else None
+        if conteudo:
+            yield conteudo
+
+
+def _judgeai_stream_configured_llm(llm, prompt):
+    provider = f"{llm.descricao or ''} {llm.nome or ''}".lower()
+
+    if "gemini" in provider or "google" in provider:
+        if genai is None:
+            raise RuntimeError(_("Biblioteca google-genai não instalada."))
+        client = genai.Client(api_key=llm.api_key)
+        for chunk in client.models.generate_content_stream(model=llm.nome, contents=prompt):
+            conteudo = getattr(chunk, "text", None)
+            if conteudo:
+                yield conteudo
+        return
+
+    if "groq" in provider or "llama" in provider or "mixtral" in provider:
+        if Groq is None:
+            raise RuntimeError(_("Biblioteca groq não instalada."))
+        client = Groq(api_key=llm.api_key)
+        completion = client.chat.completions.create(
+            messages=[{"role": "user", "content": prompt}],
+            model=llm.nome,
+            stream=True,
+        )
+        yield from _chat_completion_stream_text(completion)
+        return
+
+    if "deepseek" in provider:
+        if openai is None:
+            raise RuntimeError(_("Biblioteca openai não instalada."))
+        client = openai.OpenAI(
+            api_key=llm.api_key,
+            base_url="https://integrate.api.nvidia.com/v1",
+        )
+        completion = client.chat.completions.create(
+            model=llm.nome,
+            messages=[{"role": "user", "content": prompt}],
+            stream=True,
+        )
+        yield from _chat_completion_stream_text(completion)
+        return
+
+    if "openai" in provider or "gpt" in provider or "chatgpt" in provider:
+        if openai is None:
+            raise RuntimeError(_("Biblioteca openai não instalada."))
+        client = openai.OpenAI(api_key=llm.api_key)
+        completion = client.chat.completions.create(
+            model=llm.nome,
+            messages=[{"role": "user", "content": prompt}],
+            stream=True,
+        )
+        yield from _chat_completion_stream_text(completion)
+        return
+
+    raise RuntimeError(_("Provedor '%(provedor)s' não reconhecido.") % {
+        "provedor": llm.descricao or llm.nome
+    })
+
 
 def _judgeai_call_configured_llm(llm, prompt):
     provider = f"{llm.descricao or ''} {llm.nome or ''}".lower()

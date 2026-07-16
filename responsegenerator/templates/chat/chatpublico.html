@@ -30,6 +30,7 @@
 
 body {
   height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   background: radial-gradient(circle at top, #06111a 0, #02060b 46%, #000 100%);
@@ -125,7 +126,8 @@ button { transition: transform 0.2s ease, box-shadow 0.2s ease; cursor: pointer;
 .chat-history {
   flex: 1; overflow-y: auto; padding: 30px 20px;
   display: flex; flex-direction: column; align-items: center; gap: 24px;
-  scroll-behavior: smooth;
+  scroll-behavior: smooth; overscroll-behavior: contain; scroll-padding-top: 16px;
+  overflow-anchor: none;
 }
 .chat-history::-webkit-scrollbar { width: 6px; }
 .chat-history::-webkit-scrollbar-thumb { background: rgba(0, 220, 130, 0.2); border-radius: 10px; }
@@ -137,6 +139,11 @@ button { transition: transform 0.2s ease, box-shadow 0.2s ease; cursor: pointer;
 .hero p { color: var(--muted); font-size: 15px; line-height: 1.6; }
 
 /* BOLHAS DE MENSAGEM */
+.chat-turn {
+  width: 100%; max-width: 860px; align-self: center;
+  display: flex; flex-direction: column; gap: 24px;
+  scroll-margin-top: 16px;
+}
 .message-wrapper { width: 100%; display: flex; flex-direction: column; }
 .message-wrapper.user-group { max-width: 860px; align-self: center; }
 .message-wrapper.ai-group { max-width: 1400px; align-self: center; }
@@ -195,6 +202,7 @@ button { transition: transform 0.2s ease, box-shadow 0.2s ease; cursor: pointer;
   margin: 1em 0; border: 1px solid rgba(255,255,255,0.08);
 }
 .markdown-body pre code { background: transparent; padding: 0; color: #e2e8f0; }
+.markdown-body .stream-error { margin-top: 14px; color: #fca5a5; }
 
 .cross-eval-panel {
   margin-top: 16px;
@@ -263,6 +271,25 @@ button { transition: transform 0.2s ease, box-shadow 0.2s ease; cursor: pointer;
   background: linear-gradient(to top, var(--bg) 60%, transparent);
 }
 
+.model-picker {
+  width: 100%; max-width: 860px; display: flex; align-items: center; gap: 12px;
+  margin-bottom: 10px; padding: 0 4px;
+}
+.model-picker label {
+  color: var(--muted); font-family: var(--mono); font-size: 11px;
+  font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  white-space: nowrap;
+}
+.model-select {
+  width: min(100%, 360px); min-height: 40px; margin-left: auto;
+  border: 1px solid rgba(0, 220, 130, 0.25); border-radius: 12px;
+  background: rgba(6, 12, 20, 0.95); color: var(--text-strong);
+  padding: 8px 36px 8px 12px; font-size: 14px; cursor: pointer;
+}
+.model-select:focus { border-color: var(--accent-bright); }
+.model-select:disabled { cursor: not-allowed; opacity: 0.58; }
+.model-select option { background: #06101a; color: var(--text-strong); }
+
 .input-box {
   width: 100%; max-width: 860px; position: relative;
   background: rgba(6, 12, 20, 0.95); border: 1px solid rgba(0, 220, 130, 0.25);
@@ -290,11 +317,21 @@ textarea::placeholder { color: rgba(122, 150, 140, 0.6); }
 
 .footer-hint { margin-top: 12px; color: var(--muted); font-family: var(--mono); font-size: 11px; text-align: center; }
 
+[data-theme="light"] .model-select {
+  background: #ffffff; border-color: rgba(5, 150, 105, 0.25); color: #111827;
+}
+[data-theme="light"] .model-select option { background: #ffffff; color: #111827; }
+
 @media (max-width: 720px) {
   .header { flex-direction: column; align-items: flex-start; padding: 16px; gap: 20px; }
   .lang-form { align-self: flex-end; margin-top: -55px; }
+  .chat-history { padding: 20px 14px; gap: 20px; }
+  .chat-turn { gap: 18px; }
   .message-user { max-width: 95%; }
-  .input-area-wrapper { padding: 10px 14px 20px; }
+  .message-ai { padding: 18px 16px; }
+  .model-picker { align-items: stretch; flex-direction: column; gap: 6px; padding: 0; }
+  .model-select { width: 100%; max-width: none; margin-left: 0; font-size: 16px; }
+  .input-area-wrapper { padding: 10px 14px max(20px, env(safe-area-inset-bottom)); }
 }
 </style>
 </head>
@@ -361,6 +398,19 @@ textarea::placeholder { color: rgba(122, 150, 140, 0.6); }
   </div>
 
   <div class="input-area-wrapper">
+    <div class="model-picker">
+      <label for="modelSelect">{% trans "Modelo" %}</label>
+      <select id="modelSelect" class="model-select" {% if not llms_publicas %}disabled{% endif %}>
+        {% if llms_publicas %}
+          <option value="" selected>{% trans "Selecione um modelo" %}</option>
+          {% for llm in llms_publicas %}
+            <option value="{{ llm.id }}">{{ llm.nome }}</option>
+          {% endfor %}
+        {% else %}
+          <option value="" selected>{% trans "Nenhum modelo disponível" %}</option>
+        {% endif %}
+      </select>
+    </div>
     <div class="input-box">
       <textarea id="questionInput" rows="1" placeholder="{% trans "Digite sua pergunta... Ex.: Como reduzir riscos de phishing?" %}"></textarea>
       <button class="btn-send" id="sendBtn" type="button" onclick="sendPublicQuestion()" disabled aria-label="{% trans 'Enviar pergunta' %}">
@@ -458,12 +508,20 @@ function renderCrossEvaluationTable(rows) {
 // Auto-Ajuste da Caixa de Texto
 const textarea = document.getElementById('questionInput');
 const sendBtn = document.getElementById('sendBtn');
+const modelSelect = document.getElementById('modelSelect');
+let isSending = false;
+
+function updateSendState() {
+  sendBtn.disabled = isSending || textarea.value.trim() === '' || !modelSelect.value;
+}
 
 textarea.addEventListener('input', function() {
   this.style.height = '44px';
   this.style.height = Math.max(44, this.scrollHeight) + 'px';
-  sendBtn.disabled = this.value.trim() === '';
+  updateSendState();
 });
+
+modelSelect.addEventListener('change', updateSendState);
 
 textarea.addEventListener("keydown", function(event) {
   if (event.key === 'Enter' && !event.shiftKey) {
@@ -476,21 +534,52 @@ const chatHistory = document.getElementById("chatHistory");
 const heroSection = document.getElementById("heroSection");
 let isFirstMessage = true;
 
-function scrollToBottom() {
-  chatHistory.scrollTo({ top: chatHistory.scrollHeight, behavior: 'smooth' });
+function scrollToTurnStart(turn) {
+  window.requestAnimationFrame(() => {
+    const historyRect = chatHistory.getBoundingClientRect();
+    const turnRect = turn.getBoundingClientRect();
+    const targetTop = chatHistory.scrollTop + turnRect.top - historyRect.top - 12;
+    chatHistory.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' });
+  });
+}
+
+function ensureResponseStartVisible(turn, responseElement) {
+  window.requestAnimationFrame(() => {
+    const historyRect = chatHistory.getBoundingClientRect();
+    const responseRect = responseElement.getBoundingClientRect();
+    const visibleLimit = historyRect.bottom - 72;
+
+    if (responseRect.top >= historyRect.top + 12 && responseRect.top <= visibleLimit) return;
+
+    const questionElement = turn.querySelector('.user-group');
+    const contextSpace = Math.min(
+      (questionElement?.offsetHeight || 0) + 18,
+      chatHistory.clientHeight * 0.35
+    );
+    const targetTop = chatHistory.scrollTop
+      + responseRect.top
+      - historyRect.top
+      - contextSpace;
+
+    chatHistory.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' });
+  });
 }
 
 function addUserMessage(text) {
   if (isFirstMessage) { heroSection.style.display = "none"; isFirstMessage = false; }
-  
+
+  const turn = document.createElement('section');
+  turn.className = 'chat-turn';
+
   const div = document.createElement('div');
   div.className = 'message-wrapper user-group';
   div.innerHTML = `<div class="message-user">${escapeHtml(text).replace(/\n/g, '<br>')}</div>`;
-  chatHistory.appendChild(div);
-  scrollToBottom();
+  turn.appendChild(div);
+  chatHistory.appendChild(turn);
+  return turn;
 }
 
-function addLoadingBubble() {
+function addLoadingBubble(turn, modelName) {
   const id = 'load-' + Date.now();
   const div = document.createElement('div');
   div.className = 'message-wrapper ai-group';
@@ -504,14 +593,13 @@ function addLoadingBubble() {
             <div class="ai-icon">
                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
             </div>
-            <span class="ai-name">PonderSEC</span>
+            <span class="ai-name">${escapeHtml(modelName || "PonderSEC")}</span>
             <div class="typing-indicator" style="margin-left: auto;"><span></span><span></span><span></span></div>
           </div>
         </div>
     </div>
   `;
-  chatHistory.appendChild(div);
-  scrollToBottom();
+  turn.appendChild(div);
   return id;
 }
 
@@ -520,7 +608,7 @@ function removeBubble(id) {
   if(el) el.remove();
 }
 
-function addAIBubblesGroup(respostas, tabelaAvaliacaoCruzada = []) {
+function addAIBubblesGroup(respostas, tabelaAvaliacaoCruzada = [], turn = null) {
   const div = document.createElement('div');
   div.className = 'message-wrapper ai-group';
   
@@ -567,42 +655,175 @@ function addAIBubblesGroup(respostas, tabelaAvaliacaoCruzada = []) {
   html += '</div>';
   html += renderCrossEvaluationTable(tabelaAvaliacaoCruzada);
   div.innerHTML = html;
-  chatHistory.appendChild(div);
+  (turn || chatHistory).appendChild(div);
+  return div;
+}
+
+function addStreamingResponse(turn, modelName) {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'message-wrapper ai-group';
+  wrapper.innerHTML = `
+    <div class="ai-responses-grid single-response">
+      <div class="message-ai">
+        <div class="message-ai-header">
+          <div class="ai-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2 2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><path d="M12 8v3"/><path d="M6.5 11a5.5 5.5 0 0 0 11 0"/><rect x="3" y="11" width="4" height="7" rx="1"/><rect x="17" y="11" width="4" height="7" rx="1"/><path d="M7 18h10"/><path d="M9 21h6"/></svg>
+          </div>
+          <span class="ai-name">${escapeHtml(modelName)}</span>
+          <span class="ai-status">{% trans "Respondendo" %}</span>
+        </div>
+        <div class="markdown-body"></div>
+      </div>
+    </div>
+  `;
+  turn.appendChild(wrapper);
+
+  return {
+    wrapper,
+    body: wrapper.querySelector('.markdown-body'),
+    status: wrapper.querySelector('.ai-status'),
+    markdown: '',
+  };
+}
+
+function appendStreamChunk(streamState, content) {
+  streamState.markdown += content || '';
+  streamState.body.innerHTML = marked.parse(streamState.markdown);
+}
+
+function markStreamComplete(streamState) {
+  streamState.status.textContent = '{% trans "Concluído" %}';
+}
+
+function markStreamError(streamState, message) {
+  streamState.status.textContent = '{% trans "Erro" %}';
+  streamState.status.classList.add('error');
+  if (message) {
+    streamState.body.insertAdjacentHTML(
+      'beforeend',
+      `<p class="stream-error">${escapeHtml(message)}</p>`
+    );
+  }
+}
+
+function appendCrossEvaluation(wrapper, rows) {
+  const table = renderCrossEvaluationTable(rows);
+  if (table) wrapper.insertAdjacentHTML('beforeend', table);
+}
+
+async function consumeNDJSON(response, onEvent) {
+  const processLines = (text, flush = false) => {
+    const lines = text.split('\n');
+    const remainder = flush ? '' : lines.pop();
+    lines.forEach(line => {
+      if (line.trim()) onEvent(JSON.parse(line));
+    });
+    if (flush && remainder?.trim()) onEvent(JSON.parse(remainder));
+    return remainder || '';
+  };
+
+  if (!response.body || !response.body.getReader) {
+    processLines(await response.text(), true);
+    return;
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  while (true) {
+    const { value, done } = await reader.read();
+    buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
+    buffer = processLines(buffer, done);
+    if (done) break;
+  }
 }
 
 async function sendPublicQuestion() {
   const pergunta = textarea.value.trim();
-  if (!pergunta) return;
+  const modeloId = modelSelect.value;
+  if (!pergunta || !modeloId || isSending) return;
+
+  const modelName = modelSelect.options[modelSelect.selectedIndex]?.text || "PonderSEC";
+  isSending = true;
+  modelSelect.disabled = true;
 
   textarea.value = '';
   textarea.style.height = '44px';
-  sendBtn.disabled = true;
+  updateSendState();
 
-  addUserMessage(pergunta);
-  const loadingId = addLoadingBubble();
+  const turn = addUserMessage(pergunta);
+  const loadingId = addLoadingBubble(turn, modelName);
+  scrollToTurnStart(turn);
+  let streamState = null;
 
   try {
-    const response = await fetch("{% url 'usuario_final_chat_api' %}", {
+    const response = await fetch("{% url 'usuario_final_chat_stream_api' %}", {
       method: "POST",
       headers: { "Content-Type": "application/json", "X-CSRFToken": getCSRFToken() },
-      body: JSON.stringify({ pergunta })
+      body: JSON.stringify({ pergunta, modelo_id: Number(modeloId) })
     });
 
-    const data = await response.json();
-    removeBubble(loadingId);
-
-    if (!response.ok || data.status === "erro") {
+    if (!response.ok) {
+      const data = await response.json();
       throw new Error(data.mensagem || '{% trans "Erro ao consultar os modelos." %}');
     }
 
-    const respostas = data.respostas || data.responses || [];
-    addAIBubblesGroup(respostas, data.tabela_avaliacao_cruzada || []);
-    scrollToBottom();
+    await consumeNDJSON(response, event => {
+      if (event.tipo === 'trecho') {
+        if (!streamState) {
+          removeBubble(loadingId);
+          streamState = addStreamingResponse(turn, modelName);
+          ensureResponseStartVisible(turn, streamState.wrapper);
+        }
+        appendStreamChunk(streamState, event.conteudo);
+        return;
+      }
+
+      if (event.tipo === 'resposta_concluida') {
+        if (streamState) markStreamComplete(streamState);
+        return;
+      }
+
+      if (event.tipo === 'concluido') {
+        if (streamState) {
+          markStreamComplete(streamState);
+          appendCrossEvaluation(streamState.wrapper, event.tabela_avaliacao_cruzada || []);
+        }
+        return;
+      }
+
+      if (event.tipo === 'erro') {
+        removeBubble(loadingId);
+        if (streamState) {
+          markStreamError(streamState, event.mensagem);
+        } else {
+          const responseElement = addAIBubblesGroup(
+            [{ modelo: modelName, resposta: event.mensagem, ok: false }],
+            [],
+            turn
+          );
+          ensureResponseStartVisible(turn, responseElement);
+        }
+      }
+    });
 
   } catch (error) {
     removeBubble(loadingId);
-    addAIBubblesGroup([{ modelo: "Sistema", resposta: `{% trans "Erro:" %} ${error.message}`, ok: false }]);
-    scrollToBottom();
+    if (streamState) {
+      markStreamError(streamState, error.message);
+    } else {
+      const responseElement = addAIBubblesGroup(
+        [{ modelo: "Sistema", resposta: `{% trans "Erro:" %} ${error.message}`, ok: false }],
+        [],
+        turn
+      );
+      ensureResponseStartVisible(turn, responseElement);
+    }
+  } finally {
+    isSending = false;
+    modelSelect.disabled = modelSelect.options.length <= 1;
+    updateSendState();
   }
 }
 </script>
