@@ -235,6 +235,8 @@ body::before {
 }
 .field-input:focus, .field-select:focus { border-color: rgba(0, 220, 130, 0.44); background: rgba(0, 0, 0, 0.5); }
 .field-input::placeholder { color: rgba(122, 150, 140, 0.68); }
+.field-hint { margin-top: 8px; color: var(--muted); font-size: 11px; line-height: 1.45; }
+.field-hint.has-key { color: #7df6c2; }
 .field-select {
   cursor: pointer; appearance: none;
   background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
@@ -313,15 +315,15 @@ body::before {
                 </a>
             </header>
 
-            {% if messages %}
             <div class="toast-stack" id="toast-container">
+                {% if messages %}
                 {% for message in messages %}
                 <div class="toast-message {% if message.tags == 'error' %}error{% endif %}">
                     {{ message }}
                 </div>
                 {% endfor %}
+                {% endif %}
             </div>
-            {% endif %}
 
             <main>
                 <section class="main-card">
@@ -339,7 +341,7 @@ body::before {
                     <div class="metrics-list" id="llmList">
                         {% translate "Provedor desconhecido" as unknown_provider %}
                         {% for llm in llms_cadastradas %}
-                        <div class="metric-card" id="llm-{{ llm.id }}">
+                        <div class="metric-card" id="llm-{{ llm.id }}" data-modelo="{{ llm.nome|escape }}" data-provedor="{{ llm.descricao|default:''|escape }}" data-key-hint="{{ llm.api_key_hint|escape }}">
                             <div class="metric-info">
                                 <div class="metric-icon-box">
                                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -352,12 +354,12 @@ body::before {
                                 <div class="metric-details">
                                     <div class="metric-name" id="llm-nome-{{ llm.id }}">{{ llm.nome }}</div>
                                     <div class="metric-meta">
-                                        <span class="badge-tipo">{{ llm.descricao|default:unknown_provider }}</span>
+                                        <span class="badge-tipo" id="llm-provedor-{{ llm.id }}">{{ llm.descricao|default:unknown_provider }}</span>
                                     </div>
                                 </div>
                             </div>
                             <div class="metric-actions">
-                                <button class="btn-icon btn-edit" title="{% translate 'Editar' %}" onclick="editarLLM('{{ llm.id }}', '{{ llm.nome|escapejs }}', '{{ llm.descricao|default:''|escapejs }}')">
+                                <button class="btn-icon btn-edit" title="{% translate 'Editar' %}" onclick="editarLLM('{{ llm.id }}')">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                                         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
@@ -437,6 +439,7 @@ body::before {
                             </svg>
                         </button>
                     </div>
+                    <p class="field-hint" id="apiKeyStatus"></p>
                 </div>
 
                 <div class="modal-footer">
@@ -538,12 +541,21 @@ body::before {
             apiKeyInput.value = '';
             apiKeyInput.required = true;
             apiKeyInput.placeholder = '{% translate "Cole sua chave aqui..." %}';
+            const apiKeyStatus = document.getElementById('apiKeyStatus');
+            apiKeyStatus.textContent = '{% translate "A chave será armazenada ao salvar o modelo." %}';
+            apiKeyStatus.classList.remove('has-key');
             atualizarModelos();
 
             modalOverlay.classList.add('active');
         }
 
-        function editarLLM(id, nome, provedorAtual) {
+        function editarLLM(id) {
+            const card = document.getElementById(`llm-${id}`);
+            if (!card) return;
+            const nome = card.dataset.modelo || '';
+            const provedorAtual = card.dataset.provedor || '';
+            const keyHint = card.dataset.keyHint || '';
+
             modoEditar = true;
             document.getElementById('modalTitulo').textContent = '{% translate "Editar LLM" %}';
             document.getElementById('btnSalvarLabel').textContent = '{% translate "Salvar Alterações" %}';
@@ -553,6 +565,11 @@ body::before {
             apiKeyInput.value = '';
             apiKeyInput.required = false;
             apiKeyInput.placeholder = '{% translate "Deixe em branco para manter a chave atual" %}';
+            const apiKeyStatus = document.getElementById('apiKeyStatus');
+            apiKeyStatus.textContent = keyHint
+                ? `{% translate "Chave atual salva:" %} ${keyHint}. {% translate "Cole uma nova chave somente para substituí-la." %}`
+                : '{% translate "Nenhuma chave salva. Cole uma chave para configurar este modelo." %}';
+            apiKeyStatus.classList.toggle('has-key', Boolean(keyHint));
             
             const provedor = provedorAtual || descobrirProvedorPorModelo(nome);
             document.getElementById("fProvider").value = provedor;
@@ -570,37 +587,71 @@ body::before {
             return document.querySelector('[name=csrfmiddlewaretoken]').value;
         }
 
-        document.getElementById('formLLM').addEventListener('submit', function(e) {
+        function mostrarToast(message, isError = false) {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+            const toast = document.createElement('div');
+            toast.className = `toast-message${isError ? ' error' : ''}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(40px)';
+                setTimeout(() => toast.remove(), 450);
+            }, 6000);
+        }
+
+        document.getElementById('formLLM').addEventListener('submit', async function(e) {
             if (modoEditar) {
-                e.preventDefault(); 
-                
+                e.preventDefault();
+
                 const id = document.getElementById("fId").value;
                 const nome = document.getElementById("fModel").value;
-            const api_key = document.getElementById("fApiKey").value;
-            const descricao = document.getElementById("fProvider").value;
-                
-                fetch(`/api/llm/${id}/edit/`, {
-                    method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRFToken": getCSRFToken()
-                    },
-                    body: JSON.stringify({ nome, descricao, api_key })
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.status === "success") {
-                        const elemento = document.getElementById(`llm-nome-${id}`);
-                        if (elemento) elemento.innerText = nome;
-                        fecharModal();
-                    } else {
-                        alert("{% translate 'Erro ao salvar:' %} " + data.message);
+                const api_key = document.getElementById("fApiKey").value.trim();
+                const descricao = document.getElementById("fProvider").value;
+                const saveButton = document.getElementById('btnSalvar');
+                saveButton.disabled = true;
+
+                try {
+                    const response = await fetch(`/api/llm/${id}/edit/`, {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-CSRFToken": getCSRFToken()
+                        },
+                        body: JSON.stringify({ nome, descricao, api_key })
+                    });
+                    const contentType = response.headers.get('content-type') || '';
+                    if (!contentType.includes('application/json')) {
+                        throw new Error('{% translate "A sessão expirou ou o servidor retornou uma resposta inválida." %}');
                     }
-                })
-                .catch(error => {
+                    const data = await response.json();
+                    if (!response.ok || data.status !== "success") {
+                        throw new Error(data.message || '{% translate "Não foi possível salvar a configuração." %}');
+                    }
+
+                    const card = document.getElementById(`llm-${id}`);
+                    const nameElement = document.getElementById(`llm-nome-${id}`);
+                    const providerElement = document.getElementById(`llm-provedor-${id}`);
+                    if (nameElement) nameElement.textContent = data.nome;
+                    if (providerElement) providerElement.textContent = data.descricao;
+                    if (card) {
+                        card.dataset.modelo = data.nome;
+                        card.dataset.provedor = data.descricao;
+                        card.dataset.keyHint = data.api_key_hint || '';
+                    }
+
+                    const keyMessage = data.key_updated
+                        ? `{% translate "A nova chave foi salva" %} (${data.api_key_hint}).`
+                        : `{% translate "A chave existente foi mantida" %} (${data.api_key_hint}).`;
+                    mostrarToast(`${data.message} ${keyMessage}`);
+                    fecharModal();
+                } catch (error) {
                     console.error("{% translate 'Erro na requisição:' %}", error);
-                    alert("{% translate 'Erro ao comunicar com o servidor.' %}");
-                });
+                    mostrarToast(error.message || '{% translate "Erro ao comunicar com o servidor." %}', true);
+                } finally {
+                    saveButton.disabled = false;
+                }
             }
         });
 

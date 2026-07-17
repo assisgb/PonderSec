@@ -299,6 +299,103 @@ class ProviderClientTests(TestCase):
         self.assertIn("cota", str(raised.exception).lower())
 
 
+class LLMConfigurationTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="llm-owner", password="senha-segura")
+        self.client.force_login(self.user)
+        self.llm = LLM.objects.create(
+            usuario=self.user,
+            nome="gemini-2.5-flash",
+            descricao="Gemini",
+            api_key="old-secret-key-1234",
+        )
+
+    def test_edit_endpoint_persists_replaced_api_key(self):
+        new_key = "new-secret-groq-key-9876"
+
+        with self.assertLogs("responsegenerator.views", level="INFO") as captured:
+            response = self.client.put(
+                reverse("edit_llm_api", args=[self.llm.id]),
+                data=json.dumps({
+                    "nome": "llama-3.3-70b-versatile",
+                    "descricao": "Groq",
+                    "api_key": new_key,
+                }),
+                content_type="application/json",
+            )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["status"], "success")
+        self.assertTrue(payload["key_updated"])
+        self.assertEqual(payload["api_key_hint"], "••••9876")
+        self.assertNotIn(new_key, response.content.decode())
+        self.llm.refresh_from_db()
+        self.assertEqual(self.llm.api_key, new_key)
+        self.assertEqual(self.llm.nome, "llama-3.3-70b-versatile")
+        self.assertEqual(self.llm.descricao, "Groq")
+        self.assertIn("key_updated=True", " ".join(captured.output))
+
+    def test_blank_api_key_preserves_current_persisted_key(self):
+        response = self.client.put(
+            reverse("edit_llm_api", args=[self.llm.id]),
+            data=json.dumps({
+                "nome": "gemini-2.5-pro",
+                "descricao": "Gemini",
+                "api_key": "",
+            }),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.json()["key_updated"])
+        self.llm.refresh_from_db()
+        self.assertEqual(self.llm.api_key, "old-secret-key-1234")
+        self.assertEqual(self.llm.nome, "gemini-2.5-pro")
+
+    def test_setup_page_exposes_only_masked_key_hint(self):
+        response = self.client.get(reverse("setup_llm"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "••••1234")
+        self.assertNotContains(response, "old-secret-key-1234")
+
+    def test_edit_cannot_modify_another_users_llm(self):
+        other = User.objects.create_user(username="other-owner", password="senha-segura")
+        foreign_llm = LLM.objects.create(
+            usuario=other,
+            nome="modelo",
+            descricao="Groq",
+            api_key="foreign-key",
+        )
+
+        response = self.client.put(
+            reverse("edit_llm_api", args=[foreign_llm.id]),
+            data=json.dumps({
+                "nome": "alterado",
+                "descricao": "Gemini",
+                "api_key": "stolen-replacement",
+            }),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 404)
+        foreign_llm.refresh_from_db()
+        self.assertEqual(foreign_llm.api_key, "foreign-key")
+
+    def test_new_configuration_persists_api_key(self):
+        response = self.client.post(reverse("setup_llm"), data={
+            "provider": "Groq",
+            "model": "llama-3.1-8b-instant",
+            "apiKey": "new-configuration-key",
+        })
+
+        self.assertRedirects(response, reverse("setup_llm"))
+        created = LLM.objects.get(nome="llama-3.1-8b-instant")
+        self.assertEqual(created.api_key, "new-configuration-key")
+        self.assertEqual(created.usuario, self.user)
+
+
 class AdminPublicMetricTests(TestCase):
     def setUp(self):
         self.admin = AdminPonderSec(nome="Admin", email="admin@example.com", ativo=True)

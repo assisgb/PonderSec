@@ -5,6 +5,7 @@ from django.utils.translation import gettext as _
 from django.contrib import messages as django_messages
 from django.contrib.auth.decorators import login_required
 from django.db import close_old_connections, transaction
+import hashlib
 import logging
 import re
 from django.http import JsonResponse, HttpResponse, StreamingHttpResponse
@@ -46,6 +47,21 @@ from responsegenerator.llm_client import (
 
 
 logger = logging.getLogger(__name__)
+
+
+def _api_key_hint(api_key):
+    """Identifica uma chave persistida sem expor o segredo completo."""
+    clean_key = (api_key or "").strip()
+    if not clean_key:
+        return ""
+    return f"••••{clean_key[-4:]}"
+
+
+def _api_key_fingerprint(api_key):
+    clean_key = (api_key or "").strip()
+    if not clean_key:
+        return "missing"
+    return hashlib.sha256(clean_key.encode("utf-8")).hexdigest()[:10]
 
 
 def _call_llm_in_worker(llm, prompt):
@@ -998,18 +1014,38 @@ def setup_llm(request):
             django_messages.error(request, _("Provedor, modelo e chave da API são obrigatórios."))
             return redirect('setup_llm')
 
-        LLM.objects.create(
-            usuario = request.user,
-            nome = nome,
-            descricao = provedor,
-            api_key = api_key
+        if len(api_key) > LLM._meta.get_field("api_key").max_length:
+            django_messages.error(request, _("A chave da API excede o tamanho permitido."))
+            return redirect('setup_llm')
+
+        try:
+            llm = LLM.objects.create(
+                usuario=request.user,
+                nome=nome,
+                descricao=provedor,
+                api_key=api_key,
+            )
+        except Exception:
+            logger.exception("Falha ao salvar nova configuração de LLM usuario_id=%s", request.user.id)
+            django_messages.error(request, _("Não foi possível salvar a configuração da LLM."))
+            return redirect('setup_llm')
+
+        logger.info(
+            "Configuração LLM criada usuario_id=%s llm_id=%s model=%s provider=%s key_fp=%s",
+            request.user.id,
+            llm.id,
+            llm.nome,
+            llm.descricao,
+            _api_key_fingerprint(llm.api_key),
         )
         django_messages.success(request, _("IA '%(nome)s' configurada com sucesso!") % {
             "nome": nome,
         })
         return redirect('setup_llm')
 
-    llms_cadastradas = LLM.objects.filter(usuario=request.user)
+    llms_cadastradas = list(LLM.objects.filter(usuario=request.user))
+    for llm in llms_cadastradas:
+        llm.api_key_hint = _api_key_hint(llm.api_key)
     return render(request, 'setup/setup-llm.html',{"llms_cadastradas": llms_cadastradas})
 
 @login_required
@@ -1057,39 +1093,81 @@ def deletar_llm(request, id):
     return JsonResponse({"status": "error", "message": _("Erro ao deletar LLM.")})
 
 @login_required
+@require_http_methods(["PUT"])
 def edit_llm_api(request, id):
-    if request.method == "PUT":
-        try:
-            data = json.loads(request.body or "{}")
-        except json.JSONDecodeError:
-            return JsonResponse({"status": "error", "message": _("JSON inválido.")}, status=400)
-        nome = (data.get("nome") or "").strip()
-        provedor = (data.get("descricao") or "").strip()
-        api_key = (data.get("api_key") or "").strip()
+    try:
+        data = json.loads(request.body or "{}")
+    except json.JSONDecodeError:
+        return JsonResponse({"status": "error", "message": _("JSON inválido.")}, status=400)
 
-        # BLINDADO: A versão anterior .get().filter() causava quebra e não protegia.
-        llm = get_object_or_404(LLM, id=id, usuario=request.user)
-        if not nome or not provedor:
-            return JsonResponse({
-                "status": "error",
-                "message": _("Provedor e modelo são obrigatórios."),
-            }, status=400)
-        llm.nome = nome
-        llm.descricao = provedor
-        fields = ["nome", "descricao"]
-        if api_key:
-            llm.api_key = api_key
-            fields.append("api_key")
-        llm.save(update_fields=fields)
-        logger.info(
-            "Configuração LLM atualizada usuario_id=%s llm_id=%s model=%s key_updated=%s",
+    nome = (data.get("nome") or "").strip()
+    provedor = (data.get("descricao") or "").strip()
+    api_key = (data.get("api_key") or "").strip()
+
+    if not nome or not provedor:
+        return JsonResponse({
+            "status": "error",
+            "message": _("Provedor e modelo são obrigatórios."),
+        }, status=400)
+
+    if len(api_key) > LLM._meta.get_field("api_key").max_length:
+        return JsonResponse({
+            "status": "error",
+            "message": _("A chave da API excede o tamanho permitido."),
+        }, status=400)
+
+    llm = LLM.objects.filter(id=id, usuario=request.user).first()
+    if not llm:
+        return JsonResponse({
+            "status": "error",
+            "message": _("Configuração de LLM não encontrada."),
+        }, status=404)
+
+    previous_fingerprint = _api_key_fingerprint(llm.api_key)
+    try:
+        with transaction.atomic():
+            llm.nome = nome
+            llm.descricao = provedor
+            fields = ["nome", "descricao"]
+            if api_key:
+                llm.api_key = api_key
+                fields.append("api_key")
+            llm.save(update_fields=fields)
+            llm.refresh_from_db(fields=["nome", "descricao", "api_key"])
+
+            if api_key and llm.api_key != api_key:
+                raise RuntimeError("A chave da API não foi persistida após o salvamento.")
+    except Exception:
+        logger.exception(
+            "Falha ao atualizar configuração LLM usuario_id=%s llm_id=%s",
             request.user.id,
             llm.id,
-            llm.nome,
-            bool(api_key),
         )
-        return JsonResponse({"status": "success", "message": _("LLM atualizada com sucesso.")})
-    return JsonResponse({"status": "error", "message": _("Método não permitido.")}, status=405)
+        return JsonResponse({
+            "status": "error",
+            "message": _("Não foi possível salvar a configuração da LLM."),
+        }, status=500)
+
+    current_fingerprint = _api_key_fingerprint(llm.api_key)
+    logger.info(
+        "Configuração LLM atualizada usuario_id=%s llm_id=%s model=%s provider=%s "
+        "key_updated=%s key_fp_before=%s key_fp_after=%s",
+        request.user.id,
+        llm.id,
+        llm.nome,
+        llm.descricao,
+        bool(api_key),
+        previous_fingerprint,
+        current_fingerprint,
+    )
+    return JsonResponse({
+        "status": "success",
+        "message": _("LLM atualizada com sucesso."),
+        "nome": llm.nome,
+        "descricao": llm.descricao,
+        "key_updated": bool(api_key),
+        "api_key_hint": _api_key_hint(llm.api_key),
+    })
 
 @login_required
 def menu_consulta(request):

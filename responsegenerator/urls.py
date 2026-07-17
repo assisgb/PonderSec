@@ -43,7 +43,7 @@ urlpatterns = [
     path('setup-deletar-metrica/<int:id>/', views.setup_deletar_metrica, name='setup_deletar_metrica'),
     path('historico/', views.historico, name="historico"),
     path("api/llm/<int:id>/delete/", views.deletar_llm, name="delete_llm"),
-    path("api/llm/<int:id>/edit/", views.edit_llm_api),
+    path("api/llm/<int:id>/edit/", views.edit_llm_api, name="edit_llm_api"),
     path('avaliacao/dashboard/', views.dashboard_avaliacoes, name='dashboard_avaliacoes'),
     path('avaliacao/dashboard-comparativo/', views.dashboard_comparativo_avaliacoes, name='dashboard_comparativo_avaliacoes'),
     path('menu_avaliacao/', views.menu_avaliacao, name='menu_avaliacao'),
