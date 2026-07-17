@@ -711,6 +711,15 @@ function appendCrossEvaluation(wrapper, rows) {
   if (table) wrapper.insertAdjacentHTML('beforeend', table);
 }
 
+function appendEvaluationStatus(wrapper, evaluation) {
+  if (!evaluation || !["erro", "parcial"].includes(evaluation.status)) return;
+  const message = evaluation.mensagem || "{% trans 'A resposta foi gerada, mas a avaliação automática falhou.' %}";
+  wrapper.insertAdjacentHTML(
+    'beforeend',
+    `<p class="stream-error">${escapeHtml(message)}</p>`
+  );
+}
+
 async function consumeNDJSON(response, onEvent) {
   const processLines = (text, flush = false) => {
     const lines = text.split('\n');
@@ -756,16 +765,25 @@ async function sendPublicQuestion() {
   const loadingId = addLoadingBubble(turn, modelName);
   scrollToTurnStart(turn);
   let streamState = null;
+  let terminalEventReceived = false;
+  const controller = new AbortController();
+  const browserTimeout = window.setTimeout(() => controller.abort(), 120000);
 
   try {
     const response = await fetch("{% url 'usuario_final_chat_stream_api' %}", {
       method: "POST",
       headers: { "Content-Type": "application/json", "X-CSRFToken": getCSRFToken() },
-      body: JSON.stringify({ pergunta, modelo_id: Number(modeloId) })
+      body: JSON.stringify({ pergunta, modelo_id: Number(modeloId) }),
+      signal: controller.signal,
     });
 
     if (!response.ok) {
-      const data = await response.json();
+      let data = {};
+      try {
+        data = JSON.parse(await response.text());
+      } catch (parseError) {
+        data = { mensagem: '{% trans "O servidor não conseguiu concluir a solicitação." %}' };
+      }
       throw new Error(data.mensagem || '{% trans "Erro ao consultar os modelos." %}');
     }
 
@@ -786,14 +804,17 @@ async function sendPublicQuestion() {
       }
 
       if (event.tipo === 'concluido') {
+        terminalEventReceived = true;
         if (streamState) {
           markStreamComplete(streamState);
           appendCrossEvaluation(streamState.wrapper, event.tabela_avaliacao_cruzada || []);
+          appendEvaluationStatus(streamState.wrapper, event.avaliacao_cruzada);
         }
         return;
       }
 
       if (event.tipo === 'erro') {
+        terminalEventReceived = true;
         removeBubble(loadingId);
         if (streamState) {
           markStreamError(streamState, event.mensagem);
@@ -808,19 +829,27 @@ async function sendPublicQuestion() {
       }
     });
 
+    if (!terminalEventReceived) {
+      throw new Error('{% trans "A conexão foi encerrada antes da conclusão da resposta." %}');
+    }
+
   } catch (error) {
     removeBubble(loadingId);
+    const errorMessage = error.name === 'AbortError'
+      ? '{% trans "Tempo limite excedido ao aguardar o provedor." %}'
+      : error.message;
     if (streamState) {
-      markStreamError(streamState, error.message);
+      markStreamError(streamState, errorMessage);
     } else {
       const responseElement = addAIBubblesGroup(
-        [{ modelo: "Sistema", resposta: `{% trans "Erro:" %} ${error.message}`, ok: false }],
+        [{ modelo: "Sistema", resposta: `{% trans "Erro:" %} ${errorMessage}`, ok: false }],
         [],
         turn
       );
       ensureResponseStartVisible(turn, responseElement);
     }
   } finally {
+    window.clearTimeout(browserTimeout);
     isSending = false;
     modelSelect.disabled = modelSelect.options.length <= 1;
     updateSendState();

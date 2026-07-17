@@ -4,10 +4,9 @@ from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.contrib import messages as django_messages
 from django.contrib.auth.decorators import login_required
-from django.db import transaction
-import os
+from django.db import close_old_connections, transaction
+import logging
 import re
-from datetime import timedelta
 from django.http import JsonResponse, HttpResponse, StreamingHttpResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
 import json
@@ -32,23 +31,30 @@ from responsegenerator.models import (
 )
 from functools import wraps
 from django.db.models import Avg, Count, Prefetch, Q
-from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from responsegenerator.judgeai_metrics import (
+    JUDGE_METRIC_KEYS,
+    JUDGE_METRIC_NAMES,
+    ensure_judge_metrics,
+    judge_metric_key,
+    normalize_metric_name,
+)
+from responsegenerator.llm_client import (
+    call_configured_llm,
+    stream_configured_llm,
+)
 
-try:
-    from google import genai
-except ImportError:
-    genai = None
 
-try:
-    import openai
-except ImportError:
-    openai = None
+logger = logging.getLogger(__name__)
 
-try:
-    from groq import Groq
-except ImportError:
-    Groq = None
+
+def _call_llm_in_worker(llm, prompt):
+    """Isola conexões Django criadas pelas tarefas paralelas de provedores externos."""
+    close_old_connections()
+    try:
+        return _judgeai_call_configured_llm(llm, prompt)
+    finally:
+        close_old_connections()
 
 
 def salvar_no_historico(user, pergunta, resposta):
@@ -145,11 +151,16 @@ def usuario_final_chat_api(request):
                 'resposta': texto_resposta.strip(),
                 'ok': True,
             }
-        except Exception as e:
+        except Exception as exc:
+            logger.exception(
+                "Falha no chat público pergunta_id=%s llm_id=%s",
+                pergunta_publica.id,
+                llm_selecionada.id,
+            )
             resultado = {
                 'llm_id': llm_selecionada.id,
                 'modelo': llm_selecionada.nome,
-                'resposta': f"Erro ao consultar: {str(e)}",
+                'resposta': str(exc),
                 'ok': False,
             }
 
@@ -162,6 +173,13 @@ def usuario_final_chat_api(request):
         resultado["resposta_id"] = resposta_publica.id
         respostas = [resultado]
         respostas_publicas = [resposta_publica]
+
+        if not resultado["ok"]:
+            return JsonResponse({
+                "status": "erro",
+                "respostas": respostas,
+                "mensagem": resultado["resposta"],
+            }, status=502)
 
         avaliacao_status = _executar_avaliacao_cruzada_publica(
             pergunta_publica,
@@ -195,11 +213,11 @@ def usuario_final_chat_api(request):
             'status': 'erro',
             'mensagem': 'Erro ao processar JSON.'
         }, status=400)
-    except Exception as e:
-        print(f"Erro em usuario_final_chat_api: {str(e)}")
+    except Exception:
+        logger.exception("Erro não tratado em usuario_final_chat_api")
         return JsonResponse({
             'status': 'erro',
-            'mensagem': f'Erro no servidor: {str(e)}'
+            'mensagem': 'Não foi possível processar a solicitação. Tente novamente.'
         }, status=500)
 
 
@@ -247,7 +265,14 @@ def usuario_final_chat_stream_api(request):
             "mensagem": "O modelo selecionado não está disponível.",
         }, status=400)
 
-    pergunta_publica = PerguntaPublica.objects.create(conteudo=pergunta)
+    try:
+        pergunta_publica = PerguntaPublica.objects.create(conteudo=pergunta)
+    except Exception:
+        logger.exception("Falha ao salvar pergunta do chat público antes do streaming")
+        return JsonResponse({
+            "status": "erro",
+            "mensagem": "Não foi possível salvar a pergunta. Tente novamente.",
+        }, status=500)
     prompt_final = _public_chat_prompt(pergunta)
 
     def gerar_eventos():
@@ -269,13 +294,26 @@ def usuario_final_chat_stream_api(request):
                 raise RuntimeError("O modelo não retornou conteúdo.")
         except Exception as exc:
             texto_parcial = "".join(partes).strip()
-            mensagem = f"Erro ao consultar: {str(exc)}"
-            RespostaPublica.objects.create(
-                pergunta=pergunta_publica,
-                llm=llm_selecionada,
-                conteudo_resposta=texto_parcial or mensagem,
-                ok=False,
+            mensagem = str(exc)
+            logger.exception(
+                "Falha no stream do chat público pergunta_id=%s llm_id=%s parcial=%s",
+                pergunta_publica.id,
+                llm_selecionada.id,
+                bool(texto_parcial),
             )
+            try:
+                RespostaPublica.objects.create(
+                    pergunta=pergunta_publica,
+                    llm=llm_selecionada,
+                    conteudo_resposta=texto_parcial or mensagem,
+                    ok=False,
+                )
+            except Exception:
+                logger.exception(
+                    "Falha ao salvar resposta pública com erro pergunta_id=%s llm_id=%s",
+                    pergunta_publica.id,
+                    llm_selecionada.id,
+                )
             yield _public_chat_stream_event(
                 "erro",
                 mensagem=mensagem,
@@ -283,12 +321,25 @@ def usuario_final_chat_stream_api(request):
             )
             return
 
-        resposta_publica = RespostaPublica.objects.create(
-            pergunta=pergunta_publica,
-            llm=llm_selecionada,
-            conteudo_resposta=texto_resposta,
-            ok=True,
-        )
+        try:
+            resposta_publica = RespostaPublica.objects.create(
+                pergunta=pergunta_publica,
+                llm=llm_selecionada,
+                conteudo_resposta=texto_resposta,
+                ok=True,
+            )
+        except Exception:
+            logger.exception(
+                "Falha ao salvar resposta pública pergunta_id=%s llm_id=%s",
+                pergunta_publica.id,
+                llm_selecionada.id,
+            )
+            yield _public_chat_stream_event(
+                "erro",
+                mensagem="A resposta foi gerada, mas não pôde ser salva. Tente novamente.",
+                possui_conteudo_parcial=True,
+            )
+            return
         yield _public_chat_stream_event(
             "resposta_concluida",
             resposta_id=resposta_publica.id,
@@ -308,11 +359,16 @@ def usuario_final_chat_stream_api(request):
                 {"status": "sem_dados", "media_geral": None, "notas_total": 0, "metricas": []},
             )
         except Exception as exc:
+            logger.exception(
+                "Falha na avaliação cruzada pública pergunta_id=%s resposta_id=%s",
+                pergunta_publica.id,
+                resposta_publica.id,
+            )
             avaliacao_status = {
                 "status": "erro",
                 "total": 0,
                 "notas_total": 0,
-                "mensagem": str(exc),
+                "mensagem": "A resposta foi gerada, mas a avaliação automática falhou.",
             }
             avaliacao = {
                 "status": "sem_dados",
@@ -406,9 +462,9 @@ def ver_detalhes_questao(request, id):
             'tem_resposta_humana': tem_resposta_humana,
             'tem_respostas_ia': len(respostas_encontradas) > 0,
         })
-    except Exception as e:
-        print(f"Erro em ver_detalhes_questao: {str(e)}")
-        return JsonResponse({'erro': str(e)}, status=500)
+    except Exception:
+        logger.exception("Falha ao carregar detalhes da questão id=%s usuario_id=%s", id, request.user.id)
+        return JsonResponse({'erro': 'Não foi possível carregar os detalhes da questão.'}, status=500)
 
 
 @login_required
@@ -465,48 +521,25 @@ def gerar_resposta_ia_unica(request, questao_id, llm_id):
                 "Obs: A saída vai ser formatada como texto normal, sem códigos ou marcações especiais, exceto se usar markdown.\n"
     )
     prompt_final = f"{contexto}\n\n{questao.conteudo}"
-    texto_ia_limpa = ""
-    provedor = llm.descricao.lower() if llm.descricao else ""
 
     try:
-        if "gemini" in provedor or "google" in provedor:
-            client = genai.Client(api_key=llm.api_key)
-            resp = client.models.generate_content(model=llm.nome, contents=prompt_final)
-            texto_ia_limpa = resp.text
-        elif "groq" in provedor:
-            client = Groq(api_key=llm.api_key)
-            chat_completion = client.chat.completions.create(
-                messages=[{"role": "user", "content": prompt_final}],
-                model=llm.nome,
-            )
-            texto_ia_limpa = chat_completion.choices[0].message.content
-        elif "openai" in provedor or "OpenAI" in provedor or "openAI" in provedor:
-            client = openai.OpenAI(api_key=llm.api_key)
-            response = client.chat.completions.create(
-                model=llm.nome,
-                messages=[{"role": "user", "content": prompt_final}]
-            )
-            texto_ia_limpa = response.choices[0].message.content
-        elif "deepseek" in provedor:
-            client = openai.OpenAI(
-                api_key=llm.api_key,
-                base_url="https://integrate.api.nvidia.com/v1"
-            )
-            response = client.chat.completions.create(
-                model=llm.nome,
-                messages=[{"role": "user", "content": prompt_final}]
-            )
-            texto_ia_limpa = response.choices[0].message.content
-        else:
-            return JsonResponse({'status': 'erro', 'mensagem': f"Provedor '{llm.descricao}' não reconhecido."}, status=400)
-    except Exception as e:
-        return JsonResponse({'status': 'erro', 'mensagem': f"Erro na IA {llm.nome}: {str(e)}"}, status=500)
+        texto_ia_limpa = _judgeai_call_configured_llm(llm, prompt_final)
+    except Exception as exc:
+        logger.exception("Falha ao gerar resposta única questao_id=%s llm_id=%s", questao.id, llm.id)
+        return JsonResponse({'status': 'erro', 'mensagem': str(exc)}, status=502)
 
-    Resposta.objects.create(
-        questao_id=questao_id,
-        llm=llm,
-        conteudo_resposta=texto_ia_limpa.strip()
-    )
+    try:
+        Resposta.objects.create(
+            questao_id=questao_id,
+            llm=llm,
+            conteudo_resposta=texto_ia_limpa.strip(),
+        )
+    except Exception:
+        logger.exception("Resposta gerada, mas não salva questao_id=%s llm_id=%s", questao.id, llm.id)
+        return JsonResponse({
+            'status': 'erro',
+            'mensagem': 'A resposta foi gerada, mas não pôde ser salva. Tente novamente.',
+        }, status=500)
 
     return JsonResponse({'status': 'ok'})
 
@@ -544,59 +577,49 @@ def gerar_respostas_ia_faltantes(request, questao_id):
     )
     prompt_final = f"{contexto}\n\n{questao.conteudo}"
 
-    erros = []
+    resultados = []
 
     def _gerar(llm):
-        texto_ia_limpa = ""
-        provedor = llm.descricao.lower() if llm.descricao else ""
         try:
-            if "gemini" in provedor or "google" in provedor:
-                client = genai.Client(api_key=llm.api_key)
-                resp = client.models.generate_content(model=llm.nome, contents=prompt_final)
-                texto_ia_limpa = resp.text
-            elif "groq" in provedor:
-                client = Groq(api_key=llm.api_key)
-                chat_completion = client.chat.completions.create(
-                    messages=[{"role": "user", "content": prompt_final}],
-                    model=llm.nome,
-                )
-                texto_ia_limpa = chat_completion.choices[0].message.content
-            elif "openai" in provedor or "OpenAI" in provedor or "openAI" in provedor:
-                client = openai.OpenAI(api_key=llm.api_key)
-                response = client.chat.completions.create(
-                    model=llm.nome,
-                    messages=[{"role": "user", "content": prompt_final}]
-                )
-                texto_ia_limpa = response.choices[0].message.content
-            elif "deepseek" in provedor:
-                client = openai.OpenAI(
-                    api_key=llm.api_key,
-                    base_url="https://integrate.api.nvidia.com/v1"
-                )
-                response = client.chat.completions.create(
-                    model=llm.nome,
-                    messages=[{"role": "user", "content": prompt_final}]
-                )
-                texto_ia_limpa = response.choices[0].message.content
-            else:
-                return
-        except Exception as e:
-            erros.append(f"{llm.nome}: {str(e)}")
-            return
-
-        Resposta.objects.create(
-            questao_id=questao_id,
-            llm=llm,
-            conteudo_resposta=texto_ia_limpa.strip()
-        )
+            return llm, _call_llm_in_worker(llm, prompt_final), None
+        except Exception as exc:
+            logger.exception("Falha ao gerar resposta faltante questao_id=%s llm_id=%s", questao.id, llm.id)
+            return llm, None, str(exc)
 
     with ThreadPoolExecutor(max_workers=min(4, len(ias_faltantes))) as executor:
-        list(executor.map(_gerar, ias_faltantes))
+        resultados = list(executor.map(_gerar, ias_faltantes))
+
+    erros = []
+    geradas = 0
+    try:
+        with transaction.atomic():
+            for llm, texto, erro in resultados:
+                if erro:
+                    erros.append({"llm_id": llm.id, "modelo": llm.nome, "mensagem": erro})
+                    continue
+                Resposta.objects.create(
+                    questao_id=questao_id,
+                    llm=llm,
+                    conteudo_resposta=texto,
+                )
+                geradas += 1
+    except Exception:
+        logger.exception("Respostas geradas, mas não salvas questao_id=%s", questao.id)
+        return JsonResponse({
+            'status': 'erro',
+            'geradas': 0,
+            'mensagem': 'As respostas foram geradas, mas não puderam ser salvas. Tente novamente.',
+        }, status=500)
 
     if erros:
-        return JsonResponse({'status': 'parcial', 'erros': erros})
+        return JsonResponse({
+            'status': 'parcial' if geradas else 'erro',
+            'geradas': geradas,
+            'erros': erros,
+            'mensagem': 'Alguns modelos não responderam. Consulte os detalhes retornados.',
+        }, status=207 if geradas else 502)
 
-    return JsonResponse({'status': 'ok', 'geradas': len(ias_faltantes)})
+    return JsonResponse({'status': 'ok', 'geradas': geradas})
 
 
 @login_required
@@ -921,61 +944,35 @@ def gerar_respostas(request, questao_id):
     )
     prompt_final = f"{contexto}\n\n{questao.conteudo}"
 
+    resultados = []
     for llm in llms_ativos:
-        texto_ia_limpa = ""
-        provedor = llm.descricao.lower() if llm.descricao else ""
-
         try:
-            if "gemini" in provedor or "google" in provedor:
-                client = genai.Client(api_key=llm.api_key)
-                resp = client.models.generate_content(model=llm.nome, contents=prompt_final)
-                texto_ia_limpa = resp.text
+            texto_ia_limpa = _judgeai_call_configured_llm(llm, prompt_final)
+            Resposta.objects.update_or_create(
+                questao_id=questao_id,
+                llm=llm,
+                defaults={"conteudo_resposta": texto_ia_limpa},
+            )
+            resultados.append({"llm_id": llm.id, "modelo": llm.nome, "ok": True})
+        except Exception as exc:
+            logger.exception("Falha ao gerar resposta questao_id=%s llm_id=%s", questao.id, llm.id)
+            resultados.append({
+                "llm_id": llm.id,
+                "modelo": llm.nome,
+                "ok": False,
+                "mensagem": str(exc),
+            })
 
-            elif "groq" in provedor:
-                client = Groq(api_key=llm.api_key)
-                chat_completion = client.chat.completions.create(
-                    messages=[{"role": "user", "content": prompt_final}],
-                    model=llm.nome,
-                )
-                texto_ia_limpa = chat_completion.choices[0].message.content
+    falhas = [item for item in resultados if not item["ok"]]
+    if falhas:
+        sucessos = len(resultados) - len(falhas)
+        return JsonResponse({
+            "status": "parcial" if sucessos else "erro",
+            "mensagem": "Alguns modelos não responderam. Consulte os detalhes retornados.",
+            "resultados": resultados,
+        }, status=207 if sucessos else 502)
 
-            elif "openai" in provedor or "OpenAI" in provedor or "openAI" in provedor:
-                client = openai.OpenAI(api_key=llm.api_key)
-                response = client.chat.completions.create(
-                    model=llm.nome,
-                    messages=[{"role": "user", "content": prompt_final}]
-                )
-                texto_ia_limpa = response.choices[0].message.content
-            
-            elif "deepseek" in provedor:
-                client = openai.OpenAI(
-                    api_key=llm.api_key, 
-                    base_url="https://integrate.api.nvidia.com/v1"
-                )
-                response = client.chat.completions.create(
-                    model=llm.nome, 
-                    messages=[{"role": "user", "content": prompt_final}]
-                )
-                texto_ia_limpa = response.choices[0].message.content
-            
-            else:
-                texto_ia_limpa = _("Provedor '%(provedor)s' não reconhecido para execução automática.") % {
-                    "provedor": llm.descricao
-                }
-
-        except Exception as e:
-            texto_ia_limpa = _("Erro na IA %(nome)s: %(erro)s") % {
-                "nome": llm.nome,
-                "erro": str(e),
-            }
-
-        Resposta.objects.create(
-            questao_id=questao_id,
-            llm=llm,
-            conteudo_resposta=texto_ia_limpa.strip()
-        )
-
-    return JsonResponse({'status': 'ok'})
+    return JsonResponse({'status': 'ok', 'resultados': resultados})
 
 @login_required
 def limpar_respostas(request):
@@ -984,17 +981,22 @@ def limpar_respostas(request):
             # BLINDADO: Apaga apenas as respostas das questões que pertencem ao usuário logado
             Resposta.objects.filter(questao__usuario=request.user).delete()
             return JsonResponse({"ok": True})
-        except Exception as e:
-            return JsonResponse({"ok": False, "erro": str(e)}, status=500)
+        except Exception:
+            logger.exception("Falha ao limpar respostas usuario_id=%s", request.user.id)
+            return JsonResponse({"ok": False, "erro": _("Não foi possível limpar as respostas.")}, status=500)
             
     return JsonResponse({"ok": False, "erro": _("Método não permitido")}, status=405)
     
 @login_required
 def setup_llm(request):
     if request.method == "POST":
-        nome = request.POST.get("model")
-        provedor = request.POST.get("provider")
-        api_key = request.POST.get("apiKey")
+        nome = (request.POST.get("model") or "").strip()
+        provedor = (request.POST.get("provider") or "").strip()
+        api_key = (request.POST.get("apiKey") or "").strip()
+
+        if not nome or not provedor or not api_key:
+            django_messages.error(request, _("Provedor, modelo e chave da API são obrigatórios."))
+            return redirect('setup_llm')
 
         LLM.objects.create(
             usuario = request.user,
@@ -1016,52 +1018,17 @@ def setup_configurar_llm(request):
 
 @login_required
 def setup_avaliacao(request):
-    metricas = Metrica.objects.filter(usuario=request.user, ativa=True)
+    metricas = ensure_judge_metrics(request.user)
     return render(request, 'setup/setup-avaliacao.html', {'metricas': metricas})
 
 @login_required
 def setup_adicionar_metrica(request):
     if request.method == 'POST':
-        nome             = request.POST.get('nome', '').strip()
-        descricao        = request.POST.get('descricao', '').strip()
-        tipo             = request.POST.get('tipo', 'quantitativa')
-        pontuacao_maxima = request.POST.get('pontuacao_maxima')
-        criterio_texto   = request.POST.get('criterio_texto', '').strip()
-
-        try:
-            pts = int(pontuacao_maxima)
-            if pts > 5:
-                pts = 5  
-            elif pts < 2:
-                pts = 2  
-        except (ValueError, TypeError):
-            pts = 5 
-
-        label_opcao_1 = ""
-        label_opcao_2 = ""
-        if pts == 2:
-            label_opcao_1 = request.POST.get('opcao_1', 'Ruim').strip()
-            label_opcao_2 = request.POST.get('opcao_2', 'Bom').strip()
-
-        if not nome:
-            django_messages.error(request, _('O nome da métrica é obrigatório.'))
-            return redirect('setup_avaliacao')
-        
-        else:
-            Metrica.objects.create(
-                usuario          = request.user,
-                nome             = nome,
-                descricao        = descricao,
-                tipo             = tipo,
-                pontuacao_maxima = pts, # Salva o número blindado!
-                criterio_texto   = criterio_texto,
-                label_opcao_1    = label_opcao_1,
-                label_opcao_2    = label_opcao_2,
-                ativa            = True,
-            )
-            django_messages.success(request, _("Métrica '%(nome)s' adicionada com sucesso!") % {
-                "nome": nome,
-            })
+        ensure_judge_metrics(request.user)
+        django_messages.error(
+            request,
+            _("As métricas do JudgeAI são fixas: Completude, Acurácia, Diretividade e Clareza (1 a 5)."),
+        )
 
     return redirect('setup_avaliacao')
 
@@ -1069,22 +1036,18 @@ def setup_adicionar_metrica(request):
 @login_required
 def setup_configurar_metrica(request):
     if request.method == 'POST':
-        metrica_id = request.POST.get('metrica_id')
-        metrica = get_object_or_404(Metrica, id=metrica_id, usuario=request.user)
-        metrica.nome = request.POST.get('nome')
-        metrica.save()
-        django_messages.success(request, _("Configurações da métrica atualizadas!"))
+        ensure_judge_metrics(request.user)
+        django_messages.error(request, _("As métricas e a escala do JudgeAI são fixas."))
     return redirect('setup_avaliacao')
 
 @login_required
 @require_http_methods(["DELETE"])
 def setup_deletar_metrica(request, id):
-    try:
-        metrica = get_object_or_404(Metrica, id=id, usuario=request.user)
-        metrica.delete()
-        return JsonResponse({"status": "success", "message": _("Métrica deletada com sucesso.")})
-    except Exception as e:
-        return JsonResponse({"status": "error", "message": str(e)}, status=500)
+    ensure_judge_metrics(request.user)
+    return JsonResponse({
+        "status": "error",
+        "message": _("As quatro métricas oficiais do JudgeAI não podem ser removidas."),
+    }, status=409)
 
 @login_required
 def deletar_llm(request, id):
@@ -1096,17 +1059,37 @@ def deletar_llm(request, id):
 @login_required
 def edit_llm_api(request, id):
     if request.method == "PUT":
-        data = json.loads(request.body)
-        nome = data.get("nome")
-        api_key = data.get("api_key")
+        try:
+            data = json.loads(request.body or "{}")
+        except json.JSONDecodeError:
+            return JsonResponse({"status": "error", "message": _("JSON inválido.")}, status=400)
+        nome = (data.get("nome") or "").strip()
+        provedor = (data.get("descricao") or "").strip()
+        api_key = (data.get("api_key") or "").strip()
 
         # BLINDADO: A versão anterior .get().filter() causava quebra e não protegia.
         llm = get_object_or_404(LLM, id=id, usuario=request.user)
+        if not nome or not provedor:
+            return JsonResponse({
+                "status": "error",
+                "message": _("Provedor e modelo são obrigatórios."),
+            }, status=400)
         llm.nome = nome
-        llm.api_key = api_key
-        llm.save()
+        llm.descricao = provedor
+        fields = ["nome", "descricao"]
+        if api_key:
+            llm.api_key = api_key
+            fields.append("api_key")
+        llm.save(update_fields=fields)
+        logger.info(
+            "Configuração LLM atualizada usuario_id=%s llm_id=%s model=%s key_updated=%s",
+            request.user.id,
+            llm.id,
+            llm.nome,
+            bool(api_key),
+        )
         return JsonResponse({"status": "success", "message": _("LLM atualizada com sucesso.")})
-    return JsonResponse({"status": "error"})
+    return JsonResponse({"status": "error", "message": _("Método não permitido.")}, status=405)
 
 @login_required
 def menu_consulta(request):
@@ -1139,127 +1122,19 @@ def _text_preview(text, limit=320):
     return text if len(text) <= limit else f"{text[:limit].rstrip()}..."
 
 def _metric_max(metrica):
-    return metrica.pontuacao_maxima or 5
-
-
-def _chat_completion_stream_text(completion_stream):
-    for chunk in completion_stream:
-        choices = getattr(chunk, "choices", None) or []
-        if not choices:
-            continue
-        delta = getattr(choices[0], "delta", None)
-        conteudo = getattr(delta, "content", None) if delta is not None else None
-        if conteudo:
-            yield conteudo
+    return 5
 
 
 def _judgeai_stream_configured_llm(llm, prompt):
-    provider = f"{llm.descricao or ''} {llm.nome or ''}".lower()
-
-    if "gemini" in provider or "google" in provider:
-        if genai is None:
-            raise RuntimeError(_("Biblioteca google-genai não instalada."))
-        client = genai.Client(api_key=llm.api_key)
-        for chunk in client.models.generate_content_stream(model=llm.nome, contents=prompt):
-            conteudo = getattr(chunk, "text", None)
-            if conteudo:
-                yield conteudo
-        return
-
-    if "groq" in provider or "llama" in provider or "mixtral" in provider:
-        if Groq is None:
-            raise RuntimeError(_("Biblioteca groq não instalada."))
-        client = Groq(api_key=llm.api_key)
-        completion = client.chat.completions.create(
-            messages=[{"role": "user", "content": prompt}],
-            model=llm.nome,
-            stream=True,
-        )
-        yield from _chat_completion_stream_text(completion)
-        return
-
-    if "deepseek" in provider:
-        if openai is None:
-            raise RuntimeError(_("Biblioteca openai não instalada."))
-        client = openai.OpenAI(
-            api_key=llm.api_key,
-            base_url="https://integrate.api.nvidia.com/v1",
-        )
-        completion = client.chat.completions.create(
-            model=llm.nome,
-            messages=[{"role": "user", "content": prompt}],
-            stream=True,
-        )
-        yield from _chat_completion_stream_text(completion)
-        return
-
-    if "openai" in provider or "gpt" in provider or "chatgpt" in provider:
-        if openai is None:
-            raise RuntimeError(_("Biblioteca openai não instalada."))
-        client = openai.OpenAI(api_key=llm.api_key)
-        completion = client.chat.completions.create(
-            model=llm.nome,
-            messages=[{"role": "user", "content": prompt}],
-            stream=True,
-        )
-        yield from _chat_completion_stream_text(completion)
-        return
-
-    raise RuntimeError(_("Provedor '%(provedor)s' não reconhecido.") % {
-        "provedor": llm.descricao or llm.nome
-    })
+    yield from stream_configured_llm(llm, prompt)
 
 
 def _judgeai_call_configured_llm(llm, prompt):
-    provider = f"{llm.descricao or ''} {llm.nome or ''}".lower()
-
-    if "gemini" in provider or "google" in provider:
-        if genai is None:
-            raise RuntimeError(_("Biblioteca google-genai não instalada."))
-        client = genai.Client(api_key=llm.api_key)
-        response = client.models.generate_content(model=llm.nome, contents=prompt)
-        return (getattr(response, "text", "") or "").strip()
-
-    if "groq" in provider or "llama" in provider or "mixtral" in provider:
-        if Groq is None:
-            raise RuntimeError(_("Biblioteca groq não instalada."))
-        client = Groq(api_key=llm.api_key)
-        completion = client.chat.completions.create(
-            messages=[{"role": "user", "content": prompt}],
-            model=llm.nome,
-        )
-        return completion.choices[0].message.content.strip()
-
-    if "deepseek" in provider:
-        if openai is None:
-            raise RuntimeError(_("Biblioteca openai não instalada."))
-        client = openai.OpenAI(
-            api_key=llm.api_key,
-            base_url="https://integrate.api.nvidia.com/v1"
-        )
-        response = client.chat.completions.create(
-            model=llm.nome,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        return response.choices[0].message.content.strip()
-
-    if "openai" in provider or "gpt" in provider or "chatgpt" in provider:
-        if openai is None:
-            raise RuntimeError(_("Biblioteca openai não instalada."))
-        client = openai.OpenAI(api_key=llm.api_key)
-        response = client.chat.completions.create(
-            model=llm.nome,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        return response.choices[0].message.content.strip()
-
-    raise RuntimeError(_("Provedor '%(provedor)s' não reconhecido.") % {
-        "provedor": llm.descricao or llm.nome
-    })
+    return call_configured_llm(llm, prompt)
 
 def _judgeai_prompt(questao, resposta, juiz, metricas):
     metricas_txt = "\n".join(
-        f"- {m.nome} (0 a {_metric_max(m)}): {m.descricao or m.criterio_texto or 'Avalie este critério.'}"
+        f"- {m.nome} (1 a 5): {m.descricao or m.criterio_texto}"
         for m in metricas
     )
     return (
@@ -1268,18 +1143,17 @@ def _judgeai_prompt(questao, resposta, juiz, metricas):
         "a uma pergunta técnica de cibersegurança.\n\n"
 
         "REGRAS DE AVALIAÇÃO:\n"
-        "1. Para CADA métrica listada abaixo, leia atentamente a DESCRIÇÃO da métrica. A descrição define o critério exato que você deve avaliar.\n"
-        "2. Avalie a resposta EXCLUSIVAMENTE com base no que a descrição da métrica pede. Não invente critérios próprios.\n"
+        "1. Avalie EXATAMENTE estas quatro métricas, na escala inteira de 1 a 5: Completude, Acurácia, Diretividade e Clareza.\n"
+        "2. Não avalie nenhuma métrica além das quatro listadas.\n"
         "3. Antes de decidir a nota, releia a descrição da métrica e depois releia a resposta em busca de evidências concretas "
         "(trechos, afirmações, exemplos, comandos, códigos) que sustentem ou contradigam o critério descrito.\n"
         "4. Evite viés de verbosidade: uma resposta mais longa não é automaticamente melhor. Avalie se a resposta "
         "atende ao critério da métrica, não o tamanho do texto.\n"
         "5. Evite viés de complacência: não dê notas altas por padrão. Se a resposta não atender ao critério descrito "
         "na métrica, a nota deve refletir isso.\n"
-        "6. Se a resposta avaliada for vazia, sem sentido, um refusal sem justificativa técnica, ou completamente fora "
-        "do escopo da pergunta, atribua nota mínima em todas as métricas aplicáveis e explique isso na justificativa.\n"
-        "7. Se a métrica não for aplicável ao tipo de pergunta ou resposta (ex.: métrica sobre código quando não "
-        "há código na resposta), atribua a nota mínima da escala e explique por que não há evidência para nota maior.\n\n"
+        "6. Se a resposta avaliada for vazia, sem sentido, uma recusa sem justificativa técnica ou completamente fora "
+        "do escopo da pergunta, atribua nota 1 nas quatro métricas e explique isso na justificativa.\n"
+        "7. Você está avaliando a resposta de OUTRO modelo. Nunca avalie uma resposta produzida por você mesmo.\n\n"
 
         "FORMATO DAS JUSTIFICATIVAS:\n"
         "- Escreva em português, entre 20 e 45 palavras por métrica.\n"
@@ -1293,13 +1167,13 @@ def _judgeai_prompt(questao, resposta, juiz, metricas):
         "Retorne SOMENTE um JSON válido, sem markdown, sem texto antes ou depois, sem blocos de código (```).\n"
         "{\n"
         '  "notas": [\n'
-        '    {"metrica": "Nome exato da métrica", "nota": 0, "justificativa": "Nota X/Y: frase completa explicando o motivo da nota com evidência da resposta."}\n'
+        '    {"metrica": "Nome exato da métrica", "nota": 1, "justificativa": "Frase completa explicando o motivo da nota com evidência da resposta."}\n'
         "  ],\n"
         '  "justificativa": "síntese geral em uma frase completa, mencionando o principal ponto forte e a principal fraqueza da resposta avaliada"\n'
         "}\n"
-        "- O campo 'nota' deve ser um número dentro da escala definida para cada métrica.\n"
+        "- O campo 'nota' deve ser um número inteiro entre 1 e 5.\n"
         "- A ordem das métricas no array 'notas' deve seguir a ordem em que foram apresentadas.\n"
-        "- Não inclua métricas que não estejam na lista fornecida.\n"
+        "- Retorne as quatro métricas uma única vez; não omita, duplique ou inclua outra métrica.\n"
         "- Não adicione campos extras ao JSON.\n\n"
 
         f"Juiz: {juiz.nome}\n\n"
@@ -1310,53 +1184,72 @@ def _judgeai_prompt(questao, resposta, juiz, metricas):
     )
 
 def _parse_judgeai_result(raw_text, metricas):
-    notas_por_nome = {}
-    justificativa = ""
+    raw_text = (raw_text or "").strip()
+    if not raw_text:
+        raise ValueError("A LLM avaliadora retornou uma resposta vazia.")
 
-    json_match = re.search(r"\{[\s\S]*\}", raw_text or "")
-    if json_match:
-        try:
-            parsed = json.loads(json_match.group(0))
-            justificativa = (parsed.get("justificativa") or "").strip()
-            for item in parsed.get("notas", []):
-                nome = (item.get("metrica") or "").strip().lower()
-                notas_por_nome[nome] = {
-                    "nota": item.get("nota"),
-                    "justificativa": (item.get("justificativa") or "").strip()
-                }
-        except (json.JSONDecodeError, AttributeError):
-            notas_por_nome = {}
+    fenced = re.fullmatch(r"```(?:json)?\s*([\s\S]*?)\s*```", raw_text, re.IGNORECASE)
+    candidate = fenced.group(1).strip() if fenced else raw_text
+    try:
+        parsed = json.loads(candidate)
+    except json.JSONDecodeError as exc:
+        raise ValueError("A LLM avaliadora retornou JSON inválido.") from exc
 
-    resultado = []
-    for metrica in metricas:
-        item = notas_por_nome.get(metrica.nome.lower(), {})
+    if not isinstance(parsed, dict) or not isinstance(parsed.get("notas"), list):
+        raise ValueError("A avaliação não contém o array 'notas' esperado.")
+
+    expected = {judge_metric_key(metrica.nome): metrica for metrica in metricas}
+    if None in expected or set(expected) != set(JUDGE_METRIC_KEYS) or len(metricas) != 4:
+        raise ValueError("A avaliação deve usar exclusivamente as quatro métricas oficiais do JudgeAI.")
+
+    parsed_by_key = {}
+    for item in parsed["notas"]:
+        if not isinstance(item, dict):
+            raise ValueError("Cada nota do JudgeAI deve ser um objeto JSON.")
+        key = judge_metric_key(item.get("metrica"))
+        if key is None:
+            raise ValueError(f"Métrica inesperada na resposta do JudgeAI: {item.get('metrica') or '(vazia)' }.")
+        if key in parsed_by_key:
+            raise ValueError(f"A métrica {expected[key].nome} foi retornada mais de uma vez.")
+
         nota = item.get("nota")
+        if isinstance(nota, bool) or not isinstance(nota, (int, float)) or int(nota) != nota:
+            raise ValueError(f"A nota de {expected[key].nome} deve ser um número inteiro entre 1 e 5.")
+        nota = int(nota)
+        if nota < 1 or nota > 5:
+            raise ValueError(f"A nota de {expected[key].nome} está fora da escala de 1 a 5.")
 
-        if nota is None:
-            match = re.search(rf"{re.escape(metrica.nome)}\s*[:=-]\s*(\d+)", raw_text or "", re.IGNORECASE)
-            nota = int(match.group(1)) if match else None
-
-        try:
-            nota = int(nota) if nota is not None else None
-        except (TypeError, ValueError):
-            nota = None
-
-        maximo = _metric_max(metrica)
-        if nota is not None:
-            nota = max(0, min(nota, maximo))
-
-        resultado.append({
-            "metrica": metrica.nome,
+        justificativa_metrica = item.get("justificativa")
+        if not isinstance(justificativa_metrica, str) or not justificativa_metrica.strip():
+            raise ValueError(f"A justificativa de {expected[key].nome} não foi informada.")
+        parsed_by_key[key] = {
             "nota": nota,
-            "max": maximo,
-            "justificativa": item.get("justificativa") or ""
-        })
+            "justificativa": justificativa_metrica.strip(),
+        }
 
-    if not justificativa:
-        match = re.search(r"Justificativa\s*[:=-]\s*([\s\S]+)", raw_text or "", re.IGNORECASE)
-        justificativa = match.group(1).strip() if match else _text_preview(raw_text, 500)
+    missing = [
+        expected[key].nome
+        for key in JUDGE_METRIC_KEYS
+        if key not in parsed_by_key
+    ]
+    if missing:
+        raise ValueError(f"A avaliação não retornou todas as métricas: {', '.join(missing)}.")
+    if len(parsed_by_key) != 4:
+        raise ValueError("A avaliação deve retornar exatamente quatro notas.")
 
-    return resultado, justificativa
+    resultado = [
+        {
+            "metrica": expected[key].nome,
+            "nota": parsed_by_key[key]["nota"],
+            "max": 5,
+            "justificativa": parsed_by_key[key]["justificativa"],
+        }
+        for key in JUDGE_METRIC_KEYS
+    ]
+    justificativa = parsed.get("justificativa")
+    if not isinstance(justificativa, str) or not justificativa.strip():
+        justificativa = "Avaliação concluída com justificativas específicas para as quatro métricas."
+    return resultado, justificativa.strip()
 
 
 def _formatar_justificativa_avaliacao(texto, nota=None, maximo=5):
@@ -1377,48 +1270,46 @@ def _formatar_justificativa_avaliacao(texto, nota=None, maximo=5):
 
 
 def _salvar_avaliacoes_juiz(usuario, resposta, juiz, metricas, notas, justificativa):
-    metricas_por_nome = {metrica.nome.lower(): metrica for metrica in metricas}
-    AvaliacaoJuiz.objects.filter(
-        usuario=usuario,
-        juiz=juiz,
-        resposta=resposta,
-        metrica__in=metricas
-    ).delete()
+    metricas_por_chave = {judge_metric_key(metrica.nome): metrica for metrica in metricas}
+    notas_por_chave = {judge_metric_key(item.get("metrica")): item for item in notas}
+    if set(metricas_por_chave) != set(JUDGE_METRIC_KEYS) or set(notas_por_chave) != set(JUDGE_METRIC_KEYS):
+        raise ValueError("O JudgeAI só pode salvar as quatro métricas oficiais.")
 
-    for item in notas:
-        metrica = metricas_por_nome.get((item.get("metrica") or "").lower())
-        nota = item.get("nota")
-
-        if not metrica or nota is None:
-            continue
-
-        AvaliacaoJuiz.objects.update_or_create(
+    with transaction.atomic():
+        AvaliacaoJuiz.objects.filter(
             usuario=usuario,
             juiz=juiz,
             resposta=resposta,
-            metrica=metrica,
-            defaults={
-                "avaliacao_quanti": nota,
-                "avaliacao_quali": _formatar_justificativa_avaliacao(
-                    item.get("justificativa"),
-                    nota,
-                    _metric_max(metrica),
+            metrica__in=metricas,
+        ).delete()
+
+        for key in JUDGE_METRIC_KEYS:
+            metrica = metricas_por_chave[key]
+            item = notas_por_chave[key]
+            nota = item["nota"]
+            AvaliacaoJuiz.objects.create(
+                usuario=usuario,
+                juiz=juiz,
+                resposta=resposta,
+                metrica=metrica,
+                avaliacao_quanti=nota,
+                avaliacao_quali=_formatar_justificativa_avaliacao(
+                    item["justificativa"], nota, 5,
                 ),
-                "justificativa_geral": justificativa,
-                "erro": False,
-            }
-        )
+                justificativa_geral=justificativa,
+                erro=False,
+            )
 
 PUBLIC_CROSS_EVAL_MAX_TASKS = 40
 
 
 def _metricas_publicas_ativas():
-    return list(Metrica.objects.filter(usuario__isnull=True, ativa=True).order_by("id"))
+    return ensure_judge_metrics(None)
 
 
 def _public_judge_prompt(pergunta_publica, resposta_publica, juiz, metricas):
     metricas_txt = "\n".join(
-        f"- {m.nome} (0 a {_metric_max(m)}): {m.descricao or m.criterio_texto or 'Avalie este critério.'}"
+        f"- {m.nome} (1 a 5): {m.descricao or m.criterio_texto}"
         for m in metricas
     )
     respondente = resposta_publica.llm.nome if resposta_publica.llm else "LLM removida"
@@ -1427,13 +1318,13 @@ def _public_judge_prompt(pergunta_publica, resposta_publica, juiz, metricas):
         "O usuário final é leigo em cibersegurança. Avalie se a resposta de outro modelo é correta, clara, útil e segura para esse público.\n\n"
 
         "REGRAS DE AVALIAÇÃO:\n"
-        "1. Para CADA métrica listada abaixo, leia atentamente a DESCRIÇÃO da métrica. A descrição define o critério exato que você deve avaliar.\n"
-        "2. Avalie a resposta EXCLUSIVAMENTE com base no que a descrição da métrica pede. Não invente critérios próprios.\n"
-        "3. Se a descrição da métrica pede, por exemplo, 'clareza', avalie especificamente se a resposta é clara para um leigo. "
-        "Se pede 'segurança', avalie se a resposta não induz a práticas perigosas. Siga à risca o que está descrito.\n"
+        "1. Avalie EXATAMENTE estas quatro métricas, na escala inteira de 1 a 5: Completude, Acurácia, Diretividade e Clareza.\n"
+        "2. Não avalie nenhuma métrica além das quatro listadas.\n"
+        "3. Use a descrição de cada métrica para não misturar critérios nem justificativas.\n"
         "4. Antes de atribuir cada nota, releia a descrição da métrica e verifique se a resposta atende ou não ao que ela descreve.\n"
         "5. Evite viés de complacência: não dê notas altas por padrão. Se a resposta não atender ao critério descrito na métrica, a nota deve ser baixa.\n"
-        "6. Se a resposta for vazia, uma recusa (refusal), ou completamente fora do escopo, atribua nota mínima em todas as métricas.\n\n"
+        "6. Se a resposta for vazia, uma recusa ou completamente fora do escopo, atribua nota 1 nas quatro métricas.\n"
+        "7. Você está avaliando a resposta de OUTRO modelo. Nunca avalie uma resposta produzida por você mesmo.\n\n"
 
         "FORMATO DAS JUSTIFICATIVAS:\n"
         "- Escreva em português, entre 20 e 45 palavras por métrica.\n"
@@ -1445,12 +1336,12 @@ def _public_judge_prompt(pergunta_publica, resposta_publica, juiz, metricas):
         "Retorne SOMENTE um JSON válido, sem markdown, sem texto antes ou depois, sem blocos de código (```).\n"
         "{\n"
         '  "notas": [\n'
-        '    {"metrica": "Nome exato da métrica", "nota": 0, "justificativa": "Nota X/Y: frase completa explicando o motivo da nota com evidência da resposta."}\n'
+        '    {"metrica": "Nome exato da métrica", "nota": 1, "justificativa": "Frase completa explicando o motivo da nota com evidência da resposta."}\n'
         "  ],\n"
         '  "justificativa": "síntese geral em uma frase completa"\n'
         "}\n"
-        "- O campo 'nota' deve ser um número dentro da escala definida para cada métrica.\n"
-        "- A ordem das métricas no array 'notas' deve seguir a ordem em que foram apresentadas.\n\n"
+        "- O campo 'nota' deve ser um número inteiro entre 1 e 5.\n"
+        "- Retorne as quatro métricas, uma única vez cada, na ordem apresentada.\n\n"
 
         f"Juiz: {juiz.nome}\n\n"
         f"Métricas (nome, escala e DESCRIÇÃO — avalie conforme o descrito):\n{metricas_txt}\n\n"
@@ -1461,35 +1352,44 @@ def _public_judge_prompt(pergunta_publica, resposta_publica, juiz, metricas):
 
 
 def _salvar_avaliacoes_publicas(resposta_publica, juiz, metricas, notas, justificativa):
-    metricas_por_nome = {metrica.nome.lower(): metrica for metrica in metricas}
-    AvaliacaoPublicaLLM.objects.filter(
-        juiz=juiz,
-        resposta=resposta_publica,
-        metrica__in=metricas,
-    ).delete()
+    metricas_por_chave = {judge_metric_key(metrica.nome): metrica for metrica in metricas}
+    notas_por_chave = {judge_metric_key(item.get("metrica")): item for item in notas}
+    if set(metricas_por_chave) != set(JUDGE_METRIC_KEYS) or set(notas_por_chave) != set(JUDGE_METRIC_KEYS):
+        raise ValueError("O JudgeAI só pode salvar as quatro métricas oficiais.")
 
-    for item in notas:
-        metrica = metricas_por_nome.get((item.get("metrica") or "").lower())
-        nota = item.get("nota")
-
-        if not metrica or nota is None:
-            continue
-
-        AvaliacaoPublicaLLM.objects.update_or_create(
+    with transaction.atomic():
+        AvaliacaoPublicaLLM.objects.filter(
             juiz=juiz,
             resposta=resposta_publica,
-            metrica=metrica,
-            defaults={
-                "avaliacao_quanti": nota,
-                "avaliacao_quali": _formatar_justificativa_avaliacao(
-                    item.get("justificativa"),
-                    nota,
-                    _metric_max(metrica),
+            metrica__in=metricas,
+        ).delete()
+
+        for key in JUDGE_METRIC_KEYS:
+            metrica = metricas_por_chave[key]
+            item = notas_por_chave[key]
+            nota = item["nota"]
+            AvaliacaoPublicaLLM.objects.create(
+                juiz=juiz,
+                resposta=resposta_publica,
+                metrica=metrica,
+                avaliacao_quanti=nota,
+                avaliacao_quali=_formatar_justificativa_avaliacao(
+                    item["justificativa"], nota, 5,
                 ),
-                "justificativa_geral": justificativa,
-                "erro": False,
-            },
-        )
+                justificativa_geral=justificativa,
+                erro=False,
+            )
+
+
+def _same_llm_identity(respondente, juiz):
+    if respondente is None or juiz is None:
+        return False
+    if getattr(respondente, "pk", None) == getattr(juiz, "pk", None) and type(respondente) is type(juiz):
+        return True
+    # Duas configurações do mesmo modelo continuam sendo a mesma LLM, mesmo com chaves distintas.
+    return normalize_metric_name(getattr(respondente, "nome", "")) == normalize_metric_name(
+        getattr(juiz, "nome", "")
+    )
 
 
 def _executar_avaliacao_cruzada_publica(pergunta_publica, respostas_publicas, juizes, metricas):
@@ -1503,7 +1403,7 @@ def _executar_avaliacao_cruzada_publica(pergunta_publica, respostas_publicas, ju
     tarefas = []
     for resposta_publica in respostas_validas:
         for juiz in juizes:
-            if resposta_publica.llm_id == juiz.id:
+            if _same_llm_identity(resposta_publica.llm, juiz):
                 continue
             tarefas.append((resposta_publica, juiz))
 
@@ -1518,7 +1418,7 @@ def _executar_avaliacao_cruzada_publica(pergunta_publica, respostas_publicas, ju
         futures = {}
         for resposta_publica, juiz in tarefas_limitadas:
             prompt = _public_judge_prompt(pergunta_publica, resposta_publica, juiz, metricas)
-            futures[executor.submit(_judgeai_call_configured_llm, juiz, prompt)] = (resposta_publica, juiz)
+            futures[executor.submit(_call_llm_in_worker, juiz, prompt)] = (resposta_publica, juiz)
 
         for future in as_completed(futures):
             resposta_publica, juiz = futures[future]
@@ -1528,6 +1428,11 @@ def _executar_avaliacao_cruzada_publica(pergunta_publica, respostas_publicas, ju
                 _salvar_avaliacoes_publicas(resposta_publica, juiz, metricas, notas, justificativa)
                 resultados.append({"erro": False, "notas": notas})
             except Exception as exc:
+                logger.exception(
+                    "Falha no JudgeAI público resposta_id=%s juiz_id=%s",
+                    resposta_publica.id,
+                    juiz.id,
+                )
                 resultados.append({"erro": True, "mensagem": str(exc), "notas": []})
 
     notas_total = sum(
@@ -1537,12 +1442,24 @@ def _executar_avaliacao_cruzada_publica(pergunta_publica, respostas_publicas, ju
     )
     erros = sum(1 for item in resultados if item.get("erro"))
 
+    status = "ok"
+    if erros and notas_total:
+        status = "parcial"
+    elif erros:
+        status = "erro"
+    elif not notas_total:
+        status = "sem_notas"
+
     return {
-        "status": "ok" if notas_total else "sem_notas",
+        "status": status,
         "total": len(resultados),
         "notas_total": notas_total,
         "erros": erros,
         "limitado": limitou,
+        "mensagem": (
+            "A resposta foi gerada, mas uma ou mais avaliações automáticas falharam."
+            if erros else "Avaliação cruzada concluída."
+        ),
     }
 
 
@@ -1605,13 +1522,22 @@ def _tabela_avaliacoes_publicas(resposta_ids, limite=None):
         AvaliacaoPublicaLLM.objects
         .filter(resposta_id__in=resposta_ids, erro=False, avaliacao_quanti__isnull=False)
         .select_related("juiz", "resposta__llm", "metrica")
-        .order_by("resposta_id", "juiz__nome", "metrica__nome")
+        .order_by("resposta_id", "juiz__nome")
+    )
+    metric_order = {name: index for index, name in enumerate(JUDGE_METRIC_NAMES)}
+    avaliacoes = sorted(
+        qs,
+        key=lambda item: (
+            item.resposta_id,
+            item.juiz.nome if item.juiz else "",
+            metric_order.get(item.metrica.nome if item.metrica else "", 99),
+        ),
     )
     if limite:
-        qs = qs[:limite]
+        avaliacoes = avaliacoes[:limite]
 
     linhas = []
-    for avaliacao in qs:
+    for avaliacao in avaliacoes:
         maximo = _metric_max(avaliacao.metrica) if avaliacao.metrica else 5
         linhas.append({
             "resposta_id": avaliacao.resposta_id,
@@ -1667,12 +1593,7 @@ def juizes_executar_avaliacao(request):
     if not judge_ids:
         return JsonResponse({"status": "erro", "mensagem": _("Selecione ao menos um juiz online.")}, status=400)
 
-    metricas = list(Metrica.objects.filter(usuario=request.user, ativa=True).order_by("id"))
-    if not metricas:
-        return JsonResponse({
-            "status": "erro",
-            "mensagem": _("Nenhuma métrica ativa encontrada. Configure métricas no Setup antes de avaliar.")
-        }, status=400)
+    metricas = ensure_judge_metrics(request.user)
 
     respostas = list(
         Resposta.objects
@@ -1701,7 +1622,7 @@ def juizes_executar_avaliacao(request):
     tarefas = []
     for resposta in respostas:
         for juiz in juizes:
-            if resposta.llm_id and resposta.llm_id == juiz.id:
+            if _same_llm_identity(resposta.llm, juiz):
                 continue
             tarefas.append((resposta.questao, resposta, juiz))
 
@@ -1722,7 +1643,7 @@ def juizes_executar_avaliacao(request):
         futures = {}
         for questao, resposta, juiz in tarefas:
             prompt = _judgeai_prompt(questao, resposta, juiz, metricas)
-            futures[executor.submit(_judgeai_call_configured_llm, juiz, prompt)] = (questao, resposta, juiz)
+            futures[executor.submit(_call_llm_in_worker, juiz, prompt)] = (questao, resposta, juiz)
 
         for future in as_completed(futures):
             questao, resposta, juiz = futures[future]
@@ -1743,14 +1664,26 @@ def juizes_executar_avaliacao(request):
                     "erro": False,
                 })
             except Exception as exc:
+                logger.exception(
+                    "Falha no JudgeAI de pesquisador usuario_id=%s resposta_id=%s juiz_id=%s",
+                    request.user.id,
+                    resposta.id,
+                    juiz.id,
+                )
                 resultados.append(_judgeai_error_result(questao, resposta, juiz, str(exc)))
 
     resultados.sort(key=lambda item: (item["questao_id"], item["modelo_respondente"], item["modelo_juiz"]))
 
+    erros_total = sum(1 for item in resultados if item.get("erro"))
     return JsonResponse({
-        "status": "ok",
+        "status": "parcial" if erros_total else "ok",
         "total": len(resultados),
         "notas_total": sum(len(item.get("notas", [])) for item in resultados if not item.get("erro")),
+        "erros_total": erros_total,
+        "mensagem": (
+            _("Uma ou mais avaliações falharam. Consulte o resultado de cada par.")
+            if erros_total else _("Avaliação concluída.")
+        ),
         "resultados": resultados,
     })
 
@@ -1800,16 +1733,29 @@ def avaliacao_respostas(request, formulario_id, questao_id):
     questao = get_object_or_404(Questao, id=questao_id, usuario=request.user)
     
     respostas = Resposta.objects.filter(questao=questao)
-    metricas = Metrica.objects.filter(usuario=request.user, ativa=True)
+    metricas = ensure_judge_metrics(request.user)
 
     if request.method == 'POST':
-        data = json.loads(request.body)
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({'status': 'erro', 'mensagem': _('JSON inválido.')}, status=400)
+        metrica_ids = {metrica.id for metrica in metricas}
+        resposta_ids = set(respostas.values_list("id", flat=True))
         for item in data:
+            if item.get('metrica_id') not in metrica_ids or item.get('resposta_id') not in resposta_ids:
+                return JsonResponse({'status': 'erro', 'mensagem': _('Avaliação contém uma resposta ou métrica inválida.')}, status=400)
+            try:
+                nota = int(item.get('quanti'))
+            except (TypeError, ValueError):
+                return JsonResponse({'status': 'erro', 'mensagem': _('A nota deve ser um inteiro entre 1 e 5.')}, status=400)
+            if nota < 1 or nota > 5:
+                return JsonResponse({'status': 'erro', 'mensagem': _('A nota deve estar entre 1 e 5.')}, status=400)
             Avaliacao.objects.create(
                 usuario=request.user,
                 resposta_id=item['resposta_id'],
                 metrica_id=item['metrica_id'],
-                avaliacao_quanti=item.get('quanti'),
+                avaliacao_quanti=nota,
                 avaliacao_quali=item.get('quali'),
             )
         return JsonResponse({'status': 'ok'})
@@ -1884,7 +1830,7 @@ def responder_avaliacao_publica(request, formulario_id):
         id=formulario_id
     )
     
-    metricas = list(Metrica.objects.filter(usuario_id=formulario.usuario_id, ativa=True))
+    metricas = ensure_judge_metrics(formulario.usuario)
 
     escala_padrao = [
         ('😞', _('Muito Ruim')),
@@ -2024,12 +1970,12 @@ def responder_avaliacao_publica(request, formulario_id):
 
 @login_required
 def dashboard_avaliacoes(request):
-    metricas = list(
-        Metrica.objects
-        .filter(usuario=request.user, ativa=True)
-        .order_by("id")
-        .values("id", "nome", "pontuacao_maxima")
-    )
+    metricas_obj = ensure_judge_metrics(request.user)
+    metricas = [
+        {"id": metrica.id, "nome": metrica.nome, "pontuacao_maxima": 5}
+        for metrica in metricas_obj
+    ]
+    metrica_ids = [metrica["id"] for metrica in metricas]
     llms = list(
         LLM.objects
         .filter(usuario=request.user)
@@ -2043,7 +1989,7 @@ def dashboard_avaliacoes(request):
         (item["metrica_id"], item["resposta__llm_id"]): item
         for item in (
             AvaliacaoFormulario.objects
-            .filter(usuario=request.user, avaliacao_quanti__isnull=False)
+            .filter(usuario=request.user, metrica_id__in=metrica_ids, avaliacao_quanti__isnull=False)
             .values("metrica_id", "resposta__llm_id")
             .annotate(media=Avg("avaliacao_quanti"), total=Count("id"))
         )
@@ -2052,7 +1998,7 @@ def dashboard_avaliacoes(request):
         (item["metrica_id"], item["resposta__llm_id"]): item
         for item in (
             AvaliacaoJuiz.objects
-            .filter(usuario=request.user, avaliacao_quanti__isnull=False, erro=False)
+            .filter(usuario=request.user, metrica_id__in=metrica_ids, avaliacao_quanti__isnull=False, erro=False)
             .values("metrica_id", "resposta__llm_id")
             .annotate(media=Avg("avaliacao_quanti"), total=Count("id"))
         )
@@ -2177,7 +2123,7 @@ def juizes_comparador(request):
         .order_by("-id")
     )
     llms = list(LLM.objects.filter(usuario=request.user, ativo=True).order_by("nome"))
-    metricas = list(Metrica.objects.filter(usuario=request.user, ativa=True).order_by("id"))
+    metricas = ensure_judge_metrics(request.user)
     categorias = Categoria.objects.filter(usuario=request.user).order_by("nome_categoria")
 
     questoes_data = []
@@ -2300,10 +2246,11 @@ def admin_pondersec_logout(request):
 
 @admin_required
 def admin_pondersec_home(request):
+    metricas_publicas = ensure_judge_metrics(None)
     total_llms = LLMPublica.objects.count()
     llms_ativas = LLMPublica.objects.filter(ativo=True).count()
-    total_metricas_publicas = Metrica.objects.filter(usuario__isnull=True).count()
-    metricas_publicas_ativas = Metrica.objects.filter(usuario__isnull=True, ativa=True).count()
+    total_metricas_publicas = len(metricas_publicas)
+    metricas_publicas_ativas = len(metricas_publicas)
     total_perguntas_publicas = PerguntaPublica.objects.count()
     total_avaliacoes_publicas = AvaliacaoPublicaLLM.objects.filter(
         erro=False,
@@ -2331,28 +2278,14 @@ def _normalizar_pontuacao_publica(valor):
 @admin_required
 def admin_pondersec_metricas_publicas(request):
     if request.method == "POST":
-        nome = (request.POST.get("nome") or "").strip()
-        descricao = (request.POST.get("descricao") or "").strip()
-        criterio_texto = (request.POST.get("criterio_texto") or "").strip()
-        pontuacao_maxima = _normalizar_pontuacao_publica(request.POST.get("pontuacao_maxima"))
-
-        if not nome:
-            django_messages.error(request, "Nome da métrica é obrigatório.")
-            return redirect("admin_pondersec_metricas_publicas")
-
-        Metrica.objects.create(
-            usuario=None,
-            nome=nome,
-            descricao=descricao,
-            tipo="quantitativa",
-            pontuacao_maxima=pontuacao_maxima,
-            criterio_texto=criterio_texto,
-            ativa=True,
+        ensure_judge_metrics(None)
+        django_messages.error(
+            request,
+            "As métricas públicas são fixas: Completude, Acurácia, Diretividade e Clareza (1 a 5).",
         )
-        django_messages.success(request, f"Métrica pública '{nome}' criada.")
         return redirect("admin_pondersec_metricas_publicas")
 
-    metricas = Metrica.objects.filter(usuario__isnull=True).order_by("-id")
+    metricas = ensure_judge_metrics(None)
     return render(request, "admin_pondersec/metricas_publicas.html", {
         "admin": request.admin_pondersec,
         "metricas": metricas,
@@ -2362,58 +2295,39 @@ def admin_pondersec_metricas_publicas(request):
 @admin_required
 @require_http_methods(["PUT"])
 def admin_pondersec_metrica_publica_editar(request, id):
-    try:
-        dados = json.loads(request.body or "{}")
-    except json.JSONDecodeError:
-        return JsonResponse({"status": "erro", "mensagem": "JSON inválido."}, status=400)
-
-    metrica = get_object_or_404(Metrica, id=id, usuario__isnull=True)
-    nome = (dados.get("nome") or "").strip()
-    descricao = (dados.get("descricao") or "").strip()
-    criterio_texto = (dados.get("criterio_texto") or "").strip()
-
-    if not nome:
-        return JsonResponse({"status": "erro", "mensagem": "Nome da métrica é obrigatório."}, status=400)
-
-    metrica.nome = nome
-    metrica.descricao = descricao
-    metrica.criterio_texto = criterio_texto
-    metrica.pontuacao_maxima = _normalizar_pontuacao_publica(dados.get("pontuacao_maxima"))
-    if isinstance(dados.get("ativa"), bool):
-        metrica.ativa = dados["ativa"]
-    metrica.save()
-    return JsonResponse({"status": "ok", "mensagem": "Métrica atualizada."})
+    ensure_judge_metrics(None)
+    return JsonResponse({
+        "status": "erro",
+        "mensagem": "As quatro métricas oficiais e a escala de 1 a 5 são fixas.",
+    }, status=409)
 
 
 @admin_required
 @require_http_methods(["DELETE"])
 def admin_pondersec_metrica_publica_deletar(request, id):
-    deleted, _ = Metrica.objects.filter(id=id, usuario__isnull=True).delete()
-    if not deleted:
-        return JsonResponse({"status": "erro", "mensagem": "Métrica não encontrada."}, status=404)
-    return JsonResponse({"status": "ok", "mensagem": "Métrica removida."})
+    ensure_judge_metrics(None)
+    return JsonResponse({
+        "status": "erro",
+        "mensagem": "As quatro métricas oficiais não podem ser removidas.",
+    }, status=409)
 
 
 @admin_required
 @require_http_methods(["POST"])
 def admin_pondersec_metrica_publica_toggle(request, id):
-    try:
-        metrica = Metrica.objects.get(id=id, usuario__isnull=True)
-    except Metrica.DoesNotExist:
-        return JsonResponse({"status": "erro", "mensagem": "Métrica não encontrada."}, status=404)
-    metrica.ativa = not metrica.ativa
-    metrica.save(update_fields=["ativa"])
-    return JsonResponse({"status": "ok", "ativa": metrica.ativa})
+    ensure_judge_metrics(None)
+    return JsonResponse({
+        "status": "erro",
+        "mensagem": "As quatro métricas oficiais devem permanecer ativas.",
+    }, status=409)
 
 
 @admin_required
 def admin_pondersec_avaliacoes_publicas(request):
-    metricas = list(
-        Metrica.objects
-        .filter(usuario__isnull=True, ativa=True)
-        .order_by("id")
-        .values("id", "nome", "pontuacao_maxima")
-    )
+    metricas = [
+        {"id": metrica.id, "nome": metrica.nome, "pontuacao_maxima": 5}
+        for metrica in ensure_judge_metrics(None)
+    ]
     llms = list(
         LLMPublica.objects
         .order_by("nome")
@@ -2567,16 +2481,28 @@ def admin_pondersec_llm_publica_editar(request, id):
     descricao = dados.get("descricao")
     ativo = dados.get("ativo")
 
-    if not nome or not api_key:
-        return JsonResponse({"status": "erro", "mensagem": "Nome e API key são obrigatórios."}, status=400)
+    if not nome:
+        return JsonResponse({"status": "erro", "mensagem": "Nome do modelo é obrigatório."}, status=400)
 
     llm.nome = nome
-    llm.api_key = api_key
+    fields = ["nome"]
+    if api_key:
+        llm.api_key = api_key
+        fields.append("api_key")
     if descricao is not None:
         llm.descricao = descricao.strip()
+        fields.append("descricao")
     if isinstance(ativo, bool):
         llm.ativo = ativo
-    llm.save()
+        fields.append("ativo")
+    llm.save(update_fields=fields)
+    logger.info(
+        "Configuração LLM pública atualizada admin_id=%s llm_id=%s model=%s key_updated=%s",
+        request.admin_pondersec.id,
+        llm.id,
+        llm.nome,
+        bool(api_key),
+    )
     return JsonResponse({"status": "ok", "mensagem": "LLM atualizada."})
 
 

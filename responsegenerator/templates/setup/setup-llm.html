@@ -357,7 +357,7 @@ body::before {
                                 </div>
                             </div>
                             <div class="metric-actions">
-                                <button class="btn-icon btn-edit" title="{% translate 'Editar' %}" onclick="editarLLM('{{ llm.id }}', '{{ llm.nome|escapejs }}', '{{ llm.api_key|escapejs }}')">
+                                <button class="btn-icon btn-edit" title="{% translate 'Editar' %}" onclick="editarLLM('{{ llm.id }}', '{{ llm.nome|escapejs }}', '{{ llm.descricao|default:''|escapejs }}')">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                                         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
@@ -464,11 +464,11 @@ body::before {
             ],
             "Groq": [
                 { value: "llama-3.3-70b-versatile", label: "Llama 3.3 70B (Versatile)" },
-                { value: "mixtral-8x7b-32768", label: "Mixtral 8x7B" }
+                { value: "llama-3.1-8b-instant", label: "Llama 3.1 8B (Instant)" }
             ],
             "Gemini": [
                 { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash" },
-                { value: "gemini-1.5-pro", label: "Gemini 1.5 Pro" }
+                { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro" }
             ],
             "DeepSeek": [
                 { value: "deepseek-v4-pro", label: "DeepSeek V4 Pro" },
@@ -534,21 +534,27 @@ body::before {
             
             document.getElementById('fId').value = '';
             document.getElementById('fProvider').value = '';
-            document.getElementById('fApiKey').value = '';
+            const apiKeyInput = document.getElementById('fApiKey');
+            apiKeyInput.value = '';
+            apiKeyInput.required = true;
+            apiKeyInput.placeholder = '{% translate "Cole sua chave aqui..." %}';
             atualizarModelos();
 
             modalOverlay.classList.add('active');
         }
 
-        function editarLLM(id, nome, api_key) {
+        function editarLLM(id, nome, provedorAtual) {
             modoEditar = true;
             document.getElementById('modalTitulo').textContent = '{% translate "Editar LLM" %}';
             document.getElementById('btnSalvarLabel').textContent = '{% translate "Salvar Alterações" %}';
 
             document.getElementById('fId').value = id;
-            document.getElementById('fApiKey').value = api_key;
+            const apiKeyInput = document.getElementById('fApiKey');
+            apiKeyInput.value = '';
+            apiKeyInput.required = false;
+            apiKeyInput.placeholder = '{% translate "Deixe em branco para manter a chave atual" %}';
             
-            const provedor = descobrirProvedorPorModelo(nome);
+            const provedor = provedorAtual || descobrirProvedorPorModelo(nome);
             document.getElementById("fProvider").value = provedor;
             atualizarModelos();
             document.getElementById("fModel").value = nome;
@@ -570,7 +576,8 @@ body::before {
                 
                 const id = document.getElementById("fId").value;
                 const nome = document.getElementById("fModel").value;
-                const api_key = document.getElementById("fApiKey").value;
+            const api_key = document.getElementById("fApiKey").value;
+            const descricao = document.getElementById("fProvider").value;
                 
                 fetch(`/api/llm/${id}/edit/`, {
                     method: "PUT",
@@ -578,7 +585,7 @@ body::before {
                         "Content-Type": "application/json",
                         "X-CSRFToken": getCSRFToken()
                     },
-                    body: JSON.stringify({ nome, api_key })
+                    body: JSON.stringify({ nome, descricao, api_key })
                 })
                 .then(res => res.json())
                 .then(data => {

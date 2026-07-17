@@ -2097,11 +2097,17 @@ function reconsultarIaFaltante(questaoId, btn) {
       if (fakeBtn) abrirModalDetalhes(fakeBtn);
       btn.style.display = "none";
     } else {
-      btn.textContent = data.mensagem || "{% translate 'Erro ao consultar IA' %}";
+      const detalhes = (data.erros || [])
+        .map(item => `${item.modelo || 'LLM'}: ${item.mensagem || item}`)
+        .join(' · ');
+      btn.textContent = detalhes || data.mensagem || "{% translate 'Erro ao consultar IA' %}";
+      btn.title = btn.textContent;
+      btn.disabled = false;
     }
   })
-  .catch(() => {
-    btn.textContent = "{% translate 'Erro de rede' %}";
+  .catch((error) => {
+    btn.textContent = error.message || "{% translate 'Erro de rede' %}";
+    btn.disabled = false;
   });
 }
 

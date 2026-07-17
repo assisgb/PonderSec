@@ -1,8 +1,8 @@
 django
 psycopg2-binary
-google-genai
-groq
-openai
+google-genai>=2.12.1,<3.0
+groq>=1.5.0,<2.0
+openai>=2.46.0,<3.0
 python-dotenv
 aiohttp
 django-extensions

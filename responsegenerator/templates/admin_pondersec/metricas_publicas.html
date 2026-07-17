@@ -158,32 +158,14 @@
 
         <div class="layout">
             <section class="panel">
-                <div class="section-kicker">{% translate "Nova Métrica" %}</div>
-                <form method="POST" action="{% url 'admin_pondersec_metricas_publicas' %}">
-                    {% csrf_token %}
-                    <div class="field-group">
-                        <label class="field-label" for="nome">{% translate "Nome" %}</label>
-                        <input class="field-input" id="nome" name="nome" maxlength="100" required placeholder="{% translate 'Ex.: Clareza' %}">
-                    </div>
-                    <div class="field-group">
-                        <label class="field-label" for="pontuacao_maxima">{% translate "Pontuação Máxima" %}</label>
-                        <select class="field-select" id="pontuacao_maxima" name="pontuacao_maxima">
-                            <option value="5">5</option>
-                            <option value="4">4</option>
-                            <option value="3">3</option>
-                            <option value="2">2</option>
-                        </select>
-                    </div>
-                    <div class="field-group">
-                        <label class="field-label" for="descricao">{% translate "Descrição" %}</label>
-                        <textarea class="field-area" id="descricao" name="descricao" placeholder="{% translate 'Explique o que a LLM juíza deve observar.' %}"></textarea>
-                    </div>
-                    <div class="field-group">
-                        <label class="field-label" for="criterio_texto">{% translate "Critério Detalhado" %}</label>
-                        <textarea class="field-area" id="criterio_texto" name="criterio_texto" placeholder="{% translate 'Opcional: detalhe sinais de boa ou má resposta.' %}"></textarea>
-                    </div>
-                    <button class="btn btn-primary" type="submit">{% translate "Adicionar Métrica" %}</button>
-                </form>
+                <div class="section-kicker">{% translate "Configuração oficial" %}</div>
+                <p class="metric-desc">
+                    {% translate "O JudgeAI usa exclusivamente quatro métricas fixas. Todas recebem notas inteiras de 1 a 5 para manter avaliações públicas e de pesquisadores comparáveis." %}
+                </p>
+                <div class="metric-meta">
+                    <span class="badge badge-on">{% translate "4 métricas obrigatórias" %}</span>
+                    <span class="badge badge-score">{% translate "Escala 1–5" %}</span>
+                </div>
             </section>
 
             <section class="panel">
@@ -209,9 +191,7 @@
                                 </div>
                             </div>
                             <div class="metric-actions">
-                                <button class="btn-icon" title="{% if metrica.ativa %}{% translate 'Desativar' %}{% else %}{% translate 'Ativar' %}{% endif %}" onclick="toggleMetrica({{ metrica.id }})">⏻</button>
-                                <button class="btn-icon" title="{% translate 'Editar' %}" onclick="abrirEditar({{ metrica.id }}, '{{ metrica.nome|escapejs }}', '{{ metrica.descricao|default:''|escapejs }}', '{{ metrica.criterio_texto|default:''|escapejs }}', {{ metrica.pontuacao_maxima|default:5 }}, {{ metrica.ativa|yesno:'true,false' }})">✎</button>
-                                <button class="btn-icon danger" title="{% translate 'Remover' %}" onclick="deletarMetrica({{ metrica.id }}, '{{ metrica.nome|escapejs }}')">×</button>
+                                <span class="badge badge-on">{% translate "Fixa" %}</span>
                             </div>
                         </article>
                     {% empty %}
@@ -222,132 +202,8 @@
         </div>
     </div>
 
-    <div class="modal-overlay" id="modalEdit">
-        <div class="modal">
-            <div class="modal-header">
-                <div>
-                    <div class="badge-admin">{% translate "Configuração" %}</div>
-                    <div class="modal-title">{% translate "Editar Métrica Pública" %}</div>
-                </div>
-                <button class="modal-close" onclick="fecharModal()" type="button">×</button>
-            </div>
-            <form id="formEdit" onsubmit="salvarEdicao(event)">
-                <input type="hidden" id="editId">
-                <div class="field-group">
-                    <label class="field-label" for="editNome">{% translate "Nome" %}</label>
-                    <input class="field-input" id="editNome" required maxlength="100">
-                </div>
-                <div class="field-group">
-                    <label class="field-label" for="editPontuacao">{% translate "Pontuação Máxima" %}</label>
-                    <select class="field-select" id="editPontuacao">
-                        <option value="5">5</option>
-                        <option value="4">4</option>
-                        <option value="3">3</option>
-                        <option value="2">2</option>
-                    </select>
-                </div>
-                <div class="field-group">
-                    <label class="field-label" for="editDescricao">{% translate "Descrição" %}</label>
-                    <textarea class="field-area" id="editDescricao"></textarea>
-                </div>
-                <div class="field-group">
-                    <label class="field-label" for="editCriterio">{% translate "Critério Detalhado" %}</label>
-                    <textarea class="field-area" id="editCriterio"></textarea>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-ghost" onclick="fecharModal()">{% translate "Cancelar" %}</button>
-                    <button type="submit" class="btn btn-primary">{% translate "Salvar alterações" %}</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <script>
-        const URL_EDITAR = (id) => `/admin-pondersec/metricas-publicas/${id}/editar/`;
-        const URL_DELETAR = (id) => `/admin-pondersec/metricas-publicas/${id}/deletar/`;
-        const URL_TOGGLE = (id) => `/admin-pondersec/metricas-publicas/${id}/toggle/`;
-
-        function csrfToken() {
-            const el = document.querySelector('[name=csrfmiddlewaretoken]');
-            return el ? el.value : '';
-        }
-        function toast(msg, type = 'success') {
-            let container = document.getElementById('toast-container');
-            if (!container) {
-                container = document.createElement('div');
-                container.id = 'toast-container';
-                document.body.appendChild(container);
-            }
-            const t = document.createElement('div');
-            t.className = 'toast ' + type;
-            t.textContent = msg;
-            container.appendChild(t);
-            setTimeout(() => t.remove(), 3500);
-        }
-        function abrirEditar(id, nome, descricao, criterio, pontuacao, ativa) {
-            document.getElementById('editId').value = id;
-            document.getElementById('editNome').value = nome;
-            document.getElementById('editDescricao').value = descricao;
-            document.getElementById('editCriterio').value = criterio;
-            document.getElementById('editPontuacao').value = String(pontuacao || 5);
-            document.getElementById('modalEdit').dataset.ativa = ativa ? 'true' : 'false';
-            document.getElementById('modalEdit').classList.add('active');
-        }
-        function fecharModal() {
-            document.getElementById('modalEdit').classList.remove('active');
-        }
-        async function salvarEdicao(ev) {
-            ev.preventDefault();
-            const id = document.getElementById('editId').value;
-            const payload = {
-                nome: document.getElementById('editNome').value.trim(),
-                descricao: document.getElementById('editDescricao').value.trim(),
-                criterio_texto: document.getElementById('editCriterio').value.trim(),
-                pontuacao_maxima: document.getElementById('editPontuacao').value,
-                ativa: document.getElementById('modalEdit').dataset.ativa === 'true',
-            };
-            try {
-                const resp = await fetch(URL_EDITAR(id), {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken(), 'X-Requested-With': 'XMLHttpRequest' },
-                    body: JSON.stringify(payload),
-                });
-                const data = await resp.json();
-                if (!resp.ok || data.status !== 'ok') throw new Error(data.mensagem || '{% translate "Falha ao salvar." %}');
-                fecharModal();
-                toast('{% translate "Métrica atualizada." %}');
-                setTimeout(() => location.reload(), 600);
-            } catch (e) {
-                toast(e.message, 'error');
-            }
-        }
-        async function toggleMetrica(id) {
-            try {
-                const resp = await fetch(URL_TOGGLE(id), { method: 'POST', headers: { 'X-CSRFToken': csrfToken(), 'X-Requested-With': 'XMLHttpRequest' } });
-                const data = await resp.json();
-                if (!resp.ok || data.status !== 'ok') throw new Error(data.mensagem || '{% translate "Falha ao alternar." %}');
-                toast(data.ativa ? '{% translate "Métrica ativada." %}' : '{% translate "Métrica desativada." %}');
-                setTimeout(() => location.reload(), 500);
-            } catch (e) {
-                toast(e.message, 'error');
-            }
-        }
-        async function deletarMetrica(id, nome) {
-            if (!confirm(`{% translate "Remover a métrica" %} "${nome}"?`)) return;
-            try {
-                const resp = await fetch(URL_DELETAR(id), { method: 'DELETE', headers: { 'X-CSRFToken': csrfToken(), 'X-Requested-With': 'XMLHttpRequest' } });
-                const data = await resp.json();
-                if (!resp.ok || data.status !== 'ok') throw new Error(data.mensagem || '{% translate "Falha ao remover." %}');
-                toast('{% translate "Métrica removida." %}');
-                setTimeout(() => location.reload(), 600);
-            } catch (e) {
-                toast(e.message, 'error');
-            }
-        }
         document.querySelectorAll('#toast-container .toast').forEach(t => setTimeout(() => t.remove(), 3500));
-        document.getElementById('modalEdit').addEventListener('click', function(e) {
-            if (e.target === this) fecharModal();
-        });
     </script>
 </body>
 </html>

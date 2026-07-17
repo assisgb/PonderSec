@@ -179,6 +179,17 @@ class Avaliacao(models.Model):
     avaliacao_quali = models.TextField(blank=True, null=True)
     avaliacao_quanti = models.IntegerField(blank=True, null=True)
 
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    models.Q(avaliacao_quanti__isnull=True)
+                    | models.Q(avaliacao_quanti__gte=1, avaliacao_quanti__lte=5)
+                ),
+                name="research_score_between_1_and_5",
+            ),
+        ]
+
     def __str__(self):
         return f"{self.usuario} - {self.resposta}"
 
@@ -236,6 +247,17 @@ class AvaliacaoFormulario(models.Model):
     avaliacao_quali = models.TextField(blank=True, null=True)
     avaliacao_quanti = models.IntegerField(blank=True, null=True)
 
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    models.Q(avaliacao_quanti__isnull=True)
+                    | models.Q(avaliacao_quanti__gte=1, avaliacao_quanti__lte=5)
+                ),
+                name="form_score_between_1_and_5",
+            ),
+        ]
+
     def __str__(self):
         nome_valiador = self.usuario.username if self.usuario else self.avaliador.nome
         return f"{nome_valiador} - {self.resposta}"
@@ -256,6 +278,15 @@ class AvaliacaoJuiz(models.Model):
     class Meta:
         ordering = ['-atualizado_em']
         unique_together = ('usuario', 'juiz', 'resposta', 'metrica')
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    models.Q(avaliacao_quanti__isnull=True)
+                    | models.Q(avaliacao_quanti__gte=1, avaliacao_quanti__lte=5)
+                ),
+                name="judge_score_between_1_and_5",
+            ),
+        ]
 
     def __str__(self):
         nome_juiz = self.juiz.nome if self.juiz else 'Juiz removido'
@@ -289,6 +320,15 @@ class AvaliacaoPublicaLLM(models.Model):
         verbose_name_plural = "Avaliações Públicas por LLM"
         ordering = ["-atualizado_em"]
         unique_together = ("juiz", "resposta", "metrica")
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    models.Q(avaliacao_quanti__isnull=True)
+                    | models.Q(avaliacao_quanti__gte=1, avaliacao_quanti__lte=5)
+                ),
+                name="public_judge_score_between_1_and_5",
+            ),
+        ]
 
     def __str__(self):
         nome_juiz = self.juiz.nome if self.juiz else "Juiz removido"

@@ -649,7 +649,7 @@ function renderMetrics(){
     return;
   }
   els.metricList.innerHTML = metricas.map(m => `
-    <span class="chip good">${escapeHtml(m.nome)} · 0-${m.max}</span>
+    <span class="chip good">${escapeHtml(m.nome)} · 1-5</span>
   `).join("");
 }
 
@@ -784,11 +784,15 @@ async function runEvaluation(){
       })
     });
     const data = await response.json();
-    if(!response.ok || data.status !== "ok"){
+    if(!response.ok || !["ok", "parcial"].includes(data.status)){
       throw new Error(data.mensagem || "{% translate 'Erro ao executar avaliação.' %}");
     }
     renderResults(data.resultados || []);
-    setStatus(`${data.total || 0} {% translate "pares avaliados" %} · ${data.notas_total || 0} {% translate "notas geradas · dashboard comparativo atualizado." %}`);
+    if(data.status === "parcial"){
+      setStatus(data.mensagem || "{% translate 'Uma ou mais avaliações falharam.' %}", "error");
+    }else{
+      setStatus(`${data.total || 0} {% translate "pares avaliados" %} · ${data.notas_total || 0} {% translate "notas geradas · dashboard comparativo atualizado." %}`);
+    }
   }catch(error){
     setStatus(error.message, "error");
   }finally{

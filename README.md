@@ -62,6 +62,29 @@ O sistema iniciará automaticamente os serviços definidos no `docker-compose.ym
 
 ---
 
+# ✅ Validação e testes
+
+O JudgeAI usa exclusivamente **Completude, Acurácia, Diretividade e Clareza**, com notas inteiras de **1 a 5**.
+
+Depois de atualizar o código, aplique as migrações e execute os testes:
+
+```bash
+docker compose run --rm web python manage.py migrate
+docker compose run --rm web python manage.py test
+```
+
+Os tempos máximos das chamadas externas podem ser configurados no `.env`:
+
+```dotenv
+LLM_REQUEST_TIMEOUT_SECONDS=45
+LLM_STREAM_TIMEOUT_SECONDS=60
+LOG_LEVEL=INFO
+```
+
+As chaves de API são relidas do banco a cada chamada. Depois de substituir uma chave no Setup ou no painel público, não é necessário reiniciar o processo para invalidar cache de cliente.
+
+---
+
 # 📂 Estrutura do Projeto
 
 ```
@@ -96,5 +119,4 @@ Instituição: **Universidade Federal do Amazonas (UFAM)**
 * **Luiz Barbosa**
 
 ---
-
 

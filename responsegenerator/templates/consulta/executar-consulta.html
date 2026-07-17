@@ -413,12 +413,25 @@ body::before {
             document.getElementById('progressBar').style.display = 'block';
 
             try {
-                const requisicoes = Array.from(selectedQuestions).map(id => 
-                    fetch(`/questoes/${id}/gerar-ia-faltantes/`, {
+                const requisicoes = Array.from(selectedQuestions).map(async id => {
+                    const response = await fetch(`/questoes/${id}/gerar-ia-faltantes/`, {
                         method: 'POST',
                         headers: { 'X-CSRFToken': getCookie('csrftoken') }
-                    })
-                );
+                    });
+                    let data;
+                    try {
+                        data = await response.json();
+                    } catch (parseError) {
+                        throw new Error(`{% translate "A questão" %} #${id}: {% translate "o servidor retornou uma resposta inválida." %}`);
+                    }
+                    if (!response.ok || !['ok', 'ja_completo'].includes(data.status)) {
+                        const details = (data.erros || [])
+                            .map(item => `${item.modelo || 'LLM'}: ${item.mensagem || item}`)
+                            .join(' · ');
+                        throw new Error(`{% translate "A questão" %} #${id}: ${details || data.mensagem || '{% translate "falha ao consultar os modelos." %}'}`);
+                    }
+                    return data;
+                });
 
                 await Promise.all(requisicoes);
 
@@ -428,7 +441,7 @@ body::before {
                 
             } catch (error) {
                 console.error("{% translate 'Erro ao executar consultas:' %}", error);
-                alert("{% translate 'Houve um erro ao processar as perguntas.' %}");
+                alert(error.message || "{% translate 'Houve um erro ao processar as perguntas.' %}");
                 btnRun.innerHTML = originalText;
                 btnRun.disabled = false;
                 document.getElementById('progressBar').style.display = 'none';
