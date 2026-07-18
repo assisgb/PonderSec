@@ -3,16 +3,20 @@
 <html lang="{{ LANGUAGE_CODE|default:'pt-br' }}">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>{% translate "Sucesso — PonderSEC" %}</title>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         
+        html, body { width: 100%; min-height: 100%; }
+
         body {
             font-family: "Space Grotesk", sans-serif;
             background: radial-gradient(circle at top, #051015 0, #02060b 45%, #000000 100%);
-            color: #e5fef6; height: 100vh; display: flex; align-items: center; justify-content: center;
+            color: #e5fef6; min-height: 100vh; min-height: 100svh; display: flex; align-items: center; justify-content: center;
+            padding: max(64px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+            overflow-x: hidden;
         }
 
         .background-grid {
@@ -40,12 +44,20 @@
             background: radial-gradient(circle at top, #0b141d 0, #050a11 55%, #020509 100%);
             border: 1px solid rgba(0, 255, 160, 0.25); padding: 50px; border-radius: 18px;
             box-shadow: 0 0 0 1px rgba(0,255,160,0.08), 0 18px 60px rgba(0,0,0,0.9), 0 0 40px rgba(0,255,160,0.1);
-            max-width: 500px; text-align: center;
+            width: 100%; max-width: 500px; text-align: center;
         }
 
         .icon { font-size: 64px; margin-bottom: 20px; display: block; filter: drop-shadow(0 0 15px rgba(0,255,160,0.4)); }
         h1 { color: #00ff9f; margin-bottom: 12px; font-size: 28px; }
         p { color: #8ba1b0; line-height: 1.6; font-size: 15px; }
+
+        @media (max-width: 520px) {
+            body { align-items: flex-start; }
+            .box { padding: 32px 20px; border-radius: 15px; }
+            .icon { font-size: 52px; margin-bottom: 15px; }
+            h1 { font-size: 23px; overflow-wrap: anywhere; }
+            p { font-size: 14px; overflow-wrap: anywhere; }
+        }
     </style>
 </head>
 <body>

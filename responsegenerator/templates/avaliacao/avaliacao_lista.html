@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="{% static 'app_sidebar.css' %}">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
+button, input, select, textarea { min-width: 0; }
 
 :root {
   --bg: #050c14;
@@ -163,7 +164,7 @@ body::before {
 .metric-card:hover .metric-icon-box { background: rgba(0,255,160,0.12); border-color: rgba(0,255,160,0.4); }
 
 .metric-details { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-.metric-name { font-size: 15px; font-weight: 700; color: var(--text-strong); }
+.metric-name { font-size: 15px; font-weight: 700; color: var(--text-strong); overflow-wrap: anywhere; }
 .metric-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 
 .badge-tipo {
@@ -272,6 +273,8 @@ body::before {
 
 .question-option-text { font-size: 14px; color: var(--text-strong); line-height: 1.4; }
 .question-option-meta { font-family: var(--mono); font-size: 10px; color: var(--muted); margin-top: 4px; font-weight: 700; text-transform: uppercase; }
+.question-option > :not(.custom-checkbox):not(input) { min-width: 0; }
+.question-option-text, .question-option-meta { overflow-wrap: anywhere; }
 
 /* Box de Compartilhamento */
 .share-box {
@@ -279,7 +282,7 @@ body::before {
     background: rgba(0, 220, 130, 0.05); padding: 6px; border-radius: 10px; border: 1px solid rgba(0, 220, 130, 0.2);
 }
 .share-input {
-    flex: 1; background: transparent; border: none; color: var(--accent-bright); font-family: var(--mono);
+    flex: 1; min-width: 0; width: 100%; background: transparent; border: none; color: var(--accent-bright); font-family: var(--mono);
     font-size: 13px; outline: none; padding: 0 10px;
 }
 
@@ -308,6 +311,76 @@ body::before {
   .main-card { padding: 20px; } 
   .toolbar { flex-direction: column; align-items: stretch; }
   .search-bar { max-width: 100%; }
+}
+@media (max-width: 520px) {
+  body { padding: 8px; }
+  .hdr { margin-bottom: 12px; padding: 16px 14px; border-radius: 14px; }
+  .hdr-left { width: 100%; gap: 12px; margin-bottom: 12px; }
+  .logo-box { width: 46px; height: 46px; }
+  .hdr-title { font-size: 19px; overflow-wrap: anywhere; }
+  .hdr-sub { font-size: 12px; overflow-wrap: anywhere; }
+  .main-card { padding: 16px 12px 22px; border-radius: 14px; }
+  .toolbar { gap: 10px; margin-bottom: 20px; }
+  .toolbar .btn { width: 100%; }
+  .forms-list { gap: 12px; }
+  .metric-card {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 16px;
+    padding: 18px 16px;
+  }
+  .metric-info { align-items: flex-start; gap: 12px; }
+  .metric-icon-box { width: 42px; height: 42px; }
+  .metric-meta { gap: 6px; }
+  .badge-tipo, .badge-highlight {
+    max-width: 100%;
+    padding: 4px 8px;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+  .metric-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(44px, 1fr));
+    width: 100%;
+    gap: 8px;
+    margin-left: 0;
+  }
+  .btn-icon { width: 100%; min-height: 44px; }
+
+  .modal-overlay {
+    align-items: flex-start;
+    padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+    overflow-y: auto;
+  }
+  .modal {
+    width: 100%;
+    max-height: calc(100dvh - 16px);
+    padding: 20px 16px;
+    border-radius: 14px;
+  }
+  .modal-header { gap: 10px; margin-bottom: 18px; padding-bottom: 14px; }
+  .modal-title { font-size: 18px; overflow-wrap: anywhere; }
+  .modal-section-label { letter-spacing: 0.14em; }
+  .questions-select { max-height: min(280px, 38dvh); padding-right: 2px; }
+  .question-option { align-items: flex-start; gap: 10px; padding: 11px 10px; }
+  .question-option-text { font-size: 13px; }
+  .share-box { gap: 6px; padding: 5px; }
+  .share-input { padding: 0 6px; font-size: 11px; }
+  .modal-footer {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .modal-footer .btn { width: 100%; min-width: 0; }
+  #formDeletar { flex-wrap: wrap; }
+  #formDeletar .btn { flex: 1 1 120px; }
+
+  .toast-stack {
+    top: max(8px, env(safe-area-inset-top));
+    right: max(8px, env(safe-area-inset-right));
+    left: max(8px, env(safe-area-inset-left));
+  }
+  .toast-message { width: 100%; padding: 12px 14px; overflow-wrap: anywhere; }
 }
 </style>
 </head>

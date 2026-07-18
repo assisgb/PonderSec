@@ -509,6 +509,15 @@ class ResearchBatchGenerationTests(TestCase):
         self.assertEqual(rendered_question.status_consulta, "pendente")
         self.assertTrue(rendered_question.pode_executar)
 
+    def test_consultation_renders_select_all_for_executable_questions(self):
+        response = self.client.get(reverse("executar_consulta"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'id="btnSelectAll"')
+        self.assertContains(response, 'aria-pressed="false"')
+        self.assertContains(response, "Selecionar todas")
+        self.assertContains(response, "toggleVisibleQuestions()")
+
     def test_database_rejects_duplicate_ai_answer_but_allows_human_answers(self):
         Resposta.objects.create(
             questao=self.question,
@@ -841,6 +850,17 @@ class PublicFormEvaluationTests(TestCase):
         self.assertContains(response, 'data-val=""')
         for metric in self.metrics:
             self.assertContains(response, f'name="quanti_{self.answer.id}_{metric.id}"')
+
+    def test_public_form_has_responsive_layout_and_touch_navigation(self):
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "viewport-fit=cover")
+        self.assertContains(response, "touch-action: pan-y")
+        self.assertContains(response, "max-width: 1480px")
+        self.assertContains(response, "grid-template-columns: repeat(2, minmax(0, 1fr))")
+        self.assertContains(response, "max-height: clamp(160px, 32dvh, 360px)")
+        self.assertContains(response, "carouselShell.addEventListener('touchstart'")
 
     def test_all_answers_and_all_four_metrics_must_be_scored(self):
         second_answer = Resposta.objects.create(questao=self.question, conteudo_resposta="Use MFA.")

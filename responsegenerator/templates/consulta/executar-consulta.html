@@ -142,6 +142,8 @@ body::before {
 .btn-primary:hover:not(:disabled) { border-color: var(--accent-bright); background: rgba(0, 220, 130, 0.2); box-shadow: 0 0 26px rgba(0, 220, 130, 0.14); }
 .btn-ghost { border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(255, 255, 255, 0.035); color: var(--muted); }
 .btn-ghost:hover { border-color: rgba(255, 255, 255, 0.18); color: var(--text); background: rgba(255, 255, 255, 0.065); }
+.btn-select-all { border: 1px solid rgba(0, 220, 130, 0.26); background: rgba(0, 220, 130, 0.06); color: var(--text); }
+.btn-select-all:hover:not(:disabled), .btn-select-all[aria-pressed="true"] { border-color: rgba(0, 220, 130, 0.52); background: rgba(0, 220, 130, 0.13); color: var(--accent-bright); }
 .btn-danger { border: 1px solid rgba(239, 68, 68, 0.34); background: rgba(239, 68, 68, 0.08); color: #f87171; }
 .btn-danger:hover { border-color: rgba(239, 68, 68, 0.58); background: rgba(239, 68, 68, 0.16); color: #fecaca; }
 
@@ -153,7 +155,7 @@ body::before {
 }
 
 .toolbar {
-  display: grid; grid-template-columns: minmax(240px, 1fr) auto auto; gap: 12px;
+  display: grid; grid-template-columns: minmax(220px, 1fr) auto auto auto; gap: 12px;
   align-items: center; margin-bottom: 24px;
 }
 
@@ -242,6 +244,12 @@ body::before {
 .detail-response-body { min-height: 150px; max-height: 350px; overflow-y: auto; white-space: pre-wrap; font-size: 13px; padding: 16px; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; background: rgba(0, 0, 0, 0.32); color: var(--text); line-height: 1.65; }
 
 @media (max-width: 1180px) { .app-shell { gap: 14px; } .side-nav { width: 220px; } }
+@media (max-width: 980px) {
+  .toolbar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .toolbar .search-bar { grid-column: 1 / -1; }
+  .toolbar .btn { width: 100%; }
+  .toolbar #btnRun { grid-column: 1 / -1; }
+}
 @media (max-width: 760px) { 
   body { padding: 12px; } 
   .app-shell { flex-direction: column; } 
@@ -290,6 +298,10 @@ body::before {
                             </span>
                             <input type="text" class="search-input" id="filterInput" placeholder="{% translate 'Buscar perguntas...' %}">
                         </div>
+                        <button type="button" class="btn btn-select-all" id="btnSelectAll" onclick="toggleVisibleQuestions()" aria-pressed="false">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"></rect><path d="m7.5 12 3 3 6-6"></path></svg>
+                            <span id="selectAllLabel">{% translate "Selecionar todas" %}</span>
+                        </button>
                         <button class="btn btn-danger" onclick="limparRespostas()">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M3 6h18"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
                             {% translate "Apagar tudo" %}
@@ -374,21 +386,57 @@ body::before {
         const modalQuestion = document.getElementById("modal-questao-conteudo");
         const answersGrid = document.getElementById("answers-card");
         const filterInput = document.getElementById('filterInput');
+        const selectAllButton = document.getElementById('btnSelectAll');
+        const selectAllLabel = document.getElementById('selectAllLabel');
+        const selectAllText = "{% translate 'Selecionar todas' %}";
+        const deselectAllText = "{% translate 'Desmarcar todas' %}";
         const questionCards = Array.from(document.querySelectorAll('#questionsList .history-card')).map(card => ({
             element: card,
             text: card.dataset.text || ''
         }));
         let filterTimer = null;
 
-        function toggleQuestion(element) {
+        function visibleExecutableCards() {
+            return questionCards
+                .map(({ element }) => element)
+                .filter(element => element.classList.contains('selectable') && !element.classList.contains('is-filtered'));
+        }
+
+        function setQuestionSelected(element, shouldSelect) {
             const id = element.dataset.id;
-            if (selectedQuestions.has(id)) {
-                selectedQuestions.delete(id);
-                element.classList.remove("selected");
-            } else {
+            if (!id || !element.classList.contains('selectable')) return;
+
+            if (shouldSelect) {
                 selectedQuestions.add(id);
-                element.classList.add("selected");
+            } else {
+                selectedQuestions.delete(id);
             }
+            element.classList.toggle('selected', shouldSelect);
+        }
+
+        function updateSelectAllButton() {
+            const visibleCards = visibleExecutableCards();
+            const allVisibleSelected = visibleCards.length > 0
+                && visibleCards.every(element => selectedQuestions.has(element.dataset.id));
+
+            selectAllButton.disabled = visibleCards.length === 0;
+            selectAllButton.setAttribute('aria-pressed', String(allVisibleSelected));
+            selectAllLabel.textContent = allVisibleSelected ? deselectAllText : selectAllText;
+        }
+
+        function toggleQuestion(element) {
+            if (!element.classList.contains('selectable')) return;
+            setQuestionSelected(element, !selectedQuestions.has(element.dataset.id));
+            updateSelectAllButton();
+        }
+
+        function toggleVisibleQuestions() {
+            const visibleCards = visibleExecutableCards();
+            if (!visibleCards.length) return;
+
+            const shouldSelect = !visibleCards.every(element => selectedQuestions.has(element.dataset.id));
+            visibleCards.forEach(element => setQuestionSelected(element, shouldSelect));
+            updateSelectAllButton();
         }
 
         async function showAnswer(id) {
@@ -437,12 +485,15 @@ body::before {
             questionCards.forEach(({ element, text }) => {
                 element.classList.toggle('is-filtered', !text.includes(filter));
             });
+            updateSelectAllButton();
         }
 
         filterInput.addEventListener('input', () => {
             window.clearTimeout(filterTimer);
             filterTimer = window.setTimeout(applyQuestionFilter, 75);
         });
+
+        updateSelectAllButton();
 
         async function executeQuestions() {
             if (selectedQuestions.size === 0) {

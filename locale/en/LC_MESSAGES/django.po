@@ -2748,6 +2748,14 @@ msgstr "No models available"
 msgid "Respondendo"
 msgstr "Responding"
 
+#: responsegenerator/templates/consulta/executar-consulta.html
+msgid "Selecionar todas"
+msgstr "Select all"
+
+#: responsegenerator/templates/consulta/executar-consulta.html
+msgid "Desmarcar todas"
+msgstr "Deselect all"
+
 #~ msgid "Consulta aberta para perguntas sobre cibersegurança"
 #~ msgstr "Open consultation for cybersecurity questions"
 
