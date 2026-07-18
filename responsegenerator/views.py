@@ -2378,18 +2378,17 @@ def responder_avaliacao_publica(request, formulario_id):
         with transaction.atomic():
             avaliador, created = Avaliador.objects.get_or_create(
                 email=email,
+                formulario=formulario,
                 defaults={
                     'nome': nome,
                     'profissao': profissao,
-                    'formulario': formulario,
                 },
             )
 
             if not created:
                 avaliador.nome = nome
                 avaliador.profissao = profissao
-                avaliador.formulario = formulario
-                avaliador.save(update_fields=['nome', 'profissao', 'formulario'])
+                avaliador.save(update_fields=['nome', 'profissao'])
 
             for avaliacao_formulario in avaliacoes:
                 avaliacao_formulario.avaliador = avaliador
@@ -2503,7 +2502,7 @@ def dashboard_avaliacoes(request):
     avaliadores_humanos = Avaliador.objects.filter(
         formulario__usuario=request.user,
         avaliacoes__avaliacao_quanti__isnull=False,
-    ).distinct().count()
+    ).values("email").distinct().count()
     juizes_online = AvaliacaoJuiz.objects.filter(
         usuario=request.user,
         erro=False,

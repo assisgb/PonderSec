@@ -279,10 +279,18 @@ class Formulario(models.Model):
 
 class Avaliador(models.Model):
     nome = models.CharField(max_length=100)
-    email = models.EmailField(unique=True)
+    email = models.EmailField()
     profissao = models.CharField(max_length=100, blank=True, null=True)
     formulario = models.ForeignKey(Formulario, on_delete=models.CASCADE, related_name='avaliadores')
     data_resposta = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=("email", "formulario"),
+                name="unique_evaluator_email_per_form",
+            ),
+        ]
 
     def __str__(self):
         return f"{self.nome} - {self.email}"

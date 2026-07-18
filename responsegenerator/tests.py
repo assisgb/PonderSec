@@ -1,12 +1,14 @@
 import json
+from importlib import import_module
 from types import SimpleNamespace
 from unittest import mock
 
+from django.apps import apps as django_apps
 from django.contrib.auth.models import User
 from django.core import signing
 from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError, connection, transaction
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
@@ -961,4 +963,96 @@ class PublicFormEvaluationTests(TestCase):
         self.assertEqual(
             set(AvaliacaoFormulario.objects.values_list("metrica__nome", flat=True)),
             set(JUDGE_METRIC_NAMES),
+        )
+
+    def test_same_evaluator_is_counted_in_every_completed_form(self):
+        second_question = Questao.objects.create(
+            usuario=self.owner,
+            conteudo="Como proteger uma conta?",
+        )
+        second_answer = Resposta.objects.create(
+            questao=second_question,
+            conteudo_resposta="Use uma senha exclusiva e autenticação em dois fatores.",
+        )
+        second_form = Formulario.objects.create(
+            nome="Avaliação de autenticação",
+            usuario=self.owner,
+        )
+        second_form.questoes.add(second_question)
+
+        first_response = self.client.post(
+            self.url,
+            data={**self.identity, **self._scores_for(self.answer)},
+        )
+        second_response = self.client.post(
+            reverse("responder_avaliacao_publica", args=[second_form.id]),
+            data={**self.identity, **self._scores_for(second_answer)},
+        )
+
+        self.assertEqual(first_response.status_code, 200)
+        self.assertEqual(second_response.status_code, 200)
+        self.assertEqual(Avaliador.objects.count(), 2)
+        self.assertEqual(self.form.avaliadores.count(), 1)
+        self.assertEqual(second_form.avaliadores.count(), 1)
+        self.assertEqual(AvaliacaoFormulario.objects.count(), 8)
+
+        self.client.force_login(self.owner)
+        list_response = self.client.get(reverse("avaliacao"))
+        counts_by_form = {
+            form.id: form.avaliadores_total
+            for form in list_response.context["formularios"]
+        }
+        self.assertEqual(counts_by_form[self.form.id], 1)
+        self.assertEqual(counts_by_form[second_form.id], 1)
+
+        dashboard_response = self.client.get(reverse("dashboard_avaliacoes"))
+        dashboard = json.loads(dashboard_response.context["dashboard_json"])
+        self.assertEqual(dashboard["resumo"]["avaliadores_humanos"], 1)
+
+    def test_migration_recovers_previous_form_counters(self):
+        second_question = Questao.objects.create(
+            usuario=self.owner,
+            conteudo="Como configurar MFA?",
+        )
+        second_answer = Resposta.objects.create(
+            questao=second_question,
+            conteudo_resposta="Cadastre um aplicativo autenticador.",
+        )
+        second_form = Formulario.objects.create(
+            nome="Avaliação de MFA",
+            usuario=self.owner,
+        )
+        second_form.questoes.add(second_question)
+
+        evaluator = Avaliador.objects.create(
+            nome=self.identity["nome"],
+            email=self.identity["email"],
+            profissao=self.identity["profissao"],
+            formulario=second_form,
+        )
+        AvaliacaoFormulario.objects.bulk_create([
+            AvaliacaoFormulario(
+                usuario=self.owner,
+                avaliador=evaluator,
+                resposta=answer,
+                metrica=metric,
+                avaliacao_quanti=4,
+            )
+            for answer in (self.answer, second_answer)
+            for metric in self.metrics
+        ])
+
+        migration = import_module(
+            "responsegenerator.migrations.0017_evaluator_per_form"
+        )
+        migration.restore_evaluator_form_links(
+            django_apps,
+            SimpleNamespace(connection=connection),
+        )
+
+        self.assertEqual(self.form.avaliadores.count(), 1)
+        self.assertEqual(second_form.avaliadores.count(), 1)
+        self.assertEqual(
+            Avaliador.objects.filter(email=self.identity["email"]).count(),
+            2,
         )
