@@ -14,6 +14,7 @@ import os
 from pathlib import Path
 import mimetypes
 from django.utils.translation import gettext_lazy as _
+from django.core.exceptions import ImproperlyConfigured
 import ssl
 
 try:
@@ -31,11 +32,16 @@ if load_dotenv:
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-%y-2+movo6))$jx5%uuh^z2&(a08e!xunbz*7uq)c&28uqjusg'
-
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() in ('1', 'true', 'yes', 'on')
+
+# Tokens de avaliação e cookies são assinados por esta chave. A chave real não
+# pode ficar versionada; o fallback existe exclusivamente para desenvolvimento.
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
+if not SECRET_KEY:
+    if not DEBUG:
+        raise ImproperlyConfigured('DJANGO_SECRET_KEY é obrigatória quando DJANGO_DEBUG=False.')
+    SECRET_KEY = 'django-insecure-local-development-only-change-me'
 
 ALLOWED_HOSTS = ['10.208.200.20','localhost','pondersec.icomp.ufam.edu.br', '*']
 
@@ -145,6 +151,14 @@ else:
             'PASSWORD': os.environ.get('DB_PASSWORD', 'teste123'),
             'HOST': os.environ.get('DB_HOST', 'db'),
             'PORT': os.environ.get('DB_PORT', '5432'),
+            # Reaproveita a conexão por thread entre requisições e valida uma
+            # conexão reutilizada antes de entregá-la à aplicação. Ambos podem
+            # ser desativados por ambiente sem alterar o backend de testes.
+            'CONN_MAX_AGE': max(0, int(os.environ.get('DB_CONN_MAX_AGE', '60'))),
+            'CONN_HEALTH_CHECKS': os.environ.get(
+                'DB_CONN_HEALTH_CHECKS',
+                'True',
+            ).lower() in ('1', 'true', 'yes', 'on'),
         }
     }
 
@@ -213,6 +227,36 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # ou deixa uma conexão aberta sem produzir conteúdo.
 LLM_REQUEST_TIMEOUT_SECONDS = float(os.environ.get('LLM_REQUEST_TIMEOUT_SECONDS', '45'))
 LLM_STREAM_TIMEOUT_SECONDS = float(os.environ.get('LLM_STREAM_TIMEOUT_SECONDS', '60'))
+# Modelos diferentes da mesma pergunta podem responder em paralelo, mas o
+# limite evita que uma configuração grande monopolize todas as threads.
+LLM_MODELS_MAX_WORKERS = max(1, min(8, int(os.environ.get('LLM_MODELS_MAX_WORKERS', '4'))))
+# A avaliação usa um pool separado para não atrasar novas respostas enquanto o
+# JudgeAI processa resultados já exibidos ao usuário.
+LLM_EVALUATION_MAX_WORKERS = max(1, min(8, int(os.environ.get('LLM_EVALUATION_MAX_WORKERS', '4'))))
+LLM_CLIENT_CACHE_TTL_SECONDS = float(os.environ.get('LLM_CLIENT_CACHE_TTL_SECONDS', '300'))
+LLM_CLIENT_CACHE_MAX_SIZE = int(os.environ.get('LLM_CLIENT_CACHE_MAX_SIZE', '8'))
+LLM_TRANSIENT_MAX_ATTEMPTS = int(os.environ.get('LLM_TRANSIENT_MAX_ATTEMPTS', '2'))
+LLM_TRANSIENT_RETRY_DELAY_SECONDS = float(
+    os.environ.get('LLM_TRANSIENT_RETRY_DELAY_SECONDS', '0.2')
+)
+
+# Protege as chaves dos provedores contra rajadas no chat anônimo. Em produção,
+# use um cache compartilhado (Redis/Memcached) para um limite global entre workers.
+PUBLIC_CHAT_RATE_LIMIT = max(1, int(os.environ.get('PUBLIC_CHAT_RATE_LIMIT', '30')))
+PUBLIC_EVALUATION_RATE_LIMIT = max(1, int(os.environ.get('PUBLIC_EVALUATION_RATE_LIMIT', '120')))
+PUBLIC_CHAT_RATE_WINDOW_SECONDS = max(
+    1,
+    int(os.environ.get('PUBLIC_CHAT_RATE_WINDOW_SECONDS', '60')),
+)
+PUBLIC_RATE_TRUST_X_REAL_IP = os.environ.get(
+    'PUBLIC_RATE_TRUST_X_REAL_IP',
+    'False',
+).lower() in ('1', 'true', 'yes', 'on')
+QUESTION_UPLOAD_MAX_BYTES = max(
+    1,
+    int(os.environ.get('QUESTION_UPLOAD_MAX_BYTES', str(10 * 1024 * 1024))),
+)
+QUESTION_UPLOAD_MAX_ITEMS = max(1, int(os.environ.get('QUESTION_UPLOAD_MAX_ITEMS', '20000')))
 
 LOG_LEVEL = os.environ.get('LOG_LEVEL', 'INFO').upper()
 LOGGING = {

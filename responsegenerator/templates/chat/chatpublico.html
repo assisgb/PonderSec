@@ -144,6 +144,14 @@ button { transition: transform 0.2s ease, box-shadow 0.2s ease; cursor: pointer;
   display: flex; flex-direction: column; gap: 24px;
   scroll-margin-top: 16px;
 }
+@supports (content-visibility: auto) {
+  .chat-turn {
+    content-visibility: auto;
+    contain-intrinsic-size: 300px;
+    contain-intrinsic-size: auto 300px;
+  }
+  .chat-turn:last-child { content-visibility: visible; }
+}
 .message-wrapper { width: 100%; display: flex; flex-direction: column; }
 .message-wrapper.user-group { max-width: 860px; align-self: center; }
 .message-wrapper.ai-group { max-width: 1400px; align-self: center; }
@@ -203,6 +211,22 @@ button { transition: transform 0.2s ease, box-shadow 0.2s ease; cursor: pointer;
 }
 .markdown-body pre code { background: transparent; padding: 0; color: #e2e8f0; }
 .markdown-body .stream-error { margin-top: 14px; color: #fca5a5; }
+.stream-evaluation-note { margin-top: 14px; color: var(--muted); font-family: var(--mono); font-size: 11px; }
+
+.evaluation-pending {
+  display: flex; align-items: center; gap: 10px;
+  margin-top: 14px; padding: 10px 12px;
+  border: 1px solid rgba(0, 255, 153, 0.16); border-radius: 10px;
+  color: var(--muted); font-family: var(--mono); font-size: 11px;
+}
+.evaluation-pending-spinner {
+  width: 14px; height: 14px; flex: 0 0 auto;
+  border: 2px solid rgba(0, 255, 153, 0.2); border-top-color: var(--accent-bright);
+  border-radius: 50%; animation: evaluationSpin 0.8s linear infinite;
+}
+.evaluation-pending.error { color: #fca5a5; border-color: rgba(248, 113, 113, 0.25); }
+.evaluation-pending.error .evaluation-pending-spinner { display: none; }
+@keyframes evaluationSpin { to { transform: rotate(360deg); } }
 
 .cross-eval-panel {
   margin-top: 16px;
@@ -510,15 +534,24 @@ const textarea = document.getElementById('questionInput');
 const sendBtn = document.getElementById('sendBtn');
 const modelSelect = document.getElementById('modelSelect');
 let isSending = false;
+let textareaResizeFrame = null;
 
 function updateSendState() {
   sendBtn.disabled = isSending || textarea.value.trim() === '' || !modelSelect.value;
 }
 
+function queueTextareaResize() {
+  if (textareaResizeFrame !== null) return;
+  textareaResizeFrame = window.requestAnimationFrame(() => {
+    textareaResizeFrame = null;
+    textarea.style.height = '44px';
+    textarea.style.height = Math.max(44, textarea.scrollHeight) + 'px';
+  });
+}
+
 textarea.addEventListener('input', function() {
-  this.style.height = '44px';
-  this.style.height = Math.max(44, this.scrollHeight) + 'px';
   updateSendState();
+  queueTextareaResize();
 });
 
 modelSelect.addEventListener('change', updateSendState);
@@ -683,22 +716,51 @@ function addStreamingResponse(turn, modelName) {
     body: wrapper.querySelector('.markdown-body'),
     status: wrapper.querySelector('.ai-status'),
     markdown: '',
+    pendingChunks: [],
+    renderTimerId: null,
+    errorShown: false,
   };
 }
 
-function appendStreamChunk(streamState, content) {
-  streamState.markdown += content || '';
+function flushStreamChunks(streamState) {
+  if (streamState.renderTimerId !== null) {
+    window.clearTimeout(streamState.renderTimerId);
+    streamState.renderTimerId = null;
+  }
+
+  if (streamState.pendingChunks.length === 0) return;
+
+  streamState.markdown += streamState.pendingChunks.join('');
+  streamState.pendingChunks.length = 0;
   streamState.body.innerHTML = marked.parse(streamState.markdown);
 }
 
+function scheduleStreamRender(streamState) {
+  if (streamState.renderTimerId !== null) return;
+
+  streamState.renderTimerId = window.setTimeout(() => {
+    streamState.renderTimerId = null;
+    flushStreamChunks(streamState);
+  }, 75);
+}
+
+function appendStreamChunk(streamState, content) {
+  if (!content) return;
+  streamState.pendingChunks.push(content);
+  scheduleStreamRender(streamState);
+}
+
 function markStreamComplete(streamState) {
+  flushStreamChunks(streamState);
   streamState.status.textContent = '{% trans "Concluído" %}';
 }
 
 function markStreamError(streamState, message) {
+  flushStreamChunks(streamState);
   streamState.status.textContent = '{% trans "Erro" %}';
   streamState.status.classList.add('error');
-  if (message) {
+  if (message && !streamState.errorShown) {
+    streamState.errorShown = true;
     streamState.body.insertAdjacentHTML(
       'beforeend',
       `<p class="stream-error">${escapeHtml(message)}</p>`
@@ -706,18 +768,78 @@ function markStreamError(streamState, message) {
   }
 }
 
-function appendCrossEvaluation(wrapper, rows) {
-  const table = renderCrossEvaluationTable(rows);
-  if (table) wrapper.insertAdjacentHTML('beforeend', table);
+function appendCompletionDetails(wrapper, rows, evaluation) {
+  let html = renderCrossEvaluationTable(rows);
+  if (evaluation && ["erro", "parcial"].includes(evaluation.status)) {
+    const message = evaluation.mensagem || "{% trans 'A resposta foi gerada, mas a avaliação automática falhou.' %}";
+    html += `<p class="stream-error">${escapeHtml(message)}</p>`;
+  } else if (evaluation && ["sem_notas", "sem_metricas", "sem_pares"].includes(evaluation.status)) {
+    const message = evaluation.mensagem || "{% trans 'A avaliação automática não está disponível para esta resposta.' %}";
+    html += `<p class="stream-evaluation-note">${escapeHtml(message)}</p>`;
+  }
+  if (html) wrapper.insertAdjacentHTML('beforeend', html);
 }
 
-function appendEvaluationStatus(wrapper, evaluation) {
-  if (!evaluation || !["erro", "parcial"].includes(evaluation.status)) return;
-  const message = evaluation.mensagem || "{% trans 'A resposta foi gerada, mas a avaliação automática falhou.' %}";
-  wrapper.insertAdjacentHTML(
-    'beforeend',
-    `<p class="stream-error">${escapeHtml(message)}</p>`
-  );
+async function requestCrossEvaluation(wrapper, responseId, authorizationToken) {
+  const pending = document.createElement('div');
+  pending.className = 'evaluation-pending';
+  pending.setAttribute('role', 'status');
+  pending.innerHTML = `
+    <span class="evaluation-pending-spinner" aria-hidden="true"></span>
+    <span>{% trans "Avaliando a resposta em segundo plano..." %}</span>
+  `;
+  wrapper.appendChild(pending);
+
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), 120000);
+  try {
+    let data = {};
+    while (true) {
+      const response = await fetch("{% url 'usuario_final_chat_avaliacao_api' %}", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCSRFToken() },
+        body: JSON.stringify({
+          resposta_id: Number(responseId),
+          avaliacao_token: authorizationToken,
+        }),
+        signal: controller.signal,
+      });
+      data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.mensagem || '{% trans "Não foi possível avaliar a resposta." %}');
+      }
+      if (response.status !== 202 && data.status !== 'processando') break;
+
+      const retryDelay = Math.max(200, Math.min(2000, Number(data.retry_after_ms) || 1000));
+      await new Promise(resolve => window.setTimeout(resolve, retryDelay));
+    }
+
+    pending.remove();
+    appendCompletionDetails(
+      wrapper,
+      data.tabela_avaliacao_cruzada || [],
+      data.avaliacao_cruzada
+    );
+  } catch (error) {
+    pending.classList.add('error');
+    const message = error.name === 'AbortError'
+      ? '{% trans "A avaliação automática excedeu o tempo limite." %}'
+      : (error.message || '{% trans "Não foi possível avaliar a resposta." %}');
+    pending.querySelector('span:last-child').textContent = message;
+    if (error.name === 'AbortError') {
+      const retry = document.createElement('button');
+      retry.type = 'button';
+      retry.className = 'btn-login';
+      retry.textContent = '{% trans "Tentar avaliação novamente" %}';
+      retry.addEventListener('click', () => {
+        pending.remove();
+        void requestCrossEvaluation(wrapper, responseId, authorizationToken);
+      }, { once: true });
+      pending.appendChild(retry);
+    }
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
 }
 
 async function consumeNDJSON(response, onEvent) {
@@ -758,6 +880,10 @@ async function sendPublicQuestion() {
   modelSelect.disabled = true;
 
   textarea.value = '';
+  if (textareaResizeFrame !== null) {
+    window.cancelAnimationFrame(textareaResizeFrame);
+    textareaResizeFrame = null;
+  }
   textarea.style.height = '44px';
   updateSendState();
 
@@ -766,6 +892,8 @@ async function sendPublicQuestion() {
   scrollToTurnStart(turn);
   let streamState = null;
   let terminalEventReceived = false;
+  let errorDisplayed = false;
+  let evaluationStarted = false;
   const controller = new AbortController();
   const browserTimeout = window.setTimeout(() => controller.abort(), 120000);
 
@@ -807,14 +935,28 @@ async function sendPublicQuestion() {
         terminalEventReceived = true;
         if (streamState) {
           markStreamComplete(streamState);
-          appendCrossEvaluation(streamState.wrapper, event.tabela_avaliacao_cruzada || []);
-          appendEvaluationStatus(streamState.wrapper, event.avaliacao_cruzada);
+          if (!evaluationStarted && event.resposta_id && event.avaliacao_token) {
+            evaluationStarted = true;
+            void requestCrossEvaluation(
+              streamState.wrapper,
+              event.resposta_id,
+              event.avaliacao_token
+            );
+          } else {
+            appendCompletionDetails(
+              streamState.wrapper,
+              event.tabela_avaliacao_cruzada || [],
+              event.avaliacao_cruzada
+            );
+          }
         }
         return;
       }
 
       if (event.tipo === 'erro') {
         terminalEventReceived = true;
+        if (errorDisplayed) return;
+        errorDisplayed = true;
         removeBubble(loadingId);
         if (streamState) {
           markStreamError(streamState, event.mensagem);
@@ -838,15 +980,18 @@ async function sendPublicQuestion() {
     const errorMessage = error.name === 'AbortError'
       ? '{% trans "Tempo limite excedido ao aguardar o provedor." %}'
       : error.message;
-    if (streamState) {
-      markStreamError(streamState, errorMessage);
-    } else {
-      const responseElement = addAIBubblesGroup(
-        [{ modelo: "Sistema", resposta: `{% trans "Erro:" %} ${errorMessage}`, ok: false }],
-        [],
-        turn
-      );
-      ensureResponseStartVisible(turn, responseElement);
+    if (!errorDisplayed) {
+      errorDisplayed = true;
+      if (streamState) {
+        markStreamError(streamState, errorMessage);
+      } else {
+        const responseElement = addAIBubblesGroup(
+          [{ modelo: "Sistema", resposta: `{% trans "Erro:" %} ${errorMessage}`, ok: false }],
+          [],
+          turn
+        );
+        ensureResponseStartVisible(turn, responseElement);
+      }
     }
   } finally {
     window.clearTimeout(browserTimeout);

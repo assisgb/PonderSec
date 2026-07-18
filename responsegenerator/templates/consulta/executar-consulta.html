@@ -95,17 +95,23 @@ body::before {
 
 /* --- CSS DO HEADER E PROGRESS BAR --- */
 .progress-bar-container {
-    width: 100%; height: 3px; background: #1b2635; border-radius: 99px;
+    width: 100%; height: 4px; background: #1b2635; border-radius: 99px;
     margin-bottom: 20px; overflow: hidden; display: none;
+    box-shadow: 0 0 12px rgba(0, 255, 159, 0.12);
 }
 .progress-bar-fill {
     height: 100%; width: 0%; background: linear-gradient(90deg, #00ff9f, #00ff57);
-    border-radius: 99px; animation: progressAnim 1.5s ease-in-out infinite;
+    border-radius: 99px; transition: width 0.2s ease;
 }
-@keyframes progressAnim {
-    0%   { width: 0%; margin-left: 0%; }
-    50%  { width: 60%; margin-left: 20%; }
-    100% { width: 0%; margin-left: 100%; }
+.progress-bar-fill.is-indeterminate {
+    width: 34% !important;
+    animation: progressSweep 1.15s ease-in-out infinite;
+    box-shadow: 0 0 12px rgba(0, 255, 159, 0.7);
+}
+@keyframes progressSweep {
+    0%   { transform: translateX(-110%); }
+    50%  { transform: translateX(100%); }
+    100% { transform: translateX(300%); }
 }
 
 .hdr {
@@ -168,7 +174,16 @@ body::before {
   position: relative; display: flex; flex-direction: column; gap: 14px; overflow: hidden;
   padding: 22px 24px; border: 1px solid rgba(0, 220, 130, 0.12); border-radius: 16px;
   background: linear-gradient(135deg, rgba(11, 20, 29, 0.9) 0%, rgba(5, 10, 17, 0.96) 100%);
+  contain: layout style paint;
   transition: border-color 0.16s ease, background 0.16s ease;
+}
+.history-card.is-filtered { display: none; }
+@supports (content-visibility: auto) {
+  .history-card {
+    content-visibility: auto;
+    contain-intrinsic-size: 116px;
+    contain-intrinsic-size: auto 116px;
+  }
 }
 .history-card.selectable { cursor: pointer; }
 .history-card.selectable:hover { border-color: rgba(0, 220, 130, 0.34); background: linear-gradient(135deg, rgba(12, 24, 33, 0.94) 0%, rgba(5, 10, 17, 0.98) 100%); }
@@ -180,6 +195,8 @@ body::before {
 .status-badge { min-height: 25px; display: inline-flex; align-items: center; gap: 7px; padding: 5px 10px; border-radius: 999px; font-size: 9px; font-weight: 700; font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.04em; }
 .status-answered { border: 1px solid rgba(0, 220, 130, 0.28); background: rgba(0, 220, 130, 0.1); color: var(--accent-bright); }
 .status-pending { border: 1px solid rgba(245, 158, 11, 0.32); background: rgba(245, 158, 11, 0.1); color: #fbbf24; }
+.status-partial { border: 1px solid rgba(251, 191, 36, 0.42); background: rgba(251, 191, 36, 0.12); color: #fde68a; }
+.status-disabled { border: 1px solid rgba(148, 163, 184, 0.3); background: rgba(148, 163, 184, 0.08); color: #94a3b8; }
 
 .card-actions { display: flex; gap: 8px; flex-shrink: 0; }
 .btn-view { border-color: rgba(0, 220, 130, 0.24); color: var(--accent); }
@@ -246,7 +263,7 @@ body::before {
         
         <div class="wrap">
             <div class="progress-bar-container" id="progressBar">
-                 <div class="progress-bar-fill"></div>
+                 <div class="progress-bar-fill" id="progressFill"></div>
             </div>
 
             <header class="hdr">
@@ -277,7 +294,7 @@ body::before {
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M3 6h18"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
                             {% translate "Apagar tudo" %}
                         </button>
-                        <button class="btn btn-primary" id="btnRun" onclick="executeQuestions()">
+                        <button class="btn btn-primary" id="btnRun" onclick="executeQuestions()" {% if not total_llms_ativas %}disabled{% endif %}>
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
                             {% translate "Executar IAs" %}
                         </button>
@@ -286,21 +303,26 @@ body::before {
                     <div class="history-grid" id="questionsList">
                         {% if questoes %}
                             {% for questao in questoes %}
-                                <article class="history-card {% if not questao.respostas_cache %}selectable{% endif %}" data-id="{{questao.id}}" data-text="{{ questao.conteudo|lower }}" {% if not questao.respostas_cache %}onclick="toggleQuestion(this)"{% endif %}>
+                                <article class="history-card {% if questao.pode_executar %}selectable{% endif %}" data-id="{{questao.id}}" data-text="{{ questao.conteudo|lower }}" {% if questao.pode_executar %}onclick="toggleQuestion(this)"{% endif %}>
                                     <div class="card-header">
                                         <div class="badge-row">
-                                            {% if questao.respostas_cache %}
-                                                <span class="status-badge status-answered">{% translate "Respondida" %}</span>
+                                            {% if questao.status_consulta == "completa" %}
+                                                <span class="status-badge status-answered">{% translate "Completa" %} · {{ questao.respostas_ativas_total }}/{{ questao.total_llms_ativas }}</span>
+                                            {% elif questao.status_consulta == "parcial" %}
+                                                <span class="status-badge status-partial">{% translate "Parcial" %} · {{ questao.respostas_ativas_total }}/{{ questao.total_llms_ativas }}</span>
+                                            {% elif questao.status_consulta == "pendente" %}
+                                                <span class="status-badge status-pending">{% translate "Pendente" %} · 0/{{ questao.total_llms_ativas }}</span>
                                             {% else %}
-                                                <span class="status-badge status-pending">{% translate "Pendente" %}</span>
+                                                <span class="status-badge status-disabled">{% translate "Nenhuma IA ativa" %}</span>
                                             {% endif %}
                                         </div>
                                         <div class="card-actions">
-                                            {% if questao.respostas_cache %}
+                                            {% if questao.tem_respostas_ia %}
                                                 <button type="button" class="btn btn-ghost" style="min-height: 32px; padding: 6px 12px; font-size: 11px;" onclick="showAnswer('{{questao.id}}'); event.stopPropagation();">
                                                     {% translate "Ver Respostas" %}
                                                 </button>
-                                            {% else %}
+                                            {% endif %}
+                                            {% if questao.pode_executar %}
                                                 <div class="custom-checkbox"><span class="checkmark">✓</span></div>
                                             {% endif %}
                                         </div>
@@ -348,6 +370,15 @@ body::before {
 
     <script>
         const selectedQuestions = new Set();
+        const modalOverlay = document.getElementById("modal-overlay");
+        const modalQuestion = document.getElementById("modal-questao-conteudo");
+        const answersGrid = document.getElementById("answers-card");
+        const filterInput = document.getElementById('filterInput');
+        const questionCards = Array.from(document.querySelectorAll('#questionsList .history-card')).map(card => ({
+            element: card,
+            text: card.dataset.text || ''
+        }));
+        let filterTimer = null;
 
         function toggleQuestion(element) {
             const id = element.dataset.id;
@@ -361,41 +392,56 @@ body::before {
         }
 
         async function showAnswer(id) {
-            const response = await fetch(`/respostas/${id}`)
-            const data = await response.json()
+            try {
+                const response = await fetch(`/respostas/${id}/`);
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.erro || "{% translate 'Não foi possível carregar as respostas.' %}");
 
-            document.getElementById("modal-questao-conteudo").innerHTML = data.questao
-            document.getElementById("modal-overlay").classList.add("active");
+                modalQuestion.textContent = data.questao;
+                modalOverlay.classList.add("active");
 
-            const grid = document.getElementById("answers-card")
-            grid.innerHTML = ""
+                const fragment = document.createDocumentFragment();
 
-            for (const r of data.respostas) {
-                grid.innerHTML += `
-                    <div class="detail-response-card">
-                        <label class="field-label" style="color: var(--accent-bright); text-transform: none;">✦ ${r.llm}</label>
-                        <div class="detail-response-body">${r.conteudo}</div>
-                    </div>
-                `
+                for (const r of (data.respostas || [])) {
+                    const card = document.createElement("div");
+                    card.className = "detail-response-card";
+                    const label = document.createElement("label");
+                    label.className = "field-label";
+                    label.style.cssText = "color: var(--accent-bright); text-transform: none;";
+                    label.textContent = `✦ ${r.llm || "LLM"}`;
+                    const body = document.createElement("div");
+                    body.className = "detail-response-body";
+                    body.textContent = r.conteudo || "";
+                    card.append(label, body);
+                    fragment.appendChild(card);
+                }
+                answersGrid.replaceChildren(fragment);
+            } catch (error) {
+                alert(error.message || "{% translate 'Não foi possível carregar as respostas.' %}");
             }
         }
 
         function closeAnswer() {
-            document.getElementById("modal-overlay").classList.remove("active");
+            modalOverlay.classList.remove("active");
         }
 
         // Fechar clicando fora
-        document.getElementById('modal-overlay').addEventListener('click', e => { 
-            if (e.target === document.getElementById('modal-overlay')) closeAnswer(); 
+        modalOverlay.addEventListener('click', e => {
+            if (e.target === modalOverlay) closeAnswer();
         });
 
         // Filtrar perguntas
-        document.getElementById('filterInput').addEventListener('keyup', function() {
-            const filter = this.value.toLowerCase();
-            document.querySelectorAll('.history-card').forEach(card => {
-                const text = card.getAttribute('data-text');
-                card.style.display = text.includes(filter) ? '' : 'none';
+        function applyQuestionFilter() {
+            filterTimer = null;
+            const filter = filterInput.value.toLowerCase();
+            questionCards.forEach(({ element, text }) => {
+                element.classList.toggle('is-filtered', !text.includes(filter));
             });
+        }
+
+        filterInput.addEventListener('input', () => {
+            window.clearTimeout(filterTimer);
+            filterTimer = window.setTimeout(applyQuestionFilter, 75);
         });
 
         async function executeQuestions() {
@@ -406,37 +452,73 @@ body::before {
 
             const btnRun = document.getElementById('btnRun');
             const originalText = btnRun.innerHTML;
+            const questionIds = Array.from(selectedQuestions);
+            const progressBar = document.getElementById('progressBar');
+            const progressFill = document.getElementById('progressFill');
+            const failures = [];
+            const csrfToken = getCookie('csrftoken');
             
-            btnRun.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="animation: spin 1s linear infinite;"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg> {% translate "Processando..." %}';
+            btnRun.textContent = `{% translate "Processando" %} 0/${questionIds.length}`;
             btnRun.disabled = true;
 
-            document.getElementById('progressBar').style.display = 'block';
+            progressBar.style.display = 'block';
+            progressFill.style.width = '0%';
+            progressFill.classList.add('is-indeterminate');
 
             try {
-                const requisicoes = Array.from(selectedQuestions).map(async id => {
-                    const response = await fetch(`/questoes/${id}/gerar-ia-faltantes/`, {
-                        method: 'POST',
-                        headers: { 'X-CSRFToken': getCookie('csrftoken') }
-                    });
-                    let data;
-                    try {
-                        data = await response.json();
-                    } catch (parseError) {
-                        throw new Error(`{% translate "A questão" %} #${id}: {% translate "o servidor retornou uma resposta inválida." %}`);
-                    }
-                    if (!response.ok || !['ok', 'ja_completo'].includes(data.status)) {
-                        const details = (data.erros || [])
-                            .map(item => `${item.modelo || 'LLM'}: ${item.mensagem || item}`)
-                            .join(' · ');
-                        throw new Error(`{% translate "A questão" %} #${id}: ${details || data.mensagem || '{% translate "falha ao consultar os modelos." %}'}`);
-                    }
-                    return data;
-                });
+                // Duas perguntas em trânsito aproveitam threads liberadas por uma
+                // LLM lenta. O pool global do backend continua impondo o limite real.
+                let nextIndex = 0;
+                let completed = 0;
+                async function processNextQuestion() {
+                    while (nextIndex < questionIds.length) {
+                        const index = nextIndex;
+                        nextIndex += 1;
+                        const id = questionIds[index];
+                        try {
+                            const response = await fetch(`/questoes/${id}/gerar-ia-faltantes/`, {
+                                method: 'POST',
+                                headers: { 'X-CSRFToken': csrfToken }
+                            });
+                            let data;
+                            try {
+                                data = await response.json();
+                            } catch (parseError) {
+                                throw new Error("{% translate 'o servidor retornou uma resposta inválida.' %}");
+                            }
 
-                await Promise.all(requisicoes);
+                            if (data.status !== 'ok' && data.status !== 'ja_completo') {
+                                const details = (data.erros || [])
+                                    .map(item => `${item.modelo || 'LLM'}: ${item.mensagem || item}`)
+                                    .join(' · ');
+                                throw new Error(details || data.mensagem || "{% translate 'falha ao consultar os modelos.' %}");
+                            }
+                        } catch (error) {
+                            failures.push(`{% translate "Questão" %} #${id}: ${error.message}`);
+                        } finally {
+                            completed += 1;
+                            btnRun.textContent = `{% translate "Processando" %} ${completed}/${questionIds.length}`;
+                            progressFill.classList.remove('is-indeterminate');
+                            progressFill.style.width = `${Math.round((completed / questionIds.length) * 100)}%`;
+                        }
+                    }
+                }
+                const requestWorkers = Array.from(
+                    { length: Math.min(2, questionIds.length) },
+                    () => processNextQuestion()
+                );
+                await Promise.all(requestWorkers);
 
                 selectedQuestions.clear();
-                document.getElementById('progressBar').style.display = 'none';
+                progressFill.classList.remove('is-indeterminate');
+                progressFill.style.width = '100%';
+                if (failures.length) {
+                    const visibleFailures = failures.slice(0, 5).join('\n');
+                    const remaining = failures.length > 5
+                        ? `\n+${failures.length - 5} {% translate "falha(s) adicional(is)" %}`
+                        : '';
+                    alert(`{% translate "Processamento concluído com respostas pendentes. Você pode selecionar novamente os itens parciais." %}\n\n${visibleFailures}${remaining}`);
+                }
                 location.reload();
                 
             } catch (error) {
@@ -444,7 +526,9 @@ body::before {
                 alert(error.message || "{% translate 'Houve um erro ao processar as perguntas.' %}");
                 btnRun.innerHTML = originalText;
                 btnRun.disabled = false;
-                document.getElementById('progressBar').style.display = 'none';
+                progressBar.style.display = 'none';
+                progressFill.classList.remove('is-indeterminate');
+                progressFill.style.width = '0%';
             }
         }
 

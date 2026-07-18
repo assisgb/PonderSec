@@ -10,6 +10,12 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     ports:
       - "${POSTGRES_PORT}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
     restart: always
 
   # Serviço do Site (Django)
@@ -18,10 +24,9 @@ services:
       context: .
       network: host
     command: >
-      sh -c "python manage.py makemigrations &&
-             python manage.py migrate &&
+      sh -c "python manage.py migrate &&
              python manage.py bootstrap_admin &&
-             gunicorn pondersec.wsgi:application --bind 0.0.0.0:8000 --workers 3"
+             exec gunicorn pondersec.wsgi:application --bind 0.0.0.0:8000 --worker-class gthread --workers ${GUNICORN_WORKERS:-3} --threads ${GUNICORN_THREADS:-4} --timeout ${GUNICORN_TIMEOUT_SECONDS:-180}"
 
     ports:
       - "8000:8000"
@@ -31,14 +36,37 @@ services:
     env_file:
       - .env
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
       - DB_ENGINE=${DB_ENGINE}
+      - DJANGO_DEBUG=${DJANGO_DEBUG:-True}
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY:-}
       - DB_NAME=${POSTGRES_DB}
       - DB_USER=${POSTGRES_USER}
       - DB_PASSWORD=${POSTGRES_PASSWORD}
       - DB_HOST=${DB_HOST}
-      - DB_PORT=${POSTGRES_PORT}
+      - DB_PORT=${DB_PORT:-5432}
+      - DB_CONN_MAX_AGE=${DB_CONN_MAX_AGE:-60}
+      - DB_CONN_HEALTH_CHECKS=${DB_CONN_HEALTH_CHECKS:-true}
+      - LLM_REQUEST_TIMEOUT_SECONDS=${LLM_REQUEST_TIMEOUT_SECONDS:-45}
+      - LLM_STREAM_TIMEOUT_SECONDS=${LLM_STREAM_TIMEOUT_SECONDS:-60}
+      - LLM_MODELS_MAX_WORKERS=${LLM_MODELS_MAX_WORKERS:-4}
+      - LLM_EVALUATION_MAX_WORKERS=${LLM_EVALUATION_MAX_WORKERS:-4}
+      - LLM_CLIENT_CACHE_TTL_SECONDS=${LLM_CLIENT_CACHE_TTL_SECONDS:-300}
+      - LLM_CLIENT_CACHE_MAX_SIZE=${LLM_CLIENT_CACHE_MAX_SIZE:-8}
+      - LLM_TRANSIENT_MAX_ATTEMPTS=${LLM_TRANSIENT_MAX_ATTEMPTS:-2}
+      - LLM_TRANSIENT_RETRY_DELAY_SECONDS=${LLM_TRANSIENT_RETRY_DELAY_SECONDS:-0.2}
+      - PUBLIC_CHAT_RATE_LIMIT=${PUBLIC_CHAT_RATE_LIMIT:-30}
+      - PUBLIC_EVALUATION_RATE_LIMIT=${PUBLIC_EVALUATION_RATE_LIMIT:-120}
+      - PUBLIC_CHAT_RATE_WINDOW_SECONDS=${PUBLIC_CHAT_RATE_WINDOW_SECONDS:-60}
+      - PUBLIC_RATE_TRUST_X_REAL_IP=${PUBLIC_RATE_TRUST_X_REAL_IP:-false}
+      - QUESTION_UPLOAD_MAX_BYTES=${QUESTION_UPLOAD_MAX_BYTES:-10485760}
+      - QUESTION_UPLOAD_MAX_ITEMS=${QUESTION_UPLOAD_MAX_ITEMS:-20000}
+      - GUNICORN_WORKERS=${GUNICORN_WORKERS:-3}
+      - GUNICORN_THREADS=${GUNICORN_THREADS:-4}
+      - GUNICORN_TIMEOUT_SECONDS=${GUNICORN_TIMEOUT_SECONDS:-180}
+    restart: unless-stopped
 
   pgadmin:
     image: dpage/pgadmin4

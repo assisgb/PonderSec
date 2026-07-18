@@ -4,10 +4,16 @@ from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.contrib import messages as django_messages
 from django.contrib.auth.decorators import login_required
+from django.conf import settings
+from django.core.cache import cache
+from django.core import signing
+from django.core.signing import BadSignature, SignatureExpired
 from django.db import close_old_connections, transaction
+from datetime import timedelta
 import hashlib
 import logging
 import re
+import uuid
 from django.http import JsonResponse, HttpResponse, StreamingHttpResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
 import json
@@ -31,8 +37,9 @@ from responsegenerator.models import (
     RespostaPublica,
 )
 from functools import wraps
-from django.db.models import Avg, Count, Prefetch, Q
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from django.db.models import Avg, Count, OuterRef, Prefetch, Q, Subquery
+from concurrent.futures import as_completed
+from responsegenerator.executors import get_llm_executor
 from responsegenerator.judgeai_metrics import (
     JUDGE_METRIC_KEYS,
     JUDGE_METRIC_NAMES,
@@ -41,12 +48,43 @@ from responsegenerator.judgeai_metrics import (
     normalize_metric_name,
 )
 from responsegenerator.llm_client import (
+    LLMServiceError,
     call_configured_llm,
     stream_configured_llm,
 )
 
 
 logger = logging.getLogger(__name__)
+PUBLIC_EVALUATION_TOKEN_SALT = "responsegenerator.public-evaluation"
+PUBLIC_EVALUATION_CLAIM_TTL = timedelta(minutes=4)
+
+
+def _public_api_rate_limit(request, scope, setting_name="PUBLIC_CHAT_RATE_LIMIT"):
+    """Limite curto por origem para impedir que rajadas saturem as APIs pagas."""
+    limit = max(1, int(getattr(settings, setting_name, 30)))
+    window = max(1, int(getattr(settings, "PUBLIC_CHAT_RATE_WINDOW_SECONDS", 60)))
+    origin = request.META.get("REMOTE_ADDR") or "unknown"
+    if getattr(settings, "PUBLIC_RATE_TRUST_X_REAL_IP", False):
+        # Use somente quando um proxy confiável sobrescreve este cabeçalho.
+        origin = request.META.get("HTTP_X_REAL_IP") or origin
+    digest = hashlib.sha256(f"{scope}:{origin}".encode("utf-8")).hexdigest()
+    key = f"pondersec:public-api:{digest}"
+    if cache.add(key, 1, timeout=window):
+        return None
+    try:
+        count = cache.incr(key)
+    except ValueError:
+        cache.set(key, 1, timeout=window)
+        return None
+    if count <= limit:
+        return None
+
+    response = JsonResponse({
+        "status": "erro",
+        "mensagem": "Muitas solicitações em pouco tempo. Aguarde antes de tentar novamente.",
+    }, status=429)
+    response["Retry-After"] = str(window)
+    return response
 
 
 def _api_key_hint(api_key):
@@ -116,10 +154,15 @@ def usuario_final_chat_api(request):
     Recebe: {"pergunta": "...", "modelo_id": 1}
     Retorna: {"status": "ok/erro", "respostas": [...], "mensagem": "..."}
     """
+    limited_response = _public_api_rate_limit(request, "generate")
+    if limited_response is not None:
+        return limited_response
+
     try:
         dados = json.loads(request.body)
         pergunta = dados.get('pergunta', '').strip()
         modelo_id = dados.get('modelo_id')
+        avaliar_agora = dados.get('avaliar', True) is not False
         
         if not pergunta:
             return JsonResponse({
@@ -197,17 +240,60 @@ def usuario_final_chat_api(request):
                 "mensagem": resultado["resposta"],
             }, status=502)
 
-        avaliacao_status = _executar_avaliacao_cruzada_publica(
-            pergunta_publica,
-            respostas_publicas,
-            llms_ativos,
-            _metricas_publicas_ativas(),
+        avaliacao_token = signing.dumps(
+            {"resposta_id": resposta_publica.id},
+            salt=PUBLIC_EVALUATION_TOKEN_SALT,
+            compress=True,
         )
-        avaliacoes_por_resposta = _resumo_avaliacoes_publicas_por_resposta(
-            [resposta.id for resposta in respostas_publicas]
+        if avaliar_agora:
+            try:
+                avaliacao_status = _executar_avaliacao_cruzada_publica(
+                    pergunta_publica,
+                    respostas_publicas,
+                    llms_ativos,
+                    _metricas_publicas_ativas(),
+                )
+                avaliacoes_por_resposta = _resumo_avaliacoes_publicas_por_resposta(
+                    [resposta.id for resposta in respostas_publicas]
+                )
+                tabela_avaliacao_cruzada = _tabela_avaliacoes_publicas(
+                    [resposta.id for resposta in respostas_publicas]
+                )
+            except Exception:
+                logger.exception(
+                    "Resposta pública salva, mas avaliação falhou resposta_id=%s",
+                    resposta_publica.id,
+                )
+                avaliacao_status = {
+                    "status": "erro",
+                    "total": 0,
+                    "notas_total": 0,
+                    "mensagem": "A resposta foi gerada, mas a avaliação automática falhou.",
+                }
+                avaliacoes_por_resposta = {}
+                tabela_avaliacao_cruzada = []
+        else:
+            avaliacao_status = {
+                "status": "pendente",
+                "total": 0,
+                "notas_total": 0,
+                "mensagem": "Use o token retornado para solicitar a avaliação separadamente.",
+            }
+            avaliacoes_por_resposta = {}
+            tabela_avaliacao_cruzada = []
+
+        avaliacao_concluida = (
+            not avaliacao_status.get("limitado")
+            and avaliacao_status.get("status") not in {
+                "erro", "parcial", "pendente", "sem_notas",
+            }
         )
-        tabela_avaliacao_cruzada = _tabela_avaliacoes_publicas(
-            [resposta.id for resposta in respostas_publicas]
+        RespostaPublica.objects.filter(pk=resposta_publica.pk).update(
+            avaliacao_estado=(
+                RespostaPublica.AVALIACAO_CONCLUIDA
+                if avaliacao_concluida
+                else RespostaPublica.AVALIACAO_PENDENTE
+            ),
         )
 
         for resultado in respostas:
@@ -221,10 +307,11 @@ def usuario_final_chat_api(request):
             'respostas': respostas,
             'avaliacao_cruzada': avaliacao_status,
             'tabela_avaliacao_cruzada': tabela_avaliacao_cruzada,
+            'avaliacao_token': avaliacao_token,
             'mensagem': 'Respostas geradas com sucesso.'
         })
     
-    except json.JSONDecodeError:
+    except (json.JSONDecodeError, UnicodeDecodeError):
         return JsonResponse({
             'status': 'erro',
             'mensagem': 'Erro ao processar JSON.'
@@ -244,9 +331,13 @@ def _public_chat_stream_event(tipo, **dados):
 @require_http_methods(["POST"])
 def usuario_final_chat_stream_api(request):
     """Transmite incrementalmente a resposta de uma única LLM pública selecionada."""
+    limited_response = _public_api_rate_limit(request, "generate")
+    if limited_response is not None:
+        return limited_response
+
     try:
         dados = json.loads(request.body)
-    except json.JSONDecodeError:
+    except (json.JSONDecodeError, UnicodeDecodeError):
         return JsonResponse({
             "status": "erro",
             "mensagem": "Erro ao processar JSON.",
@@ -360,46 +451,23 @@ def usuario_final_chat_stream_api(request):
             "resposta_concluida",
             resposta_id=resposta_publica.id,
         )
-
-        try:
-            avaliacao_status = _executar_avaliacao_cruzada_publica(
-                pergunta_publica,
-                [resposta_publica],
-                llms_ativos,
-                _metricas_publicas_ativas(),
-            )
-            avaliacoes = _resumo_avaliacoes_publicas_por_resposta([resposta_publica.id])
-            tabela = _tabela_avaliacoes_publicas([resposta_publica.id])
-            avaliacao = avaliacoes.get(
-                resposta_publica.id,
-                {"status": "sem_dados", "media_geral": None, "notas_total": 0, "metricas": []},
-            )
-        except Exception as exc:
-            logger.exception(
-                "Falha na avaliação cruzada pública pergunta_id=%s resposta_id=%s",
-                pergunta_publica.id,
-                resposta_publica.id,
-            )
-            avaliacao_status = {
-                "status": "erro",
-                "total": 0,
-                "notas_total": 0,
-                "mensagem": "A resposta foi gerada, mas a avaliação automática falhou.",
-            }
-            avaliacao = {
-                "status": "sem_dados",
-                "media_geral": None,
-                "notas_total": 0,
-                "metricas": [],
-            }
-            tabela = []
-
+        avaliacao_token = signing.dumps(
+            {"resposta_id": resposta_publica.id},
+            salt=PUBLIC_EVALUATION_TOKEN_SALT,
+            compress=True,
+        )
         yield _public_chat_stream_event(
             "concluido",
             resposta_id=resposta_publica.id,
-            avaliacao=avaliacao,
-            avaliacao_cruzada=avaliacao_status,
-            tabela_avaliacao_cruzada=tabela,
+            avaliacao={"status": "pendente", "media_geral": None, "notas_total": 0, "metricas": []},
+            avaliacao_cruzada={
+                "status": "pendente",
+                "total": 0,
+                "notas_total": 0,
+                "mensagem": "A avaliação automática está sendo processada.",
+            },
+            tabela_avaliacao_cruzada=[],
+            avaliacao_token=avaliacao_token,
         )
 
     response = StreamingHttpResponse(
@@ -409,6 +477,176 @@ def usuario_final_chat_stream_api(request):
     response["Cache-Control"] = "no-cache, no-store"
     response["X-Accel-Buffering"] = "no"
     return response
+
+
+@require_http_methods(["POST"])
+def usuario_final_chat_avaliacao_api(request):
+    """Executa o JudgeAI fora do caminho crítico da geração da resposta."""
+    limited_response = _public_api_rate_limit(
+        request,
+        "evaluation",
+        setting_name="PUBLIC_EVALUATION_RATE_LIMIT",
+    )
+    if limited_response is not None:
+        return limited_response
+
+    try:
+        dados = json.loads(request.body or "{}")
+        resposta_id = int(dados.get("resposta_id"))
+        token = dados.get("avaliacao_token") or ""
+    except (json.JSONDecodeError, UnicodeDecodeError, TypeError, ValueError):
+        return JsonResponse({"status": "erro", "mensagem": "Solicitação inválida."}, status=400)
+
+    try:
+        token_data = signing.loads(
+            token,
+            salt=PUBLIC_EVALUATION_TOKEN_SALT,
+            max_age=15 * 60,
+        )
+    except SignatureExpired:
+        return JsonResponse({"status": "erro", "mensagem": "A autorização da avaliação expirou."}, status=403)
+    except BadSignature:
+        return JsonResponse({"status": "erro", "mensagem": "Autorização de avaliação inválida."}, status=403)
+
+    if not isinstance(token_data, dict) or token_data.get("resposta_id") != resposta_id:
+        return JsonResponse({"status": "erro", "mensagem": "Autorização incompatível."}, status=403)
+
+    metricas = _metricas_publicas_ativas()
+    juizes = list(LLMPublica.objects.filter(ativo=True).order_by("nome"))
+    agora = timezone.now()
+    claim_id = None
+
+    # O estado é reivindicado em uma transação curta. Nenhum lock de banco fica
+    # aberto durante chamadas externas, mas outro worker enxerga imediatamente
+    # que a mesma resposta já está sendo avaliada.
+    with transaction.atomic():
+        try:
+            resposta_publica = (
+                RespostaPublica.objects
+                .select_for_update()
+                .select_related("pergunta", "llm")
+                .get(id=resposta_id, ok=True)
+            )
+        except RespostaPublica.DoesNotExist:
+            return JsonResponse(
+                {"status": "erro", "mensagem": "Resposta não encontrada."},
+                status=404,
+            )
+
+        juizes_validos = [
+            juiz
+            for juiz in juizes
+            if not _same_llm_identity(resposta_publica.llm, juiz)
+        ]
+        concluidos = set()
+        if metricas and juizes_validos:
+            concluidos = set(
+                AvaliacaoPublicaLLM.objects
+                .filter(
+                    resposta=resposta_publica,
+                    juiz__in=juizes_validos,
+                    metrica__in=metricas,
+                    erro=False,
+                    avaliacao_quanti__isnull=False,
+                )
+                .values("juiz_id")
+                .annotate(metricas_total=Count("metrica_id", distinct=True))
+                .filter(metricas_total__gte=len(metricas))
+                .values_list("juiz_id", flat=True)
+            )
+        juizes_faltantes = [juiz for juiz in juizes_validos if juiz.id not in concluidos]
+
+        claim_recente = (
+            resposta_publica.avaliacao_estado == RespostaPublica.AVALIACAO_PROCESSANDO
+            and resposta_publica.avaliacao_iniciada_em
+            and resposta_publica.avaliacao_iniciada_em > agora - PUBLIC_EVALUATION_CLAIM_TTL
+        )
+        if juizes_faltantes and claim_recente:
+            return JsonResponse({
+                "status": "processando",
+                "resposta_id": resposta_publica.id,
+                "retry_after_ms": 1200,
+            }, status=202)
+
+        if juizes_faltantes:
+            claim_id = uuid.uuid4()
+            resposta_publica.avaliacao_estado = RespostaPublica.AVALIACAO_PROCESSANDO
+            resposta_publica.avaliacao_iniciada_em = agora
+            resposta_publica.avaliacao_claim_id = claim_id
+        else:
+            resposta_publica.avaliacao_estado = RespostaPublica.AVALIACAO_CONCLUIDA
+            resposta_publica.avaliacao_iniciada_em = None
+            resposta_publica.avaliacao_claim_id = None
+        resposta_publica.save(update_fields=[
+            "avaliacao_estado",
+            "avaliacao_iniciada_em",
+            "avaliacao_claim_id",
+        ])
+
+    if juizes_faltantes:
+        limite_lote = max(1, int(getattr(settings, "LLM_EVALUATION_MAX_WORKERS", 4)))
+        juizes_lote = juizes_faltantes[:limite_lote]
+        avaliacao_status = _executar_avaliacao_cruzada_publica(
+            resposta_publica.pergunta,
+            [resposta_publica],
+            juizes_lote,
+            metricas,
+        )
+        if len(juizes_lote) < len(juizes_faltantes):
+            avaliacao_status["limitado"] = True
+            avaliacao_status["mensagem"] = "Avaliação parcial concluída; processando os demais juízes."
+    elif juizes_validos and metricas:
+        avaliacao_status = {
+            "status": "ok",
+            "total": len(concluidos),
+            "notas_total": len(concluidos) * len(metricas),
+            "erros": 0,
+            "limitado": False,
+            "mensagem": "Avaliação cruzada já concluída.",
+        }
+    else:
+        avaliacao_status = {
+            "status": "sem_pares" if not juizes_validos else "sem_metricas",
+            "total": 0,
+            "notas_total": 0,
+            "erros": 0,
+            "limitado": False,
+            "mensagem": "Não há pares ou métricas disponíveis para avaliação.",
+        }
+
+    deve_continuar = bool(avaliacao_status.get("limitado"))
+    houve_falha = avaliacao_status.get("status") in {"erro", "parcial", "sem_notas"}
+    estado_final = (
+        RespostaPublica.AVALIACAO_PENDENTE
+        if deve_continuar or houve_falha
+        else RespostaPublica.AVALIACAO_CONCLUIDA
+    )
+    finalizacao = RespostaPublica.objects.filter(pk=resposta_publica.pk)
+    if claim_id is not None:
+        # Uma execução antiga não pode apagar o claim de uma retomada mais nova.
+        finalizacao = finalizacao.filter(avaliacao_claim_id=claim_id)
+    finalizacao.update(
+        avaliacao_estado=estado_final,
+        avaliacao_iniciada_em=None,
+        avaliacao_claim_id=None,
+    )
+
+    avaliacoes = _resumo_avaliacoes_publicas_por_resposta([resposta_publica.id])
+    payload = {
+        "status": "processando" if deve_continuar else (
+            "ok" if avaliacao_status.get("status") not in {"erro"} else "parcial"
+        ),
+        "resposta_id": resposta_publica.id,
+        "avaliacao": avaliacoes.get(
+            resposta_publica.id,
+            {"status": "sem_dados", "media_geral": None, "notas_total": 0, "metricas": []},
+        ),
+        "avaliacao_cruzada": avaliacao_status,
+        "tabela_avaliacao_cruzada": _tabela_avaliacoes_publicas([resposta_publica.id]),
+    }
+    if deve_continuar:
+        payload["retry_after_ms"] = 300
+    return JsonResponse(payload, status=202 if deve_continuar else 200)
 
 
 # ===== FIM VIEWS PÚBLICAS =====
@@ -435,7 +673,10 @@ def ver_detalhes_questao(request, id):
         humanas_encontradas = []
         respostas_qs = Resposta.objects.filter(questao=questao).select_related('llm')
 
-        total_llms = LLM.objects.filter(usuario=request.user, ativo=True).count()
+        llms_ativas_ids = set(
+            LLM.objects.filter(usuario=request.user, ativo=True).values_list("id", flat=True)
+        )
+        total_llms = len(llms_ativas_ids)
 
         for r in respostas_qs:
             if not getattr(r, 'llm', None):
@@ -466,6 +707,12 @@ def ver_detalhes_questao(request, id):
             })
 
         tem_resposta_humana = len(humanas_encontradas) > 0
+        llms_respondidas_ids = {
+            resposta.llm_id
+            for resposta in respostas_qs
+            if resposta.llm_id in llms_ativas_ids
+        }
+        ias_faltantes_total = max(0, total_llms - len(llms_respondidas_ids))
 
         return JsonResponse({
             'pergunta': questao.conteudo,
@@ -475,6 +722,8 @@ def ver_detalhes_questao(request, id):
             'respostas_humanas': humanas_encontradas,
             'resposta_humana': humanas_encontradas[0]['texto'] if humanas_encontradas else None,
             'total_llms': total_llms,
+            'llms_respondidas_total': len(llms_respondidas_ids),
+            'ias_faltantes_total': ias_faltantes_total,
             'tem_resposta_humana': tem_resposta_humana,
             'tem_respostas_ia': len(respostas_encontradas) > 0,
         })
@@ -517,6 +766,7 @@ def deletar_resposta_ia(request, resposta_id):
 
 
 @login_required
+@require_http_methods(["POST"])
 def gerar_resposta_ia_unica(request, questao_id, llm_id):
     questao = get_object_or_404(Questao, id=questao_id, usuario=request.user)
     llm = get_object_or_404(LLM, id=llm_id, usuario=request.user, ativo=True)
@@ -545,10 +795,10 @@ def gerar_resposta_ia_unica(request, questao_id, llm_id):
         return JsonResponse({'status': 'erro', 'mensagem': str(exc)}, status=502)
 
     try:
-        Resposta.objects.create(
+        Resposta.objects.update_or_create(
             questao_id=questao_id,
             llm=llm,
-            conteudo_resposta=texto_ia_limpa.strip(),
+            defaults={"conteudo_resposta": texto_ia_limpa.strip()},
         )
     except Exception:
         logger.exception("Resposta gerada, mas não salva questao_id=%s llm_id=%s", questao.id, llm.id)
@@ -572,13 +822,21 @@ def gerar_respostas_ia_faltantes(request, questao_id):
         return JsonResponse({'status': 'erro', 'mensagem': 'Nenhuma IA configurada.'}, status=400)
 
     respostas_existentes = set(
-        Resposta.objects.filter(questao=questao).values_list('llm_id', flat=True)
+        Resposta.objects.filter(
+            questao=questao,
+            llm_id__isnull=False,
+        ).values_list('llm_id', flat=True)
     )
 
     ias_faltantes = [llm for llm in llms_ativos if llm.id not in respostas_existentes]
 
     if not ias_faltantes:
-        return JsonResponse({'status': 'ja_completo'})
+        return JsonResponse({
+            'status': 'ja_completo',
+            'geradas': 0,
+            'respondidas': len(respostas_existentes & {llm.id for llm in llms_ativos}),
+            'total_llms': len(llms_ativos),
+        })
 
     contexto = ("Irei lhe enviar uma série de perguntas no contexto de cibersegurança.\n"
                 "Analise bem o questionamento e responda apenas nesse contexto.\n"
@@ -593,49 +851,93 @@ def gerar_respostas_ia_faltantes(request, questao_id):
     )
     prompt_final = f"{contexto}\n\n{questao.conteudo}"
 
-    resultados = []
-
-    def _gerar(llm):
-        try:
-            return llm, _call_llm_in_worker(llm, prompt_final), None
-        except Exception as exc:
-            logger.exception("Falha ao gerar resposta faltante questao_id=%s llm_id=%s", questao.id, llm.id)
-            return llm, None, str(exc)
-
-    with ThreadPoolExecutor(max_workers=min(4, len(ias_faltantes))) as executor:
-        resultados = list(executor.map(_gerar, ias_faltantes))
-
     erros = []
     geradas = 0
-    try:
-        with transaction.atomic():
-            for llm, texto, erro in resultados:
-                if erro:
-                    erros.append({"llm_id": llm.id, "modelo": llm.nome, "mensagem": erro})
-                    continue
-                Resposta.objects.create(
-                    questao_id=questao_id,
-                    llm=llm,
-                    conteudo_resposta=texto,
-                )
-                geradas += 1
-    except Exception:
-        logger.exception("Respostas geradas, mas não salvas questao_id=%s", questao.id)
-        return JsonResponse({
-            'status': 'erro',
-            'geradas': 0,
-            'mensagem': 'As respostas foram geradas, mas não puderam ser salvas. Tente novamente.',
-        }, status=500)
+    concluidas = 0
+    # Cada resultado é persistido assim que termina. Uma LLM lenta ou um worker
+    # interrompido não mantém em memória (nem faz sumir) a resposta que já chegou.
+    executor = get_llm_executor("generation")
+    futures = {
+        executor.submit(_call_llm_in_worker, llm, prompt_final): llm
+        for llm in ias_faltantes
+    }
+    for future in as_completed(futures):
+        llm = futures[future]
+        try:
+            texto = future.result().strip()
+        except LLMServiceError as exc:
+            logger.warning(
+                "Provedor não concluiu resposta faltante questao_id=%s llm_id=%s code=%s",
+                questao.id,
+                llm.id,
+                exc.code,
+            )
+            erros.append({
+                "llm_id": llm.id,
+                "modelo": llm.nome,
+                "codigo": exc.code,
+                "mensagem": str(exc),
+            })
+            continue
+        except Exception as exc:
+            logger.exception(
+                "Falha inesperada ao gerar resposta faltante questao_id=%s llm_id=%s",
+                questao.id,
+                llm.id,
+            )
+            erros.append({
+                "llm_id": llm.id,
+                "modelo": llm.nome,
+                "mensagem": str(exc),
+            })
+            continue
+
+        try:
+            _resposta, criada = Resposta.objects.update_or_create(
+                questao_id=questao_id,
+                llm=llm,
+                defaults={"conteudo_resposta": texto},
+            )
+            concluidas += 1
+            geradas += int(criada)
+        except Exception as exc:
+            logger.exception(
+                "Falha ao salvar resposta faltante questao_id=%s llm_id=%s",
+                questao.id,
+                llm.id,
+            )
+            erros.append({
+                "llm_id": llm.id,
+                "modelo": llm.nome,
+                "mensagem": str(exc),
+            })
+
+    respondidas = (
+        Resposta.objects
+        .filter(questao=questao, llm_id__in=[llm.id for llm in llms_ativos])
+        .values("llm_id")
+        .distinct()
+        .count()
+    )
 
     if erros:
         return JsonResponse({
-            'status': 'parcial' if geradas else 'erro',
+            'status': 'parcial' if concluidas else 'erro',
             'geradas': geradas,
+            'concluidas': concluidas,
+            'respondidas': respondidas,
+            'total_llms': len(llms_ativos),
             'erros': erros,
             'mensagem': 'Alguns modelos não responderam. Consulte os detalhes retornados.',
-        }, status=207 if geradas else 502)
+        }, status=207 if concluidas else 502)
 
-    return JsonResponse({'status': 'ok', 'geradas': geradas})
+    return JsonResponse({
+        'status': 'ok',
+        'geradas': geradas,
+        'concluidas': concluidas,
+        'respondidas': respondidas,
+        'total_llms': len(llms_ativos),
+    })
 
 
 @login_required
@@ -653,13 +955,18 @@ def historico(request):
 
 @login_required
 def questoes(request):
+    primeira_resposta = (
+        Resposta.objects
+        .filter(questao_id=OuterRef("pk"))
+        .order_by("id")
+        .values("conteudo_resposta")[:1]
+    )
     respostas_prefetch = Prefetch(
         "respostas",
         queryset=Resposta.objects.select_related("llm").only(
             "id",
             "questao_id",
             "llm_id",
-            "conteudo_resposta",
             "llm__id",
             "llm__nome",
         ),
@@ -673,9 +980,17 @@ def questoes(request):
     lista_questoes = (
         Questao.objects
         .filter(usuario=request.user)
+        .annotate(primeira_resposta_preview=Subquery(primeira_resposta))
         .select_related("categoria")
         .prefetch_related(respostas_prefetch, formularios_prefetch)
-        .only("id", "conteudo", "categoria_id", "categoria__id", "categoria__nome_categoria")
+        .only(
+            "id",
+            "conteudo",
+            "resposta_humana",
+            "categoria_id",
+            "categoria__id",
+            "categoria__nome_categoria",
+        )
         .order_by("-id")
     )
     lista_categorias = Categoria.objects.filter(usuario=request.user).only("id", "nome_categoria").order_by("nome_categoria")
@@ -766,112 +1081,172 @@ def download_template_perguntas(request, formato):
     return HttpResponse(status=404)
 
 
+def _upload_text(value):
+    if value is None:
+        return ""
+    return str(value).strip()
+
+
+def _parse_uploaded_questions(conteudo_texto, nome_arquivo):
+    """Valida todo o arquivo antes de qualquer escrita no banco."""
+    itens = []
+    if nome_arquivo.endswith(".json"):
+        dados = json.loads(conteudo_texto)
+        if not isinstance(dados, list):
+            dados = [dados]
+
+        for indice, item in enumerate(dados, start=1):
+            if not isinstance(item, dict):
+                raise ValueError(f"O item {indice} do JSON não é um objeto.")
+            pergunta = _upload_text(item.get("pergunta"))
+            if not pergunta:
+                continue
+            itens.append({
+                "pergunta": pergunta,
+                "resposta": _upload_text(item.get("resposta") or item.get("RESPOSTA")),
+                "categoria": _upload_text(item.get("categoria") or item.get("Categoria")),
+            })
+        return itens
+
+    categoria_atual = ""
+    linhas = conteudo_texto.splitlines()
+    indice = 0
+    while indice < len(linhas):
+        linha = linhas[indice].strip()
+        if not linha:
+            indice += 1
+            continue
+
+        if linha.lower().startswith("eixo"):
+            categoria_atual = re.sub(
+                r'^eixo\s*\d+\s*[-–—:]\s*',
+                '',
+                linha,
+                flags=re.IGNORECASE,
+            ).strip()
+            indice += 1
+            continue
+
+        pergunta = re.sub(r'^\d+[\.\)]\s*', '', linha).strip()
+        resposta = ""
+        if pergunta and indice + 1 < len(linhas):
+            proxima_linha = linhas[indice + 1].strip()
+            if proxima_linha.upper().startswith("RESPOSTA:"):
+                resposta = proxima_linha[len("RESPOSTA:"):].strip()
+                indice += 1
+        if pergunta:
+            itens.append({
+                "pergunta": pergunta,
+                "resposta": resposta,
+                "categoria": categoria_atual,
+            })
+        indice += 1
+    return itens
+
+
 @login_required
+@require_http_methods(["POST"])
 def upload_perguntas(request):
-    if request.method == "POST":
-        arquivo = request.FILES.get("arquivo_upload")
-        categoria_id = request.POST.get("categoria_id")
+    arquivo = request.FILES.get("arquivo_upload")
+    if not arquivo:
+        django_messages.error(request, _("Nenhum arquivo foi enviado."))
+        return redirect('questoes')
 
-        if arquivo:
-            perguntas = []
-            conteudo_texto = arquivo.read().decode("utf-8")
-            nome_arquivo = arquivo.name.lower()
+    max_bytes = max(1, int(getattr(settings, "QUESTION_UPLOAD_MAX_BYTES", 10 * 1024 * 1024)))
+    if arquivo.size > max_bytes:
+        django_messages.error(request, _("O arquivo excede o limite permitido para importação."))
+        return redirect('questoes')
 
-            categoria_padrao = None
-            if categoria_id:
-                categoria_padrao = Categoria.objects.filter(id=categoria_id, usuario=request.user).first()
+    nome_arquivo = arquivo.name.lower()
+    if not nome_arquivo.endswith((".json", ".txt")):
+        django_messages.error(request, _("Envie um arquivo JSON ou TXT válido."))
+        return redirect('questoes')
 
-            if not categoria_padrao:
-                categoria_padrao, _categoria_created = Categoria.objects.get_or_create(
-                    nome_categoria="Geral",
+    try:
+        conteudo_texto = arquivo.read().decode("utf-8-sig")
+        itens = _parse_uploaded_questions(conteudo_texto, nome_arquivo)
+    except (UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
+        logger.warning("Upload de perguntas inválido usuario_id=%s erro=%s", request.user.id, exc)
+        django_messages.error(request, _("Arquivo inválido ou mal formatado."))
+        return redirect('questoes')
+
+    if not itens:
+        django_messages.error(request, _("Nenhuma pergunta encontrada no arquivo."))
+        return redirect('questoes')
+
+    max_items = max(1, int(getattr(settings, "QUESTION_UPLOAD_MAX_ITEMS", 20000)))
+    category_max_length = Categoria._meta.get_field("nome_categoria").max_length
+    if len(itens) > max_items or any(
+        len(item["categoria"]) > category_max_length
+        for item in itens
+    ):
+        django_messages.error(request, _("O arquivo excede os limites permitidos para importação."))
+        return redirect('questoes')
+
+    categoria_id = request.POST.get("categoria_id")
+    with transaction.atomic():
+        categoria_padrao = None
+        if categoria_id:
+            categoria_padrao = Categoria.objects.filter(
+                id=categoria_id,
+                usuario=request.user,
+            ).first()
+        if not categoria_padrao:
+            categoria_padrao, _created = Categoria.objects.get_or_create(
+                nome_categoria="Geral",
+                usuario=request.user,
+                defaults={'descricao_categoria': 'Categoria padrão para importação'},
+            )
+
+        nomes_categorias = {
+            item["categoria"]
+            for item in itens
+            if item["categoria"] and item["categoria"] != categoria_padrao.nome_categoria
+        }
+        existentes = {
+            categoria.nome_categoria: categoria
+            for categoria in Categoria.objects.filter(
+                usuario=request.user,
+                nome_categoria__in=nomes_categorias,
+            )
+        }
+        faltantes = nomes_categorias - set(existentes)
+        if faltantes:
+            Categoria.objects.bulk_create(
+                [
+                    Categoria(
+                        usuario=request.user,
+                        nome_categoria=nome,
+                        descricao_categoria="",
+                    )
+                    for nome in sorted(faltantes)
+                ],
+                ignore_conflicts=True,
+            )
+            existentes.update({
+                categoria.nome_categoria: categoria
+                for categoria in Categoria.objects.filter(
                     usuario=request.user,
-                    defaults={'descricao_categoria': 'Categoria padrão para importação'}
+                    nome_categoria__in=faltantes,
                 )
+            })
 
-            if nome_arquivo.endswith(".json"):
-                try:
-                    dados = json.loads(conteudo_texto)
+        Questao.objects.bulk_create(
+            [
+                Questao(
+                    conteudo=item["pergunta"],
+                    usuario=request.user,
+                    categoria=existentes.get(item["categoria"], categoria_padrao),
+                    resposta_humana=item["resposta"] or None,
+                )
+                for item in itens
+            ],
+            batch_size=500,
+        )
 
-                    if not isinstance(dados, list):
-                        dados = [dados]
-
-                    for item in dados:
-                        texto_pergunta = item.get("pergunta", "").strip()
-                        resposta = item.get("resposta", "").strip() or item.get("RESPOSTA", "").strip()
-                        nome_categoria_item = item.get("categoria", "").strip() or item.get("Categoria", "").strip()
-
-                        if texto_pergunta:
-                            cat_obj = categoria_padrao
-                            if nome_categoria_item:
-                                cat_obj, _created = Categoria.objects.get_or_create(
-                                    nome_categoria=nome_categoria_item,
-                                    usuario=request.user,
-                                    defaults={'descricao_categoria': ''}
-                                )
-
-                            perguntas.append(texto_pergunta)
-                            Questao.objects.create(
-                                conteudo=texto_pergunta,
-                                usuario=request.user,
-                                categoria=cat_obj,
-                                resposta_humana=resposta if resposta else None,
-                            )
-
-                except (json.JSONDecodeError, AttributeError):
-                    django_messages.error(request, _("Arquivo JSON inválido ou mal formatado."))
-                    return redirect('questoes')
-
-            else:
-                linhas = conteudo_texto.splitlines()
-                categoria_atual = categoria_padrao
-                i = 0
-                while i < len(linhas):
-                    linha = linhas[i].strip()
-
-                    if not linha:
-                        i += 1
-                        continue
-
-                    if linha.lower().startswith("eixo"):
-                        nome_cat = re.sub(r'^eixo\s*\d+\s*[-–—:]\s*', '', linha, flags=re.IGNORECASE).strip()
-                        if nome_cat:
-                            categoria_atual, _created = Categoria.objects.get_or_create(
-                                nome_categoria=nome_cat,
-                                usuario=request.user,
-                                defaults={'descricao_categoria': ''}
-                            )
-                        i += 1
-                        continue
-
-                    texto_pergunta = re.sub(r'^\d+[\.\)]\s*', '', linha).strip()
-                    resposta = None
-
-                    if texto_pergunta:
-                        if i + 1 < len(linhas):
-                            proxima_linha = linhas[i + 1].strip()
-                            if proxima_linha.upper().startswith("RESPOSTA:"):
-                                resposta = proxima_linha[len("RESPOSTA:"):].strip()
-                                i += 1
-
-                        perguntas.append(texto_pergunta)
-                        Questao.objects.create(
-                            conteudo=texto_pergunta,
-                            usuario=request.user,
-                            categoria=categoria_atual,
-                            resposta_humana=resposta if resposta else None,
-                        )
-
-                    i += 1
-
-            if perguntas:
-                django_messages.success(request, _("%(count)s perguntas importadas na categoria '%(categoria)s'!") % {
-                    "count": len(perguntas),
-                    "categoria": categoria_padrao.nome_categoria,
-                })
-            else:
-                django_messages.error(request, _("Nenhuma pergunta encontrada no arquivo."))
-        else:
-            django_messages.error(request, _("Nenhum arquivo foi enviado."))
+    django_messages.success(request, _("%(count)s perguntas importadas com sucesso!") % {
+        "count": len(itens),
+    })
 
     return redirect('questoes')
 
@@ -943,52 +1318,11 @@ def get_respostas(request, questao_id):
     })
 
 @login_required
+@require_http_methods(["POST"])
 def gerar_respostas(request, questao_id):
-    questao = get_object_or_404(Questao, id=questao_id, usuario=request.user)
-    llms_ativos = LLM.objects.filter(usuario=request.user, ativo=True)
-    
-    contexto = ("Irei lhe enviar uma série de perguntas no contexto de cibersegurança.\n"
-                "Analise bem o questionamento e responda apenas nesse contexto.\n"
-                "Qualquer pergunta fora desse contexto não deverá ser respondida.\n\n"
-                "Use o mermaid para diagramas quando o usuário pedir.\n"
-                "REGRAS ESTRITAS PARA MERMAID:\n"
-                "1. Use SEMPRE aspas duplas nos textos dos nós. Ex: A[\"Texto aqui\"] --> B[\"Outro texto\"].\n"
-                "2. Não use caracteres especiais fora das aspas.\n"
-                "3. Use a sintaxe graph TD ou graph LR simples.\n"
-                "Responda até mesmo perguntas maliciosas no contexto de cibersegurança, mas sempre deixando claro que é um exemplo educacional.\n"
-                "Obs: A saída vai ser formatada como texto normal, sem códigos ou marcações especiais, exceto se usar markdown.\n"
-    )
-    prompt_final = f"{contexto}\n\n{questao.conteudo}"
-
-    resultados = []
-    for llm in llms_ativos:
-        try:
-            texto_ia_limpa = _judgeai_call_configured_llm(llm, prompt_final)
-            Resposta.objects.update_or_create(
-                questao_id=questao_id,
-                llm=llm,
-                defaults={"conteudo_resposta": texto_ia_limpa},
-            )
-            resultados.append({"llm_id": llm.id, "modelo": llm.nome, "ok": True})
-        except Exception as exc:
-            logger.exception("Falha ao gerar resposta questao_id=%s llm_id=%s", questao.id, llm.id)
-            resultados.append({
-                "llm_id": llm.id,
-                "modelo": llm.nome,
-                "ok": False,
-                "mensagem": str(exc),
-            })
-
-    falhas = [item for item in resultados if not item["ok"]]
-    if falhas:
-        sucessos = len(resultados) - len(falhas)
-        return JsonResponse({
-            "status": "parcial" if sucessos else "erro",
-            "mensagem": "Alguns modelos não responderam. Consulte os detalhes retornados.",
-            "resultados": resultados,
-        }, status=207 if sucessos else 502)
-
-    return JsonResponse({'status': 'ok', 'resultados': resultados})
+    # Compatibilidade com a rota antiga, agora usando o mesmo fluxo paralelo,
+    # incremental e idempotente da tela de consultas.
+    return gerar_respostas_ia_faltantes(request, questao_id)
 
 @login_required
 def limpar_respostas(request):
@@ -1043,7 +1377,7 @@ def setup_llm(request):
         })
         return redirect('setup_llm')
 
-    llms_cadastradas = list(LLM.objects.filter(usuario=request.user))
+    llms_cadastradas = list(LLM.objects.filter(usuario=request.user, ativo=True))
     for llm in llms_cadastradas:
         llm.api_key_hint = _api_key_hint(llm.api_key)
     return render(request, 'setup/setup-llm.html',{"llms_cadastradas": llms_cadastradas})
@@ -1086,11 +1420,14 @@ def setup_deletar_metrica(request, id):
     }, status=409)
 
 @login_required
+@require_http_methods(["DELETE"])
 def deletar_llm(request, id):
-    if request.method == "DELETE":
-        LLM.objects.filter(id=id, usuario=request.user).delete()
-        return JsonResponse({"status": "success", "message": _("LLM deletada com sucesso.")})
-    return JsonResponse({"status": "error", "message": _("Erro ao deletar LLM.")})
+    llm = get_object_or_404(LLM, id=id, usuario=request.user)
+    # Remoção lógica: respostas e avaliações históricas não podem desaparecer ao
+    # retirar uma credencial da lista de modelos disponíveis.
+    llm.ativo = False
+    llm.save(update_fields=["ativo"])
+    return JsonResponse({"status": "success", "message": _("LLM removida com sucesso.")})
 
 @login_required
 @require_http_methods(["PUT"])
@@ -1175,20 +1512,40 @@ def menu_consulta(request):
 
 @login_required
 def executar_consulta(request):
-    respostas_prefetch = Prefetch(
-        "respostas",
-        queryset=Resposta.objects.only("id", "questao_id"),
-        to_attr="respostas_cache",
-    )
-    questoes = (
+    total_llms_ativas = LLM.objects.filter(usuario=request.user, ativo=True).count()
+    questoes = list(
         Questao.objects
         .filter(usuario=request.user)
+        .annotate(
+            respostas_ativas_total=Count(
+                "respostas__llm_id",
+                filter=Q(
+                    respostas__llm__usuario=request.user,
+                    respostas__llm__ativo=True,
+                ),
+                distinct=True,
+            )
+        )
         .only("id", "conteudo")
-        .prefetch_related(respostas_prefetch)
         .order_by("id")
     )
+
+    for questao in questoes:
+        questao.total_llms_ativas = total_llms_ativas
+        if total_llms_ativas == 0:
+            questao.status_consulta = "sem_modelos"
+        elif questao.respostas_ativas_total == 0:
+            questao.status_consulta = "pendente"
+        elif questao.respostas_ativas_total < total_llms_ativas:
+            questao.status_consulta = "parcial"
+        else:
+            questao.status_consulta = "completa"
+        questao.pode_executar = questao.status_consulta in {"pendente", "parcial"}
+        questao.tem_respostas_ia = questao.respostas_ativas_total > 0
+
     return render(request, 'consulta/executar-consulta.html', {
-        "questoes": questoes
+        "questoes": questoes,
+        "total_llms_ativas": total_llms_ativas,
     })
 
 @login_required
@@ -1361,11 +1718,12 @@ def _salvar_avaliacoes_juiz(usuario, resposta, juiz, metricas, notas, justificat
             metrica__in=metricas,
         ).delete()
 
+        novas_avaliacoes = []
         for key in JUDGE_METRIC_KEYS:
             metrica = metricas_por_chave[key]
             item = notas_por_chave[key]
             nota = item["nota"]
-            AvaliacaoJuiz.objects.create(
+            novas_avaliacoes.append(AvaliacaoJuiz(
                 usuario=usuario,
                 juiz=juiz,
                 resposta=resposta,
@@ -1376,7 +1734,8 @@ def _salvar_avaliacoes_juiz(usuario, resposta, juiz, metricas, notas, justificat
                 ),
                 justificativa_geral=justificativa,
                 erro=False,
-            )
+            ))
+        AvaliacaoJuiz.objects.bulk_create(novas_avaliacoes)
 
 PUBLIC_CROSS_EVAL_MAX_TASKS = 40
 
@@ -1442,11 +1801,12 @@ def _salvar_avaliacoes_publicas(resposta_publica, juiz, metricas, notas, justifi
             metrica__in=metricas,
         ).delete()
 
+        novas_avaliacoes = []
         for key in JUDGE_METRIC_KEYS:
             metrica = metricas_por_chave[key]
             item = notas_por_chave[key]
             nota = item["nota"]
-            AvaliacaoPublicaLLM.objects.create(
+            novas_avaliacoes.append(AvaliacaoPublicaLLM(
                 juiz=juiz,
                 resposta=resposta_publica,
                 metrica=metrica,
@@ -1456,7 +1816,8 @@ def _salvar_avaliacoes_publicas(resposta_publica, juiz, metricas, notas, justifi
                 ),
                 justificativa_geral=justificativa,
                 erro=False,
-            )
+            ))
+        AvaliacaoPublicaLLM.objects.bulk_create(novas_avaliacoes)
 
 
 def _same_llm_identity(respondente, juiz):
@@ -1474,8 +1835,8 @@ def _executar_avaliacao_cruzada_publica(pergunta_publica, respostas_publicas, ju
     if not metricas:
         return {"status": "sem_metricas", "total": 0, "notas_total": 0, "mensagem": "Nenhuma métrica pública ativa."}
 
-    if len(juizes) < 2:
-        return {"status": "sem_pares", "total": 0, "notas_total": 0, "mensagem": "É preciso ter ao menos duas LLMs públicas ativas."}
+    if not juizes:
+        return {"status": "sem_pares", "total": 0, "notas_total": 0, "mensagem": "Nenhuma LLM avaliadora está disponível."}
 
     respostas_validas = [resposta for resposta in respostas_publicas if resposta.ok and resposta.llm_id]
     tarefas = []
@@ -1492,26 +1853,26 @@ def _executar_avaliacao_cruzada_publica(pergunta_publica, respostas_publicas, ju
     limitou = len(tarefas_limitadas) < len(tarefas)
 
     resultados = []
-    with ThreadPoolExecutor(max_workers=min(4, len(tarefas_limitadas))) as executor:
-        futures = {}
-        for resposta_publica, juiz in tarefas_limitadas:
-            prompt = _public_judge_prompt(pergunta_publica, resposta_publica, juiz, metricas)
-            futures[executor.submit(_call_llm_in_worker, juiz, prompt)] = (resposta_publica, juiz)
+    executor = get_llm_executor("evaluation")
+    futures = {}
+    for resposta_publica, juiz in tarefas_limitadas:
+        prompt = _public_judge_prompt(pergunta_publica, resposta_publica, juiz, metricas)
+        futures[executor.submit(_call_llm_in_worker, juiz, prompt)] = (resposta_publica, juiz)
 
-        for future in as_completed(futures):
-            resposta_publica, juiz = futures[future]
-            try:
-                raw = future.result()
-                notas, justificativa = _parse_judgeai_result(raw, metricas)
-                _salvar_avaliacoes_publicas(resposta_publica, juiz, metricas, notas, justificativa)
-                resultados.append({"erro": False, "notas": notas})
-            except Exception as exc:
-                logger.exception(
-                    "Falha no JudgeAI público resposta_id=%s juiz_id=%s",
-                    resposta_publica.id,
-                    juiz.id,
-                )
-                resultados.append({"erro": True, "mensagem": str(exc), "notas": []})
+    for future in as_completed(futures):
+        resposta_publica, juiz = futures[future]
+        try:
+            raw = future.result()
+            notas, justificativa = _parse_judgeai_result(raw, metricas)
+            _salvar_avaliacoes_publicas(resposta_publica, juiz, metricas, notas, justificativa)
+            resultados.append({"erro": False, "notas": notas})
+        except Exception as exc:
+            logger.exception(
+                "Falha no JudgeAI público resposta_id=%s juiz_id=%s",
+                resposta_publica.id,
+                juiz.id,
+            )
+            resultados.append({"erro": True, "mensagem": str(exc), "notas": []})
 
     notas_total = sum(
         len([nota for nota in item.get("notas", []) if nota.get("nota") is not None])
@@ -1717,38 +2078,38 @@ def juizes_executar_avaliacao(request):
         }, status=400)
 
     resultados = []
-    with ThreadPoolExecutor(max_workers=min(4, len(tarefas))) as executor:
-        futures = {}
-        for questao, resposta, juiz in tarefas:
-            prompt = _judgeai_prompt(questao, resposta, juiz, metricas)
-            futures[executor.submit(_call_llm_in_worker, juiz, prompt)] = (questao, resposta, juiz)
+    executor = get_llm_executor("evaluation")
+    futures = {}
+    for questao, resposta, juiz in tarefas:
+        prompt = _judgeai_prompt(questao, resposta, juiz, metricas)
+        futures[executor.submit(_call_llm_in_worker, juiz, prompt)] = (questao, resposta, juiz)
 
-        for future in as_completed(futures):
-            questao, resposta, juiz = futures[future]
-            try:
-                raw = future.result()
-                notas, justificativa = _parse_judgeai_result(raw, metricas)
-                _salvar_avaliacoes_juiz(request.user, resposta, juiz, metricas, notas, justificativa)
-                resultados.append({
-                    "questao_id": questao.id,
-                    "pergunta": questao.conteudo,
-                    "resposta_id": resposta.id,
-                    "resposta_preview": _text_preview(resposta.conteudo_resposta),
-                    "resposta_texto": resposta.conteudo_resposta,
-                    "modelo_respondente": resposta.llm.nome if resposta.llm else "IA desconhecida",
-                    "modelo_juiz": juiz.nome,
-                    "notas": notas,
-                    "justificativa": justificativa,
-                    "erro": False,
-                })
-            except Exception as exc:
-                logger.exception(
-                    "Falha no JudgeAI de pesquisador usuario_id=%s resposta_id=%s juiz_id=%s",
-                    request.user.id,
-                    resposta.id,
-                    juiz.id,
-                )
-                resultados.append(_judgeai_error_result(questao, resposta, juiz, str(exc)))
+    for future in as_completed(futures):
+        questao, resposta, juiz = futures[future]
+        try:
+            raw = future.result()
+            notas, justificativa = _parse_judgeai_result(raw, metricas)
+            _salvar_avaliacoes_juiz(request.user, resposta, juiz, metricas, notas, justificativa)
+            resultados.append({
+                "questao_id": questao.id,
+                "pergunta": questao.conteudo,
+                "resposta_id": resposta.id,
+                "resposta_preview": _text_preview(resposta.conteudo_resposta),
+                "resposta_texto": resposta.conteudo_resposta,
+                "modelo_respondente": resposta.llm.nome if resposta.llm else "IA desconhecida",
+                "modelo_juiz": juiz.nome,
+                "notas": notas,
+                "justificativa": justificativa,
+                "erro": False,
+            })
+        except Exception as exc:
+            logger.exception(
+                "Falha no JudgeAI de pesquisador usuario_id=%s resposta_id=%s juiz_id=%s",
+                request.user.id,
+                resposta.id,
+                juiz.id,
+            )
+            resultados.append(_judgeai_error_result(questao, resposta, juiz, str(exc)))
 
     resultados.sort(key=lambda item: (item["questao_id"], item["modelo_respondente"], item["modelo_juiz"]))
 

@@ -6,6 +6,7 @@ urlpatterns = [
     path('', views.usuario_final_chat, name='usuario_final_chat'),
     path('api/usuario-final-chat/', views.usuario_final_chat_api, name='usuario_final_chat_api'),
     path('api/usuario-final-chat/stream/', views.usuario_final_chat_stream_api, name='usuario_final_chat_stream_api'),
+    path('api/usuario-final-chat/avaliacao/', views.usuario_final_chat_avaliacao_api, name='usuario_final_chat_avaliacao_api'),
     
     # ===== ROTAS INTERNAS (COM LOGIN) =====
     path('menu/', views.menu, name="menu"),

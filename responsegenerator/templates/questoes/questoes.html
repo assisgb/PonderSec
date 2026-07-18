@@ -754,8 +754,10 @@ textarea:focus,
   border-radius: 16px;
   background:
     linear-gradient(135deg, rgba(11, 20, 29, 0.9) 0%, rgba(5, 10, 17, 0.96) 100%);
+  contain: layout style paint;
   content-visibility: auto;
   contain-intrinsic-size: 190px;
+  contain-intrinsic-size: auto 190px;
   transition: border-color 0.16s ease, background 0.16s ease;
 }
 
@@ -1497,11 +1499,9 @@ textarea:focus,
 
             <div class="card-question">{{ item.conteudo }}</div>
             {% if item.respostas_cache or item.resposta_humana %}
-            {% with primeira_resposta=item.respostas_cache.0 %}
             <div class="card-preview">
-              {% if item.resposta_humana %}{{ item.resposta_humana|truncatewords:18 }}{% elif primeira_resposta.conteudo_resposta %}{{ primeira_resposta.conteudo_resposta|truncatewords:18 }}{% else %}{% translate "Resposta detalhada registrada." %}{% endif %}...
+              {% if item.resposta_humana %}{{ item.resposta_humana|truncatewords:18 }}{% elif item.primeira_resposta_preview %}{{ item.primeira_resposta_preview|truncatewords:18 }}{% else %}{% translate "Resposta detalhada registrada." %}{% endif %}...
             </div>
-            {% endwith %}
             <div class="card-footer">
               {% if item.resposta_humana %}
               <span class="tag tag-humana" style="border-color: rgba(139, 92, 246, 0.32); background: rgba(139, 92, 246, 0.1); color: #c4b5fd;">{% translate "Humano" %}</span>
@@ -1734,6 +1734,7 @@ function bloquearBotao(btnId) {
 
 let historyCardCache = [];
 let filterTimer = null;
+let historyFilters = null;
 
 function initHistoryCache() {
   historyCardCache = Array.from(document.querySelectorAll(".history-card")).map(card => ({
@@ -1746,12 +1747,26 @@ function initHistoryCache() {
     hasHuman: card.getAttribute("data-has-human") === "true",
     hasAi: card.getAttribute("data-has-ai") === "true"
   }));
+  historyFilters = {
+    search: document.getElementById("searchInput"),
+    status: document.getElementById("statusFilter"),
+    type: document.getElementById("typeFilter"),
+    ai: document.getElementById("aiFilter"),
+    form: document.getElementById("formFilter"),
+    category: document.getElementById("categoryFilter"),
+    empty: document.getElementById("filterEmpty")
+  };
 }
 
 function updateHistoryStats() {
   const cards = historyCardCache.length ? historyCardCache : Array.from(document.querySelectorAll(".history-card")).map(el => ({ el }));
-  const answered = cards.filter(card => card.el.dataset.status === "answered").length;
-  const pending = cards.filter(card => card.el.dataset.status === "pending").length;
+  let answered = 0;
+  let pending = 0;
+  cards.forEach(card => {
+    const status = card.status || card.el.dataset.status;
+    if (status === "answered") answered += 1;
+    if (status === "pending") pending += 1;
+  });
 
   const totalEl = document.getElementById("statTotal");
   const answeredEl = document.getElementById("statAnswered");
@@ -1768,15 +1783,15 @@ function queueFilterHistory() {
 }
 
 function filterHistory() {
-  const searchInput = document.getElementById("searchInput");
+  const searchInput = historyFilters?.search;
   if (!searchInput) return;
 
   const searchText = searchInput.value.toLowerCase().trim();
-  const statusFilter = document.getElementById("statusFilter")?.value || "all";
-  const typeFilter = document.getElementById("typeFilter")?.value || "all";
-  const aiFilter = (document.getElementById("aiFilter")?.value || "all").toLowerCase();
-  const formFilter = (document.getElementById("formFilter")?.value || "all").toLowerCase();
-  const categoryFilter = (document.getElementById("categoryFilter")?.value || "all").toLowerCase();
+  const statusFilter = historyFilters.status?.value || "all";
+  const typeFilter = historyFilters.type?.value || "all";
+  const aiFilter = (historyFilters.ai?.value || "all").toLowerCase();
+  const formFilter = (historyFilters.form?.value || "all").toLowerCase();
+  const categoryFilter = (historyFilters.category?.value || "all").toLowerCase();
   const cards = historyCardCache;
   let visibleCount = 0;
 
@@ -1792,11 +1807,11 @@ function filterHistory() {
     const matchCategory = categoryFilter === "all" || card.category.includes(categoryFilter);
     const shouldShow = matchSearch && matchStatus && matchType && matchAI && matchForm && matchCategory;
 
-    card.el.hidden = !shouldShow;
+    if (card.el.hidden === shouldShow) card.el.hidden = !shouldShow;
     if (shouldShow) visibleCount += 1;
   });
 
-  const filterEmpty = document.getElementById("filterEmpty");
+  const filterEmpty = historyFilters.empty;
   if (filterEmpty) filterEmpty.hidden = cards.length === 0 || visibleCount > 0;
 }
 
@@ -1882,14 +1897,13 @@ function abrirModalDetalhes(btn) {
   document.getElementById("detalhesModal")?.classList.add("active");
   if (detalhesPergunta) detalhesPergunta.innerText = pageText.loadingDetails;
   if (respostasContainer) {
-    respostasContainer.innerHTML = "";
     const loading = document.createElement("p");
     loading.className = "modal-desc";
     loading.textContent = pageText.fetchingResponses;
-    respostasContainer.appendChild(loading);
+    respostasContainer.replaceChildren(loading);
   }
   if (humanSection) humanSection.style.display = "none";
-  if (humanList) humanList.innerHTML = "";
+  if (humanList) humanList.replaceChildren();
   if (humanAddArea) humanAddArea.style.display = "none";
   if (btnAddHuman) btnAddHuman.style.display = "none";
   if (humanInput) humanInput.value = "";
@@ -1900,9 +1914,9 @@ function abrirModalDetalhes(btn) {
     .then(data => {
       if (data.erro) throw new Error(data.erro);
       detalhesPergunta.innerText = data.pergunta || pageText.unavailableQuestion;
-      respostasContainer.innerHTML = "";
 
       detalhesPergunta.dataset.questaoId = data.questao_id || "";
+      const responsesFragment = document.createDocumentFragment();
 
       if (!data.respostas || data.respostas.length === 0) {
         const empty = document.createElement("p");
@@ -1912,7 +1926,7 @@ function abrirModalDetalhes(btn) {
         } else {
           empty.textContent = pageText.noIaResponse;
         }
-        respostasContainer.appendChild(empty);
+        responsesFragment.appendChild(empty);
       } else {
         data.respostas.forEach(resp => {
           const card = document.createElement("div");
@@ -1948,12 +1962,13 @@ function abrirModalDetalhes(btn) {
 
           card.appendChild(labelRow);
           card.appendChild(body);
-          respostasContainer.appendChild(card);
+          responsesFragment.appendChild(card);
         });
       }
+      respostasContainer.replaceChildren(responsesFragment);
 
       humanSection.style.display = "block";
-      humanList.innerHTML = "";
+      const humanFragment = document.createDocumentFragment();
 
       const humanas = data.respostas_humanas || [];
       if (humanas.length === 0) {
@@ -1993,15 +2008,15 @@ function abrirModalDetalhes(btn) {
 
           card.appendChild(labelRow);
           card.appendChild(body);
-          humanList.appendChild(card);
+          humanFragment.appendChild(card);
         });
       }
+      humanList.replaceChildren(humanFragment);
 
       if (btnAddHuman) btnAddHuman.style.display = "inline-flex";
 
       const btnReconsultar = document.getElementById("btnReconsultar");
-      const qtdRespostasIA = (data.respostas || []).length;
-      if (btnReconsultar && data.total_llms && qtdRespostasIA < data.total_llms) {
+      if (btnReconsultar && data.ias_faltantes_total > 0) {
         btnReconsultar.style.display = "inline-flex";
         btnReconsultar.disabled = false;
         btnReconsultar.textContent = "{% translate 'Re-consultar IAs faltantes' %}";
@@ -2012,7 +2027,7 @@ function abrirModalDetalhes(btn) {
     })
     .catch(() => {
       if (detalhesPergunta) detalhesPergunta.innerText = pageText.loadError;
-      if (respostasContainer) respostasContainer.innerHTML = "";
+      if (respostasContainer) respostasContainer.replaceChildren();
     });
 }
 
@@ -2091,11 +2106,18 @@ function reconsultarIaFaltante(questaoId, btn) {
   })
   .then(r => r.json())
   .then(data => {
-    if (data.status === 'ok') {
+    if (['ok', 'ja_completo', 'parcial'].includes(data.status)) {
       const url = `/questoes/ver/${questaoId}/`;
       const fakeBtn = document.querySelector(`[data-url="${url}"]`);
       if (fakeBtn) abrirModalDetalhes(fakeBtn);
-      btn.style.display = "none";
+      if (data.status === 'parcial') {
+        const detalhes = (data.erros || [])
+          .map(item => `${item.modelo || 'LLM'}: ${item.mensagem || item}`)
+          .join(' · ');
+        alert(detalhes || data.mensagem || "{% translate 'Algumas IAs continuam pendentes.' %}");
+      } else {
+        btn.style.display = "none";
+      }
     } else {
       const detalhes = (data.erros || [])
         .map(item => `${item.modelo || 'LLM'}: ${item.mensagem || item}`)

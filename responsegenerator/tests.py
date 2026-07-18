@@ -3,9 +3,13 @@ from types import SimpleNamespace
 from unittest import mock
 
 from django.contrib.auth.models import User
+from django.core import signing
+from django.core.cache import cache
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import IntegrityError, transaction
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
+from django.utils import timezone
 
 from responsegenerator.judgeai_metrics import JUDGE_METRIC_NAMES, ensure_judge_metrics
 from responsegenerator.llm_client import LLMServiceError, call_configured_llm
@@ -163,8 +167,79 @@ class PublicChatCrossEvaluationTests(TestCase):
             [event["tipo"] for event in events],
             ["inicio", "trecho", "trecho", "resposta_concluida", "concluido"],
         )
+        concluido = events[-1]
+        self.assertEqual(concluido["avaliacao"]["status"], "pendente")
+        self.assertTrue(concluido["avaliacao_token"])
+        self.assertEqual(AvaliacaoPublicaLLM.objects.count(), 0)
+        mocked_judge.assert_not_called()
+
+        evaluation_response = self.client.post(
+            reverse("usuario_final_chat_avaliacao_api"),
+            data=json.dumps({
+                "resposta_id": concluido["resposta_id"],
+                "avaliacao_token": concluido["avaliacao_token"],
+            }),
+            content_type="application/json",
+        )
+
+        self.assertEqual(evaluation_response.status_code, 200)
+        evaluation_payload = evaluation_response.json()
+        self.assertEqual(evaluation_payload["status"], "ok")
+        self.assertEqual(evaluation_payload["avaliacao_cruzada"]["status"], "ok")
+        self.assertEqual(len(evaluation_payload["tabela_avaliacao_cruzada"]), 4)
         self.assertEqual(AvaliacaoPublicaLLM.objects.count(), 4)
         self.assertEqual(AvaliacaoPublicaLLM.objects.values("juiz_id").distinct().get()["juiz_id"], self.llm_b.id)
+
+        # Repetir a requisição assinada deve apenas devolver o resultado persistido,
+        # sem consumir outra chamada do provedor.
+        repeated_response = self.client.post(
+            reverse("usuario_final_chat_avaliacao_api"),
+            data=json.dumps({
+                "resposta_id": concluido["resposta_id"],
+                "avaliacao_token": concluido["avaliacao_token"],
+            }),
+            content_type="application/json",
+        )
+        self.assertEqual(repeated_response.status_code, 200)
+        self.assertEqual(repeated_response.json()["avaliacao_cruzada"]["mensagem"], "Avaliação cruzada já concluída.")
+        self.assertEqual(mocked_judge.call_count, 1)
+
+    @mock.patch("responsegenerator.views._judgeai_call_configured_llm")
+    @mock.patch("responsegenerator.views._judgeai_stream_configured_llm")
+    def test_public_chat_evaluation_rejects_tampered_or_mismatched_token(self, mocked_stream, mocked_judge):
+        mocked_stream.return_value = iter(["Resposta segura."])
+        response = self.client.post(
+            reverse("usuario_final_chat_stream_api"),
+            data=json.dumps({"pergunta": "Como proteger minha conta?", "modelo_id": self.llm_a.id}),
+            content_type="application/json",
+        )
+        events = [
+            json.loads(line)
+            for line in b"".join(response.streaming_content).decode().splitlines()
+        ]
+        concluido = events[-1]
+
+        tampered_response = self.client.post(
+            reverse("usuario_final_chat_avaliacao_api"),
+            data=json.dumps({
+                "resposta_id": concluido["resposta_id"],
+                "avaliacao_token": concluido["avaliacao_token"] + "adulterado",
+            }),
+            content_type="application/json",
+        )
+        self.assertEqual(tampered_response.status_code, 403)
+
+        mismatched_response = self.client.post(
+            reverse("usuario_final_chat_avaliacao_api"),
+            data=json.dumps({
+                "resposta_id": concluido["resposta_id"] + 1,
+                "avaliacao_token": concluido["avaliacao_token"],
+            }),
+            content_type="application/json",
+        )
+        self.assertEqual(mismatched_response.status_code, 403)
+        mocked_judge.assert_not_called()
+        self.assertEqual(AvaliacaoPublicaLLM.objects.count(), 0)
 
     def test_public_chat_validates_model_selection(self):
         response = self.client.post(
@@ -174,6 +249,74 @@ class PublicChatCrossEvaluationTests(TestCase):
         )
         self.assertEqual(response.status_code, 400)
         self.assertEqual(PerguntaPublica.objects.count(), 0)
+
+    @mock.patch("responsegenerator.views._judgeai_call_configured_llm", return_value="Resposta rápida")
+    def test_non_stream_api_can_defer_judgeai_without_hiding_the_answer(self, mocked_call):
+        response = self.client.post(
+            reverse("usuario_final_chat_api"),
+            data=json.dumps({
+                "pergunta": "Como ativar MFA?",
+                "modelo_id": self.llm_a.id,
+                "avaliar": False,
+            }),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["status"], "ok")
+        self.assertEqual(payload["avaliacao_cruzada"]["status"], "pendente")
+        self.assertTrue(payload["avaliacao_token"])
+        self.assertEqual(mocked_call.call_count, 1)
+        self.assertEqual(AvaliacaoPublicaLLM.objects.count(), 0)
+
+    @mock.patch("responsegenerator.views._judgeai_call_configured_llm")
+    def test_evaluation_claim_prevents_a_second_concurrent_judge_call(self, mocked_judge):
+        question = PerguntaPublica.objects.create(conteudo="Como usar MFA?")
+        answer = RespostaPublica.objects.create(
+            pergunta=question,
+            llm=self.llm_a,
+            conteudo_resposta="Ative MFA.",
+            avaliacao_estado=RespostaPublica.AVALIACAO_PROCESSANDO,
+            avaliacao_iniciada_em=timezone.now(),
+        )
+        token = signing.dumps(
+            {"resposta_id": answer.id},
+            salt="responsegenerator.public-evaluation",
+            compress=True,
+        )
+
+        response = self.client.post(
+            reverse("usuario_final_chat_avaliacao_api"),
+            data=json.dumps({"resposta_id": answer.id, "avaliacao_token": token}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 202)
+        self.assertEqual(response.json()["status"], "processando")
+        mocked_judge.assert_not_called()
+
+    @override_settings(PUBLIC_CHAT_RATE_LIMIT=1)
+    def test_public_chat_rate_limit_rejects_bursts_before_provider_call(self):
+        cache.clear()
+        payload = json.dumps({"pergunta": "Pergunta", "modelo_id": self.llm_a.id})
+        try:
+            first = self.client.post(
+                reverse("usuario_final_chat_stream_api"),
+                data=payload,
+                content_type="application/json",
+            )
+            second = self.client.post(
+                reverse("usuario_final_chat_stream_api"),
+                data=payload,
+                content_type="application/json",
+            )
+        finally:
+            cache.clear()
+
+        self.assertNotEqual(first.status_code, 429)
+        self.assertEqual(second.status_code, 429)
+        self.assertEqual(second["Retry-After"], "60")
 
 
 class JudgeAIParserAndResearchTests(TestCase):
@@ -242,6 +385,218 @@ class JudgeAIParserAndResearchTests(TestCase):
                 avaliacao_quanti=0,
             )
 
+    def test_database_prevents_duplicate_metric_names_for_user_and_public_scope(self):
+        metric = self.metrics[0]
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            Metrica.objects.create(
+                usuario=self.user,
+                nome=metric.nome,
+                descricao="Duplicada",
+                tipo="quantitativa",
+            )
+
+        public_metric = ensure_judge_metrics(None)[0]
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            Metrica.objects.create(
+                usuario=None,
+                nome=public_metric.nome,
+                descricao="Duplicada pública",
+                tipo="quantitativa",
+            )
+
+
+class ResearchBatchGenerationTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="batch-user",
+            password="senha-segura",
+        )
+        self.client.force_login(self.user)
+        self.groq = LLM.objects.create(
+            usuario=self.user,
+            nome="llama-3.3-70b-versatile",
+            descricao="Groq",
+            api_key="groq-key",
+        )
+        self.gemini = LLM.objects.create(
+            usuario=self.user,
+            nome="gemini-2.5-flash",
+            descricao="Gemini",
+            api_key="gemini-key",
+        )
+        self.question = Questao.objects.create(
+            usuario=self.user,
+            conteudo="Como reduzir ataques de phishing?",
+        )
+        self.endpoint = reverse(
+            "gerar_respostas_ia_faltantes",
+            args=[self.question.id],
+        )
+
+    @mock.patch("responsegenerator.views._call_llm_in_worker")
+    def test_repeated_batch_call_is_idempotent(self, mocked_call):
+        mocked_call.side_effect = lambda llm, _prompt: f"Resposta de {llm.nome}"
+
+        first = self.client.post(self.endpoint)
+
+        self.assertEqual(first.status_code, 200)
+        self.assertEqual(first.json()["status"], "ok")
+        self.assertEqual(first.json()["respondidas"], 2)
+        self.assertEqual(Resposta.objects.filter(questao=self.question).count(), 2)
+        self.assertEqual(mocked_call.call_count, 2)
+
+        mocked_call.reset_mock()
+        second = self.client.post(self.endpoint)
+
+        self.assertEqual(second.status_code, 200)
+        self.assertEqual(second.json()["status"], "ja_completo")
+        self.assertEqual(Resposta.objects.filter(questao=self.question).count(), 2)
+        mocked_call.assert_not_called()
+
+    @mock.patch("responsegenerator.views._call_llm_in_worker")
+    def test_partial_result_is_saved_and_retry_calls_only_missing_model(self, mocked_call):
+        def first_attempt(llm, _prompt):
+            if llm.id == self.gemini.id:
+                raise LLMServiceError("Falha temporária do Gemini", code="timeout")
+            return "Resposta Groq preservada"
+
+        mocked_call.side_effect = first_attempt
+        first = self.client.post(self.endpoint)
+
+        self.assertEqual(first.status_code, 207)
+        self.assertEqual(first.json()["status"], "parcial")
+        self.assertEqual(first.json()["respondidas"], 1)
+        saved = Resposta.objects.get(questao=self.question)
+        self.assertEqual(saved.llm, self.groq)
+        self.assertEqual(saved.conteudo_resposta, "Resposta Groq preservada")
+
+        consultation = self.client.get(reverse("executar_consulta"))
+        rendered_question = next(
+            item
+            for item in consultation.context["questoes"]
+            if item.id == self.question.id
+        )
+        self.assertEqual(rendered_question.status_consulta, "parcial")
+        self.assertTrue(rendered_question.pode_executar)
+        self.assertContains(consultation, "Parcial")
+
+        mocked_call.reset_mock()
+        mocked_call.side_effect = lambda _llm, _prompt: "Resposta Gemini recuperada"
+        second = self.client.post(self.endpoint)
+
+        self.assertEqual(second.status_code, 200)
+        self.assertEqual(second.json()["status"], "ok")
+        self.assertEqual(second.json()["respondidas"], 2)
+        self.assertEqual(mocked_call.call_count, 1)
+        self.assertEqual(mocked_call.call_args.args[0].id, self.gemini.id)
+        self.assertEqual(Resposta.objects.filter(questao=self.question).count(), 2)
+
+    def test_human_answer_does_not_mark_ai_generation_complete(self):
+        Resposta.objects.create(
+            questao=self.question,
+            llm=None,
+            conteudo_resposta="Resposta humana",
+        )
+
+        response = self.client.get(reverse("executar_consulta"))
+        rendered_question = next(
+            item
+            for item in response.context["questoes"]
+            if item.id == self.question.id
+        )
+
+        self.assertEqual(rendered_question.respostas_ativas_total, 0)
+        self.assertEqual(rendered_question.status_consulta, "pendente")
+        self.assertTrue(rendered_question.pode_executar)
+
+    def test_database_rejects_duplicate_ai_answer_but_allows_human_answers(self):
+        Resposta.objects.create(
+            questao=self.question,
+            llm=self.groq,
+            conteudo_resposta="Primeira resposta",
+        )
+
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            Resposta.objects.create(
+                questao=self.question,
+                llm=self.groq,
+                conteudo_resposta="Resposta duplicada",
+            )
+
+        Resposta.objects.create(
+            questao=self.question,
+            llm=None,
+            conteudo_resposta="Resposta humana 1",
+        )
+        Resposta.objects.create(
+            questao=self.question,
+            llm=None,
+            conteudo_resposta="Resposta humana 2",
+        )
+        self.assertEqual(
+            Resposta.objects.filter(questao=self.question, llm__isnull=True).count(),
+            2,
+        )
+
+    def test_removing_llm_preserves_its_existing_answers(self):
+        answer = Resposta.objects.create(
+            questao=self.question,
+            llm=self.groq,
+            conteudo_resposta="Resposta histórica",
+        )
+
+        response = self.client.delete(reverse("delete_llm", args=[self.groq.id]))
+
+        self.assertEqual(response.status_code, 200)
+        self.groq.refresh_from_db()
+        self.assertFalse(self.groq.ativo)
+        self.assertTrue(Resposta.objects.filter(pk=answer.id).exists())
+
+
+class QuestionUploadOptimizationTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="upload-user", password="senha")
+        self.client.force_login(self.user)
+
+    def test_json_upload_creates_questions_and_categories_in_one_atomic_batch(self):
+        content = json.dumps([
+            {"pergunta": "Pergunta 1", "categoria": "Web", "resposta": "Resposta 1"},
+            {"pergunta": "Pergunta 2", "categoria": "Web"},
+            {"pergunta": "Pergunta 3", "categoria": "Rede"},
+        ]).encode("utf-8")
+        upload = SimpleUploadedFile("perguntas.json", content, content_type="application/json")
+
+        response = self.client.post(
+            reverse("upload_perguntas"),
+            data={"arquivo_upload": upload},
+        )
+
+        self.assertRedirects(response, reverse("questoes"))
+        self.assertEqual(Questao.objects.filter(usuario=self.user).count(), 3)
+        self.assertEqual(
+            set(Questao.objects.values_list("categoria__nome_categoria", flat=True)),
+            {"Web", "Rede"},
+        )
+        self.assertEqual(
+            Questao.objects.get(conteudo="Pergunta 1").resposta_humana,
+            "Resposta 1",
+        )
+
+    def test_invalid_json_does_not_partially_persist_valid_prefix(self):
+        content = json.dumps([
+            {"pergunta": "Não deve ser salva", "categoria": "Temporária"},
+            "item inválido",
+        ]).encode("utf-8")
+        upload = SimpleUploadedFile("perguntas.json", content, content_type="application/json")
+
+        response = self.client.post(
+            reverse("upload_perguntas"),
+            data={"arquivo_upload": upload},
+        )
+
+        self.assertRedirects(response, reverse("questoes"))
+        self.assertFalse(Questao.objects.filter(usuario=self.user).exists())
+
 
 class ProviderClientTests(TestCase):
     def setUp(self):
@@ -281,6 +636,29 @@ class ProviderClientTests(TestCase):
         self.assertEqual(result, "Resposta Groq")
         mocked_groq.assert_called_once_with(api_key="groq-key", timeout=45.0, max_retries=0)
         client.chat.completions.create.assert_called_once()
+
+    @mock.patch("responsegenerator.llm_client.openai")
+    def test_deepseek_uses_official_api_endpoint(self, mocked_openai):
+        llm = LLM.objects.create(
+            usuario=self.user,
+            nome="deepseek-v4-flash",
+            descricao="DeepSeek",
+            api_key="deepseek-key",
+        )
+        client = mocked_openai.OpenAI.return_value
+        client.chat.completions.create.return_value = SimpleNamespace(
+            choices=[SimpleNamespace(message=SimpleNamespace(content="Resposta DeepSeek"))]
+        )
+
+        result = call_configured_llm(llm, "Pergunta")
+
+        self.assertEqual(result, "Resposta DeepSeek")
+        mocked_openai.OpenAI.assert_called_once_with(
+            api_key="deepseek-key",
+            timeout=45.0,
+            max_retries=0,
+            base_url="https://api.deepseek.com",
+        )
 
     @mock.patch("responsegenerator.llm_client.genai_types")
     @mock.patch("responsegenerator.llm_client.genai")

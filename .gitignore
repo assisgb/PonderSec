@@ -1,5 +1,4 @@
 venv
-.dockerignore
 rebuild.sh
 .env
 db.sqlite3

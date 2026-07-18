@@ -65,6 +65,9 @@ class PerguntaPublica(models.Model):
         verbose_name = "Pergunta Pública"
         verbose_name_plural = "Perguntas Públicas"
         ordering = ["-criado_em"]
+        indexes = [
+            models.Index(fields=["-criado_em"], name="perg_pub_created_idx"),
+        ]
 
     def __str__(self):
         return self.conteudo[:80]
@@ -72,6 +75,15 @@ class PerguntaPublica(models.Model):
 
 class RespostaPublica(models.Model):
     """Respostas geradas por LLMs públicas para uma pergunta do chat público."""
+    AVALIACAO_PENDENTE = "pendente"
+    AVALIACAO_PROCESSANDO = "processando"
+    AVALIACAO_CONCLUIDA = "concluida"
+    AVALIACAO_ESTADOS = [
+        (AVALIACAO_PENDENTE, "Pendente"),
+        (AVALIACAO_PROCESSANDO, "Processando"),
+        (AVALIACAO_CONCLUIDA, "Concluída"),
+    ]
+
     pergunta = models.ForeignKey(
         PerguntaPublica,
         on_delete=models.CASCADE,
@@ -87,6 +99,13 @@ class RespostaPublica(models.Model):
     conteudo_resposta = models.TextField()
     ok = models.BooleanField(default=True)
     criado_em = models.DateTimeField(auto_now_add=True)
+    avaliacao_estado = models.CharField(
+        max_length=12,
+        choices=AVALIACAO_ESTADOS,
+        default=AVALIACAO_PENDENTE,
+    )
+    avaliacao_iniciada_em = models.DateTimeField(null=True, blank=True)
+    avaliacao_claim_id = models.UUIDField(null=True, blank=True, editable=False)
 
     class Meta:
         verbose_name = "Resposta Pública"
@@ -112,6 +131,20 @@ class Metrica(models.Model):
     label_opcao_1 = models.CharField(max_length=50, blank=True, null=True)
     label_opcao_2 = models.CharField(max_length=50, blank=True, null=True)
     ativa = models.BooleanField(default=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=("usuario", "nome"),
+                condition=models.Q(usuario__isnull=False),
+                name="unique_metric_user_name",
+            ),
+            models.UniqueConstraint(
+                fields=("nome",),
+                condition=models.Q(usuario__isnull=True),
+                name="unique_global_metric_name",
+            ),
+        ]
 
     def __str__(self):
         return self.nome
@@ -146,6 +179,11 @@ class Questao(models.Model):
     categoria = models.ForeignKey(Categoria, on_delete=models.SET_NULL, null=True)
     resposta_humana = models.TextField(blank=True, null=True, verbose_name="Resposta Humana")
 
+    class Meta:
+        indexes = [
+            models.Index(fields=["usuario", "-id"], name="quest_user_id_idx"),
+        ]
+
     def __str__(self):
         return self.conteudo[:50]
 
@@ -167,6 +205,15 @@ class Resposta(models.Model):
     )
 
     conteudo_resposta = models.TextField()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=("questao", "llm"),
+                condition=models.Q(llm__isnull=False),
+                name="unique_resposta_questao_llm",
+            ),
+        ]
 
     def __str__(self):
         return f"{self.questao} - {self.llm}"
@@ -201,6 +248,9 @@ class Historico(models.Model):
 
     class Meta:
         ordering = ['-data']
+        indexes = [
+            models.Index(fields=["usuario", "-data"], name="histor_user_data_idx"),
+        ]
 
     def __str__(self):
         return f"{self.usuario.username} - {self.data}"
@@ -248,6 +298,13 @@ class AvaliacaoFormulario(models.Model):
     avaliacao_quanti = models.IntegerField(blank=True, null=True)
 
     class Meta:
+        indexes = [
+            models.Index(
+                fields=["usuario", "metrica"],
+                condition=models.Q(avaliacao_quanti__isnull=False),
+                name="aval_form_user_metric_idx",
+            ),
+        ]
         constraints = [
             models.CheckConstraint(
                 condition=(
@@ -278,6 +335,16 @@ class AvaliacaoJuiz(models.Model):
     class Meta:
         ordering = ['-atualizado_em']
         unique_together = ('usuario', 'juiz', 'resposta', 'metrica')
+        indexes = [
+            models.Index(
+                fields=["usuario", "metrica"],
+                condition=models.Q(
+                    erro=False,
+                    avaliacao_quanti__isnull=False,
+                ),
+                name="aval_judge_user_metric_idx",
+            ),
+        ]
         constraints = [
             models.CheckConstraint(
                 condition=(
@@ -320,6 +387,16 @@ class AvaliacaoPublicaLLM(models.Model):
         verbose_name_plural = "Avaliações Públicas por LLM"
         ordering = ["-atualizado_em"]
         unique_together = ("juiz", "resposta", "metrica")
+        indexes = [
+            models.Index(
+                fields=["-atualizado_em"],
+                condition=models.Q(
+                    erro=False,
+                    avaliacao_quanti__isnull=False,
+                ),
+                name="aval_pub_updated_idx",
+            ),
+        ]
         constraints = [
             models.CheckConstraint(
                 condition=(

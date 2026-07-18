@@ -1,0 +1,16 @@
+.git
+.github
+.agents
+.codex
+.planning
+.env
+.env.*
+!.env.exemplo
+__pycache__/
+*.py[cod]
+*.sqlite3
+db.sqlite3
+venv/
+.venv/
+certificados/
+docs/
