@@ -848,6 +848,7 @@ class PublicFormEvaluationTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'data-max="5"', count=4)
         self.assertContains(response, 'data-val=""')
+        self.assertContains(response, 'class="likert-tick" data-pos="', count=20)
         for metric in self.metrics:
             self.assertContains(response, f'name="quanti_{self.answer.id}_{metric.id}"')
 

@@ -2783,6 +2783,10 @@ msgstr "Seleccionar todas"
 msgid "Desmarcar todas"
 msgstr "Deseleccionar todas"
 
+#: responsegenerator/templates/avaliacao/avaliacao_publica.html
+msgid "Sem pontuação"
+msgstr "Sin puntuación"
+
 #~ msgid "Consulta aberta para perguntas sobre cibersegurança"
 #~ msgstr "Consulta abierta para preguntas sobre ciberseguridad"
 
