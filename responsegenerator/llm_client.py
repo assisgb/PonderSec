@@ -35,6 +35,7 @@ _CLIENT_CACHE_TTL_SECONDS = 300.0
 _CLIENT_CACHE_MAX_SIZE = 8
 _TRANSIENT_MAX_ATTEMPTS = 2
 _TRANSIENT_RETRY_DELAY_SECONDS = 0.2
+_GEMINI_AUTH_KEY_PREFIX = "AQ."
 _client_cache_state = threading.local()
 
 
@@ -70,6 +71,15 @@ def _fresh_credentials(llm):
 
 def _key_fingerprint(api_key):
     return hashlib.sha256(api_key.encode("utf-8")).hexdigest()[:10]
+
+
+def _gemini_key_kind(api_key):
+    """Classifica a credencial sem restringir formatos futuros do Google."""
+    if api_key.startswith(_GEMINI_AUTH_KEY_PREFIX):
+        return "authorization"
+    if api_key.startswith("AIza"):
+        return "standard"
+    return "unknown"
 
 
 def _timeout_seconds(stream=False):
@@ -211,7 +221,12 @@ def _exception_status(exc):
 
 def _is_transient_error(exc, provider):
     mapped_code = _mapped_error(exc, provider).code
-    if mapped_code in {"quota_exceeded", "authentication_error", "model_not_found"}:
+    if mapped_code in {
+        "quota_exceeded",
+        "authentication_error",
+        "gemini_auth_key_rejected",
+        "model_not_found",
+    }:
         return False
     if mapped_code in {"timeout", "rate_limited"}:
         return True
@@ -284,6 +299,19 @@ def _mapped_error(exc, provider):
             _("O limite momentâneo de requisições do provedor foi atingido. Aguarde e tente novamente."),
             code="rate_limited",
         )
+    if provider == "gemini" and (
+        "access_token_type_unsupported" in lowered
+        or "api_key_service_blocked" in lowered
+    ):
+        return LLMServiceError(
+            _(
+                "A chave de autorização do Gemini (AQ.) foi aceita pelo PonderSec, "
+                "mas o Google recusou o vínculo dela com a conta de serviço. "
+                "Verifique a chave/projeto no Google AI Studio ou use uma chave "
+                "padrão restrita à Generative Language API."
+            ),
+            code="gemini_auth_key_rejected",
+        )
     if (
         status in (401, 403)
         or status_text in {"401", "403", "unauthenticated", "permission_denied"}
@@ -352,6 +380,65 @@ def _gemini_response_text(response):
     )
 
 
+def _gemini_interaction_response_text(response):
+    try:
+        text = getattr(response, "output_text", None)
+    except (AttributeError, ValueError):
+        text = None
+    if text and str(text).strip():
+        return str(text).strip()
+
+    raise LLMServiceError(
+        _(
+            "O Gemini encerrou a interação sem retornar conteúdo. "
+            "Verifique filtros de segurança e o modelo configurado."
+        ),
+        code="empty_response",
+    )
+
+
+def _gemini_generate_text(client, api_key, model, prompt):
+    # As novas chaves AQ. são vinculadas a contas de serviço. A Interactions
+    # API é o fluxo atual recomendado pelo Google para essas credenciais; as
+    # chaves padrão/legadas permanecem no generateContent para não alterar o
+    # comportamento das integrações já existentes.
+    if _gemini_key_kind(api_key) == "authorization":
+        interactions = getattr(client, "interactions", None)
+        create = getattr(interactions, "create", None)
+        if not callable(create):
+            raise LLMServiceError(
+                _(
+                    "A versão instalada do google-genai não oferece suporte às "
+                    "novas chaves de autorização do Gemini."
+                ),
+                code="dependency_missing",
+            )
+        response = create(model=model, input=prompt)
+        return _gemini_interaction_response_text(response)
+
+    response = client.models.generate_content(model=model, contents=prompt)
+    return _gemini_response_text(response)
+
+
+def _gemini_interaction_stream_text(interaction_stream):
+    for event in interaction_stream:
+        event_type = (
+            event.get("event_type") if isinstance(event, dict)
+            else getattr(event, "event_type", None)
+        )
+        if event_type == "error":
+            error = event.get("error") if isinstance(event, dict) else getattr(event, "error", None)
+            raise RuntimeError(str(error or "Gemini interaction stream error"))
+        if event_type != "step.delta":
+            continue
+
+        delta = event.get("delta") if isinstance(event, dict) else getattr(event, "delta", None)
+        delta_type = delta.get("type") if isinstance(delta, dict) else getattr(delta, "type", None)
+        content = delta.get("text") if isinstance(delta, dict) else getattr(delta, "text", None)
+        if delta_type == "text" and content:
+            yield str(content)
+
+
 def _chat_completion_text(response):
     choices = getattr(response, "choices", None) or []
     if not choices:
@@ -373,8 +460,12 @@ def call_configured_llm(llm, prompt):
     max_attempts = _transient_max_attempts()
 
     logger.info(
-        "Iniciando chamada LLM provider=%s model=%s key_fp=%s timeout_s=%s",
-        provider, model, fingerprint, timeout,
+        "Iniciando chamada LLM provider=%s model=%s key_kind=%s key_fp=%s timeout_s=%s",
+        provider,
+        model,
+        _gemini_key_kind(api_key) if provider == "gemini" else "api_key",
+        fingerprint,
+        timeout,
     )
     for attempt in range(1, max_attempts + 1):
         cache_key = None
@@ -390,8 +481,7 @@ def call_configured_llm(llm, prompt):
 
             cache_key, client = _cached_provider_client(provider, api_key, timeout)
             if provider == "gemini":
-                response = client.models.generate_content(model=model, contents=prompt)
-                result = _gemini_response_text(response)
+                result = _gemini_generate_text(client, api_key, model, prompt)
             else:
                 response = client.chat.completions.create(
                     model=model, messages=[{"role": "user", "content": prompt}],
@@ -470,8 +560,12 @@ def stream_configured_llm(llm, prompt):
     max_attempts = _transient_max_attempts()
 
     logger.info(
-        "Iniciando stream LLM provider=%s model=%s key_fp=%s timeout_s=%s",
-        provider, model, fingerprint, timeout,
+        "Iniciando stream LLM provider=%s model=%s key_kind=%s key_fp=%s timeout_s=%s",
+        provider,
+        model,
+        _gemini_key_kind(api_key) if provider == "gemini" else "api_key",
+        fingerprint,
+        timeout,
     )
     for attempt in range(1, max_attempts + 1):
         cache_key = None
@@ -488,16 +582,32 @@ def stream_configured_llm(llm, prompt):
 
             cache_key, client = _cached_provider_client(provider, api_key, timeout)
             if provider == "gemini":
-                stream = client.models.generate_content_stream(model=model, contents=prompt)
-                for chunk in stream:
-                    try:
-                        content = getattr(chunk, "text", None)
-                    except (AttributeError, ValueError):
-                        content = None
-                    if content:
-                        content = str(content)
+                if _gemini_key_kind(api_key) == "authorization":
+                    interactions = getattr(client, "interactions", None)
+                    create = getattr(interactions, "create", None)
+                    if not callable(create):
+                        raise LLMServiceError(
+                            _(
+                                "A versão instalada do google-genai não oferece suporte às "
+                                "novas chaves de autorização do Gemini."
+                            ),
+                            code="dependency_missing",
+                        )
+                    stream = create(model=model, input=prompt, stream=True)
+                    for content in _gemini_interaction_stream_text(stream):
                         chars += len(content)
                         yield content
+                else:
+                    stream = client.models.generate_content_stream(model=model, contents=prompt)
+                    for chunk in stream:
+                        try:
+                            content = getattr(chunk, "text", None)
+                        except (AttributeError, ValueError):
+                            content = None
+                        if content:
+                            content = str(content)
+                            chars += len(content)
+                            yield content
             else:
                 stream = client.chat.completions.create(
                     model=model,

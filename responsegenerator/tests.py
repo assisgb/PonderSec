@@ -12,7 +12,11 @@ from django.urls import reverse
 from django.utils import timezone
 
 from responsegenerator.judgeai_metrics import JUDGE_METRIC_NAMES, ensure_judge_metrics
-from responsegenerator.llm_client import LLMServiceError, call_configured_llm
+from responsegenerator.llm_client import (
+    LLMServiceError,
+    call_configured_llm,
+    stream_configured_llm,
+)
 from responsegenerator.models import (
     AdminPonderSec,
     AvaliacaoFormulario,
@@ -629,6 +633,77 @@ class ProviderClientTests(TestCase):
         mocked_genai.Client.assert_called_once_with(api_key="new-key", http_options=http_options)
         mocked_types.HttpOptions.assert_called_once_with(timeout=45000)
         client.models.generate_content.assert_called_once_with(model="gemini-2.5-flash", contents="Pergunta")
+
+    @mock.patch("responsegenerator.llm_client.genai_types")
+    @mock.patch("responsegenerator.llm_client.genai")
+    def test_gemini_authorization_key_uses_interactions_api(self, mocked_genai, mocked_types):
+        llm = LLM.objects.create(
+            usuario=self.user,
+            nome="gemini-3.5-flash",
+            descricao="Gemini",
+            api_key="AQ." + ("a" * 50),
+        )
+        client = mocked_genai.Client.return_value
+        client.interactions.create.return_value = SimpleNamespace(output_text="Resposta Gemini AQ")
+
+        result = call_configured_llm(llm, "Pergunta")
+
+        self.assertEqual(result, "Resposta Gemini AQ")
+        client.interactions.create.assert_called_once_with(
+            model="gemini-3.5-flash",
+            input="Pergunta",
+        )
+        client.models.generate_content.assert_not_called()
+
+    @mock.patch("responsegenerator.llm_client.genai_types")
+    @mock.patch("responsegenerator.llm_client.genai")
+    def test_gemini_authorization_key_streams_interaction_text(self, mocked_genai, mocked_types):
+        llm = LLM.objects.create(
+            usuario=self.user,
+            nome="gemini-3.5-flash",
+            descricao="Gemini",
+            api_key="AQ." + ("b" * 50),
+        )
+        client = mocked_genai.Client.return_value
+        client.interactions.create.return_value = iter([
+            SimpleNamespace(
+                event_type="step.delta",
+                delta=SimpleNamespace(type="text", text="Resposta "),
+            ),
+            SimpleNamespace(
+                event_type="step.delta",
+                delta=SimpleNamespace(type="text", text="Gemini AQ"),
+            ),
+        ])
+
+        result = "".join(stream_configured_llm(llm, "Pergunta"))
+
+        self.assertEqual(result, "Resposta Gemini AQ")
+        client.interactions.create.assert_called_once_with(
+            model="gemini-3.5-flash",
+            input="Pergunta",
+            stream=True,
+        )
+        client.models.generate_content_stream.assert_not_called()
+
+    @mock.patch("responsegenerator.llm_client.genai_types")
+    @mock.patch("responsegenerator.llm_client.genai")
+    def test_gemini_rejected_authorization_key_has_specific_error(self, mocked_genai, mocked_types):
+        llm = LLM.objects.create(
+            usuario=self.user,
+            nome="gemini-3.5-flash",
+            descricao="Gemini",
+            api_key="AQ." + ("c" * 50),
+        )
+        mocked_genai.Client.return_value.interactions.create.side_effect = RuntimeError(
+            "401 UNAUTHENTICATED: ACCESS_TOKEN_TYPE_UNSUPPORTED"
+        )
+
+        with self.assertRaises(LLMServiceError) as raised:
+            call_configured_llm(llm, "Pergunta")
+
+        self.assertEqual(raised.exception.code, "gemini_auth_key_rejected")
+        self.assertIn("aq.", str(raised.exception).lower())
 
     @mock.patch("responsegenerator.llm_client.Groq")
     def test_groq_client_flow_and_timeout(self, mocked_groq):
