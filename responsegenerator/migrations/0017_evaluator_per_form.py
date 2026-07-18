@@ -57,6 +57,11 @@ def merge_evaluators_by_email(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
+    # PostgreSQL cannot add the composite constraint in the same transaction
+    # that inserts the recovered evaluator rows because their foreign-key
+    # trigger events are still pending. Commit each operation separately.
+    atomic = False
+
     dependencies = [
         ("responsegenerator", "0016_unique_metric_names"),
     ]
