@@ -659,12 +659,14 @@ function renderAll(){
   renderResponses();
 }
 
-function renderResults(results){
-  state.results = results;
+function renderResults(newResults){
+  const existingKeys = new Set(state.results.map(item => `${item.resposta_id}_${item.modelo_juiz}`));
+  const toAdd = newResults.filter(item => !existingKeys.has(`${item.resposta_id}_${item.modelo_juiz}`));
+  state.results = state.results.concat(toAdd);
   state.activeResult = 0;
-  const scoreCount = results.reduce((total,item) => total + ((item.notas || []).length),0);
-  els.resultCount.textContent = `${results.length} {% translate "pares" %} · ${scoreCount} {% translate "notas" %}`;
-  if(!results.length){
+  const scoreCount = state.results.reduce((total,item) => total + ((item.notas || []).length),0);
+  els.resultCount.textContent = `${state.results.length} {% translate "pares" %} · ${scoreCount} {% translate "notas" %}`;
+  if(!state.results.length){
     els.resultsGrid.innerHTML = `<div class="empty">{% translate "Nenhuma avaliação foi retornada." %}</div>`;
     return;
   }
@@ -814,7 +816,9 @@ document.getElementById("clearQuestionsBtn").addEventListener("click", () => {
 });
 
 document.getElementById("clearResultsBtn").addEventListener("click", () => {
-  renderResults([]);
+  state.results = [];
+  state.activeResult = 0;
+  els.resultsGrid.innerHTML = `<div class="empty">{% translate "A tabela de notas aparecerá aqui após a execução da avaliação automática." %}</div>`;
   els.resultCount.textContent = "0 {% translate 'pares' %} · 0 {% translate 'notas' %}";
   setStatus("{% translate 'Resultados limpos.' %}");
 });
