@@ -1015,12 +1015,13 @@ class PublicFormEvaluationTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "avaliacao/avaliacao_sucesso.html")
         self.assertEqual(AvaliacaoFormulario.objects.count(), 4)
+        self.assertIsNotNone(Avaliador.objects.get().finalizado_em)
         self.assertEqual(
             set(AvaliacaoFormulario.objects.values_list("metrica__nome", flat=True)),
             set(JUDGE_METRIC_NAMES),
         )
 
-    def test_resubmission_replaces_scores_without_inflating_counters(self):
+    def test_completed_form_blocks_resubmission_until_owner_reopens_it(self):
         first = self.client.post(
             self.url,
             data={**self.identity, **self._scores_for(self.answer, "2")},
@@ -1031,13 +1032,29 @@ class PublicFormEvaluationTests(TestCase):
         )
 
         self.assertEqual(first.status_code, 200)
-        self.assertEqual(second.status_code, 200)
+        self.assertEqual(second.status_code, 409)
+        self.assertContains(second, "Avaliação já finalizada", status_code=409)
         self.assertEqual(Avaliador.objects.count(), 1)
         self.assertEqual(AvaliacaoFormulario.objects.count(), 4)
         self.assertEqual(
             set(AvaliacaoFormulario.objects.values_list("avaliacao_quanti", flat=True)),
-            {5},
+            {2},
         )
+        evaluator = Avaliador.objects.get()
+        self.assertIsNotNone(evaluator.finalizado_em)
+
+        intruder = User.objects.create_user(
+            username="other-form-owner",
+            password="senha-segura",
+        )
+        self.client.force_login(intruder)
+        denied_reopen = self.client.post(reverse(
+            "avaliacao_reabrir_avaliador",
+            args=[self.form.id, evaluator.id],
+        ))
+        self.assertEqual(denied_reopen.status_code, 404)
+        evaluator.refresh_from_db()
+        self.assertIsNotNone(evaluator.finalizado_em)
 
         self.client.force_login(self.owner)
         list_response = self.client.get(reverse("avaliacao"))
@@ -1051,7 +1068,46 @@ class PublicFormEvaluationTests(TestCase):
         dashboard_response = self.client.get(reverse("dashboard_avaliacoes"))
         dashboard = json.loads(dashboard_response.context["dashboard_json"])
         self.assertEqual(dashboard["resumo"]["notas_especialistas"], 4)
+        self.assertEqual(dashboard["resumo"]["avaliacoes_concluidas"], 1)
         self.assertEqual(dashboard["resumo"]["avaliadores_humanos"], 1)
+
+        reopen_response = self.client.post(reverse(
+            "avaliacao_reabrir_avaliador",
+            args=[self.form.id, evaluator.id],
+        ))
+        self.assertRedirects(reopen_response, reverse("avaliacao"))
+        evaluator.refresh_from_db()
+        self.assertIsNone(evaluator.finalizado_em)
+
+        reopened_dashboard_response = self.client.get(
+            reverse("dashboard_avaliacoes")
+        )
+        reopened_dashboard = json.loads(
+            reopened_dashboard_response.context["dashboard_json"]
+        )
+        self.assertEqual(
+            reopened_dashboard["resumo"]["avaliacoes_concluidas"],
+            0,
+        )
+
+        self.client.logout()
+        corrected = self.client.post(
+            self.url,
+            data={**self.identity, **self._scores_for(self.answer, "5")},
+        )
+        self.assertEqual(corrected.status_code, 200)
+        evaluator.refresh_from_db()
+        self.assertIsNotNone(evaluator.finalizado_em)
+        self.assertEqual(AvaliacaoFormulario.objects.count(), 4)
+        self.assertEqual(
+            set(
+                AvaliacaoFormulario.objects.values_list(
+                    "avaliacao_quanti",
+                    flat=True,
+                )
+            ),
+            {5},
+        )
 
     def test_form_counter_ignores_evaluator_without_saved_scores(self):
         Avaliador.objects.create(
@@ -1080,6 +1136,7 @@ class PublicFormEvaluationTests(TestCase):
         )
         current_evaluator = Avaliador.objects.create(
             formulario=self.form,
+            finalizado_em=timezone.now(),
             **self.identity,
         )
         stale_evaluator = Avaliador.objects.create(
@@ -1087,6 +1144,7 @@ class PublicFormEvaluationTests(TestCase):
             nome="Avaliador histórico",
             email="historico@example.com",
             profissao="Analista",
+            finalizado_em=timezone.now(),
         )
         AvaliacaoFormulario.objects.bulk_create([
             AvaliacaoFormulario(
@@ -1183,6 +1241,7 @@ class PublicFormEvaluationTests(TestCase):
         dashboard_response = self.client.get(reverse("dashboard_avaliacoes"))
         dashboard = json.loads(dashboard_response.context["dashboard_json"])
         self.assertEqual(dashboard["resumo"]["avaliadores_humanos"], 1)
+        self.assertEqual(dashboard["resumo"]["avaliacoes_concluidas"], 2)
 
     def test_migration_recovers_previous_form_counters(self):
         second_question = Questao.objects.create(
@@ -1262,3 +1321,15 @@ class PublicFormEvaluationTests(TestCase):
             ).count(),
             4,
         )
+
+        completion_migration = import_module(
+            "responsegenerator.migrations.0020_evaluator_completion"
+        )
+        completion_migration.mark_existing_evaluators_as_completed(
+            django_apps,
+            SimpleNamespace(connection=connection),
+        )
+        first_form_evaluator.refresh_from_db()
+        second_form_evaluator.refresh_from_db()
+        self.assertIsNotNone(first_form_evaluator.finalizado_em)
+        self.assertIsNotNone(second_form_evaluator.finalizado_em)

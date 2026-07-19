@@ -283,6 +283,7 @@ class Avaliador(models.Model):
     profissao = models.CharField(max_length=100, blank=True, null=True)
     formulario = models.ForeignKey(Formulario, on_delete=models.CASCADE, related_name='avaliadores')
     data_resposta = models.DateTimeField(auto_now_add=True)
+    finalizado_em = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         constraints = [

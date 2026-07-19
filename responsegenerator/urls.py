@@ -33,6 +33,11 @@ urlpatterns = [
     path('avaliacao/adicionar/', views.avaliacao_adicionar_formulario, name="avaliacao_adicionar_formulario"),
     path('avaliacao/editar/<int:id>/', views.avaliacao_editar_formulario, name="avaliacao_editar_formulario"),
     path('avaliacao/deletar/<int:id>/', views.avaliacao_deletar_formulario, name="avaliacao_deletar_formulario"),
+    path(
+        'avaliacao/<int:formulario_id>/avaliador/<int:avaliador_id>/reabrir/',
+        views.avaliacao_reabrir_avaliador,
+        name="avaliacao_reabrir_avaliador",
+    ),
     path('avaliacao/<int:formulario_id>/questao/<int:questao_id>/', views.avaliacao_respostas, name="avaliacao_respostas"),
     path('avaliacao/responder/<int:formulario_id>/', views.responder_avaliacao_publica, name='responder_avaliacao_publica'),
     path('setup/', views.setup, name="setup"),

@@ -2141,6 +2141,7 @@ def avaliacao(request):
             avaliadores_total=Count(
                 "avaliadores",
                 filter=Q(
+                    avaliadores__finalizado_em__isnull=False,
                     avaliadores__avaliacoes__avaliacao_quanti__isnull=False,
                     avaliadores__avaliacoes__resposta__questao__formularios=F("pk"),
                 ),
@@ -2152,7 +2153,24 @@ def avaliacao(request):
                 "questoes",
                 queryset=Questao.objects.only("id"),
                 to_attr="questoes_cache",
-            )
+            ),
+            Prefetch(
+                "avaliadores",
+                queryset=(
+                    Avaliador.objects
+                    .only(
+                        "id",
+                        "formulario_id",
+                        "nome",
+                        "email",
+                        "profissao",
+                        "data_resposta",
+                        "finalizado_em",
+                    )
+                    .order_by("nome", "email")
+                ),
+                to_attr="avaliadores_cache",
+            ),
         )
         .only("id", "nome", "tipo_respostas")
         .order_by("-id")
@@ -2258,6 +2276,41 @@ def avaliacao_deletar_formulario(request, id):
         django_messages.success(request, _("Formulário removido!"))
     return redirect('avaliacao')
 
+
+@login_required
+@require_http_methods(["POST"])
+def avaliacao_reabrir_avaliador(request, formulario_id, avaliador_id):
+    with transaction.atomic():
+        formulario = get_object_or_404(
+            Formulario.objects.select_for_update(),
+            id=formulario_id,
+            usuario=request.user,
+        )
+        avaliador = get_object_or_404(
+            Avaliador.objects.select_for_update(),
+            id=avaliador_id,
+            formulario=formulario,
+        )
+        was_already_open = avaliador.finalizado_em is None
+        if not was_already_open:
+            avaliador.finalizado_em = None
+            avaliador.save(update_fields=["finalizado_em"])
+
+    if was_already_open:
+        django_messages.info(
+            request,
+            _("Esta participação já estava aberta para um novo envio."),
+        )
+    else:
+        django_messages.success(
+            request,
+            _("A avaliação de %(nome)s foi reaberta.") % {
+                "nome": avaliador.nome,
+            },
+        )
+
+    return redirect("avaliacao")
+
 def responder_avaliacao_publica(request, formulario_id):
     respostas_prefetch = Prefetch(
         "respostas",
@@ -2323,7 +2376,7 @@ def responder_avaliacao_publica(request, formulario_id):
 
     if request.method == 'POST':
         nome = request.POST.get('nome', '').strip()
-        email = request.POST.get('email', '').strip()
+        email = request.POST.get('email', '').strip().lower()
         profissao = request.POST.get('profissao', '').strip()
         respostas_ids = [
             resposta.id
@@ -2387,32 +2440,59 @@ def responder_avaliacao_publica(request, formulario_id):
                 status=400,
             )
 
+        already_completed = False
         with transaction.atomic():
-            avaliador, created = Avaliador.objects.get_or_create(
-                email=email,
-                formulario=formulario,
-                defaults={
-                    'nome': nome,
-                    'profissao': profissao,
-                },
+            # Serializa envios do mesmo formulário para impedir duas
+            # finalizações simultâneas com o mesmo e-mail.
+            Formulario.objects.select_for_update().only("id").get(
+                id=formulario.id,
+            )
+            avaliador = (
+                Avaliador.objects
+                .select_for_update()
+                .filter(formulario=formulario, email__iexact=email)
+                .first()
             )
 
-            if not created:
-                avaliador.nome = nome
-                avaliador.profissao = profissao
-                avaliador.save(update_fields=['nome', 'profissao'])
+            if avaliador is not None and avaliador.finalizado_em is not None:
+                already_completed = True
+            else:
+                if avaliador is None:
+                    avaliador = Avaliador.objects.create(
+                        email=email,
+                        formulario=formulario,
+                        nome=nome,
+                        profissao=profissao,
+                    )
+                else:
+                    avaliador.nome = nome
+                    avaliador.profissao = profissao
+                    avaliador.save(update_fields=["nome", "profissao"])
 
-            # Um novo envio do mesmo especialista substitui as notas anteriores
-            # deste formulário, evitando duplicação nas contagens e nas médias.
-            AvaliacaoFormulario.objects.filter(
-                avaliador=avaliador,
-                resposta_id__in=respostas_ids,
-                metrica_id__in=[metrica.id for metrica in metricas_quantitativas],
-            ).delete()
+                # Uma participação reaberta preserva as notas anteriores até
+                # o novo envio ser validado. Dentro desta transação, elas são
+                # substituídas de forma atômica pelas notas completas.
+                AvaliacaoFormulario.objects.filter(
+                    avaliador=avaliador,
+                    resposta_id__in=respostas_ids,
+                    metrica_id__in=[
+                        metrica.id for metrica in metricas_quantitativas
+                    ],
+                ).delete()
 
-            for avaliacao_formulario in avaliacoes:
-                avaliacao_formulario.avaliador = avaliador
-            AvaliacaoFormulario.objects.bulk_create(avaliacoes)
+                for avaliacao_formulario in avaliacoes:
+                    avaliacao_formulario.avaliador = avaliador
+                AvaliacaoFormulario.objects.bulk_create(avaliacoes)
+                avaliador.finalizado_em = timezone.now()
+                avaliador.save(update_fields=["finalizado_em"])
+
+        if already_completed:
+            return render(
+                request,
+                "avaliacao/avaliacao_sucesso.html",
+                {"ja_finalizada": True},
+                status=409,
+            )
 
         return render(request, 'avaliacao/avaliacao_sucesso.html')
     
@@ -2448,6 +2528,7 @@ def dashboard_avaliacoes(request):
     avaliacoes_especialistas = AvaliacaoFormulario.objects.filter(
         usuario=request.user,
         avaliador__formulario__usuario=request.user,
+        avaliador__finalizado_em__isnull=False,
         resposta__questao__formularios__id=F("avaliador__formulario_id"),
         metrica_id__in=metrica_ids,
         avaliacao_quanti__isnull=False,
@@ -2533,6 +2614,12 @@ def dashboard_avaliacoes(request):
         .distinct()
         .count()
     )
+    avaliacoes_concluidas = (
+        avaliacoes_especialistas
+        .values("avaliador_id")
+        .distinct()
+        .count()
+    )
     juizes_online = AvaliacaoJuiz.objects.filter(
         usuario=request.user,
         erro=False,
@@ -2555,6 +2642,7 @@ def dashboard_avaliacoes(request):
             "modelos": len(llms),
             "metricas": len(metricas),
             "notas_especialistas": total_especialistas,
+            "avaliacoes_concluidas": avaliacoes_concluidas,
             "notas_juizes": total_juizes,
             "avaliadores_humanos": avaliadores_humanos,
             "juizes_online": juizes_online,

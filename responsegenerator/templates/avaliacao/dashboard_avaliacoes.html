@@ -903,7 +903,7 @@
 
         if (mode === 'especialistas') {
             row.innerHTML = [
-                statCard('{% translate "Notas coletadas" %}', RESUMO.notas_especialistas ?? 0, `${RESUMO.avaliadores_humanos ?? 0} {% translate "avaliadores humanos" %}`),
+                statCard('{% translate "Avaliações concluídas" %}', RESUMO.avaliacoes_concluidas ?? 0, `${RESUMO.avaliadores_humanos ?? 0} {% translate "avaliadores únicos" %}`),
                 statCard('{% translate "LLMs avaliados" %}', totalModelos, '{% translate "modelos no comparativo" %}'),
                 statCard('{% translate "Métricas ativas" %}', totalMetricas, '{% translate "critérios de avaliação" %}'),
                 statCard('{% translate "Métrica atual" %}', '—', '{% translate "em visualização" %}', { id: 'statAtual', small: true }),
@@ -921,7 +921,7 @@
             const desvio = RESUMO.desvio_medio;
             const desvioTxt = (desvio === null || desvio === undefined) ? '—' : Number(desvio).toFixed(2);
             row.innerHTML = [
-                statCard('{% translate "Notas especialistas" %}', RESUMO.notas_especialistas ?? 0, `${RESUMO.avaliadores_humanos ?? 0} {% translate "avaliadores humanos" %}`),
+                statCard('{% translate "Avaliações especialistas" %}', RESUMO.avaliacoes_concluidas ?? 0, `${RESUMO.avaliadores_humanos ?? 0} {% translate "avaliadores únicos" %}`),
                 statCard('{% translate "Notas juízes" %}', RESUMO.notas_juizes ?? 0, `${RESUMO.juizes_online ?? 0} {% translate "LLMs como juízes" %}`),
                 statCard('{% translate "Modelos" %}', totalModelos, '{% translate "LLMs respondentes" %}'),
                 statCard('{% translate "Métricas" %}', totalMetricas, '{% translate "critérios ativos" %}'),

@@ -192,6 +192,20 @@ body::before {
 .btn-delete:hover { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.56); color: #fecaca; }
 .btn-share { border-color: rgba(14, 165, 233, 0.26); color: #38bdf8; }
 .btn-share:hover { background: rgba(14, 165, 233, 0.1); border-color: rgba(14, 165, 233, 0.56); color: #7dd3fc; }
+.btn-manage { border-color: rgba(139, 92, 246, 0.3); color: #c4b5fd; }
+.btn-manage:hover { background: rgba(139, 92, 246, 0.12); border-color: rgba(139, 92, 246, 0.58); color: #ddd6fe; }
+
+.evaluator-list { display: grid; gap: 10px; }
+.evaluator-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  padding: 14px; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 11px;
+  background: rgba(0, 0, 0, 0.3);
+}
+.evaluator-info { min-width: 0; }
+.evaluator-name { color: var(--text-strong); font-size: 13px; font-weight: 700; overflow-wrap: anywhere; }
+.evaluator-meta { margin-top: 4px; color: var(--muted); font-family: var(--mono); font-size: 10px; overflow-wrap: anywhere; }
+.evaluator-status { color: var(--accent); }
+.evaluator-status.open { color: #fbbf24; }
 
 .empty-state {
   grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center;
@@ -346,6 +360,8 @@ body::before {
     margin-left: 0;
   }
   .btn-icon { width: 100%; min-height: 44px; }
+  .evaluator-row { align-items: stretch; flex-direction: column; }
+  .evaluator-row form, .evaluator-row form .btn { width: 100%; }
 
   .modal-overlay {
     align-items: flex-start;
@@ -463,6 +479,13 @@ body::before {
                                 </div>
                             </div>
                             <div class="metric-actions">
+                                {% if formulario.avaliadores_cache %}
+                                <button type="button" class="btn-icon btn-manage" title="{% translate 'Gerenciar avaliações' %}" onclick="abrirModal('modalAvaliadores{{ formulario.id }}')">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                                    </svg>
+                                </button>
+                                {% endif %}
                                 <button class="btn-icon btn-edit" title="{% translate 'Editar' %}" onclick="abrirModalEditar({{ formulario.id }}, '{{ formulario.nome|escapejs }}', [{% for q in formulario.questoes_cache %}{{ q.id }}{% if not forloop.last %},{% endif %}{% endfor %}])">
                                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
@@ -495,6 +518,52 @@ body::before {
             </main>
         </div>
     </div>
+
+    {% for formulario in formularios %}
+    {% if formulario.avaliadores_cache %}
+    <div class="modal-overlay" id="modalAvaliadores{{ formulario.id }}">
+        <div class="modal" style="max-width: 680px;">
+            <div class="modal-header">
+                <div class="modal-title-wrap">
+                    <span class="modal-product">{% translate "Participações" %}</span>
+                    <span class="modal-title">{% translate "Gerenciar avaliações" %}</span>
+                </div>
+                <button type="button" class="modal-close" onclick="fecharModal('modalAvaliadores{{ formulario.id }}')">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6L6 18"></path><path d="M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <p style="color: var(--muted); margin-bottom: 18px; font-size: 13px; line-height: 1.55;">
+                {{ formulario.nome }} — {% translate "uma avaliação reaberta deixa de entrar no dashboard até que o especialista envie novamente." %}
+            </p>
+            <div class="evaluator-list">
+                {% for avaliador in formulario.avaliadores_cache %}
+                <div class="evaluator-row">
+                    <div class="evaluator-info">
+                        <div class="evaluator-name">{{ avaliador.nome }}</div>
+                        <div class="evaluator-meta">
+                            {{ avaliador.email }} ·
+                            {% if avaliador.finalizado_em %}
+                            <span class="evaluator-status">{% translate "finalizada" %} {{ avaliador.finalizado_em|date:"d/m/Y H:i" }}</span>
+                            {% else %}
+                            <span class="evaluator-status open">{% translate "aguardando novo envio" %}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if avaliador.finalizado_em %}
+                    <form method="POST" action="{% url 'avaliacao_reabrir_avaliador' formulario.id avaliador.id %}" onsubmit="return confirm('{% translate "Reabrir esta avaliação para um novo envio?" %}')">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-ghost" style="min-height:36px;padding:8px 12px;">
+                            {% translate "Reabrir" %}
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    {% endfor %}
 
     <div class="modal-overlay" id="modalAdicionar">
         <div class="modal">

@@ -67,9 +67,15 @@
     <div class="glow-orb"></div>
     
     <div class="box">
+        {% if ja_finalizada %}
+        <span class="icon">🔒</span>
+        <h1>{% translate "Avaliação já finalizada" %}</h1>
+        <p>{% translate "Este e-mail já concluiu este formulário. As notas existentes foram preservadas. Entre em contato com o pesquisador caso precise corrigir o envio." %}</p>
+        {% else %}
         <span class="icon">✨</span>
         <h1>{% translate "Avaliação Enviada!" %}</h1>
         <p>{% translate "Seus dados e notas foram computados com sucesso no banco de dados do PonderSEC. Muito obrigado pela sua contribuição profissional!" %}</p>
+        {% endif %}
         <p style="margin-top: 30px; font-size: 14px; color: #4ecf9a; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;">{% translate "Você já pode fechar esta aba." %}</p>
     </div>
 </body>
