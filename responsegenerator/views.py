@@ -37,7 +37,7 @@ from responsegenerator.models import (
     RespostaPublica,
 )
 from functools import wraps
-from django.db.models import Avg, Count, OuterRef, Prefetch, Q, Subquery
+from django.db.models import Avg, Count, F, OuterRef, Prefetch, Q, Subquery
 from concurrent.futures import as_completed
 from responsegenerator.executors import get_llm_executor
 from responsegenerator.judgeai_metrics import (
@@ -2142,6 +2142,7 @@ def avaliacao(request):
                 "avaliadores",
                 filter=Q(
                     avaliadores__avaliacoes__avaliacao_quanti__isnull=False,
+                    avaliadores__avaliacoes__resposta__questao__formularios=F("pk"),
                 ),
                 distinct=True,
             ),
@@ -2440,13 +2441,24 @@ def dashboard_avaliacoes(request):
         .values("id", "nome")
     )
 
+    # Uma avaliação continua armazenada quando o pesquisador edita um
+    # formulário e remove uma pergunta. Preserve o histórico no banco, mas
+    # mostre no dashboard apenas notas das perguntas atualmente vinculadas ao
+    # mesmo formulário do avaliador.
+    avaliacoes_especialistas = AvaliacaoFormulario.objects.filter(
+        usuario=request.user,
+        avaliador__formulario__usuario=request.user,
+        resposta__questao__formularios__id=F("avaliador__formulario_id"),
+        metrica_id__in=metrica_ids,
+        avaliacao_quanti__isnull=False,
+    )
+
     por_metrica = {}
     divergencias = []
     especialistas_agregados = {
         (item["metrica_id"], item["resposta__llm_id"]): item
         for item in (
-            AvaliacaoFormulario.objects
-            .filter(usuario=request.user, metrica_id__in=metrica_ids, avaliacao_quanti__isnull=False)
+            avaliacoes_especialistas
             .values("metrica_id", "resposta__llm_id")
             .annotate(media=Avg("avaliacao_quanti"), total=Count("id"))
         )
@@ -2509,19 +2521,18 @@ def dashboard_avaliacoes(request):
     desvio_medio = round(sum(desvios) / len(desvios), 2) if desvios else None
     maiores_divergencias = sorted(divergencias, key=lambda item: item["desvio"], reverse=True)[:8]
 
-    total_especialistas = AvaliacaoFormulario.objects.filter(
-        usuario=request.user,
-        avaliacao_quanti__isnull=False,
-    ).count()
+    total_especialistas = avaliacoes_especialistas.count()
     total_juizes = AvaliacaoJuiz.objects.filter(
         usuario=request.user,
         erro=False,
         avaliacao_quanti__isnull=False,
     ).count()
-    avaliadores_humanos = Avaliador.objects.filter(
-        formulario__usuario=request.user,
-        avaliacoes__avaliacao_quanti__isnull=False,
-    ).values("email").distinct().count()
+    avaliadores_humanos = (
+        avaliacoes_especialistas
+        .values("avaliador__email")
+        .distinct()
+        .count()
+    )
     juizes_online = AvaliacaoJuiz.objects.filter(
         usuario=request.user,
         erro=False,

@@ -1069,6 +1069,55 @@ class PublicFormEvaluationTests(TestCase):
 
         self.assertEqual(form_from_context.avaliadores_total, 0)
 
+    def test_dashboard_ignores_scores_from_questions_removed_from_form(self):
+        removed_question = Questao.objects.create(
+            usuario=self.owner,
+            conteudo="Pergunta removida do formulário",
+        )
+        removed_answer = Resposta.objects.create(
+            questao=removed_question,
+            conteudo_resposta="Resposta histórica.",
+        )
+        current_evaluator = Avaliador.objects.create(
+            formulario=self.form,
+            **self.identity,
+        )
+        stale_evaluator = Avaliador.objects.create(
+            formulario=self.form,
+            nome="Avaliador histórico",
+            email="historico@example.com",
+            profissao="Analista",
+        )
+        AvaliacaoFormulario.objects.bulk_create([
+            AvaliacaoFormulario(
+                usuario=self.owner,
+                avaliador=evaluator,
+                resposta=answer,
+                metrica=metric,
+                avaliacao_quanti=value,
+            )
+            for evaluator, answer, value in (
+                (current_evaluator, self.answer, 5),
+                (current_evaluator, removed_answer, 1),
+                (stale_evaluator, removed_answer, 1),
+            )
+            for metric in self.metrics
+        ])
+        self.client.force_login(self.owner)
+
+        list_response = self.client.get(reverse("avaliacao"))
+        form_from_context = next(
+            form
+            for form in list_response.context["formularios"]
+            if form.id == self.form.id
+        )
+        dashboard_response = self.client.get(reverse("dashboard_avaliacoes"))
+        dashboard = json.loads(dashboard_response.context["dashboard_json"])
+
+        self.assertEqual(form_from_context.avaliadores_total, 1)
+        self.assertEqual(dashboard["resumo"]["notas_especialistas"], 4)
+        self.assertEqual(dashboard["resumo"]["avaliadores_humanos"], 1)
+
     def test_database_rejects_duplicate_score_for_same_evaluator(self):
         evaluator = Avaliador.objects.create(
             formulario=self.form,
