@@ -955,9 +955,16 @@ class PublicFormEvaluationTests(TestCase):
     def setUp(self):
         self.owner = User.objects.create_user(username="form-owner", password="senha-segura")
         self.metrics = ensure_judge_metrics(self.owner)
+        self.llm = LLM.objects.create(
+            usuario=self.owner,
+            nome="modelo-formulario",
+            descricao="Groq",
+            api_key="test-key",
+        )
         self.question = Questao.objects.create(usuario=self.owner, conteudo="Como evitar phishing?")
         self.answer = Resposta.objects.create(
             questao=self.question,
+            llm=self.llm,
             conteudo_resposta="Verifique o remetente e não abra links suspeitos.",
         )
         self.form = Formulario.objects.create(nome="Avaliação de segurança", usuario=self.owner)
@@ -1068,7 +1075,8 @@ class PublicFormEvaluationTests(TestCase):
         dashboard_response = self.client.get(reverse("dashboard_avaliacoes"))
         dashboard = json.loads(dashboard_response.context["dashboard_json"])
         self.assertEqual(dashboard["resumo"]["notas_especialistas"], 4)
-        self.assertEqual(dashboard["resumo"]["avaliacoes_concluidas"], 1)
+        self.assertEqual(dashboard["resumo"]["avaliacoes_modelos"], 1)
+        self.assertEqual(dashboard["resumo"]["formularios_concluidos"], 1)
         self.assertEqual(dashboard["resumo"]["avaliadores_humanos"], 1)
 
         reopen_response = self.client.post(reverse(
@@ -1086,7 +1094,7 @@ class PublicFormEvaluationTests(TestCase):
             reopened_dashboard_response.context["dashboard_json"]
         )
         self.assertEqual(
-            reopened_dashboard["resumo"]["avaliacoes_concluidas"],
+            reopened_dashboard["resumo"]["avaliacoes_modelos"],
             0,
         )
 
@@ -1205,6 +1213,7 @@ class PublicFormEvaluationTests(TestCase):
         )
         second_answer = Resposta.objects.create(
             questao=second_question,
+            llm=self.llm,
             conteudo_resposta="Use uma senha exclusiva e autenticação em dois fatores.",
         )
         second_form = Formulario.objects.create(
@@ -1241,7 +1250,8 @@ class PublicFormEvaluationTests(TestCase):
         dashboard_response = self.client.get(reverse("dashboard_avaliacoes"))
         dashboard = json.loads(dashboard_response.context["dashboard_json"])
         self.assertEqual(dashboard["resumo"]["avaliadores_humanos"], 1)
-        self.assertEqual(dashboard["resumo"]["avaliacoes_concluidas"], 2)
+        self.assertEqual(dashboard["resumo"]["avaliacoes_modelos"], 1)
+        self.assertEqual(dashboard["resumo"]["formularios_concluidos"], 2)
 
     def test_migration_recovers_previous_form_counters(self):
         second_question = Questao.objects.create(

@@ -38,6 +38,7 @@ from responsegenerator.models import (
 )
 from functools import wraps
 from django.db.models import Avg, Count, F, OuterRef, Prefetch, Q, Subquery
+from django.db.models.functions import Lower
 from concurrent.futures import as_completed
 from responsegenerator.executors import get_llm_executor
 from responsegenerator.judgeai_metrics import (
@@ -2610,13 +2611,22 @@ def dashboard_avaliacoes(request):
     ).count()
     avaliadores_humanos = (
         avaliacoes_especialistas
-        .values("avaliador__email")
+        .annotate(email_normalizado=Lower("avaliador__email"))
+        .values("email_normalizado")
         .distinct()
         .count()
     )
-    avaliacoes_concluidas = (
+    formularios_concluidos = (
         avaliacoes_especialistas
         .values("avaliador_id")
+        .distinct()
+        .count()
+    )
+    avaliacoes_modelos = (
+        avaliacoes_especialistas
+        .exclude(resposta__llm_id=None)
+        .annotate(email_normalizado=Lower("avaliador__email"))
+        .values("email_normalizado", "resposta__llm_id")
         .distinct()
         .count()
     )
@@ -2642,7 +2652,8 @@ def dashboard_avaliacoes(request):
             "modelos": len(llms),
             "metricas": len(metricas),
             "notas_especialistas": total_especialistas,
-            "avaliacoes_concluidas": avaliacoes_concluidas,
+            "avaliacoes_modelos": avaliacoes_modelos,
+            "formularios_concluidos": formularios_concluidos,
             "notas_juizes": total_juizes,
             "avaliadores_humanos": avaliadores_humanos,
             "juizes_online": juizes_online,
