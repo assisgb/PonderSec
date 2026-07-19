@@ -2014,6 +2014,75 @@ def _judgeai_error_result(questao, resposta, juiz, motivo):
         "erro": True,
     }
 
+
+def _resultados_juizes_persistidos(usuario, metricas):
+    """Reconstrói o formato do comparador a partir das avaliações salvas."""
+    avaliacoes = (
+        AvaliacaoJuiz.objects
+        .filter(
+            usuario=usuario,
+            resposta__questao__usuario=usuario,
+            metrica__in=metricas,
+            avaliacao_quanti__isnull=False,
+            erro=False,
+        )
+        .select_related("juiz", "resposta__questao", "resposta__llm", "metrica")
+        .order_by("resposta__questao_id", "resposta_id", "juiz_id", "metrica_id")
+    )
+    metric_order = {
+        judge_metric_key(nome): index
+        for index, nome in enumerate(JUDGE_METRIC_NAMES)
+    }
+    resultados_por_par = {}
+
+    for avaliacao in avaliacoes:
+        chave = (avaliacao.resposta_id, avaliacao.juiz_id)
+        resultado = resultados_por_par.setdefault(chave, {
+            "questao_id": avaliacao.resposta.questao_id,
+            "pergunta": avaliacao.resposta.questao.conteudo,
+            "resposta_id": avaliacao.resposta_id,
+            "juiz_id": avaliacao.juiz_id,
+            "resposta_preview": _text_preview(avaliacao.resposta.conteudo_resposta),
+            "resposta_texto": avaliacao.resposta.conteudo_resposta,
+            "modelo_respondente": (
+                avaliacao.resposta.llm.nome
+                if avaliacao.resposta.llm else "IA desconhecida"
+            ),
+            "modelo_juiz": (
+                avaliacao.juiz.nome
+                if avaliacao.juiz else "LLM avaliadora removida"
+            ),
+            "notas": [],
+            "justificativa": avaliacao.justificativa_geral or "",
+            "erro": False,
+        })
+        if not resultado["justificativa"] and avaliacao.justificativa_geral:
+            resultado["justificativa"] = avaliacao.justificativa_geral
+
+        resultado["notas"].append({
+            "metrica": avaliacao.metrica.nome,
+            "nota": avaliacao.avaliacao_quanti,
+            "max": _metric_max(avaliacao.metrica),
+            "justificativa": (
+                avaliacao.avaliacao_quali
+                or avaliacao.justificativa_geral
+                or ""
+            ),
+        })
+
+    resultados = list(resultados_por_par.values())
+    for resultado in resultados:
+        resultado["notas"].sort(
+            key=lambda item: metric_order.get(judge_metric_key(item["metrica"]), 99)
+        )
+    resultados.sort(key=lambda item: (
+        item["questao_id"],
+        item["modelo_respondente"],
+        item["modelo_juiz"],
+    ))
+    return resultados
+
+
 @login_required
 @require_http_methods(["POST"])
 def juizes_executar_avaliacao(request):
@@ -2684,6 +2753,7 @@ def juizes_comparador(request):
     )
     llms = list(LLM.objects.filter(usuario=request.user, ativo=True).order_by("nome"))
     metricas = ensure_judge_metrics(request.user)
+    resultados_data = _resultados_juizes_persistidos(request.user, metricas)
     categorias = Categoria.objects.filter(usuario=request.user).order_by("nome_categoria")
 
     questoes_data = []
@@ -2733,6 +2803,7 @@ def juizes_comparador(request):
             }
             for metrica in metricas
         ],
+        "resultados_data": resultados_data,
         "categorias": categorias,
     })
 

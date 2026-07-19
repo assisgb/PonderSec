@@ -294,6 +294,7 @@ select.field option { background: #050c14; color: var(--text); }
 {{ questoes_data|json_script:"questoes-data" }}
 {{ llms_data|json_script:"llms-data" }}
 {{ metricas_data|json_script:"metricas-data" }}
+{{ resultados_data|json_script:"resultados-data" }}
 
 <form class="csrf-holder">{% csrf_token %}</form>
 
@@ -443,7 +444,7 @@ select.field option { background: #050c14; color: var(--text); }
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
               {% translate "Executar avaliação automática" %}
             </button>
-            <button class="btn btn-danger" type="button" id="clearResultsBtn">{% translate "Limpar resultados" %}</button>
+            <button class="btn btn-danger" type="button" id="clearResultsBtn">{% translate "Limpar visualização" %}</button>
           </div>
           <div class="status" id="statusBox">{% translate "Selecione perguntas com respostas e ao menos duas LLMs participantes." %}</div>
         </section>
@@ -466,6 +467,7 @@ select.field option { background: #050c14; color: var(--text); }
 const questoes = JSON.parse(document.getElementById("questoes-data").textContent);
 const llms = JSON.parse(document.getElementById("llms-data").textContent);
 const metricas = JSON.parse(document.getElementById("metricas-data").textContent);
+const resultadosPersistidos = JSON.parse(document.getElementById("resultados-data").textContent);
 
 const state = {
   selectedQuestions: new Set(),
@@ -837,7 +839,7 @@ document.getElementById("clearResultsBtn").addEventListener("click", () => {
   state.activeResult = 0;
   els.resultsGrid.innerHTML = `<div class="empty">{% translate "A tabela de notas aparecerá aqui após a execução da avaliação automática." %}</div>`;
   els.resultCount.textContent = "0 {% translate 'pares' %} · 0 {% translate 'notas' %}";
-  setStatus("{% translate 'Resultados limpos.' %}");
+  setStatus("{% translate 'Visualização limpa. As avaliações continuam salvas no banco.' %}");
 });
 
 els.runBtn.addEventListener("click", runEvaluation);
@@ -850,6 +852,10 @@ renderModelFilter();
 renderJudges();
 renderMetrics();
 renderAll();
+if(resultadosPersistidos.length){
+  renderResults(resultadosPersistidos);
+  setStatus(`${resultadosPersistidos.length} {% translate "avaliações salvas foram restauradas." %}`);
+}
 </script>
 <style>
 @keyframes spin { 100% { transform: rotate(360deg); } }

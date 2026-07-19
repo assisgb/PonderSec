@@ -433,6 +433,37 @@ class JudgeAIParserAndResearchTests(TestCase):
         self.assertContains(response, "state.results = mergeEvaluationResults(state.results, newResults);")
         self.assertNotContains(response, "const toAdd = newResults.filter")
 
+    @mock.patch("responsegenerator.views._judgeai_call_configured_llm", return_value=judge_payload())
+    def test_judge_comparator_restores_saved_scores_and_justifications(self, mocked_call):
+        llm_a = LLM.objects.create(usuario=self.user, nome="model-a", descricao="Groq", api_key="a")
+        llm_b = LLM.objects.create(usuario=self.user, nome="model-b", descricao="Gemini", api_key="b")
+        question = Questao.objects.create(usuario=self.user, conteudo="Como evitar phishing?")
+        Resposta.objects.create(questao=question, llm=llm_a, conteudo_resposta="Resposta A")
+        Resposta.objects.create(questao=question, llm=llm_b, conteudo_resposta="Resposta B")
+
+        execution = self.client.post(
+            reverse("juizes_executar_avaliacao"),
+            data=json.dumps({"questao_ids": [question.id], "juiz_ids": [llm_a.id, llm_b.id]}),
+            content_type="application/json",
+        )
+        reopened_page = self.client.get(reverse("juizes_comparador"))
+
+        self.assertEqual(execution.status_code, 200)
+        self.assertEqual(reopened_page.status_code, 200)
+        restored = reopened_page.context["resultados_data"]
+        self.assertEqual(len(restored), 2)
+        for result in restored:
+            self.assertEqual(len(result["notas"]), 4)
+            self.assertEqual(
+                [item["metrica"] for item in result["notas"]],
+                list(JUDGE_METRIC_NAMES),
+            )
+            self.assertTrue(all(item["justificativa"] for item in result["notas"]))
+            self.assertIn("tecnicamente sólida", result["justificativa"])
+        self.assertContains(reopened_page, 'id="resultados-data"')
+        self.assertContains(reopened_page, "renderResults(resultadosPersistidos);")
+        self.assertEqual(mocked_call.call_count, 2)
+
     def test_database_rejects_judge_score_outside_one_to_five(self):
         llm = LLM.objects.create(usuario=self.user, nome="model-a", descricao="Groq", api_key="a")
         question = Questao.objects.create(usuario=self.user, conteudo="Pergunta")
