@@ -2,6 +2,7 @@ venv
 rebuild.sh
 .env
 db.sqlite3
+staticfiles/
 __pycache__/
 *.pyc
 *.pyo

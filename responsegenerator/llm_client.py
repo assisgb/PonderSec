@@ -1,4 +1,5 @@
 import hashlib
+import importlib
 import logging
 import threading
 import time
@@ -7,22 +8,52 @@ from collections import OrderedDict
 from django.conf import settings
 from django.utils.translation import gettext as _
 
-try:
-    from google import genai
-    from google.genai import types as genai_types
-except ImportError:
-    genai = None
-    genai_types = None
 
-try:
-    import openai
-except ImportError:
-    openai = None
+# Os SDKs dos provedores importam milhares de classes (principalmente o
+# google-genai/Pydantic). Carregá-los junto com o URLconf fazia o primeiro acesso
+# de cada worker pagar vários segundos mesmo sem executar uma chamada de IA.
+_DEPENDENCY_UNLOADED = object()
+_dependency_lock = threading.Lock()
+genai = _DEPENDENCY_UNLOADED
+genai_types = _DEPENDENCY_UNLOADED
+openai = _DEPENDENCY_UNLOADED
+Groq = _DEPENDENCY_UNLOADED
 
-try:
-    from groq import Groq
-except ImportError:
-    Groq = None
+
+def _load_provider_dependency(provider):
+    global genai, genai_types, openai, Groq
+
+    if provider == "gemini" and genai is _DEPENDENCY_UNLOADED:
+        with _dependency_lock:
+            if genai is _DEPENDENCY_UNLOADED:
+                try:
+                    loaded_genai = importlib.import_module("google.genai")
+                    loaded_types = importlib.import_module("google.genai.types")
+                except ImportError:
+                    loaded_genai = None
+                    loaded_types = None
+                genai = loaded_genai
+                genai_types = loaded_types
+    elif provider in {"openai", "deepseek"} and openai is _DEPENDENCY_UNLOADED:
+        with _dependency_lock:
+            if openai is _DEPENDENCY_UNLOADED:
+                try:
+                    openai = importlib.import_module("openai")
+                except ImportError:
+                    openai = None
+    elif provider == "groq" and Groq is _DEPENDENCY_UNLOADED:
+        with _dependency_lock:
+            if Groq is _DEPENDENCY_UNLOADED:
+                try:
+                    Groq = importlib.import_module("groq").Groq
+                except ImportError:
+                    Groq = None
+
+
+def preload_provider_dependencies():
+    """Carrega SDKs antes do fork do Gunicorn, sem criar clientes ou conexões."""
+    for provider in ("gemini", "openai", "groq"):
+        _load_provider_dependency(provider)
 
 
 logger = logging.getLogger("responsegenerator.llm")
@@ -123,6 +154,7 @@ def _client_cache():
 
 
 def _client_factory_identity(provider):
+    _load_provider_dependency(provider)
     if provider == "gemini":
         factory = getattr(genai, "Client", None) if genai is not None else None
     elif provider == "groq":
@@ -347,6 +379,7 @@ def _mapped_error(exc, provider):
 
 
 def _gemini_client(api_key, timeout):
+    _load_provider_dependency("gemini")
     if genai is None:
         raise LLMServiceError(_("Biblioteca google-genai não instalada."), code="dependency_missing")
     kwargs = {"api_key": api_key}

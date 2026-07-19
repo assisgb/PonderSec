@@ -1,3 +1,4 @@
+import gzip
 import json
 from importlib import import_module
 from types import SimpleNamespace
@@ -59,6 +60,18 @@ class PublicChatCrossEvaluationTests(TestCase):
         self.llm_b = LLMPublica.objects.create(
             nome="modelo-b", descricao="OpenAI", api_key="key-b", ativo=True,
         )
+
+    def test_public_page_externalizes_theme_css_and_is_gzip_compressed(self):
+        response = self.client.get(
+            reverse("usuario_final_chat"),
+            HTTP_ACCEPT_ENCODING="gzip",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Encoding"], "gzip")
+        html = gzip.decompress(response.content).decode("utf-8")
+        self.assertIn("/static/language_switcher.css", html)
+        self.assertNotIn("TEMA CLARO — [data-theme=", html)
 
     @mock.patch("responsegenerator.views._judgeai_call_configured_llm")
     def test_public_chat_generates_four_correctly_mapped_scores(self, mocked_call):
@@ -375,8 +388,50 @@ class JudgeAIParserAndResearchTests(TestCase):
         self.assertFalse(AvaliacaoJuiz.objects.filter(resposta=answer_a, juiz=llm_a).exists())
         self.assertFalse(AvaliacaoJuiz.objects.filter(resposta=answer_b, juiz=llm_b).exists())
         for result in payload["resultados"]:
+            self.assertIn(result["juiz_id"], {llm_a.id, llm_b.id})
             self.assertEqual([item["metrica"] for item in result["notas"]], list(JUDGE_METRIC_NAMES))
         self.assertEqual(mocked_call.call_count, 2)
+
+    @mock.patch("responsegenerator.views._judgeai_call_configured_llm", return_value=judge_payload())
+    def test_repeated_judge_run_does_not_inflate_online_judge_counters(self, mocked_call):
+        llm_a = LLM.objects.create(usuario=self.user, nome="model-a", descricao="Groq", api_key="a")
+        llm_b = LLM.objects.create(usuario=self.user, nome="model-b", descricao="Gemini", api_key="b")
+        question = Questao.objects.create(usuario=self.user, conteudo="Como evitar phishing?")
+        Resposta.objects.create(questao=question, llm=llm_a, conteudo_resposta="Resposta A")
+        Resposta.objects.create(questao=question, llm=llm_b, conteudo_resposta="Resposta B")
+        request_data = json.dumps({
+            "questao_ids": [question.id],
+            "juiz_ids": [llm_a.id, llm_b.id],
+        })
+
+        first = self.client.post(
+            reverse("juizes_executar_avaliacao"),
+            data=request_data,
+            content_type="application/json",
+        )
+        second = self.client.post(
+            reverse("juizes_executar_avaliacao"),
+            data=request_data,
+            content_type="application/json",
+        )
+
+        self.assertEqual(first.status_code, 200)
+        self.assertEqual(second.status_code, 200)
+        self.assertEqual(AvaliacaoJuiz.objects.count(), 8)
+        dashboard_response = self.client.get(reverse("dashboard_avaliacoes"))
+        dashboard = json.loads(dashboard_response.context["dashboard_json"])
+        self.assertEqual(dashboard["resumo"]["notas_juizes"], 8)
+        self.assertEqual(dashboard["resumo"]["juizes_online"], 2)
+        self.assertEqual(mocked_call.call_count, 4)
+
+    def test_judge_comparator_merges_new_pairs_and_replaces_repeated_pairs(self):
+        response = self.client.get(reverse("juizes_comparador"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "function mergeEvaluationResults(currentResults, newResults)")
+        self.assertContains(response, "newResults.forEach(item => merged.set(resultIdentity(item), item));")
+        self.assertContains(response, "state.results = mergeEvaluationResults(state.results, newResults);")
+        self.assertNotContains(response, "const toAdd = newResults.filter")
 
     def test_database_rejects_judge_score_outside_one_to_five(self):
         llm = LLM.objects.create(usuario=self.user, nome="model-a", descricao="Groq", api_key="a")
@@ -964,6 +1019,77 @@ class PublicFormEvaluationTests(TestCase):
             set(AvaliacaoFormulario.objects.values_list("metrica__nome", flat=True)),
             set(JUDGE_METRIC_NAMES),
         )
+
+    def test_resubmission_replaces_scores_without_inflating_counters(self):
+        first = self.client.post(
+            self.url,
+            data={**self.identity, **self._scores_for(self.answer, "2")},
+        )
+        second = self.client.post(
+            self.url,
+            data={**self.identity, **self._scores_for(self.answer, "5")},
+        )
+
+        self.assertEqual(first.status_code, 200)
+        self.assertEqual(second.status_code, 200)
+        self.assertEqual(Avaliador.objects.count(), 1)
+        self.assertEqual(AvaliacaoFormulario.objects.count(), 4)
+        self.assertEqual(
+            set(AvaliacaoFormulario.objects.values_list("avaliacao_quanti", flat=True)),
+            {5},
+        )
+
+        self.client.force_login(self.owner)
+        list_response = self.client.get(reverse("avaliacao"))
+        form_from_context = next(
+            form
+            for form in list_response.context["formularios"]
+            if form.id == self.form.id
+        )
+        self.assertEqual(form_from_context.avaliadores_total, 1)
+
+        dashboard_response = self.client.get(reverse("dashboard_avaliacoes"))
+        dashboard = json.loads(dashboard_response.context["dashboard_json"])
+        self.assertEqual(dashboard["resumo"]["notas_especialistas"], 4)
+        self.assertEqual(dashboard["resumo"]["avaliadores_humanos"], 1)
+
+    def test_form_counter_ignores_evaluator_without_saved_scores(self):
+        Avaliador.objects.create(
+            formulario=self.form,
+            **self.identity,
+        )
+        self.client.force_login(self.owner)
+
+        response = self.client.get(reverse("avaliacao"))
+        form_from_context = next(
+            form
+            for form in response.context["formularios"]
+            if form.id == self.form.id
+        )
+
+        self.assertEqual(form_from_context.avaliadores_total, 0)
+
+    def test_database_rejects_duplicate_score_for_same_evaluator(self):
+        evaluator = Avaliador.objects.create(
+            formulario=self.form,
+            **self.identity,
+        )
+        AvaliacaoFormulario.objects.create(
+            usuario=self.owner,
+            avaliador=evaluator,
+            resposta=self.answer,
+            metrica=self.metrics[0],
+            avaliacao_quanti=4,
+        )
+
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            AvaliacaoFormulario.objects.create(
+                usuario=self.owner,
+                avaliador=evaluator,
+                resposta=self.answer,
+                metrica=self.metrics[0],
+                avaliacao_quanti=5,
+            )
 
     def test_same_evaluator_is_counted_in_every_completed_form(self):
         second_question = Questao.objects.create(

@@ -321,6 +321,14 @@ class AvaliacaoFormulario(models.Model):
                 ),
                 name="form_score_between_1_and_5",
             ),
+            models.UniqueConstraint(
+                fields=("avaliador", "resposta", "metrica"),
+                condition=(
+                    models.Q(avaliador__isnull=False)
+                    & models.Q(metrica__isnull=False)
+                ),
+                name="unique_form_score_per_evaluator",
+            ),
         ]
 
     def __str__(self):

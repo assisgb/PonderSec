@@ -659,10 +659,27 @@ function renderAll(){
   renderResponses();
 }
 
+function resultIdentity(item){
+  const judgeIdentity = item.juiz_id ?? item.modelo_juiz ?? "";
+  return `${item.questao_id ?? ""}:${item.resposta_id ?? ""}:${judgeIdentity}`;
+}
+
+function mergeEvaluationResults(currentResults, newResults){
+  const merged = new Map(
+    currentResults.map(item => [resultIdentity(item), item])
+  );
+
+  newResults.forEach(item => merged.set(resultIdentity(item), item));
+
+  return Array.from(merged.values()).sort((left,right) =>
+    (Number(left.questao_id) - Number(right.questao_id)) ||
+    String(left.modelo_respondente ?? "").localeCompare(String(right.modelo_respondente ?? "")) ||
+    String(left.modelo_juiz ?? "").localeCompare(String(right.modelo_juiz ?? ""))
+  );
+}
+
 function renderResults(newResults){
-  const existingKeys = new Set(state.results.map(item => `${item.resposta_id}_${item.modelo_juiz}`));
-  const toAdd = newResults.filter(item => !existingKeys.has(`${item.resposta_id}_${item.modelo_juiz}`));
-  state.results = state.results.concat(toAdd);
+  state.results = mergeEvaluationResults(state.results, newResults);
   state.activeResult = 0;
   const scoreCount = state.results.reduce((total,item) => total + ((item.notas || []).length),0);
   els.resultCount.textContent = `${state.results.length} {% translate "pares" %} · ${scoreCount} {% translate "notas" %}`;

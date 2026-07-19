@@ -81,6 +81,8 @@ CSRF_TRUSTED_ORIGINS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    # Comprime páginas e JSON extensos quando não há Nginx na frente.
+    'django.middleware.gzip.GZipMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -206,11 +208,27 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'usuarios', 'static'),
-]
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+STORAGES = {
+    'default': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+    },
+    'staticfiles': {
+        'BACKEND': (
+            'django.contrib.staticfiles.storage.StaticFilesStorage'
+            if DEBUG
+            else 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+        ),
+    },
+}
+
+# Os nomes versionados do collectstatic mudam a cada deploy, permitindo cache
+# longo sem servir CSS ou imagens antigas depois de uma atualização.
+WHITENOISE_MAX_AGE = 0 if DEBUG else 31536000
+WHITENOISE_AUTOREFRESH = DEBUG
+WHITENOISE_USE_FINDERS = DEBUG
 
 LOGIN_URL = '/'
 LOGIN_REDIRECT_URL = '/questoes/'
@@ -235,6 +253,10 @@ LLM_MODELS_MAX_WORKERS = max(1, min(8, int(os.environ.get('LLM_MODELS_MAX_WORKER
 LLM_EVALUATION_MAX_WORKERS = max(1, min(8, int(os.environ.get('LLM_EVALUATION_MAX_WORKERS', '4'))))
 LLM_CLIENT_CACHE_TTL_SECONDS = float(os.environ.get('LLM_CLIENT_CACHE_TTL_SECONDS', '300'))
 LLM_CLIENT_CACHE_MAX_SIZE = int(os.environ.get('LLM_CLIENT_CACHE_MAX_SIZE', '8'))
+LLM_PRELOAD_PROVIDER_SDKS = os.environ.get(
+    'LLM_PRELOAD_PROVIDER_SDKS',
+    'False',
+).lower() in ('1', 'true', 'yes', 'on')
 LLM_TRANSIENT_MAX_ATTEMPTS = int(os.environ.get('LLM_TRANSIENT_MAX_ATTEMPTS', '2'))
 LLM_TRANSIENT_RETRY_DELAY_SECONDS = float(
     os.environ.get('LLM_TRANSIENT_RETRY_DELAY_SECONDS', '0.2')

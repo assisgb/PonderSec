@@ -523,7 +523,10 @@ def usuario_final_chat_avaliacao_api(request):
         try:
             resposta_publica = (
                 RespostaPublica.objects
-                .select_for_update()
+                # As relações são opcionais e viram LEFT JOIN. No PostgreSQL,
+                # tentar bloqueá-las junto com a resposta causa
+                # "FOR UPDATE cannot be applied to the nullable side".
+                .select_for_update(of=("self",))
                 .select_related("pergunta", "llm")
                 .get(id=resposta_id, ok=True)
             )
@@ -2000,6 +2003,7 @@ def _judgeai_error_result(questao, resposta, juiz, motivo):
         "questao_id": questao.id,
         "pergunta": questao.conteudo,
         "resposta_id": resposta.id,
+        "juiz_id": juiz.id,
         "resposta_preview": _text_preview(resposta.conteudo_resposta),
         "resposta_texto": resposta.conteudo_resposta,
         "modelo_respondente": resposta.llm.nome if resposta.llm else "IA desconhecida",
@@ -2094,6 +2098,7 @@ def juizes_executar_avaliacao(request):
                 "questao_id": questao.id,
                 "pergunta": questao.conteudo,
                 "resposta_id": resposta.id,
+                "juiz_id": juiz.id,
                 "resposta_preview": _text_preview(resposta.conteudo_resposta),
                 "resposta_texto": resposta.conteudo_resposta,
                 "modelo_respondente": resposta.llm.nome if resposta.llm else "IA desconhecida",
@@ -2133,7 +2138,13 @@ def avaliacao(request):
         .filter(usuario=request.user)
         .annotate(
             questoes_total=Count("questoes", distinct=True),
-            avaliadores_total=Count("avaliadores", distinct=True),
+            avaliadores_total=Count(
+                "avaliadores",
+                filter=Q(
+                    avaliadores__avaliacoes__avaliacao_quanti__isnull=False,
+                ),
+                distinct=True,
+            ),
         )
         .prefetch_related(
             Prefetch(
@@ -2389,6 +2400,14 @@ def responder_avaliacao_publica(request, formulario_id):
                 avaliador.nome = nome
                 avaliador.profissao = profissao
                 avaliador.save(update_fields=['nome', 'profissao'])
+
+            # Um novo envio do mesmo especialista substitui as notas anteriores
+            # deste formulário, evitando duplicação nas contagens e nas médias.
+            AvaliacaoFormulario.objects.filter(
+                avaliador=avaliador,
+                resposta_id__in=respostas_ids,
+                metrica_id__in=[metrica.id for metrica in metricas_quantitativas],
+            ).delete()
 
             for avaliacao_formulario in avaliacoes:
                 avaliacao_formulario.avaliador = avaliador

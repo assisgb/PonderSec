@@ -85,6 +85,7 @@ LLM_MODELS_MAX_WORKERS=4
 LLM_EVALUATION_MAX_WORKERS=4
 LLM_CLIENT_CACHE_TTL_SECONDS=300
 LLM_CLIENT_CACHE_MAX_SIZE=8
+LLM_PRELOAD_PROVIDER_SDKS=true
 LLM_TRANSIENT_MAX_ATTEMPTS=2
 LLM_TRANSIENT_RETRY_DELAY_SECONDS=0.2
 PUBLIC_CHAT_RATE_LIMIT=30
@@ -98,11 +99,16 @@ DB_CONN_HEALTH_CHECKS=true
 GUNICORN_WORKERS=3
 GUNICORN_THREADS=4
 GUNICORN_TIMEOUT_SECONDS=180
+GUNICORN_KEEP_ALIVE_SECONDS=5
 LOG_LEVEL=INFO
 ```
 
 Em produção, `DJANGO_SECRET_KEY` é obrigatória com `DJANGO_DEBUG=False`; ela
 protege sessões e os tokens assinados usados pela avaliação assíncrona.
+O Compose assume `DJANGO_DEBUG=False` quando a variável não é informada. Defina
+uma chave secreta real antes de subir o serviço. A inicialização executa
+automaticamente migrações e `collectstatic`, gerando arquivos versionados e
+comprimidos para cache prolongado no navegador.
 
 O Gunicorn usa workers `gthread`, apropriados para as chamadas de LLM que passam
 boa parte do tempo aguardando I/O. A capacidade máxima de requisições simultâneas
@@ -118,7 +124,9 @@ evitando rajadas repetidas nas mesmas chaves de Groq/Gemini.
 Os clientes HTTP dos provedores são reutilizados por thread por até 300 segundos,
 evitando novos handshakes DNS/TLS. Falhas transitórias de conexão ou 5xx recebem
 no máximo uma repetição curta; autenticação, cota e modelo inexistente falham sem
-repetir a cobrança.
+repetir a cobrança. Com `LLM_PRELOAD_PROVIDER_SDKS=true` e o `--preload` do
+Gunicorn, os SDKs são importados antes do fork dos workers: o custo fica na
+inicialização do contêiner, não no primeiro acesso ou na primeira geração.
 
 No PostgreSQL, `DB_CONN_MAX_AGE` reaproveita conexões por thread e
 `DB_CONN_HEALTH_CHECKS` valida conexões persistentes antes do uso. O contêiner
