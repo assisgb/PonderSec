@@ -330,6 +330,10 @@ select.field option { background: #050c14; color: var(--text); }
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2 2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><path d="M12 8v3"/><path d="M6.5 11a5.5 5.5 0 0 0 11 0"/><rect x="3" y="11" width="4" height="7" rx="1"/><rect x="17" y="11" width="4" height="7" rx="1"/><path d="M7 18h10"/><path d="M9 21h6"/></svg>
               LLMs
             </a>
+            <button class="btn btn-danger" type="button" id="resetAvaliacoesBtn">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+              {% translate "Resetar avaliações" %}
+            </button>
         </div>
     </header>
 
@@ -565,6 +569,12 @@ function renderQuestions(){
   els.questionList.innerHTML = items.map(q => {
     const disabled = q.respostas_count === 0;
     const selected = state.selectedQuestions.has(q.id);
+    const avaliadoChip = q.avaliado_count > 0
+      ? `<span class="chip good" title="${q.avaliado_count} avaliações concluídas">✓ {% translate 'avaliado' %} (${q.avaliado_count})</span>`
+      : "";
+    const erroChip = q.erro_count > 0
+      ? `<span class="chip warn" title="${q.erro_count} avaliações com erro">⚠ {% translate 'com erro' %} (${q.erro_count})</span>`
+      : "";
     return `
       <label class="question-card ${selected ? "is-selected" : ""} ${disabled ? "is-disabled" : ""}">
         <input type="checkbox" data-question-id="${q.id}" ${selected ? "checked" : ""} ${disabled ? "disabled" : ""}>
@@ -574,6 +584,7 @@ function renderQuestions(){
           <div class="meta-row">
             <span class="chip">${escapeHtml(q.categoria)}</span>
             <span class="chip ${disabled ? "warn" : "good"}">${disabled ? "{% translate 'sem respostas' %}" : q.respostas_count + " {% translate 'respostas' %}"}</span>
+            ${avaliadoChip}${erroChip}
             ${q.respostas.map(r => `<span class="chip blue">${escapeHtml(r.llm)}</span>`).join("")}
           </div>
         </div>
@@ -821,6 +832,35 @@ async function runEvaluation(){
     els.runBtn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg> {% translate "Executar avaliação automática" %}';
   }
 }
+
+async function resetAvaliacoes(){
+  if(!confirm("{% translate 'Tem certeza? Todas as avaliações do JudgeAI serão apagadas permanentemente.' %}")){
+    return;
+  }
+  const btn = document.getElementById("resetAvaliacoesBtn");
+  btn.disabled = true;
+  btn.textContent = "{% translate 'Resetando...' %}";
+  try{
+    const resp = await fetch("{% url 'juizes_resetar_avaliacoes' %}", {
+      method:"POST",
+      headers:{"X-CSRFToken":getCSRFToken()},
+    });
+    const data = await resp.json();
+    if(data.ok){
+      setStatus(`{% translate 'Avaliações resetadas.' %} ${data.deletados} {% translate 'registros removidos.' %}`);
+      window.location.reload();
+    }else{
+      setStatus("{% translate 'Erro ao resetar avaliações.' %}", "error");
+      btn.disabled = false;
+      btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg> {% translate "Resetar avaliações" %}';
+    }
+  }catch(err){
+    setStatus("{% translate 'Erro de rede ao resetar.' %}", "error");
+    btn.disabled = false;
+  }
+}
+
+document.getElementById("resetAvaliacoesBtn").addEventListener("click", resetAvaliacoes);
 
 document.getElementById("selectAnsweredBtn").addEventListener("click", () => {
   filteredQuestions().forEach(q => {

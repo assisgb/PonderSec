@@ -2756,6 +2756,17 @@ def juizes_comparador(request):
     resultados_data = _resultados_juizes_persistidos(request.user, metricas)
     categorias = Categoria.objects.filter(usuario=request.user).order_by("nome_categoria")
 
+    aval_rows = (
+        AvaliacaoJuiz.objects
+        .filter(usuario=request.user)
+        .values("resposta__questao_id")
+        .annotate(
+            sem_erro=Count("id", filter=Q(erro=False)),
+            com_erro=Count("id", filter=Q(erro=True)),
+        )
+    )
+    aval_map = {row["resposta__questao_id"]: row for row in aval_rows}
+
     questoes_data = []
     for questao in questoes:
         respostas_data = []
@@ -2774,6 +2785,7 @@ def juizes_comparador(request):
                 "preview": _text_preview(resposta.conteudo_resposta, 420),
             })
 
+        aval = aval_map.get(questao.id, {})
         questoes_data.append({
             "id": questao.id,
             "conteudo": questao.conteudo,
@@ -2783,6 +2795,8 @@ def juizes_comparador(request):
             "respostas_count": len(respostas_data),
             "modelos_ids": modelos_ids,
             "respostas": respostas_data,
+            "avaliado_count": aval.get("sem_erro", 0),
+            "erro_count": aval.get("com_erro", 0),
         })
 
     return render(request, "juizes/comparador.html", {
@@ -2806,6 +2820,13 @@ def juizes_comparador(request):
         "resultados_data": resultados_data,
         "categorias": categorias,
     })
+
+
+@login_required
+@require_http_methods(["POST"])
+def juizes_resetar_avaliacoes(request):
+    deletados, _ = AvaliacaoJuiz.objects.filter(usuario=request.user).delete()
+    return JsonResponse({"ok": True, "deletados": deletados})
 
 
 # ═══════════════════════════════════════════════════════════════════

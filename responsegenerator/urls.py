@@ -55,6 +55,7 @@ urlpatterns = [
     path('menu_avaliacao/', views.menu_avaliacao, name='menu_avaliacao'),
     path('juizes/comparador/', views.juizes_comparador, name='juizes_comparador'),
     path('juizes/avaliar/', views.juizes_executar_avaliacao, name='juizes_executar_avaliacao'),
+    path('juizes/resetar/', views.juizes_resetar_avaliacoes, name='juizes_resetar_avaliacoes'),
     path('setup-configurar-metrica/', views.setup_configurar_metrica, name='setup_configurar_metrica'),
 
     # ===== PAINEL ADMIN (auth separada via AdminPonderSec) =====
