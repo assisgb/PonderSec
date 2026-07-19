@@ -2140,7 +2140,7 @@ def avaliacao(request):
         .annotate(
             questoes_total=Count("questoes", distinct=True),
             avaliadores_total=Count(
-                "avaliadores",
+                Lower("avaliadores__email"),
                 filter=Q(
                     avaliadores__finalizado_em__isnull=False,
                     avaliadores__avaliacoes__avaliacao_quanti__isnull=False,
@@ -2616,12 +2616,6 @@ def dashboard_avaliacoes(request):
         .distinct()
         .count()
     )
-    formularios_concluidos = (
-        avaliacoes_especialistas
-        .values("avaliador_id")
-        .distinct()
-        .count()
-    )
     avaliacoes_modelos = (
         avaliacoes_especialistas
         .exclude(resposta__llm_id=None)
@@ -2653,7 +2647,6 @@ def dashboard_avaliacoes(request):
             "metricas": len(metricas),
             "notas_especialistas": total_especialistas,
             "avaliacoes_modelos": avaliacoes_modelos,
-            "formularios_concluidos": formularios_concluidos,
             "notas_juizes": total_juizes,
             "avaliadores_humanos": avaliadores_humanos,
             "juizes_online": juizes_online,

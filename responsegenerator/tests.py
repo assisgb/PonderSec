@@ -1076,7 +1076,6 @@ class PublicFormEvaluationTests(TestCase):
         dashboard = json.loads(dashboard_response.context["dashboard_json"])
         self.assertEqual(dashboard["resumo"]["notas_especialistas"], 4)
         self.assertEqual(dashboard["resumo"]["avaliacoes_modelos"], 1)
-        self.assertEqual(dashboard["resumo"]["formularios_concluidos"], 1)
         self.assertEqual(dashboard["resumo"]["avaliadores_humanos"], 1)
 
         reopen_response = self.client.post(reverse(
@@ -1132,6 +1131,46 @@ class PublicFormEvaluationTests(TestCase):
         )
 
         self.assertEqual(form_from_context.avaliadores_total, 0)
+
+    def test_counters_deduplicate_historical_email_case_variants(self):
+        evaluators = [
+            Avaliador.objects.create(
+                formulario=self.form,
+                nome="Especialista",
+                email=email,
+                profissao="Analista",
+                finalizado_em=timezone.now(),
+            )
+            for email in (
+                "Especialista@Example.com",
+                "especialista@example.com",
+            )
+        ]
+        AvaliacaoFormulario.objects.bulk_create([
+            AvaliacaoFormulario(
+                usuario=self.owner,
+                avaliador=evaluator,
+                resposta=self.answer,
+                metrica=metric,
+                avaliacao_quanti=4,
+            )
+            for evaluator in evaluators
+            for metric in self.metrics
+        ])
+        self.client.force_login(self.owner)
+
+        list_response = self.client.get(reverse("avaliacao"))
+        form_from_context = next(
+            form
+            for form in list_response.context["formularios"]
+            if form.id == self.form.id
+        )
+        dashboard_response = self.client.get(reverse("dashboard_avaliacoes"))
+        dashboard = json.loads(dashboard_response.context["dashboard_json"])
+
+        self.assertEqual(form_from_context.avaliadores_total, 1)
+        self.assertEqual(dashboard["resumo"]["avaliadores_humanos"], 1)
+        self.assertEqual(dashboard["resumo"]["avaliacoes_modelos"], 1)
 
     def test_dashboard_ignores_scores_from_questions_removed_from_form(self):
         removed_question = Questao.objects.create(
@@ -1251,7 +1290,6 @@ class PublicFormEvaluationTests(TestCase):
         dashboard = json.loads(dashboard_response.context["dashboard_json"])
         self.assertEqual(dashboard["resumo"]["avaliadores_humanos"], 1)
         self.assertEqual(dashboard["resumo"]["avaliacoes_modelos"], 1)
-        self.assertEqual(dashboard["resumo"]["formularios_concluidos"], 2)
 
     def test_migration_recovers_previous_form_counters(self):
         second_question = Questao.objects.create(
