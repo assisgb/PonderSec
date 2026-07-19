@@ -1231,3 +1231,34 @@ class PublicFormEvaluationTests(TestCase):
             Avaliador.objects.filter(email=self.identity["email"]).count(),
             2,
         )
+
+        repair_migration = import_module(
+            "responsegenerator.migrations.0019_repair_evaluator_score_form_links"
+        )
+        repair_migration.repair_evaluator_score_form_links(
+            django_apps,
+            SimpleNamespace(connection=connection),
+        )
+
+        first_form_evaluator = Avaliador.objects.get(
+            email=self.identity["email"],
+            formulario=self.form,
+        )
+        second_form_evaluator = Avaliador.objects.get(
+            email=self.identity["email"],
+            formulario=second_form,
+        )
+        self.assertEqual(
+            AvaliacaoFormulario.objects.filter(
+                avaliador=first_form_evaluator,
+                resposta=self.answer,
+            ).count(),
+            4,
+        )
+        self.assertEqual(
+            AvaliacaoFormulario.objects.filter(
+                avaliador=second_form_evaluator,
+                resposta=second_answer,
+            ).count(),
+            4,
+        )
