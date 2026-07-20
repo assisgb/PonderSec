@@ -2203,6 +2203,10 @@ def juizes_executar_avaliacao(request):
 
 @login_required
 def avaliacao(request):
+    notas_validas_do_formulario = Q(
+        avaliacoes__avaliacao_quanti__isnull=False,
+        avaliacoes__resposta__questao__formularios=F("formulario_id"),
+    )
     formularios = (
         Formulario.objects
         .filter(usuario=request.user)
@@ -2228,6 +2232,23 @@ def avaliacao(request):
                 "avaliadores",
                 queryset=(
                     Avaliador.objects
+                    .annotate(
+                        notas_validas=Count(
+                            "avaliacoes",
+                            filter=notas_validas_do_formulario,
+                            distinct=True,
+                        ),
+                        questoes_avaliadas=Count(
+                            "avaliacoes__resposta__questao_id",
+                            filter=notas_validas_do_formulario,
+                            distinct=True,
+                        ),
+                        respostas_avaliadas=Count(
+                            "avaliacoes__resposta_id",
+                            filter=notas_validas_do_formulario,
+                            distinct=True,
+                        ),
+                    )
                     .only(
                         "id",
                         "formulario_id",
@@ -2245,6 +2266,57 @@ def avaliacao(request):
         .only("id", "nome", "tipo_respostas")
         .order_by("-id")
     )
+    formularios = list(formularios)
+    for formulario in formularios:
+        # Registros históricos podem conter variações de maiúsculas no e-mail.
+        # Exiba cada pessoa uma vez, seguindo a mesma identidade usada nos
+        # contadores e no dashboard.
+        avaliadores_por_email = {}
+        for avaliador in formulario.avaliadores_cache:
+            email_normalizado = (avaliador.email or "").strip().lower()
+            chave = email_normalizado or f"avaliador:{avaliador.id}"
+            atual = avaliadores_por_email.get(chave)
+            avaliacao_concluida = bool(
+                avaliador.finalizado_em and avaliador.notas_validas
+            )
+            prioridade = (
+                2 if avaliacao_concluida else 1 if avaliador.finalizado_em is None else 0,
+                avaliador.finalizado_em or avaliador.data_resposta,
+            )
+            if atual is None or prioridade > atual[0]:
+                avaliadores_por_email[chave] = (prioridade, avaliador)
+
+        avaliadores_exibicao = sorted(
+            (item[1] for item in avaliadores_por_email.values()),
+            key=lambda avaliador: (
+                (avaliador.nome or "").casefold(),
+                (avaliador.email or "").casefold(),
+            ),
+        )
+        concluidos = []
+        reabertos = []
+        sem_notas = []
+        for avaliador in avaliadores_exibicao:
+            if avaliador.finalizado_em and avaliador.notas_validas:
+                avaliador.status_exibicao = "concluida"
+                concluidos.append(avaliador)
+            elif avaliador.finalizado_em is None:
+                avaliador.status_exibicao = "reaberta"
+                reabertos.append(avaliador)
+            else:
+                avaliador.status_exibicao = "sem_notas"
+                sem_notas.append(avaliador)
+
+        formulario.avaliadores_exibicao_cache = avaliadores_exibicao
+        formulario.avaliadores_concluidos_total = len(concluidos)
+        formulario.avaliadores_reabertos_total = len(reabertos)
+        formulario.avaliadores_sem_notas_total = len(sem_notas)
+        formulario.avaliadores_registrados_total = len(avaliadores_exibicao)
+        formulario.avaliadores_preview = concluidos[:3]
+        formulario.avaliadores_restantes = max(0, len(concluidos) - 3)
+        formulario.avaliadores_reabertos_preview = reabertos[:3]
+        formulario.avaliadores_reabertos_restantes = max(0, len(reabertos) - 3)
+
     questoes_respondidas = (
         Questao.objects
         .filter(usuario=request.user)

@@ -195,17 +195,57 @@ body::before {
 .btn-manage { border-color: rgba(139, 92, 246, 0.3); color: #c4b5fd; }
 .btn-manage:hover { background: rgba(139, 92, 246, 0.12); border-color: rgba(139, 92, 246, 0.58); color: #ddd6fe; }
 
+.evaluator-preview {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 3px;
+  color: var(--muted); font-family: var(--mono); font-size: 9px; line-height: 1.4;
+}
+.evaluator-preview-label { color: #c4b5fd; font-weight: 700; }
+.evaluator-person-pill {
+  max-width: 150px; padding: 3px 7px; overflow: hidden; border: 1px solid rgba(139, 92, 246, 0.24);
+  border-radius: 999px; background: rgba(139, 92, 246, 0.08); color: #ddd6fe;
+  text-overflow: ellipsis; white-space: nowrap;
+}
+.evaluator-person-pill.open { border-color: rgba(251, 191, 36, 0.25); background: rgba(251, 191, 36, 0.08); color: #fcd34d; }
+.evaluator-more { color: var(--muted); }
+.evaluator-details-btn {
+  padding: 2px 0; border: 0; border-bottom: 1px solid rgba(56, 189, 248, 0.38);
+  background: transparent; color: #38bdf8; cursor: pointer; font: inherit; font-weight: 700;
+}
+.evaluator-details-btn:hover { color: #7dd3fc; border-bottom-color: #7dd3fc; }
+.evaluator-none { color: rgba(122, 150, 140, 0.82); }
+
+.evaluator-summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 16px 0 18px; }
+.evaluator-summary-card {
+  padding: 12px; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px;
+  background: rgba(0, 0, 0, 0.25);
+}
+.evaluator-summary-value { color: var(--text-strong); font-family: var(--mono); font-size: 18px; font-weight: 800; }
+.evaluator-summary-label { margin-top: 3px; color: var(--muted); font-size: 10px; line-height: 1.35; }
 .evaluator-list { display: grid; gap: 10px; }
 .evaluator-row {
-  display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 14px;
   padding: 14px; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 11px;
   background: rgba(0, 0, 0, 0.3);
 }
-.evaluator-info { min-width: 0; }
+.evaluator-info { min-width: 0; flex: 1; }
+.evaluator-heading { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .evaluator-name { color: var(--text-strong); font-size: 13px; font-weight: 700; overflow-wrap: anywhere; }
-.evaluator-meta { margin-top: 4px; color: var(--muted); font-family: var(--mono); font-size: 10px; overflow-wrap: anywhere; }
-.evaluator-status { color: var(--accent); }
-.evaluator-status.open { color: #fbbf24; }
+.evaluator-state {
+  padding: 3px 7px; border: 1px solid rgba(0, 220, 130, 0.25); border-radius: 999px;
+  background: rgba(0, 220, 130, 0.08); color: var(--accent); font-family: var(--mono);
+  font-size: 8px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase;
+}
+.evaluator-state.open { border-color: rgba(251, 191, 36, 0.28); background: rgba(251, 191, 36, 0.08); color: #fbbf24; }
+.evaluator-state.invalid { border-color: rgba(239, 68, 68, 0.28); background: rgba(239, 68, 68, 0.08); color: #f87171; }
+.evaluator-profession { margin-top: 4px; color: var(--text); font-size: 11px; }
+.evaluator-email { margin-top: 3px; color: var(--muted); font-family: var(--mono); font-size: 10px; overflow-wrap: anywhere; }
+.evaluator-facts { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 9px; }
+.evaluator-fact {
+  padding: 3px 7px; border: 1px solid rgba(14, 165, 233, 0.2); border-radius: 999px;
+  background: rgba(14, 165, 233, 0.06); color: #7dd3fc; font-family: var(--mono); font-size: 9px;
+}
+.evaluator-status-note { margin-top: 8px; color: var(--muted); font-size: 10px; line-height: 1.45; }
+.evaluator-status-note.done { color: rgba(0, 220, 130, 0.82); }
 
 .empty-state {
   grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center;
@@ -360,6 +400,7 @@ body::before {
     margin-left: 0;
   }
   .btn-icon { width: 100%; min-height: 44px; }
+  .evaluator-summary-grid { grid-template-columns: 1fr; }
   .evaluator-row { align-items: stretch; flex-direction: column; }
   .evaluator-row form, .evaluator-row form .btn { width: 100%; }
 
@@ -474,18 +515,31 @@ body::before {
                                     <div class="metric-name">{{ formulario.nome }}</div>
                                     <div class="metric-meta">
                                         <span class="badge-tipo">{{ formulario.questoes_total }} {% translate "pergunta(s) vinculadas" %}</span>
-                                        <span class="badge-highlight">{{ formulario.avaliadores_total }} {% translate "avaliadores humanos" %}</span>
+                                        <span class="badge-highlight">{{ formulario.avaliadores_total }} {% translate "especialista(s) concluíram" %}</span>
+                                    </div>
+                                    <div class="evaluator-preview">
+                                        {% if formulario.avaliadores_preview %}
+                                        <span class="evaluator-preview-label">{% translate "Já avaliaram:" %}</span>
+                                        {% for avaliador in formulario.avaliadores_preview %}
+                                        <span class="evaluator-person-pill" title="{{ avaliador.email }}">{{ avaliador.nome }}</span>
+                                        {% endfor %}
+                                        {% if formulario.avaliadores_restantes %}<span class="evaluator-more">+{{ formulario.avaliadores_restantes }}</span>{% endif %}
+                                        {% elif formulario.avaliadores_reabertos_preview %}
+                                        <span class="evaluator-preview-label" style="color:#fbbf24;">{% translate "Aguardando reenvio:" %}</span>
+                                        {% for avaliador in formulario.avaliadores_reabertos_preview %}
+                                        <span class="evaluator-person-pill open" title="{{ avaliador.email }}">{{ avaliador.nome }}</span>
+                                        {% endfor %}
+                                        {% if formulario.avaliadores_reabertos_restantes %}<span class="evaluator-more">+{{ formulario.avaliadores_reabertos_restantes }}</span>{% endif %}
+                                        {% else %}
+                                        <span class="evaluator-none">{% translate "Nenhum especialista concluiu este formulário ainda." %}</span>
+                                        {% endif %}
+                                        {% if formulario.avaliadores_exibicao_cache %}
+                                        <button type="button" class="evaluator-details-btn" onclick="abrirModal('modalAvaliadores{{ formulario.id }}')">{% translate "Ver detalhes" %}</button>
+                                        {% endif %}
                                     </div>
                                 </div>
                             </div>
                             <div class="metric-actions">
-                                {% if formulario.avaliadores_cache %}
-                                <button type="button" class="btn-icon btn-manage" title="{% translate 'Gerenciar avaliações' %}" onclick="abrirModal('modalAvaliadores{{ formulario.id }}')">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                                    </svg>
-                                </button>
-                                {% endif %}
                                 <button class="btn-icon btn-edit" title="{% translate 'Editar' %}" onclick="abrirModalEditar({{ formulario.id }}, '{{ formulario.nome|escapejs }}', [{% for q in formulario.questoes_cache %}{{ q.id }}{% if not forloop.last %},{% endif %}{% endfor %}])">
                                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
@@ -520,13 +574,13 @@ body::before {
     </div>
 
     {% for formulario in formularios %}
-    {% if formulario.avaliadores_cache %}
+    {% if formulario.avaliadores_exibicao_cache %}
     <div class="modal-overlay" id="modalAvaliadores{{ formulario.id }}">
-        <div class="modal" style="max-width: 680px;">
+        <div class="modal" style="max-width: 760px;">
             <div class="modal-header">
                 <div class="modal-title-wrap">
-                    <span class="modal-product">{% translate "Participações" %}</span>
-                    <span class="modal-title">{% translate "Gerenciar avaliações" %}</span>
+                    <span class="modal-product">{% translate "Especialistas identificados" %}</span>
+                    <span class="modal-title">{% translate "Quem avaliou este formulário" %}</span>
                 </div>
                 <button type="button" class="modal-close" onclick="fecharModal('modalAvaliadores{{ formulario.id }}')">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6L6 18"></path><path d="M6 6l12 12"></path></svg>
@@ -535,19 +589,48 @@ body::before {
             <p style="color: var(--muted); margin-bottom: 18px; font-size: 13px; line-height: 1.55;">
                 {{ formulario.nome }} — {% translate "uma avaliação reaberta deixa de entrar no dashboard até que o especialista envie novamente." %}
             </p>
+            <div class="evaluator-summary-grid">
+                <div class="evaluator-summary-card">
+                    <div class="evaluator-summary-value">{{ formulario.avaliadores_concluidos_total }}</div>
+                    <div class="evaluator-summary-label">{% translate "especialistas com avaliação concluída" %}</div>
+                </div>
+                <div class="evaluator-summary-card">
+                    <div class="evaluator-summary-value">{{ formulario.avaliadores_reabertos_total }}</div>
+                    <div class="evaluator-summary-label">{% translate "aguardando novo envio" %}</div>
+                </div>
+                <div class="evaluator-summary-card">
+                    <div class="evaluator-summary-value">{{ formulario.avaliadores_registrados_total }}</div>
+                    <div class="evaluator-summary-label">{% translate "especialistas identificados neste formulário" %}</div>
+                </div>
+            </div>
             <div class="evaluator-list">
-                {% for avaliador in formulario.avaliadores_cache %}
+                {% for avaliador in formulario.avaliadores_exibicao_cache %}
                 <div class="evaluator-row">
                     <div class="evaluator-info">
-                        <div class="evaluator-name">{{ avaliador.nome }}</div>
-                        <div class="evaluator-meta">
-                            {{ avaliador.email }} ·
-                            {% if avaliador.finalizado_em %}
-                            <span class="evaluator-status">{% translate "finalizada" %} {{ avaliador.finalizado_em|date:"d/m/Y H:i" }}</span>
+                        <div class="evaluator-heading">
+                            <div class="evaluator-name">{{ avaliador.nome }}</div>
+                            {% if avaliador.status_exibicao == "concluida" %}
+                            <span class="evaluator-state">{% translate "Concluída" %}</span>
+                            {% elif avaliador.status_exibicao == "reaberta" %}
+                            <span class="evaluator-state open">{% translate "Aguardando reenvio" %}</span>
                             {% else %}
-                            <span class="evaluator-status open">{% translate "aguardando novo envio" %}</span>
+                            <span class="evaluator-state invalid">{% translate "Sem notas válidas" %}</span>
                             {% endif %}
                         </div>
+                        <div class="evaluator-profession">{{ avaliador.profissao|default:_('Profissão não informada') }}</div>
+                        <div class="evaluator-email">{{ avaliador.email }}</div>
+                        {% if avaliador.status_exibicao == "concluida" %}
+                        <div class="evaluator-facts">
+                            <span class="evaluator-fact">{{ avaliador.questoes_avaliadas }} {% translate "pergunta(s)" %}</span>
+                            <span class="evaluator-fact">{{ avaliador.respostas_avaliadas }} {% translate "resposta(s)" %}</span>
+                            <span class="evaluator-fact">{{ avaliador.notas_validas }} {% translate "notas válidas" %}</span>
+                        </div>
+                        <div class="evaluator-status-note done">{% translate "Concluída em" %} {{ avaliador.finalizado_em|date:"d/m/Y H:i" }} · {% translate "incluída no dashboard" %}</div>
+                        {% elif avaliador.status_exibicao == "reaberta" %}
+                        <div class="evaluator-status-note">{% translate "Esta participação está fora do dashboard até que o especialista envie novamente." %}</div>
+                        {% else %}
+                        <div class="evaluator-status-note">{% translate "O registro não possui notas válidas nas perguntas atualmente vinculadas a este formulário." %}</div>
+                        {% endif %}
                     </div>
                     {% if avaliador.finalizado_em %}
                     <form method="POST" action="{% url 'avaliacao_reabrir_avaliador' formulario.id avaliador.id %}" onsubmit="return confirm('{% translate "Reabrir esta avaliação para um novo envio?" %}')">

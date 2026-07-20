@@ -1102,6 +1102,18 @@ class PublicFormEvaluationTests(TestCase):
             if form.id == self.form.id
         )
         self.assertEqual(form_from_context.avaliadores_total, 1)
+        self.assertEqual(form_from_context.avaliadores_concluidos_total, 1)
+        self.assertEqual(form_from_context.avaliadores_reabertos_total, 0)
+        displayed_evaluator = form_from_context.avaliadores_exibicao_cache[0]
+        self.assertEqual(displayed_evaluator.notas_validas, 4)
+        self.assertEqual(displayed_evaluator.questoes_avaliadas, 1)
+        self.assertEqual(displayed_evaluator.respostas_avaliadas, 1)
+        self.assertContains(list_response, "Já avaliaram:")
+        self.assertContains(list_response, "Ver detalhes")
+        self.assertContains(list_response, self.identity["nome"])
+        self.assertContains(list_response, self.identity["email"])
+        self.assertContains(list_response, self.identity["profissao"])
+        self.assertContains(list_response, "4 notas válidas")
 
         dashboard_response = self.client.get(reverse("dashboard_avaliacoes"))
         dashboard = json.loads(dashboard_response.context["dashboard_json"])
@@ -1116,6 +1128,20 @@ class PublicFormEvaluationTests(TestCase):
         self.assertRedirects(reopen_response, reverse("avaliacao"))
         evaluator.refresh_from_db()
         self.assertIsNone(evaluator.finalizado_em)
+
+        reopened_list_response = self.client.get(reverse("avaliacao"))
+        reopened_form = next(
+            form
+            for form in reopened_list_response.context["formularios"]
+            if form.id == self.form.id
+        )
+        self.assertEqual(reopened_form.avaliadores_concluidos_total, 0)
+        self.assertEqual(reopened_form.avaliadores_reabertos_total, 1)
+        self.assertContains(reopened_list_response, "Aguardando reenvio:")
+        self.assertContains(
+            reopened_list_response,
+            "Esta participação está fora do dashboard",
+        )
 
         reopened_dashboard_response = self.client.get(
             reverse("dashboard_avaliacoes")
