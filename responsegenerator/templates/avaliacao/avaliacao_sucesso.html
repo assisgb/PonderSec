@@ -61,6 +61,12 @@
     </style>
 </head>
 <body>
+    {% if formulario_id %}
+    <script>
+        try { sessionStorage.removeItem('avaliacao_draft_v2_{{ formulario_id }}'); } catch(e) {}
+        try { localStorage.removeItem('avaliacao_state_{{ formulario_id }}'); } catch(e) {}
+    </script>
+    {% endif %}
     {% include "partials/language_switcher.html" %}
     <div class="background-grid"></div>
     <div class="scanline"></div>

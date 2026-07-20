@@ -614,7 +614,7 @@
     <div class="bg-grid"></div>
     <div class="scanline"></div>
     <div class="bg-orb"></div>
-    <form method="POST" id="evalForm">
+    <form method="POST" id="evalForm" novalidate>
         {% csrf_token %}
         <div class="screen-ident" id="screenIdent">
             <div class="ident-card">
@@ -626,6 +626,7 @@
                 {% if form_error %}
                 <div class="form-error" role="alert">{{ form_error }}</div>
                 {% endif %}
+                <div class="form-error" id="clientIdentityError" role="alert" hidden></div>
                 <div class="field-group">
                     <label class="field-label">{% translate "Nome Completo" %}</label>
                     <input type="text" name="nome" class="field-input" required value="{{ nome_informado|default:'' }}" placeholder="{% translate 'Digite seu nome completo' %}">
@@ -781,6 +782,8 @@
     {% translate "Selecione uma pontuação em cada métrica antes de continuar." as txt_rate_before_continue %}
     {% translate "Avalie todas as respostas antes de enviar o formulário." as txt_rate_before_submit %}
     {% translate "Este formulário não possui respostas e métricas quantitativas para avaliar." as txt_no_items %}
+    {% translate "Confira nome, e-mail e profissão antes de continuar." as txt_check_identity %}
+    {% translate "Enviando avaliação..." as txt_sending %}
     var PONDERSEC_I18N = {
         item: "{{ txt_item|escapejs }}",
         question: "{{ txt_question|escapejs }}",
@@ -791,7 +794,9 @@
         of: "{{ txt_of|escapejs }}",
         rateBeforeContinue: "{{ txt_rate_before_continue|escapejs }}",
         rateBeforeSubmit: "{{ txt_rate_before_submit|escapejs }}",
-        noItems: "{{ txt_no_items|escapejs }}"
+        noItems: "{{ txt_no_items|escapejs }}",
+        checkIdentity: "{{ txt_check_identity|escapejs }}",
+        sending: "{{ txt_sending|escapejs }}"
     };
 
     /* ── Likert drag slider ── */
@@ -883,11 +888,13 @@
                 e.stopPropagation();
             });
         }
+        window.PonderSecSetLikertValue = updateDrag;
         document.querySelectorAll('.likert-drag').forEach(initWidget);
     })();
     /* ── App principal ── */
     (function () {
-        var STORAGE_KEY = 'avaliacao_state_{{ formulario.id }}';
+        var STORAGE_KEY = 'avaliacao_draft_v2_{{ formulario.id }}';
+        var LEGACY_STORAGE_KEY = 'avaliacao_state_{{ formulario.id }}';
         var btnStart      = document.getElementById('btnStart');
         var screenIdent   = document.getElementById('screenIdent');
         var screenEval    = document.getElementById('screenEval');
@@ -905,6 +912,10 @@
         var progressTrack = document.getElementById('progressTrack');
         var carouselShell = track.closest('.carousel-shell');
         var evalForm      = document.getElementById('evalForm');
+        var identityInputs = Array.from(screenIdent.querySelectorAll('input[required]'));
+        var clientIdentityError = document.getElementById('clientIdentityError');
+        var serverHasError = {{ form_error|yesno:"true,false" }};
+        var restoringDraft = false;
         var slides  = Array.from(track.querySelectorAll('.slide'));
         var total   = slides.length;
         var current = 0;
@@ -912,20 +923,72 @@
 
         function saveState() {
             try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                var ratings = {};
+                document.querySelectorAll('.likert-drag').forEach(function(widget) {
+                    var value = widget.getAttribute('data-val');
+                    if (!value) return;
+                    ratings[
+                        widget.getAttribute('data-resp') + ':' + widget.getAttribute('data-metrica')
+                    ] = value;
+                });
+                var comments = {};
+                document.querySelectorAll('.comment-field').forEach(function(field) {
+                    if (field.value) comments[field.name] = field.value;
+                });
+                var identity = {};
+                identityInputs.forEach(function(input) {
+                    identity[input.name] = input.value;
+                });
+                sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
                     current: current,
-                    identDone: screenEval.classList.contains('active')
+                    identDone: screenEval.classList.contains('active'),
+                    identity: identity,
+                    ratings: ratings,
+                    comments: comments
                 }));
             } catch(e) {}
         }
         function loadState() {
             try {
-                var raw = localStorage.getItem(STORAGE_KEY);
+                var raw = sessionStorage.getItem(STORAGE_KEY);
                 return raw ? JSON.parse(raw) : null;
             } catch(e) { return null; }
         }
-        function clearState() {
-            try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
+        function identityIsValid(showMessage) {
+            var invalid = identityInputs.find(function(input) {
+                return !input.value.trim() || !input.checkValidity();
+            });
+            if (!invalid) {
+                clientIdentityError.hidden = true;
+                return true;
+            }
+            if (showMessage) {
+                clientIdentityError.textContent = PONDERSEC_I18N.checkIdentity;
+                clientIdentityError.hidden = false;
+                invalid.focus();
+                invalid.reportValidity();
+            }
+            return false;
+        }
+        function restoreState(saved) {
+            if (!saved) return;
+            restoringDraft = true;
+            Object.entries(saved.identity || {}).forEach(function(entry) {
+                var input = evalForm.elements.namedItem(entry[0]);
+                if (input) input.value = entry[1] || '';
+            });
+            Object.entries(saved.comments || {}).forEach(function(entry) {
+                var field = evalForm.elements.namedItem(entry[0]);
+                if (field) field.value = entry[1] || '';
+            });
+            document.querySelectorAll('.likert-drag').forEach(function(widget) {
+                var key = widget.getAttribute('data-resp') + ':' + widget.getAttribute('data-metrica');
+                var value = Number((saved.ratings || {})[key]);
+                if (value && window.PonderSecSetLikertValue) {
+                    window.PonderSecSetLikertValue(widget, value);
+                }
+            });
+            restoringDraft = false;
         }
 
         function startEvaluation() {
@@ -937,20 +1000,21 @@
         }
 
         btnStart.addEventListener('click', function() {
-            var inputs = screenIdent.querySelectorAll('input[required]');
-            var ok = true;
-            inputs.forEach(function(i) { if (!i.value.trim()) { i.focus(); ok = false; } });
-            if (!ok) return;
+            if (!identityIsValid(true)) return;
             startEvaluation();
             saveState();
         });
 
-        screenIdent.querySelectorAll('input[required]').forEach(function(input) {
+        identityInputs.forEach(function(input) {
             input.addEventListener('keydown', function(e) {
                 if (e.key === 'Enter') {
                     e.preventDefault();
                     btnStart.click();
                 }
+            });
+            input.addEventListener('input', function() {
+                clientIdentityError.hidden = true;
+                saveState();
             });
         });
 
@@ -960,8 +1024,8 @@
             }
         });
 
-        document.getElementById('evalForm').addEventListener('submit', function() {
-            clearState();
+        document.querySelectorAll('.comment-field').forEach(function(field) {
+            field.addEventListener('input', saveState);
         });
         function buildDots() {
             dotsRow.innerHTML = '';
@@ -1113,8 +1177,16 @@
         evalForm.addEventListener('pondersec:rating-change', function() {
             clearAlert();
             render();
+            if (!restoringDraft) saveState();
         });
         evalForm.addEventListener('submit', function(e) {
+            if (!identityIsValid(false)) {
+                e.preventDefault();
+                screenEval.classList.remove('active');
+                screenIdent.style.display = 'flex';
+                identityIsValid(true);
+                return;
+            }
             if (!screenEval.classList.contains('active')) {
                 e.preventDefault();
                 startEvaluation();
@@ -1134,7 +1206,9 @@
                 }
                 return;
             }
+            saveState();
             btnSubmit.disabled = true;
+            btnSubmit.textContent = PONDERSEC_I18N.sending;
         });
         document.addEventListener('keydown', function(e) {
             if (!screenEval.classList.contains('active')) return;
@@ -1193,8 +1267,10 @@
             completionMsg.classList.toggle('visible', last && complete);
         }
 
+        try { localStorage.removeItem(LEGACY_STORAGE_KEY); } catch(e) {}
         var saved = loadState();
-        if (saved && saved.identDone) {
+        restoreState(saved);
+        if (saved && saved.identDone && identityIsValid(false) && !serverHasError) {
             startEvaluation();
             if (saved.current > 0 && saved.current < total) {
                 current = saved.current;

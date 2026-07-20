@@ -6,8 +6,10 @@ from django.contrib import messages as django_messages
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
 from django.core.cache import cache
+from django.core.exceptions import ValidationError
 from django.core import signing
 from django.core.signing import BadSignature, SignatureExpired
+from django.core.validators import validate_email
 from django.db import close_old_connections, transaction
 from datetime import timedelta
 import hashlib
@@ -2532,7 +2534,27 @@ def responder_avaliacao_publica(request, formulario_id):
         form_error = None
         if not nome or not email or not profissao:
             form_error = _('Preencha seus dados de identificação antes de iniciar a avaliação.')
-        elif not respostas_ids or not metricas_quantitativas:
+        else:
+            try:
+                validate_email(email)
+            except ValidationError:
+                form_error = _('Informe um endereço de e-mail válido.')
+
+        notas_esperadas = len(respostas_ids) * len(metricas_quantitativas)
+        notas_recebidas = sum(
+            bool(request.POST.get(f'quanti_{resposta_id}_{metrica.id}', '').strip())
+            for resposta_id in respostas_ids
+            for metrica in metricas_quantitativas
+        )
+        logger.info(
+            "Envio de especialista recebido formulario_id=%s avaliador_fp=%s notas_recebidas=%s notas_esperadas=%s",
+            formulario.id,
+            _api_key_fingerprint(email),
+            notas_recebidas,
+            notas_esperadas,
+        )
+
+        if not form_error and (not respostas_ids or not metricas_quantitativas):
             form_error = _('Este formulário não possui respostas e métricas quantitativas para avaliar.')
 
         avaliacoes = []
@@ -2566,6 +2588,14 @@ def responder_avaliacao_publica(request, formulario_id):
                     break
 
         if form_error:
+            logger.warning(
+                "Envio de especialista rejeitado formulario_id=%s avaliador_fp=%s motivo=%s notas_recebidas=%s notas_esperadas=%s",
+                formulario.id,
+                _api_key_fingerprint(email),
+                form_error,
+                notas_recebidas,
+                notas_esperadas,
+            )
             contexto = {
                 'formulario': formulario,
                 'metricas': metricas,
@@ -2629,14 +2659,30 @@ def responder_avaliacao_publica(request, formulario_id):
                 avaliador.save(update_fields=["finalizado_em"])
 
         if already_completed:
+            logger.info(
+                "Envio de especialista já finalizado formulario_id=%s avaliador_id=%s",
+                formulario.id,
+                avaliador.id,
+            )
             return render(
                 request,
                 "avaliacao/avaliacao_sucesso.html",
-                {"ja_finalizada": True},
+                {
+                    "ja_finalizada": True,
+                    "formulario_id": formulario.id,
+                },
                 status=409,
             )
 
-        return render(request, 'avaliacao/avaliacao_sucesso.html')
+        logger.info(
+            "Envio de especialista concluído formulario_id=%s avaliador_id=%s notas_salvas=%s",
+            formulario.id,
+            avaliador.id,
+            len(avaliacoes),
+        )
+        return render(request, 'avaliacao/avaliacao_sucesso.html', {
+            "formulario_id": formulario.id,
+        })
     
     modo_cego = request.GET.get('blind') == 'true'
 

@@ -1033,6 +1033,18 @@ class PublicFormEvaluationTests(TestCase):
         self.assertContains(response, "max-height: clamp(160px, 32dvh, 360px)")
         self.assertContains(response, "carouselShell.addEventListener('touchstart'")
 
+    def test_public_form_preserves_mobile_draft_and_validates_hidden_identity(self):
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'id="evalForm" novalidate')
+        self.assertContains(response, "sessionStorage.setItem(STORAGE_KEY")
+        self.assertContains(response, "ratings: ratings")
+        self.assertContains(response, "identity: identity")
+        self.assertContains(response, "restoreState(saved)")
+        self.assertContains(response, "identityIsValid(false)")
+        self.assertContains(response, "PonderSecSetLikertValue")
+
     def test_all_answers_and_all_four_metrics_must_be_scored(self):
         second_answer = Resposta.objects.create(questao=self.question, conteudo_resposta="Use MFA.")
         response = self.client.post(self.url, data={**self.identity, **self._scores_for(self.answer)})
@@ -1045,6 +1057,18 @@ class PublicFormEvaluationTests(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(AvaliacaoFormulario.objects.count(), 0)
 
+    def test_invalid_evaluator_email_is_rejected(self):
+        response = self.client.post(self.url, data={
+            **self.identity,
+            "email": "email-invalido",
+            **self._scores_for(self.answer),
+        })
+
+        self.assertEqual(response.status_code, 400)
+        self.assertContains(response, "Informe um endereço de e-mail válido", status_code=400)
+        self.assertEqual(Avaliador.objects.count(), 0)
+        self.assertEqual(AvaliacaoFormulario.objects.count(), 0)
+
     def test_complete_four_metric_evaluation_is_saved(self):
         data = {**self.identity, **self._scores_for(self.answer)}
         for metric in self.metrics:
@@ -1054,6 +1078,11 @@ class PublicFormEvaluationTests(TestCase):
         self.assertTemplateUsed(response, "avaliacao/avaliacao_sucesso.html")
         self.assertEqual(AvaliacaoFormulario.objects.count(), 4)
         self.assertIsNotNone(Avaliador.objects.get().finalizado_em)
+        self.assertEqual(response.context["formulario_id"], self.form.id)
+        self.assertContains(
+            response,
+            f"sessionStorage.removeItem('avaliacao_draft_v2_{self.form.id}')",
+        )
         self.assertEqual(
             set(AvaliacaoFormulario.objects.values_list("metrica__nome", flat=True)),
             set(JUDGE_METRIC_NAMES),
