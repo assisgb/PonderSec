@@ -809,7 +809,7 @@ function renderResultDetail(index){
     </div>
 
     <div class="detail-block">
-      <div class="detail-label">{% translate "Justificativa geral" %}</div>
+      <div class="detail-label">${item.erro ? "Log do erro" : "{% translate 'Justificativa geral' %}"}</div>
       <div class="detail-text">${escapeHtml(item.justificativa || "{% translate 'Sem justificativa retornada.' %}")}</div>
     </div>
   `;
