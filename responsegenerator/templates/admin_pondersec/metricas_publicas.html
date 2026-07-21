@@ -191,7 +191,13 @@
                                 </div>
                             </div>
                             <div class="metric-actions">
-                                <span class="badge badge-on">{% translate "Fixa" %}</span>
+                                <button
+                                    class="btn-icon {% if not metrica.ativa %}danger{% endif %}"
+                                    onclick="toggleMetrica({{ metrica.id }}, this)"
+                                    title="{% if metrica.ativa %}{% translate 'Desativar' %}{% else %}{% translate 'Ativar' %}{% endif %}"
+                                >
+                                    {% if metrica.ativa %}⏸{% else %}▶{% endif %}
+                                </button>
                             </div>
                         </article>
                     {% empty %}
@@ -204,6 +210,26 @@
 
     <script>
         document.querySelectorAll('#toast-container .toast').forEach(t => setTimeout(() => t.remove(), 3500));
+
+        async function toggleMetrica(id, btn) {
+            btn.disabled = true;
+            try {
+                const resp = await fetch(`/admin-pondersec/metricas-publicas/${id}/toggle/`, {
+                    method: "POST",
+                    headers: {"X-CSRFToken": "{{ csrf_token }}"},
+                });
+                const data = await resp.json();
+                if (!resp.ok) {
+                    alert(data.mensagem || "Erro ao alterar métrica.");
+                    return;
+                }
+                location.reload();
+            } catch(e) {
+                alert("Erro de rede.");
+            } finally {
+                btn.disabled = false;
+            }
+        }
     </script>
 </body>
 </html>
