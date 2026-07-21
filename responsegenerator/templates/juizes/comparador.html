@@ -357,6 +357,9 @@ select.field option { background: #050c14; color: var(--text); }
               <option value="">{% translate "Todos os status" %}</option>
               <option value="respondida">{% translate "Com respostas" %}</option>
               <option value="sem_respostas">{% translate "Sem respostas" %}</option>
+              <option value="nao_avaliada">{% translate "Não avaliadas" %}</option>
+              <option value="avaliada_parcial">{% translate "Avaliação incompleta" %}</option>
+              <option value="avaliada_completa">{% translate "Avaliação completa" %}</option>
             </select>
             <select class="field" id="categoryFilter">
               <option value="">{% translate "Todas as categorias" %}</option>
@@ -521,12 +524,26 @@ function filteredQuestions(){
   const status = els.statusFilter.value;
   const category = Number(els.categoryFilter.value || 0);
   const model = Number(els.modelFilter.value || 0);
+  const selectedJudgesArr = Array.from(state.selectedJudges);
 
   return questoes.filter(q => {
     if(term && !q.conteudo.toLowerCase().includes(term)) return false;
-    if(status && q.status !== status) return false;
     if(category && q.categoria_id !== category) return false;
     if(model && !q.modelos_ids.includes(model)) return false;
+
+    if(status === "respondida") return q.respostas_count > 0;
+    if(status === "sem_respostas") return q.respostas_count === 0;
+    if(status === "nao_avaliada") return (q.juizes_avaliados || []).length === 0;
+    if(status === "avaliada_parcial"){
+      const avaliados = q.juizes_avaliados || [];
+      return avaliados.length > 0 && (
+        selectedJudgesArr.length === 0 || selectedJudgesArr.some(jid => !avaliados.includes(jid))
+      );
+    }
+    if(status === "avaliada_completa"){
+      const avaliados = q.juizes_avaliados || [];
+      return selectedJudgesArr.length > 0 && selectedJudgesArr.every(jid => avaliados.includes(jid));
+    }
     return true;
   });
 }
@@ -569,11 +586,23 @@ function renderQuestions(){
   els.questionList.innerHTML = items.map(q => {
     const disabled = q.respostas_count === 0;
     const selected = state.selectedQuestions.has(q.id);
-    const avaliadoChip = q.avaliado_count > 0
-      ? `<span class="chip good" title="${q.avaliado_count} avaliações concluídas">✓ {% translate 'avaliado' %} (${q.avaliado_count})</span>`
-      : "";
+    const juizesAvaliados = q.juizes_avaliados || [];
+    const selectedJudgesArr = Array.from(state.selectedJudges);
+    const juizAvaliadoChips = juizesAvaliados.map(jid => {
+      const llm = llms.find(item => item.id === jid);
+      if(!llm) return "";
+      const foraDaSelecao = selectedJudgesArr.length > 0 && !selectedJudgesArr.includes(jid);
+      return `<span class="chip good" style="opacity:${foraDaSelecao ? 0.5 : 1}" title="{% translate 'Já avaliado por' %} ${escapeHtml(llm.nome)}">✓ ${escapeHtml(llm.nome)}</span>`;
+    }).join("");
+    const faltamChips = selectedJudgesArr
+      .filter(jid => !juizesAvaliados.includes(jid))
+      .map(jid => {
+        const llm = llms.find(item => item.id === jid);
+        if(!llm) return "";
+        return `<span class="chip warn" title="{% translate 'Ainda não avaliado por' %} ${escapeHtml(llm.nome)}">⏳ ${escapeHtml(llm.nome)}</span>`;
+      }).join("");
     const erroChip = q.erro_count > 0
-      ? `<span class="chip warn" title="${q.erro_count} avaliações com erro">⚠ {% translate 'com erro' %} (${q.erro_count})</span>`
+      ? `<span class="chip warn" title="${q.erro_count} {% translate 'avaliações com erro' %}">⚠ ${q.erro_count} {% translate 'erro(s)' %}</span>`
       : "";
     return `
       <label class="question-card ${selected ? "is-selected" : ""} ${disabled ? "is-disabled" : ""}">
@@ -584,7 +613,7 @@ function renderQuestions(){
           <div class="meta-row">
             <span class="chip">${escapeHtml(q.categoria)}</span>
             <span class="chip ${disabled ? "warn" : "good"}">${disabled ? "{% translate 'sem respostas' %}" : q.respostas_count + " {% translate 'respostas' %}"}</span>
-            ${avaliadoChip}${erroChip}
+            ${juizAvaliadoChips}${faltamChips}${erroChip}
             ${q.respostas.map(r => `<span class="chip blue">${escapeHtml(r.llm)}</span>`).join("")}
           </div>
         </div>
@@ -652,6 +681,7 @@ function renderJudges(){
       renderJudges();
       renderResponses();
       renderStats();
+      renderQuestions();
     });
   });
 }

@@ -434,6 +434,32 @@ class JudgeAIParserAndResearchTests(TestCase):
         self.assertNotContains(response, "const toAdd = newResults.filter")
 
     @mock.patch("responsegenerator.views._judgeai_call_configured_llm", return_value=judge_payload())
+    def test_judge_comparator_lists_each_judge_once_per_question(self, mocked_call):
+        llm_a = LLM.objects.create(usuario=self.user, nome="model-a", descricao="Groq", api_key="a")
+        llm_b = LLM.objects.create(usuario=self.user, nome="model-b", descricao="Gemini", api_key="b")
+        question = Questao.objects.create(usuario=self.user, conteudo="Como evitar phishing?")
+        Resposta.objects.create(questao=question, llm=llm_a, conteudo_resposta="Resposta A")
+        Resposta.objects.create(questao=question, llm=llm_b, conteudo_resposta="Resposta B")
+
+        execution = self.client.post(
+            reverse("juizes_executar_avaliacao"),
+            data=json.dumps({"questao_ids": [question.id], "juiz_ids": [llm_a.id, llm_b.id]}),
+            content_type="application/json",
+        )
+        comparator = self.client.get(reverse("juizes_comparador"))
+
+        self.assertEqual(execution.status_code, 200)
+        question_data = next(
+            item for item in comparator.context["questoes_data"]
+            if item["id"] == question.id
+        )
+        self.assertCountEqual(question_data["juizes_avaliados"], [llm_a.id, llm_b.id])
+        self.assertNotIn("avaliado_count", question_data)
+        self.assertContains(comparator, 'value="avaliada_completa"')
+        self.assertContains(comparator, "q.juizes_avaliados || []")
+        self.assertEqual(mocked_call.call_count, 2)
+
+    @mock.patch("responsegenerator.views._judgeai_call_configured_llm", return_value=judge_payload())
     def test_judge_comparator_restores_saved_scores_and_justifications(self, mocked_call):
         llm_a = LLM.objects.create(usuario=self.user, nome="model-a", descricao="Groq", api_key="a")
         llm_b = LLM.objects.create(usuario=self.user, nome="model-b", descricao="Gemini", api_key="b")

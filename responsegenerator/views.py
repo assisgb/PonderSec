@@ -2881,16 +2881,32 @@ def juizes_comparador(request):
     resultados_data = _resultados_juizes_persistidos(request.user, metricas)
     categorias = Categoria.objects.filter(usuario=request.user).order_by("nome_categoria")
 
-    aval_rows = (
+    # Uma avaliação gera uma nota para cada métrica. Para indicar o
+    # andamento na tela, conte cada par questão/juiz apenas uma vez.
+    juiz_ok_rows = (
         AvaliacaoJuiz.objects
-        .filter(usuario=request.user)
-        .values("resposta__questao_id")
-        .annotate(
-            sem_erro=Count("id", filter=Q(erro=False)),
-            com_erro=Count("id", filter=Q(erro=True)),
+        .filter(
+            usuario=request.user,
+            erro=False,
+            juiz__isnull=False,
+            avaliacao_quanti__isnull=False,
         )
+        .order_by()
+        .values("resposta__questao_id", "juiz_id")
+        .distinct()
     )
-    aval_map = {row["resposta__questao_id"]: row for row in aval_rows}
+    juiz_ok_map = {}
+    for row in juiz_ok_rows:
+        questao_id = row["resposta__questao_id"]
+        juiz_ok_map.setdefault(questao_id, []).append(row["juiz_id"])
+
+    erro_rows = (
+        AvaliacaoJuiz.objects
+        .filter(usuario=request.user, erro=True)
+        .values("resposta__questao_id")
+        .annotate(com_erro=Count("id"))
+    )
+    erro_map = {row["resposta__questao_id"]: row["com_erro"] for row in erro_rows}
 
     questoes_data = []
     for questao in questoes:
@@ -2910,7 +2926,6 @@ def juizes_comparador(request):
                 "preview": _text_preview(resposta.conteudo_resposta, 420),
             })
 
-        aval = aval_map.get(questao.id, {})
         questoes_data.append({
             "id": questao.id,
             "conteudo": questao.conteudo,
@@ -2920,8 +2935,8 @@ def juizes_comparador(request):
             "respostas_count": len(respostas_data),
             "modelos_ids": modelos_ids,
             "respostas": respostas_data,
-            "avaliado_count": aval.get("sem_erro", 0),
-            "erro_count": aval.get("com_erro", 0),
+            "juizes_avaliados": juiz_ok_map.get(questao.id, []),
+            "erro_count": erro_map.get(questao.id, 0),
         })
 
     return render(request, "juizes/comparador.html", {
