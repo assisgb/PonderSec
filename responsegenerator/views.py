@@ -2803,6 +2803,12 @@ def dashboard_avaliacoes(request):
         .distinct()
         .count()
     )
+    formularios_concluidos = (
+        avaliacoes_especialistas
+        .values("avaliador_id")
+        .distinct()
+        .count()
+    )
     avaliacoes_modelos = (
         avaliacoes_especialistas
         .exclude(resposta__llm_id=None)
@@ -2836,6 +2842,7 @@ def dashboard_avaliacoes(request):
             "avaliacoes_modelos": avaliacoes_modelos,
             "notas_juizes": total_juizes,
             "avaliadores_humanos": avaliadores_humanos,
+            "formularios_concluidos": formularios_concluidos,
             "juizes_online": juizes_online,
             "pontos_comparaveis": len(divergencias),
             "desvio_medio": desvio_medio,

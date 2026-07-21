@@ -1149,6 +1149,9 @@ class PublicFormEvaluationTests(TestCase):
         self.assertEqual(dashboard["resumo"]["notas_especialistas"], 4)
         self.assertEqual(dashboard["resumo"]["avaliacoes_modelos"], 1)
         self.assertEqual(dashboard["resumo"]["avaliadores_humanos"], 1)
+        self.assertEqual(dashboard["resumo"]["formularios_concluidos"], 1)
+        self.assertContains(dashboard_response, "Notas coletadas")
+        self.assertContains(dashboard_response, "formulários concluídos")
 
         reopen_response = self.client.post(reverse(
             "avaliacao_reabrir_avaliador",
@@ -1180,6 +1183,10 @@ class PublicFormEvaluationTests(TestCase):
         )
         self.assertEqual(
             reopened_dashboard["resumo"]["avaliacoes_modelos"],
+            0,
+        )
+        self.assertEqual(
+            reopened_dashboard["resumo"]["formularios_concluidos"],
             0,
         )
 
@@ -1376,6 +1383,7 @@ class PublicFormEvaluationTests(TestCase):
         dashboard = json.loads(dashboard_response.context["dashboard_json"])
         self.assertEqual(dashboard["resumo"]["avaliadores_humanos"], 1)
         self.assertEqual(dashboard["resumo"]["avaliacoes_modelos"], 1)
+        self.assertEqual(dashboard["resumo"]["formularios_concluidos"], 2)
 
     def test_migration_recovers_previous_form_counters(self):
         second_question = Questao.objects.create(
