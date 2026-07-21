@@ -1640,8 +1640,8 @@ def _parse_judgeai_result(raw_text, metricas):
         raise ValueError("A avaliação não contém o array 'notas' esperado.")
 
     expected = {judge_metric_key(metrica.nome): metrica for metrica in metricas}
-    if None in expected or set(expected) != set(JUDGE_METRIC_KEYS) or len(metricas) != 4:
-        raise ValueError("A avaliação deve usar exclusivamente as quatro métricas oficiais do JudgeAI.")
+    if None in expected or not set(expected).issubset(set(JUDGE_METRIC_KEYS)) or len(metricas) < 1:
+        raise ValueError("A avaliação deve usar métricas oficiais do JudgeAI.")
 
     parsed_by_key = {}
     for item in parsed["notas"]:
@@ -3107,11 +3107,22 @@ def admin_pondersec_metrica_publica_deletar(request, id):
 @admin_required
 @require_http_methods(["POST"])
 def admin_pondersec_metrica_publica_toggle(request, id):
+    from responsegenerator.models import Metrica
     ensure_judge_metrics(None)
-    return JsonResponse({
-        "status": "erro",
-        "mensagem": "As quatro métricas oficiais devem permanecer ativas.",
-    }, status=409)
+    try:
+        metrica = Metrica.objects.get(id=id, usuario=None)
+    except Metrica.DoesNotExist:
+        return JsonResponse({"status": "erro", "mensagem": "Métrica não encontrada."}, status=404)
+    if metrica.ativa:
+        outras_ativas = Metrica.objects.filter(usuario=None, ativa=True).exclude(id=id).exists()
+        if not outras_ativas:
+            return JsonResponse({
+                "status": "erro",
+                "mensagem": "Ao menos uma métrica pública deve permanecer ativa.",
+            }, status=409)
+    metrica.ativa = not metrica.ativa
+    metrica.save(update_fields=["ativa"])
+    return JsonResponse({"status": "ok", "ativa": metrica.ativa})
 
 
 @admin_required

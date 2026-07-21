@@ -67,6 +67,13 @@ def _metric_defaults(definition):
     }
 
 
+def _metric_structural_fields(definition):
+    """Campos fixos da métrica — exclui `ativa`, que é configurável pelo admin."""
+    defaults = _metric_defaults(definition)
+    defaults.pop("ativa")
+    return defaults
+
+
 def _ready_metrics(existing):
     """Retorna a ordem oficial quando o banco já está consistente."""
     by_key = {}
@@ -85,8 +92,8 @@ def _ready_metrics(existing):
 
     definitions = {item["key"]: item for item in JUDGE_METRICS}
     for key, metric in by_key.items():
-        defaults = _metric_defaults(definitions[key])
-        if any(getattr(metric, field) != value for field, value in defaults.items()):
+        structural = _metric_structural_fields(definitions[key])
+        if any(getattr(metric, field) != value for field, value in structural.items()):
             return None
 
     return [by_key[key] for key in JUDGE_METRIC_KEYS]
@@ -114,8 +121,9 @@ def _repair_judge_metrics(usuario):
         if metric is None:
             metric = Metrica.objects.create(usuario=usuario, **defaults)
         else:
+            structural = _metric_structural_fields(definition)
             changed = []
-            for field, value in defaults.items():
+            for field, value in structural.items():
                 if getattr(metric, field) != value:
                     setattr(metric, field, value)
                     changed.append(field)
@@ -152,15 +160,23 @@ def ensure_judge_metrics(usuario):
     existing = list(Metrica.objects.filter(usuario=usuario).order_by("id"))
     ready = _ready_metrics(existing)
     if ready is not None:
-        return ready
-    try:
-        return _repair_judge_metrics(usuario)
-    except IntegrityError:
-        # Outro worker pode ter criado as mesmas métricas entre o SELECT e o
-        # INSERT. A constraint resolve a corrida; esta nova leitura aproveita o
-        # conjunto que acabou de ser confirmado.
-        existing = list(Metrica.objects.filter(usuario=usuario).order_by("id"))
-        ready = _ready_metrics(existing)
-        if ready is not None:
-            return ready
-        return _repair_judge_metrics(usuario)
+        all_metrics = ready
+    else:
+        try:
+            all_metrics = _repair_judge_metrics(usuario)
+        except IntegrityError:
+            # Outro worker pode ter criado as mesmas métricas entre o SELECT e o
+            # INSERT. A constraint resolve a corrida; esta nova leitura aproveita o
+            # conjunto que acabou de ser confirmado.
+            existing = list(Metrica.objects.filter(usuario=usuario).order_by("id"))
+            ready = _ready_metrics(existing)
+            if ready is not None:
+                all_metrics = ready
+            else:
+                all_metrics = _repair_judge_metrics(usuario)
+
+    if usuario is None:
+        active = [m for m in all_metrics if m.ativa]
+        return active if active else all_metrics
+
+    return all_metrics
