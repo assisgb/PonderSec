@@ -16,7 +16,7 @@ import hashlib
 import logging
 import re
 import uuid
-from django.http import JsonResponse, HttpResponse, StreamingHttpResponse
+from django.http import Http404, JsonResponse, HttpResponse, StreamingHttpResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
 import json
 from django.views.decorators.http import require_http_methods
@@ -39,7 +39,7 @@ from responsegenerator.models import (
     RespostaPublica,
 )
 from functools import wraps
-from django.db.models import Avg, Count, F, OuterRef, Prefetch, Q, Subquery
+from django.db.models import Avg, Count, F, Min, OuterRef, Prefetch, Q, Subquery
 from django.db.models.functions import Lower
 from concurrent.futures import as_completed
 from responsegenerator.executors import get_llm_executor
@@ -2694,33 +2694,351 @@ def responder_avaliacao_publica(request, formulario_id):
     return render(request, 'avaliacao/avaliacao_publica.html', contexto)
 
 
+def _avaliacoes_especialistas_dashboard(usuario, metrica_ids):
+    """Notas humanas válidas e ainda pertencentes ao formulário enviado."""
+    return AvaliacaoFormulario.objects.filter(
+        usuario=usuario,
+        avaliador__formulario__usuario=usuario,
+        avaliador__finalizado_em__isnull=False,
+        resposta__questao__formularios__id=F("avaliador__formulario_id"),
+        metrica_id__in=metrica_ids,
+        avaliacao_quanti__isnull=False,
+    )
+
+
+def _aliases_especialistas(avaliacoes):
+    """Gera A1, A2... sem enviar nome ou e-mail para o template."""
+    emails = list(
+        avaliacoes
+        .annotate(email_normalizado=Lower("avaliador__email"))
+        .values("email_normalizado")
+        .annotate(primeiro_id=Min("avaliador_id"))
+        .order_by("primeiro_id")
+    )
+    alias_por_email = {
+        item["email_normalizado"]: f"A{indice}"
+        for indice, item in enumerate(emails, start=1)
+    }
+
+    formularios_por_alias = {alias: {} for alias in alias_por_email.values()}
+    formularios = (
+        avaliacoes
+        .annotate(email_normalizado=Lower("avaliador__email"))
+        .values(
+            "email_normalizado",
+            "avaliador__formulario_id",
+            "avaliador__formulario__nome",
+        )
+        .order_by()
+        .distinct()
+    )
+    for item in formularios:
+        alias = alias_por_email.get(item["email_normalizado"])
+        if not alias:
+            continue
+        formulario_id = item["avaliador__formulario_id"]
+        formularios_por_alias[alias][formulario_id] = {
+            "id": formulario_id,
+            "nome": item["avaliador__formulario__nome"],
+            "url": reverse("dashboard_avaliacoes_formulario", args=[formulario_id]),
+        }
+
+    return alias_por_email, {
+        alias: sorted(itens.values(), key=lambda item: (item["nome"].lower(), item["id"]))
+        for alias, itens in formularios_por_alias.items()
+    }
+
+
+def _detalhes_especialistas_dashboard(
+    avaliacoes,
+    metricas,
+    formulario,
+    questao,
+    alias_por_email,
+    formularios_por_alias,
+    especialista_codigo=None,
+):
+    """Monta o detalhe usando uma consulta filtrada e com todos os relacionamentos."""
+    linhas = list(
+        avaliacoes
+        .annotate(email_normalizado=Lower("avaliador__email"))
+        .select_related(
+            "avaliador",
+            "avaliador__formulario",
+            "resposta__questao",
+            "resposta__llm",
+            "metrica",
+        )
+        .order_by(
+            "avaliador__finalizado_em",
+            "avaliador_id",
+            "resposta__questao_id",
+            "resposta_id",
+            "metrica_id",
+        )
+    )
+
+    metricas_ids = [metrica["id"] for metrica in metricas]
+    metricas_nomes = {metrica["id"]: metrica["nome"] for metrica in metricas}
+    individuais = {}
+    medias = {}
+    distribuicao = {nota: 0 for nota in range(1, 6)}
+
+    for linha in linhas:
+        alias = alias_por_email.get(linha.email_normalizado)
+        if not alias:
+            continue
+
+        resposta = linha.resposta
+        pergunta = resposta.questao
+        modelo_nome = resposta.llm.nome if resposta.llm_id else _("Resposta humana")
+        chave = (alias, pergunta.id, resposta.id)
+        item = individuais.setdefault(chave, {
+            "especialista": alias,
+            "especialista_url": reverse(
+                "dashboard_avaliacoes_especialista",
+                args=[formulario.id, alias],
+            ),
+            "questao_id": pergunta.id,
+            "pergunta": pergunta.conteudo,
+            "questao_url": reverse(
+                "dashboard_avaliacoes_questao",
+                args=[formulario.id, pergunta.id],
+            ),
+            "resposta_id": resposta.id,
+            "modelo": modelo_nome,
+            "notas_por_id": {},
+            "comentarios": [],
+            "data_submissao": timezone.localtime(
+                linha.avaliador.finalizado_em
+            ).strftime("%d/%m/%Y %H:%M"),
+        })
+        item["notas_por_id"][linha.metrica_id] = linha.avaliacao_quanti
+        comentario = (linha.avaliacao_quali or "").strip()
+        if comentario:
+            item["comentarios"].append({
+                "metrica": metricas_nomes.get(linha.metrica_id, linha.metrica.nome),
+                "texto": comentario,
+            })
+
+        modelo_chave = (resposta.llm_id, modelo_nome)
+        metrica_valores = medias.setdefault(modelo_chave, {}).setdefault(
+            linha.metrica_id,
+            [],
+        )
+        metrica_valores.append(linha.avaliacao_quanti)
+        if linha.avaliacao_quanti in distribuicao:
+            distribuicao[linha.avaliacao_quanti] += 1
+
+    resultados_individuais = []
+    for item in individuais.values():
+        item["notas"] = [
+            item["notas_por_id"].get(metrica_id)
+            for metrica_id in metricas_ids
+        ]
+        item.pop("notas_por_id")
+        resultados_individuais.append(item)
+    resultados_individuais.sort(key=lambda item: (
+        item["questao_id"],
+        item["modelo"].lower(),
+        item["especialista"],
+    ))
+
+    medias_modelos = []
+    for (_llm_id, modelo_nome), valores_por_metrica in sorted(
+        medias.items(),
+        key=lambda item: item[0][1].lower(),
+    ):
+        medias_modelos.append({
+            "modelo": modelo_nome,
+            "metricas": [
+                {
+                    "media": round(sum(valores) / len(valores), 2) if valores else None,
+                    "total": len(valores),
+                }
+                for metrica_id in metricas_ids
+                for valores in [valores_por_metrica.get(metrica_id, [])]
+            ],
+        })
+
+    perguntas = {}
+    especialistas = {}
+    for item in resultados_individuais:
+        pergunta = perguntas.setdefault(item["questao_id"], {
+            "id": item["questao_id"],
+            "conteudo": item["pergunta"],
+            "url": item["questao_url"],
+            "avaliacoes": 0,
+            "especialistas": set(),
+            "modelos": set(),
+        })
+        pergunta["avaliacoes"] += 1
+        pergunta["especialistas"].add(item["especialista"])
+        pergunta["modelos"].add(item["modelo"])
+
+        especialista = especialistas.setdefault(item["especialista"], {
+            "codigo": item["especialista"],
+            "url": item["especialista_url"],
+            "avaliacoes": 0,
+            "perguntas": set(),
+            "formularios": formularios_por_alias.get(item["especialista"], []),
+        })
+        especialista["avaliacoes"] += 1
+        especialista["perguntas"].add(item["questao_id"])
+
+    perguntas_lista = []
+    for item in sorted(perguntas.values(), key=lambda valor: valor["id"]):
+        item["especialistas_total"] = len(item.pop("especialistas"))
+        item["modelos"] = sorted(item["modelos"], key=str.lower)
+        perguntas_lista.append(item)
+
+    especialistas_lista = []
+    for item in sorted(
+        especialistas.values(),
+        key=lambda valor: int(valor["codigo"][1:]),
+    ):
+        item["perguntas_total"] = len(item.pop("perguntas"))
+        item["formularios_total"] = len(item["formularios"])
+        especialistas_lista.append(item)
+
+    notas_total = sum(distribuicao.values())
+    distribuicao_lista = [
+        {
+            "nota": nota,
+            "total": total,
+            "percentual": round((total / notas_total) * 100, 1) if notas_total else 0,
+        }
+        for nota, total in distribuicao.items()
+    ]
+    especialista_selecionado = next(
+        (
+            item for item in especialistas_lista
+            if item["codigo"] == especialista_codigo
+        ),
+        None,
+    )
+
+    return {
+        "formulario": {"id": formulario.id, "nome": formulario.nome},
+        "questao": (
+            {"id": questao.id, "conteudo": questao.conteudo}
+            if questao else None
+        ),
+        "especialista": especialista_selecionado,
+        "metricas": metricas,
+        "resumo": {
+            "avaliadores": len(especialistas_lista),
+            "avaliacoes": len(resultados_individuais),
+            "notas": notas_total,
+            "perguntas": len(perguntas_lista),
+        },
+        "medias_modelos": medias_modelos,
+        "distribuicao": distribuicao_lista,
+        "perguntas": perguntas_lista,
+        "especialistas": especialistas_lista,
+        "resultados_individuais": resultados_individuais,
+    }
+
+
 @login_required
-def dashboard_avaliacoes(request):
+def dashboard_avaliacoes(
+    request,
+    formulario_id=None,
+    questao_id=None,
+    especialista_codigo=None,
+):
+    formulario_selecionado = None
+    questao_selecionada = None
+    if formulario_id is not None:
+        formulario_selecionado = get_object_or_404(
+            Formulario,
+            id=formulario_id,
+            usuario=request.user,
+        )
+    if questao_id is not None:
+        if formulario_selecionado is None:
+            raise Http404
+        questao_selecionada = get_object_or_404(
+            formulario_selecionado.questoes,
+            id=questao_id,
+            usuario=request.user,
+        )
+
     metricas_obj = ensure_judge_metrics(request.user)
     metricas = [
         {"id": metrica.id, "nome": metrica.nome, "pontuacao_maxima": 5}
         for metrica in metricas_obj
     ]
     metrica_ids = [metrica["id"] for metrica in metricas]
+    llms_queryset = LLM.objects.filter(usuario=request.user)
+    if formulario_selecionado is not None:
+        llms_queryset = llms_queryset.filter(
+            resposta__questao__formularios=formulario_selecionado,
+        )
+    if questao_selecionada is not None:
+        llms_queryset = llms_queryset.filter(
+            resposta__questao=questao_selecionada,
+        )
     llms = list(
-        LLM.objects
-        .filter(usuario=request.user)
+        llms_queryset
         .order_by("-id")
         .values("id", "nome")
+        .distinct()
     )
 
     # Uma avaliação continua armazenada quando o pesquisador edita um
     # formulário e remove uma pergunta. Preserve o histórico no banco, mas
     # mostre no dashboard apenas notas das perguntas atualmente vinculadas ao
     # mesmo formulário do avaliador.
-    avaliacoes_especialistas = AvaliacaoFormulario.objects.filter(
+    avaliacoes_especialistas_globais = _avaliacoes_especialistas_dashboard(
+        request.user,
+        metrica_ids,
+    )
+    avaliacoes_especialistas = avaliacoes_especialistas_globais
+    if formulario_selecionado is not None:
+        avaliacoes_especialistas = avaliacoes_especialistas.filter(
+            avaliador__formulario=formulario_selecionado,
+        )
+    if questao_selecionada is not None:
+        avaliacoes_especialistas = avaliacoes_especialistas.filter(
+            resposta__questao=questao_selecionada,
+        )
+
+    alias_por_email = {}
+    formularios_por_alias = {}
+    codigo_especialista = None
+    if formulario_selecionado is not None:
+        alias_por_email, formularios_por_alias = _aliases_especialistas(
+            avaliacoes_especialistas_globais,
+        )
+    if especialista_codigo is not None:
+        codigo_especialista = especialista_codigo.upper()
+        email_por_alias = {
+            alias: email for email, alias in alias_por_email.items()
+        }
+        email_especialista = email_por_alias.get(codigo_especialista)
+        if email_especialista is None:
+            raise Http404
+        avaliacoes_especialistas = avaliacoes_especialistas.annotate(
+            email_normalizado=Lower("avaliador__email"),
+        ).filter(email_normalizado=email_especialista)
+        if not avaliacoes_especialistas.exists():
+            raise Http404
+
+    avaliacoes_juizes = AvaliacaoJuiz.objects.filter(
         usuario=request.user,
-        avaliador__formulario__usuario=request.user,
-        avaliador__finalizado_em__isnull=False,
-        resposta__questao__formularios__id=F("avaliador__formulario_id"),
         metrica_id__in=metrica_ids,
         avaliacao_quanti__isnull=False,
+        erro=False,
     )
+    if formulario_selecionado is not None:
+        avaliacoes_juizes = avaliacoes_juizes.filter(
+            resposta__questao__formularios=formulario_selecionado,
+        )
+    if questao_selecionada is not None:
+        avaliacoes_juizes = avaliacoes_juizes.filter(
+            resposta__questao=questao_selecionada,
+        )
 
     por_metrica = {}
     divergencias = []
@@ -2735,8 +3053,7 @@ def dashboard_avaliacoes(request):
     juizes_agregados = {
         (item["metrica_id"], item["resposta__llm_id"]): item
         for item in (
-            AvaliacaoJuiz.objects
-            .filter(usuario=request.user, metrica_id__in=metrica_ids, avaliacao_quanti__isnull=False, erro=False)
+            avaliacoes_juizes
             .values("metrica_id", "resposta__llm_id")
             .annotate(media=Avg("avaliacao_quanti"), total=Count("id"))
         )
@@ -2791,11 +3108,7 @@ def dashboard_avaliacoes(request):
     maiores_divergencias = sorted(divergencias, key=lambda item: item["desvio"], reverse=True)[:8]
 
     total_especialistas = avaliacoes_especialistas.count()
-    total_juizes = AvaliacaoJuiz.objects.filter(
-        usuario=request.user,
-        erro=False,
-        avaliacao_quanti__isnull=False,
-    ).count()
+    total_juizes = avaliacoes_juizes.count()
     avaliadores_humanos = (
         avaliacoes_especialistas
         .annotate(email_normalizado=Lower("avaliador__email"))
@@ -2817,11 +3130,7 @@ def dashboard_avaliacoes(request):
         .distinct()
         .count()
     )
-    juizes_online = AvaliacaoJuiz.objects.filter(
-        usuario=request.user,
-        erro=False,
-        avaliacao_quanti__isnull=False,
-    ).values("juiz_id").distinct().count()
+    juizes_online = avaliacoes_juizes.values("juiz_id").distinct().count()
 
     payload = {
         "metricas": [
@@ -2853,9 +3162,39 @@ def dashboard_avaliacoes(request):
     if modo_inicial not in ("especialistas", "juizes", "comparativo"):
         modo_inicial = "especialistas"
 
+    formularios_dashboard = [
+        {
+            "id": formulario.id,
+            "nome": formulario.nome,
+            "url": reverse(
+                "dashboard_avaliacoes_formulario",
+                args=[formulario.id],
+            ),
+        }
+        for formulario in Formulario.objects.filter(
+            usuario=request.user,
+        ).only("id", "nome").order_by("nome", "id")
+    ]
+    detalhes_especialistas = None
+    if formulario_selecionado is not None:
+        detalhes_especialistas = _detalhes_especialistas_dashboard(
+            avaliacoes_especialistas,
+            metricas,
+            formulario_selecionado,
+            questao_selecionada,
+            alias_por_email,
+            formularios_por_alias,
+            especialista_codigo=codigo_especialista,
+        )
+
     return render(request, "avaliacao/dashboard_avaliacoes.html", {
         "dashboard_json": json.dumps(payload, ensure_ascii=False),
         "modo_inicial": modo_inicial,
+        "formularios_dashboard": formularios_dashboard,
+        "formulario_selecionado": formulario_selecionado,
+        "questao_selecionada": questao_selecionada,
+        "especialista_codigo": codigo_especialista,
+        "detalhes_especialistas": detalhes_especialistas,
     })
 
 

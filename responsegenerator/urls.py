@@ -51,6 +51,21 @@ urlpatterns = [
     path("api/llm/<int:id>/delete/", views.deletar_llm, name="delete_llm"),
     path("api/llm/<int:id>/edit/", views.edit_llm_api, name="edit_llm_api"),
     path('avaliacao/dashboard/', views.dashboard_avaliacoes, name='dashboard_avaliacoes'),
+    path(
+        'avaliacao/dashboard/formulario/<int:formulario_id>/',
+        views.dashboard_avaliacoes,
+        name='dashboard_avaliacoes_formulario',
+    ),
+    path(
+        'avaliacao/dashboard/formulario/<int:formulario_id>/questao/<int:questao_id>/',
+        views.dashboard_avaliacoes,
+        name='dashboard_avaliacoes_questao',
+    ),
+    path(
+        'avaliacao/dashboard/formulario/<int:formulario_id>/especialista/<str:especialista_codigo>/',
+        views.dashboard_avaliacoes,
+        name='dashboard_avaliacoes_especialista',
+    ),
     path('avaliacao/dashboard-comparativo/', views.dashboard_comparativo_avaliacoes, name='dashboard_comparativo_avaliacoes'),
     path('menu_avaliacao/', views.menu_avaliacao, name='menu_avaliacao'),
     path('juizes/comparador/', views.juizes_comparador, name='juizes_comparador'),

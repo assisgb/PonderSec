@@ -1501,3 +1501,247 @@ class PublicFormEvaluationTests(TestCase):
         second_form_evaluator.refresh_from_db()
         self.assertIsNotNone(first_form_evaluator.finalizado_em)
         self.assertIsNotNone(second_form_evaluator.finalizado_em)
+
+
+class SpecialistDashboardDetailTests(TestCase):
+    def setUp(self):
+        self.owner = User.objects.create_user(
+            username="detail-owner",
+            password="senha-segura",
+        )
+        self.client.force_login(self.owner)
+        self.metrics = ensure_judge_metrics(self.owner)
+        self.llm = LLM.objects.create(
+            usuario=self.owner,
+            nome="modelo-detalhado",
+            descricao="Gemini",
+            api_key="test-key",
+        )
+        self.forms = {
+            "auth": Formulario.objects.create(
+                usuario=self.owner,
+                nome="Autenticação",
+            ),
+            "social": Formulario.objects.create(
+                usuario=self.owner,
+                nome="Engenharia Social",
+            ),
+            "antivirus": Formulario.objects.create(
+                usuario=self.owner,
+                nome="Antivírus/Antimalware",
+            ),
+            "navigation": Formulario.objects.create(
+                usuario=self.owner,
+                nome="Navegação Segura",
+            ),
+        }
+        self.questions = {}
+        self.answers = {}
+        for key, form in self.forms.items():
+            question = Questao.objects.create(
+                usuario=self.owner,
+                conteudo=f"Pergunta de {form.nome}",
+            )
+            answer = Resposta.objects.create(
+                questao=question,
+                llm=self.llm,
+                conteudo_resposta=f"Resposta de {self.llm.nome} para {form.nome}",
+            )
+            form.questoes.add(question)
+            self.questions[key] = question
+            self.answers[key] = answer
+
+    def _submission(
+        self,
+        form_key,
+        email="especialista@example.com",
+        values=None,
+        completed=True,
+        comments=None,
+        name="Nome confidencial",
+    ):
+        values = values or [4, 4, 4, 4]
+        comments = comments or {}
+        evaluator = Avaliador.objects.create(
+            formulario=self.forms[form_key],
+            nome=name,
+            email=email,
+            profissao="Profissão confidencial",
+            finalizado_em=timezone.now() if completed else None,
+        )
+        AvaliacaoFormulario.objects.bulk_create([
+            AvaliacaoFormulario(
+                usuario=self.owner,
+                avaliador=evaluator,
+                resposta=self.answers[form_key],
+                metrica=metric,
+                avaliacao_quanti=value,
+                avaliacao_quali=comments.get(metric.nome),
+            )
+            for metric, value in zip(self.metrics, values)
+        ])
+        return evaluator
+
+    def test_dashboard_isolates_forms_and_scores_by_researcher(self):
+        self._submission("auth")
+        other = User.objects.create_user(username="foreign-owner", password="senha")
+        other_metrics = ensure_judge_metrics(other)
+        other_llm = LLM.objects.create(
+            usuario=other,
+            nome="modelo-estrangeiro",
+            api_key="foreign-key",
+        )
+        other_question = Questao.objects.create(
+            usuario=other,
+            conteudo="Pergunta estrangeira",
+        )
+        other_answer = Resposta.objects.create(
+            questao=other_question,
+            llm=other_llm,
+            conteudo_resposta="Resposta estrangeira",
+        )
+        other_form = Formulario.objects.create(
+            usuario=other,
+            nome="Formulário confidencial estrangeiro",
+        )
+        other_form.questoes.add(other_question)
+        other_evaluator = Avaliador.objects.create(
+            formulario=other_form,
+            nome="Pessoa estrangeira",
+            email="foreign@example.com",
+            finalizado_em=timezone.now(),
+        )
+        AvaliacaoFormulario.objects.bulk_create([
+            AvaliacaoFormulario(
+                usuario=other,
+                avaliador=other_evaluator,
+                resposta=other_answer,
+                metrica=metric,
+                avaliacao_quanti=1,
+            )
+            for metric in other_metrics
+        ])
+
+        response = self.client.get(reverse("dashboard_avaliacoes"))
+        dashboard = json.loads(response.context["dashboard_json"])
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(dashboard["resumo"]["notas_especialistas"], 4)
+        self.assertNotContains(response, other_form.nome)
+        self.assertEqual(
+            self.client.get(
+                reverse("dashboard_avaliacoes_formulario", args=[other_form.id])
+            ).status_code,
+            404,
+        )
+
+    def test_form_filter_limits_counts_averages_and_distribution(self):
+        self._submission("auth", values=[5, 5, 5, 5])
+        self._submission("social", values=[1, 1, 1, 1])
+
+        general = self.client.get(reverse("dashboard_avaliacoes"))
+        filtered = self.client.get(reverse(
+            "dashboard_avaliacoes_formulario",
+            args=[self.forms["auth"].id],
+        ))
+        general_data = json.loads(general.context["dashboard_json"])
+        filtered_data = json.loads(filtered.context["dashboard_json"])
+        details = filtered.context["detalhes_especialistas"]
+
+        self.assertEqual(general_data["resumo"]["notas_especialistas"], 8)
+        self.assertEqual(filtered_data["resumo"]["notas_especialistas"], 4)
+        self.assertEqual(details["resumo"], {
+            "avaliadores": 1,
+            "avaliacoes": 1,
+            "notas": 4,
+            "perguntas": 1,
+        })
+        self.assertEqual(
+            [item["media"] for item in details["medias_modelos"][0]["metricas"]],
+            [5.0, 5.0, 5.0, 5.0],
+        )
+        self.assertEqual(details["distribuicao"][-1]["total"], 4)
+        self.assertEqual(details["distribuicao"][0]["total"], 0)
+
+    def test_question_detail_keeps_evaluator_response_model_metrics_and_comment(self):
+        comments = {
+            self.metrics[0].nome: "Comentário técnico preservado.",
+        }
+        evaluator = self._submission(
+            "auth",
+            values=[1, 2, 3, 4],
+            comments=comments,
+        )
+
+        response = self.client.get(reverse(
+            "dashboard_avaliacoes_questao",
+            args=[self.forms["auth"].id, self.questions["auth"].id],
+        ))
+        details = response.context["detalhes_especialistas"]
+        result = details["resultados_individuais"][0]
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(result["especialista"], "A1")
+        self.assertEqual(result["questao_id"], self.questions["auth"].id)
+        self.assertEqual(result["resposta_id"], self.answers["auth"].id)
+        self.assertEqual(result["modelo"], self.llm.nome)
+        self.assertEqual(result["notas"], [1, 2, 3, 4])
+        self.assertEqual(result["comentarios"][0]["texto"], comments[self.metrics[0].nome])
+        self.assertEqual(
+            result["data_submissao"],
+            timezone.localtime(evaluator.finalizado_em).strftime("%d/%m/%Y %H:%M"),
+        )
+
+    def test_specialists_are_anonymized_and_alias_links_show_completed_forms(self):
+        real_name = "Nome que não pode vazar"
+        real_email = "identidade-secreta@example.com"
+        self._submission("auth", email=real_email, name=real_name)
+        self._submission("social", email=real_email, name=real_name)
+
+        response = self.client.get(reverse(
+            "dashboard_avaliacoes_especialista",
+            args=[self.forms["auth"].id, "A1"],
+        ))
+        details = response.context["detalhes_especialistas"]
+        serialized_details = json.dumps(details, ensure_ascii=False)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "A1")
+        self.assertNotContains(response, real_name)
+        self.assertNotContains(response, real_email)
+        self.assertNotIn(real_name, serialized_details)
+        self.assertNotIn(real_email, serialized_details)
+        self.assertEqual(details["especialista"]["formularios_total"], 2)
+        self.assertCountEqual(
+            [item["nome"] for item in details["especialista"]["formularios"]],
+            ["Autenticação", "Engenharia Social"],
+        )
+
+    def test_incomplete_or_reopened_form_renders_without_results(self):
+        self._submission("antivirus", completed=False)
+
+        response = self.client.get(reverse(
+            "dashboard_avaliacoes_formulario",
+            args=[self.forms["antivirus"].id],
+        ))
+        details = response.context["detalhes_especialistas"]
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(details["resumo"]["avaliadores"], 0)
+        self.assertEqual(details["resumo"]["avaliacoes"], 0)
+        self.assertEqual(details["resumo"]["notas"], 0)
+        self.assertContains(response, "Nenhuma avaliação concluída neste recorte")
+
+    def test_general_dashboard_summary_remains_compatible(self):
+        self._submission("auth", values=[4, 4, 4, 4])
+        self._submission("social", values=[5, 5, 5, 5])
+
+        response = self.client.get(reverse("dashboard_avaliacoes"))
+        dashboard = json.loads(response.context["dashboard_json"])
+
+        self.assertEqual(dashboard["resumo"]["notas_especialistas"], 8)
+        self.assertEqual(dashboard["resumo"]["avaliadores_humanos"], 1)
+        self.assertEqual(dashboard["resumo"]["formularios_concluidos"], 2)
+        self.assertEqual(dashboard["resumo"]["avaliacoes_modelos"], 1)
+        self.assertIsNone(response.context["detalhes_especialistas"])
+        self.assertContains(response, "Todos os formulários")

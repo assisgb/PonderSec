@@ -7,6 +7,7 @@
     <title>{% translate "PonderSEC — Dashboard de Avaliações" %}</title>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'app_sidebar.css' %}">
+    <link rel="stylesheet" href="{% static 'dashboard_especialistas.css' %}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -489,6 +490,23 @@
                     </div>
                 </div>
 
+                <section class="specialist-filter" id="specialistFilter" aria-labelledby="specialistFilterTitle">
+                    <div>
+                        <div class="specialist-filter-kicker">{% translate "Recorte dos especialistas" %}</div>
+                        <h2 id="specialistFilterTitle">{% translate "Resultados por formulário" %}</h2>
+                        <p>{% translate "Selecione um formulário para abrir perguntas, especialistas anônimos e avaliações individuais." %}</p>
+                    </div>
+                    <label class="specialist-select-label" for="formularioDashboardFilter">
+                        <span>{% translate "Formulário" %}</span>
+                        <select id="formularioDashboardFilter" onchange="if(this.value){ window.location.href = this.value; }">
+                            <option value="{% url 'dashboard_avaliacoes' %}"{% if not formulario_selecionado %} selected{% endif %}>{% translate "Todos os formulários" %}</option>
+                            {% for formulario in formularios_dashboard %}
+                                <option value="{{ formulario.url }}"{% if formulario_selecionado and formulario.id == formulario_selecionado.id %} selected{% endif %}>{{ formulario.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                </section>
+
                 <div class="stats-row" id="statsRow"></div>
 
                 <div id="viewSingle">
@@ -540,6 +558,12 @@
 
                         <div class="chart-legend" id="chartLegend"></div>
                     </div>
+                </div>
+
+                <div id="specialistDetail"{% if not detalhes_especialistas %} hidden{% endif %}>
+                    {% if detalhes_especialistas %}
+                        {% include "avaliacao/_dashboard_especialistas_detalhe.html" with detalhes=detalhes_especialistas %}
+                    {% endif %}
                 </div>
 
                 <div id="viewComparativo" hidden>
@@ -977,6 +1001,12 @@
         const viewSingle = document.getElementById('viewSingle');
         const viewComp   = document.getElementById('viewComparativo');
         const btnPdf     = document.getElementById('btnExportPdf');
+        const specialistFilter = document.getElementById('specialistFilter');
+        const specialistDetail = document.getElementById('specialistDetail');
+        specialistFilter.hidden = mode !== 'especialistas';
+        if (specialistDetail) {
+            specialistDetail.hidden = mode !== 'especialistas' || !specialistDetail.children.length;
+        }
 
         if (mode === 'comparativo') {
             viewSingle.hidden = true;

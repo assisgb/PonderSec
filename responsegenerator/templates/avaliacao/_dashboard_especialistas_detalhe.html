@@ -1,0 +1,200 @@
+{% load i18n %}
+<section class="specialist-detail" aria-labelledby="specialistDetailTitle">
+    <nav class="detail-breadcrumb" aria-label="{% translate 'Navegação dos resultados' %}">
+        <a href="{% url 'dashboard_avaliacoes' %}">{% translate "Dashboard geral" %}</a>
+        <span>/</span>
+        {% if detalhes.questao or detalhes.especialista %}
+            <a href="{% url 'dashboard_avaliacoes_formulario' detalhes.formulario.id %}">{{ detalhes.formulario.nome }}</a>
+        {% else %}
+            <strong>{{ detalhes.formulario.nome }}</strong>
+        {% endif %}
+        {% if detalhes.questao %}
+            <span>/</span>
+            <strong>{% translate "Pergunta" %} #{{ detalhes.questao.id }}</strong>
+        {% elif detalhes.especialista %}
+            <span>/</span>
+            <strong>{{ detalhes.especialista.codigo }}</strong>
+        {% endif %}
+    </nav>
+
+    <div class="detail-heading">
+        <div>
+            <div class="specialist-filter-kicker">{% translate "Detalhamento humano" %}</div>
+            <h2 id="specialistDetailTitle">
+                {% if detalhes.questao %}
+                    {% translate "Pergunta avaliada" %} #{{ detalhes.questao.id }}
+                {% elif detalhes.especialista %}
+                    {% blocktranslate with codigo=detalhes.especialista.codigo %}Resultados do especialista {{ codigo }}{% endblocktranslate %}
+                {% else %}
+                    {{ detalhes.formulario.nome }}
+                {% endif %}
+            </h2>
+            {% if detalhes.questao %}
+                <p>{{ detalhes.questao.conteudo }}</p>
+            {% else %}
+                <p>{% translate "Os identificadores A1, A2, A3… preservam o modo cego no dashboard." %}</p>
+            {% endif %}
+        </div>
+        <a class="identity-access" href="{% url 'avaliacao' %}">{% translate "Correspondência real restrita" %} →</a>
+    </div>
+
+    {% if detalhes.especialista %}
+        <article class="selected-specialist-card">
+            <div>
+                <span class="anon-badge">{{ detalhes.especialista.codigo }}</span>
+                <strong>{% translate "Formulários concluídos" %}</strong>
+            </div>
+            <div class="completed-form-list">
+                {% for formulario in detalhes.especialista.formularios %}
+                    <a href="{{ formulario.url }}">{{ formulario.nome }}</a>
+                {% empty %}
+                    <span>{% translate "Nenhum formulário concluído com notas válidas." %}</span>
+                {% endfor %}
+            </div>
+        </article>
+    {% endif %}
+
+    <div class="detail-stats">
+        <article><span>{% translate "Avaliadores" %}</span><strong>{{ detalhes.resumo.avaliadores }}</strong></article>
+        <article><span>{% translate "Avaliações de respostas" %}</span><strong>{{ detalhes.resumo.avaliacoes }}</strong></article>
+        <article><span>{% translate "Notas" %}</span><strong>{{ detalhes.resumo.notas }}</strong></article>
+        <article><span>{% translate "Perguntas avaliadas" %}</span><strong>{{ detalhes.resumo.perguntas }}</strong></article>
+    </div>
+
+    {% if detalhes.resultados_individuais %}
+        <div class="detail-grid-two">
+            <article class="detail-panel">
+                <header>
+                    <h3>{% translate "Médias por modelo e métrica" %}</h3>
+                    <p>{% translate "Média das notas no recorte selecionado." %}</p>
+                </header>
+                <div class="detail-table-wrap">
+                    <table class="detail-table">
+                        <thead>
+                            <tr>
+                                <th>{% translate "Modelo respondente" %}</th>
+                                {% for metrica in detalhes.metricas %}<th>{{ metrica.nome }}</th>{% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for modelo in detalhes.medias_modelos %}
+                                <tr>
+                                    <th>{{ modelo.modelo }}</th>
+                                    {% for valor in modelo.metricas %}
+                                        <td>
+                                            {% if valor.media is not None %}<strong>{{ valor.media }}</strong><small>{{ valor.total }} {% translate "notas" %}</small>{% else %}—{% endif %}
+                                        </td>
+                                    {% endfor %}
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+
+            <article class="detail-panel">
+                <header>
+                    <h3>{% translate "Distribuição das notas" %}</h3>
+                    <p>{% translate "Frequência na escala de 1 a 5." %}</p>
+                </header>
+                <div class="score-distribution">
+                    {% for faixa in detalhes.distribuicao %}
+                        <div class="score-row">
+                            <span class="score-number">{{ faixa.nota }}</span>
+                            <div class="score-track"><span style="width:{{ faixa.percentual|stringformat:'g' }}%"></span></div>
+                            <strong>{{ faixa.total }}</strong>
+                            <small>{{ faixa.percentual }}%</small>
+                        </div>
+                    {% endfor %}
+                </div>
+            </article>
+        </div>
+
+        <div class="detail-grid-two">
+            <article class="detail-panel">
+                <header>
+                    <h3>{% translate "Perguntas avaliadas" %}</h3>
+                    <p>{% translate "Abra uma pergunta para ver apenas suas avaliações individuais." %}</p>
+                </header>
+                <div class="entity-list">
+                    {% for pergunta in detalhes.perguntas %}
+                        <a class="entity-card{% if detalhes.questao and detalhes.questao.id == pergunta.id %} active{% endif %}" href="{{ pergunta.url }}">
+                            <span class="entity-code">Q{{ pergunta.id }}</span>
+                            <span class="entity-main">
+                                <strong>{{ pergunta.conteudo }}</strong>
+                                <small>{{ pergunta.avaliacoes }} {% translate "avaliações" %} · {{ pergunta.especialistas_total }} {% translate "especialistas" %}</small>
+                            </span>
+                            <span aria-hidden="true">→</span>
+                        </a>
+                    {% endfor %}
+                </div>
+            </article>
+
+            <article class="detail-panel">
+                <header>
+                    <h3>{% translate "Especialistas anônimos" %}</h3>
+                    <p>{% translate "A identidade real não é incluída nesta visualização." %}</p>
+                </header>
+                <div class="entity-list">
+                    {% for especialista in detalhes.especialistas %}
+                        <a class="entity-card{% if detalhes.especialista and detalhes.especialista.codigo == especialista.codigo %} active{% endif %}" href="{{ especialista.url }}">
+                            <span class="anon-badge">{{ especialista.codigo }}</span>
+                            <span class="entity-main">
+                                <strong>{{ especialista.formularios_total }} {% translate "formulários concluídos" %}</strong>
+                                <small>
+                                    {% for formulario in especialista.formularios %}{{ formulario.nome }}{% if not forloop.last %} · {% endif %}{% endfor %}
+                                </small>
+                                <small>{{ especialista.perguntas_total }} {% translate "perguntas" %} · {{ especialista.avaliacoes }} {% translate "avaliações" %}</small>
+                            </span>
+                            <span aria-hidden="true">→</span>
+                        </a>
+                    {% endfor %}
+                </div>
+            </article>
+        </div>
+
+        <article class="detail-panel individual-panel">
+            <header>
+                <h3>{% translate "Avaliações individuais" %}</h3>
+                <p>{% translate "Ligação entre especialista anônimo, pergunta, resposta, modelo e as quatro métricas." %}</p>
+            </header>
+            <div class="detail-table-wrap">
+                <table class="detail-table individual-table">
+                    <thead>
+                        <tr>
+                            <th>{% translate "Especialista" %}</th>
+                            <th>{% translate "Pergunta" %}</th>
+                            <th>{% translate "Modelo" %}</th>
+                            {% for metrica in detalhes.metricas %}<th>{{ metrica.nome }}</th>{% endfor %}
+                            <th>{% translate "Comentário / justificativa" %}</th>
+                            <th>{% translate "Submissão" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for resultado in detalhes.resultados_individuais %}
+                            <tr>
+                                <td><a class="anon-badge" href="{{ resultado.especialista_url }}">{{ resultado.especialista }}</a></td>
+                                <td><a class="question-link" href="{{ resultado.questao_url }}">Q{{ resultado.questao_id }}</a><small>{{ resultado.pergunta }}</small></td>
+                                <td><strong>{{ resultado.modelo }}</strong></td>
+                                {% for nota in resultado.notas %}<td class="score-cell">{% if nota is not None %}{{ nota }}{% else %}—{% endif %}</td>{% endfor %}
+                                <td class="comment-cell">
+                                    {% for comentario in resultado.comentarios %}
+                                        <p><strong>{{ comentario.metrica }}:</strong> {{ comentario.texto }}</p>
+                                    {% empty %}
+                                        <span class="muted-text">{% translate "Sem comentário." %}</span>
+                                    {% endfor %}
+                                </td>
+                                <td class="submission-cell">{{ resultado.data_submissao }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </article>
+    {% else %}
+        <div class="detail-empty">
+            <strong>{% translate "Nenhuma avaliação concluída neste recorte." %}</strong>
+            <p>{% translate "Formulários sem notas ou participações reabertas continuam disponíveis no seletor, mas não entram nos resultados." %}</p>
+        </div>
+    {% endif %}
+</section>
