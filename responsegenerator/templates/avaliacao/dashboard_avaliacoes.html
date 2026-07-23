@@ -1,47 +1,15 @@
+{% extends "base.html" %}
 {% load static i18n %}
-<!DOCTYPE html>
-<html lang="{{ LANGUAGE_CODE|default:'pt-br' }}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% translate "PonderSEC — Dashboard de Avaliações" %}</title>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'app_sidebar.css' %}">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        :root {
-            --bg: #050c14;
-            --surface: rgba(10, 20, 33, 0.72);
-            --surface-strong: rgba(5, 12, 22, 0.92);
-            --surface-soft: rgba(0, 220, 130, 0.05);
-            --border: rgba(0, 220, 130, 0.18);
-            --border-strong: rgba(0, 220, 130, 0.36);
-            --accent: #00dc82;
-            --accent-bright: #00ff9f;
-            --text: #d4f5e9;
-            --text-strong: #f0fff9;
-            --muted: #7a968c;
-            --mono: "IBM Plex Mono", monospace;
-            --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
-        }
+{% block title %}{% translate "PonderSEC — Dashboard de Avaliações" %}{% endblock %}
 
-        body {
-            min-height: 100vh; padding: 20px; overflow-x: hidden;
-            background: radial-gradient(circle at top, #020806 0, #010305 42%, #000000 100%);
-            color: var(--text); font-family: var(--sans);
-        }
-
-        body::before {
-            content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
-            background-image:
-                linear-gradient(90deg, rgba(0, 255, 160, 0.035) 1px, transparent 1px),
-                linear-gradient(180deg, rgba(0, 255, 160, 0.035) 1px, transparent 1px);
-            background-size: 40px 40px; opacity: 0.16;
-        }
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'app_sidebar.css' %}">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+        .wrap { padding-bottom: 60px; }
 
         .scanline {
             position: fixed; inset: 0;
@@ -54,41 +22,6 @@
             background: radial-gradient(circle, rgba(0, 255, 160, 0.2), transparent 70%);
             top: -10%; right: -5%; filter: blur(80px); opacity: 0.6; pointer-events: none; z-index: 0;
         }
-
-        /* --- ESTRUTURA GERAL --- */
-        .app-shell {
-            position: relative; z-index: 1; display: flex; align-items: flex-start;
-            gap: 20px; width: min(1680px, 100%); margin: 0 auto;
-        }
-
-        .wrap { width: min(1400px, 100%); min-width: 0; flex: 1; padding-bottom: 60px; }
-
-        /* --- CSS DA BARRA LATERAL (Fallback) --- */
-        .side-nav {
-            position: sticky; top: 20px; width: 246px; min-height: calc(100vh - 40px);
-            display: flex; flex-direction: column; gap: 18px; padding: 18px;
-            border: 1px solid var(--border); border-radius: 18px;
-            background: linear-gradient(180deg, rgba(5, 10, 17, 0.99), rgba(2, 5, 9, 0.99));
-            box-shadow: 0 14px 42px rgba(0, 0, 0, 0.34);
-        }
-        .side-brand { display: flex; align-items: center; gap: 12px; padding-bottom: 16px; border-bottom: 1px solid rgba(0, 220, 130, 0.12); }
-        .side-logo { width: 46px; height: 46px; flex-shrink: 0; overflow: hidden; border: 1px solid rgba(0, 220, 130, 0.34); border-radius: 13px; background: rgba(0, 220, 130, 0.06); }
-        .side-logo img { width: 100%; height: 100%; object-fit: cover; }
-        .side-brand-text { min-width: 0; }
-        .side-kicker, .side-section, .side-link, .side-logout { font-family: var(--mono); }
-        .side-kicker, .side-section { text-transform: uppercase; letter-spacing: 0.1em; }
-        .side-kicker { color: rgba(0, 220, 130, 0.76); font-size: 9px; font-weight: 700; }
-        .side-title { margin-top: 3px; color: var(--accent-bright); font-size: 16px; font-weight: 800; }
-        .side-section { margin-bottom: 8px; color: var(--muted); font-size: 9px; font-weight: 700; }
-        .side-links { display: grid; gap: 8px; }
-        .side-link, .side-logout { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 10px 12px; border: 1px solid rgba(0, 220, 130, 0.12); border-radius: 12px; background: rgba(0, 0, 0, 0.22); color: var(--muted); text-decoration: none; font-size: 11px; font-weight: 700; transition: all 0.18s ease; }
-        .side-link:hover, .side-logout:hover { transform: translateY(-1px); }
-        .side-link svg, .side-logout svg { flex-shrink: 0; color: currentColor; }
-        .side-link.active { border-color: rgba(0, 220, 130, 0.44); background: rgba(0, 220, 130, 0.12); color: var(--accent-bright); }
-        .side-link:not(.active):hover { border-color: rgba(0, 220, 130, 0.34); background: rgba(0, 220, 130, 0.075); color: var(--text); }
-        .side-footer { margin-top: auto; padding-top: 14px; border-top: 1px solid rgba(0, 220, 130, 0.12); }
-        .side-logout { border-color: rgba(239, 68, 68, 0.28); background: rgba(239, 68, 68, 0.06); color: #f87171; }
-        .side-logout:hover { border-color: rgba(239, 68, 68, 0.5); background: rgba(239, 68, 68, 0.12); color: #fecaca; }
 
         /* --- HEADER --- */
         .hdr {
@@ -287,7 +220,6 @@
         @media (max-width: 1100px) { .comparativo-layout { grid-template-columns: 1fr; } }
         @media (max-width: 768px) {
             .app-shell { flex-direction: column; }
-            .side-nav { position: relative; top: auto; width: 100%; min-height: auto; }
             .hdr { flex-direction: column; gap: 20px; align-items: flex-start; padding: 18px; }
             .header-actions { width: 100%; flex-direction: column; }
             .btn { width: 100%; justify-content: center; }
@@ -304,14 +236,16 @@
             .type-btn { font-size: 12px; padding: 8px 12px; }
             .comp-mini-strip { grid-template-columns: 1fr; }
         }
-    </style>
-</head>
-<body>
-    {% include "partials/language_switcher.html" %}
-    <div class="background-grid"></div>
+</style>
+{% endblock %}
+
+{% block background_effects %}
+    {{ block.super }}
     <div class="scanline"></div>
     <div class="glow-orb"></div>
+{% endblock %}
 
+{% block body %}
     <div class="app-shell">
         {% include "partials/app_sidebar.html" with active_nav="avaliacao" %}
         
@@ -514,7 +448,9 @@
             </main>
         </div>
     </div>
+{% endblock %}
 
+{% block extra_js %}
 <script>
     // ── DADOS DO DJANGO ──
     const DASHBOARD_PAYLOAD = {{ dashboard_json|safe }};
@@ -2074,5 +2010,4 @@
         init();
     }
 </script>
-</body>
-</html>
+{% endblock %}

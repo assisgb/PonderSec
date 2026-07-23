@@ -1,35 +1,21 @@
+{% extends "base.html" %}
 {% load static i18n %}
-<!DOCTYPE html>
-<html lang="{{ LANGUAGE_CODE|default:'pt-br' }}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% blocktranslate with nome=formulario.nome %}{{ nome }} — Avaliação PonderSEC{% endblocktranslate %}</title>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
-    <style>
+
+{% block title %}{% blocktranslate with nome=formulario.nome %}{{ nome }} — Avaliação PonderSEC{% endblocktranslate %}{% endblock %}
+
+{% block background_effects %}
+    <div class="bg-grid"></div>
+    <div class="scanline"></div>
+    <div class="bg-orb"></div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         button, input, textarea, select { font: inherit; min-width: 0; }
         img { max-width: 100%; }
-        :root {
-            --green: #00ff9f;
-            --green-dim: rgba(0,255,160,0.13);
-            --green-glow: rgba(0,255,160,0.35);
-            --purple: #bb86fc;
-            --purple-dim: rgba(187,134,252,0.12);
-            --bg-card: rgba(11,20,29,0.82);
-            --border: rgba(0,255,160,0.18);
-            --text: #e5fef6;
-            --text-muted: #8ba1b0;
-            --text-label: #c5d9e3;
-            --input-bg: #050a11;
-            --input-border: #1b2635;
-            --slide-pad-x: 22px;
-        }
         html, body {
             height: 100%;
-            font-family: "Space Grotesk", system-ui, sans-serif;
-            background: radial-gradient(circle at top, #051015 0, #02060b 45%, #000 100%);
-            color: var(--text);
             overflow-x: hidden;
         }
         .bg-grid {
@@ -38,11 +24,6 @@
                 linear-gradient(90deg, rgba(0,255,160,0.05) 1px, transparent 1px),
                 linear-gradient(180deg, rgba(0,255,160,0.05) 1px, transparent 1px);
             background-size: 40px 40px;
-        }
-        .scanline {
-            position: fixed; inset: 0; z-index: 0; pointer-events: none;
-            background-image: repeating-linear-gradient(to bottom, transparent 0px, transparent 3px, rgba(0,0,0,0.12) 3px, rgba(0,0,0,0.12) 4px);
-            opacity: 0.6;
         }
         .bg-orb {
             position: fixed; z-index: 0; pointer-events: none;
@@ -451,13 +432,10 @@
             .metric-block { flex: 1 1 calc((100% - 24px) / 3); min-width: min(170px, 100%); }
             .kbd-hint { display: none; }
         }
-    </style>
-</head>
-<body>
-    {% include "partials/language_switcher.html" %}
-    <div class="bg-grid"></div>
-    <div class="scanline"></div>
-    <div class="bg-orb"></div>
+</style>
+{% endblock %}
+
+{% block body %}
     <form method="POST" id="evalForm">
         {% csrf_token %}
         <div class="screen-ident" id="screenIdent">
@@ -614,7 +592,10 @@
             </div>
         </div>
     </form>
-    <script>
+{% endblock %}
+
+{% block extra_js %}
+<script>
     {% translate "Item" as txt_item %}
     {% translate "Pergunta" as txt_question %}
     {% translate "resposta" as txt_answer %}
@@ -1007,6 +988,5 @@
             }
         }
     })();
-    </script>
-</body>
-</html>
+</script>
+{% endblock %}

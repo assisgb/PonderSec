@@ -1,64 +1,33 @@
+{% extends "base.html" %}
 {% load static i18n %}
-<!DOCTYPE html>
-<html lang="{{ LANGUAGE_CODE|default:'pt-br' }}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% translate "Sucesso — PonderSEC" %}</title>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        
-        body {
-            font-family: "Space Grotesk", sans-serif;
-            background: radial-gradient(circle at top, #051015 0, #02060b 45%, #000000 100%);
-            color: #e5fef6; height: 100vh; display: flex; align-items: center; justify-content: center;
-        }
 
-        .background-grid {
-            position: fixed; inset: 0;
-            background-image: 
-                linear-gradient(90deg, rgba(0, 255, 160, 0.06) 1px, transparent 1px), 
-                linear-gradient(180deg, rgba(0, 255, 160, 0.06) 1px, transparent 1px);
-            background-size: 40px 40px; opacity: 0.4; pointer-events: none; z-index: 0;
-        }
+{% block title %}{% translate "Sucesso — PonderSEC" %}{% endblock %}
 
-        .scanline {
-            position: fixed; inset: 0;
-            background-image: repeating-linear-gradient(to bottom, transparent 0px, transparent 3px, rgba(0,0,0,0.12) 3px, rgba(0,0,0,0.12) 4px);
-            opacity: 0.6; pointer-events: none; z-index: 0;
-        }
+{% block extra_css %}
+<style>
+    body {
+        display: flex; align-items: center; justify-content: center;
+    }
 
-        .glow-orb {
-            position: fixed; width: 500px; height: 500px; border-radius: 50%;
-            background: radial-gradient(circle, rgba(0, 255, 160, 0.15), transparent 65%);
-            top: 50%; left: 50%; transform: translate(-50%, -50%); filter: blur(100px); pointer-events: none; z-index: 0;
-        }
+    .box {
+        position: relative; z-index: 2;
+        background: radial-gradient(circle at top, #0b141d 0, #050a11 55%, #020509 100%);
+        border: 1px solid rgba(0, 255, 160, 0.25); padding: 50px; border-radius: 18px;
+        box-shadow: 0 0 0 1px rgba(0,255,160,0.08), 0 18px 60px rgba(0,0,0,0.9), 0 0 40px rgba(0,255,160,0.1);
+        max-width: 500px; text-align: center;
+    }
 
-        .box {
-            position: relative; z-index: 2;
-            background: radial-gradient(circle at top, #0b141d 0, #050a11 55%, #020509 100%);
-            border: 1px solid rgba(0, 255, 160, 0.25); padding: 50px; border-radius: 18px;
-            box-shadow: 0 0 0 1px rgba(0,255,160,0.08), 0 18px 60px rgba(0,0,0,0.9), 0 0 40px rgba(0,255,160,0.1);
-            max-width: 500px; text-align: center;
-        }
+    .icon { font-size: 64px; margin-bottom: 20px; display: block; filter: drop-shadow(0 0 15px rgba(0,255,160,0.4)); }
+    h1 { color: #00ff9f; margin-bottom: 12px; font-size: 28px; }
+    p { color: #8ba1b0; line-height: 1.6; font-size: 15px; }
+</style>
+{% endblock %}
 
-        .icon { font-size: 64px; margin-bottom: 20px; display: block; filter: drop-shadow(0 0 15px rgba(0,255,160,0.4)); }
-        h1 { color: #00ff9f; margin-bottom: 12px; font-size: 28px; }
-        p { color: #8ba1b0; line-height: 1.6; font-size: 15px; }
-    </style>
-</head>
-<body>
-    {% include "partials/language_switcher.html" %}
-    <div class="background-grid"></div>
-    <div class="scanline"></div>
-    <div class="glow-orb"></div>
-    
+{% block body %}
     <div class="box">
         <span class="icon">✨</span>
         <h1>{% translate "Avaliação Enviada!" %}</h1>
         <p>{% translate "Seus dados e notas foram computados com sucesso no banco de dados do PonderSEC. Muito obrigado pela sua contribuição profissional!" %}</p>
         <p style="margin-top: 30px; font-size: 14px; color: #4ecf9a; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;">{% translate "Você já pode fechar esta aba." %}</p>
     </div>
-</body>
-</html>
+{% endblock %}

@@ -1,70 +1,11 @@
+{% extends "base.html" %}
 {% load static i18n %}
-<!DOCTYPE html>
-<html lang="{{ LANGUAGE_CODE|default:'pt-br' }}">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{% translate "PonderSEC — Avaliação" %}</title>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+
+{% block title %}{% translate "PonderSEC — Avaliação" %}{% endblock %}
+
+{% block extra_css %}
 <link rel="stylesheet" href="{% static 'app_sidebar.css' %}">
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-
-:root {
-  --bg: #050c14;
-  --surface: rgba(10, 20, 33, 0.72);
-  --surface-strong: rgba(5, 12, 22, 0.92);
-  --surface-soft: rgba(0, 220, 130, 0.05);
-  --border: rgba(0, 220, 130, 0.18);
-  --border-strong: rgba(0, 220, 130, 0.36);
-  --accent: #00dc82;
-  --accent-bright: #00ff9f;
-  --text: #d4f5e9;
-  --text-strong: #f0fff9;
-  --muted: #7a968c;
-  --mono: "IBM Plex Mono", monospace;
-  --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
-}
-
-body {
-  min-height: 100vh;
-  padding: 20px;
-  overflow-x: hidden;
-  background: radial-gradient(circle at top, #020806 0, #010305 42%, #000000 100%);
-  color: var(--text);
-  font-family: var(--sans);
-}
-
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background-image:
-    linear-gradient(90deg, rgba(0, 255, 160, 0.035) 1px, transparent 1px),
-    linear-gradient(180deg, rgba(0, 255, 160, 0.035) 1px, transparent 1px);
-  background-size: 40px 40px;
-  opacity: 0.16;
-}
-
-/* --- ESTRUTURA GERAL --- */
-.app-shell {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: flex-start;
-  gap: 20px;
-  width: min(1680px, 100%);
-  margin: 0 auto;
-}
-
-.wrap {
-  width: min(1400px, 100%);
-  min-width: 0;
-  flex: 1;
-}
-
 /* --- CSS DA BARRA LATERAL (Fallback caso o app_sidebar.css falhe) --- */
 .side-nav {
   position: sticky;
@@ -172,17 +113,12 @@ body::before {
 
 /* Responsividade */
 @media (max-width: 1180px) { .app-shell { gap: 14px; } .side-nav { width: 220px; } }
-@media (max-width: 760px) { body { padding: 12px; } .app-shell { flex-direction: column; } .side-nav { position: relative; top: auto; width: 100%; min-height: auto; } .hdr { align-items: flex-start; flex-direction: column; padding: 18px; } .main-card { padding: 24px 20px; } }
+@media (max-width: 760px) { .app-shell { flex-direction: column; } .side-nav { position: relative; top: auto; width: 100%; min-height: auto; } .hdr { align-items: flex-start; flex-direction: column; padding: 18px; } .main-card { padding: 24px 20px; } }
 @media (max-width: 480px) { .hdr-left { align-items: flex-start; } .logo-box { width: 48px; height: 48px; } .hdr-title { font-size: 20px; } .question-intro h1 { font-size: 25px; } .cards-grid { grid-template-columns: 1fr; } }
 </style>
-</head>
-<body>
-  {% include "partials/language_switcher.html" %}
-  
-  <div class="background-grid"></div>
-  <div class="scanline"></div>
-  <div class="glow-orb"></div>
+{% endblock %}
 
+{% block body %}
   <div class="app-shell">
     {% include "partials/app_sidebar.html" with active_nav="avaliacao" %}
 
@@ -263,5 +199,4 @@ body::before {
       </main>
     </div>
   </div>
-</body>
-</html>
+{% endblock %}

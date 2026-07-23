@@ -1,70 +1,11 @@
+{% extends "base.html" %}
 {% load static i18n %}
-<!DOCTYPE html>
-<html lang="{{ LANGUAGE_CODE|default:'pt-br' }}">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{% translate "PonderSEC — Formulários de Avaliação" %}</title>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+
+{% block title %}{% translate "PonderSEC — Formulários de Avaliação" %}{% endblock %}
+
+{% block extra_css %}
 <link rel="stylesheet" href="{% static 'app_sidebar.css' %}">
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-
-:root {
-  --bg: #050c14;
-  --surface: rgba(10, 20, 33, 0.72);
-  --surface-strong: rgba(5, 12, 22, 0.92);
-  --surface-soft: rgba(0, 220, 130, 0.05);
-  --border: rgba(0, 220, 130, 0.18);
-  --border-strong: rgba(0, 220, 130, 0.36);
-  --accent: #00dc82;
-  --accent-bright: #00ff9f;
-  --text: #d4f5e9;
-  --text-strong: #f0fff9;
-  --muted: #7a968c;
-  --mono: "IBM Plex Mono", monospace;
-  --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
-}
-
-body {
-  min-height: 100vh;
-  padding: 20px;
-  overflow-x: hidden;
-  background: radial-gradient(circle at top, #020806 0, #010305 42%, #000000 100%);
-  color: var(--text);
-  font-family: var(--sans);
-}
-
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background-image:
-    linear-gradient(90deg, rgba(0, 255, 160, 0.035) 1px, transparent 1px),
-    linear-gradient(180deg, rgba(0, 255, 160, 0.035) 1px, transparent 1px);
-  background-size: 40px 40px;
-  opacity: 0.16;
-}
-
-/* --- ESTRUTURA GERAL --- */
-.app-shell {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: flex-start;
-  gap: 20px;
-  width: min(1680px, 100%);
-  margin: 0 auto;
-}
-
-.wrap {
-  width: min(1400px, 100%);
-  min-width: 0;
-  flex: 1;
-}
-
 /* --- CSS DA BARRA LATERAL (Fallback) --- */
 .side-nav {
   position: sticky; top: 20px; width: 246px; min-height: calc(100vh - 40px);
@@ -299,7 +240,6 @@ body::before {
 /* Responsividade */
 @media (max-width: 1180px) { .app-shell { gap: 14px; } .side-nav { width: 220px; } .forms-list { grid-template-columns: 1fr; } }
 @media (max-width: 760px) { 
-  body { padding: 12px; } 
   .app-shell { flex-direction: column; } 
   .side-nav { position: relative; top: auto; width: 100%; min-height: auto; } 
   .hdr { align-items: flex-start; flex-direction: column; padding: 18px; } 
@@ -310,13 +250,9 @@ body::before {
   .search-bar { max-width: 100%; }
 }
 </style>
-</head>
-<body>
-    {% include "partials/language_switcher.html" %}
-    <div class="background-grid"></div>
-    <div class="scanline"></div>
-    <div class="glow-orb"></div>
+{% endblock %}
 
+{% block body %}
     <div class="app-shell">
         {% include "partials/app_sidebar.html" with active_nav="avaliacao" %}
         
@@ -619,157 +555,158 @@ body::before {
             </div>
         </div>
     </div>
+{% endblock %}
 
-    <script>
-        let formIdAtual = null;
+{% block extra_js %}
+<script>
+    let formIdAtual = null;
 
-        function abrirModalCompartilhar(id) {
-            formIdAtual = id;
-            document.getElementById('blindTestToggle').checked = false;
-            atualizarLinkCompartilhamento();
-            abrirModal('modalCompartilhar');
+    function abrirModalCompartilhar(id) {
+        formIdAtual = id;
+        document.getElementById('blindTestToggle').checked = false;
+        atualizarLinkCompartilhamento();
+        abrirModal('modalCompartilhar');
+    }
+
+    function atualizarLinkCompartilhamento() {
+        if (!formIdAtual) return;
+        const linkInput = document.getElementById('linkCompartilhamento');
+        const urlBase = window.location.origin;
+        let linkFinal = `${urlBase}/avaliacao/responder/${formIdAtual}/`;
+
+        if (document.getElementById('blindTestToggle').checked) {
+            linkFinal += "?blind=true";
         }
+        linkInput.value = linkFinal;
+    }
 
-        function atualizarLinkCompartilhamento() {
-            if (!formIdAtual) return;
-            const linkInput = document.getElementById('linkCompartilhamento');
-            const urlBase = window.location.origin;
-            let linkFinal = `${urlBase}/avaliacao/responder/${formIdAtual}/`;
+    function copiarLink() {
+        const linkInput = document.getElementById('linkCompartilhamento');
+        linkInput.select();
+        linkInput.setSelectionRange(0, 99999); 
+        
+        navigator.clipboard.writeText(linkInput.value).then(() => {
+            const toastContainer = document.getElementById('toast-container') || criarToastContainer();
+            mostrarToast(toastContainer, "{% translate 'Link copiado para a área de transferência!' %}");
+        }).catch(err => {
+            alert("{% translate 'Não foi possível copiar o link automaticamente.' %}");
+        });
+    }
 
-            if (document.getElementById('blindTestToggle').checked) {
-                linkFinal += "?blind=true";
+    function criarToastContainer() {
+        const container = document.createElement('div');
+        container.id = 'toast-container';
+        container.className = 'toast-stack';
+        document.body.appendChild(container);
+        return container;
+    }
+
+    function mostrarToast(container, mensagem) {
+        const toast = document.createElement('div');
+        toast.className = 'toast-message';
+        toast.innerText = mensagem;
+        container.appendChild(toast);
+
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(50px)';
+            setTimeout(() => toast.remove(), 500); 
+        }, 4000);
+    }
+    
+    function toggleQuestao(el) {
+        el.classList.toggle('selected');
+        const cb = el.querySelector('input[type="checkbox"]');
+        cb.checked = !cb.checked;
+    }
+
+    function filtrarQuestoesModal(selectId, containerId) {
+        const filtro = document.getElementById(selectId).value;
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        container.querySelectorAll('.question-option').forEach(opt => {
+            const hasAi = opt.getAttribute('data-has-ai') === 'true';
+            const hasHuman = opt.getAttribute('data-has-human') === 'true';
+            let show = true;
+
+            if (filtro === 'ia') {
+                show = hasAi && !hasHuman;
+            } else if (filtro === 'humana') {
+                show = hasHuman && !hasAi;
+            } else if (filtro === 'ambas') {
+                show = hasAi && hasHuman;
             }
-            linkInput.value = linkFinal;
-        }
 
-        function copiarLink() {
-            const linkInput = document.getElementById('linkCompartilhamento');
-            linkInput.select();
-            linkInput.setSelectionRange(0, 99999); 
-            
-            navigator.clipboard.writeText(linkInput.value).then(() => {
-                const toastContainer = document.getElementById('toast-container') || criarToastContainer();
-                mostrarToast(toastContainer, "{% translate 'Link copiado para a área de transferência!' %}");
-            }).catch(err => {
-                alert("{% translate 'Não foi possível copiar o link automaticamente.' %}");
-            });
-        }
+            opt.style.display = show ? '' : 'none';
+        });
+    }
 
-        function criarToastContainer() {
-            const container = document.createElement('div');
-            container.id = 'toast-container';
-            container.className = 'toast-stack';
-            document.body.appendChild(container);
-            return container;
-        }
+    function abrirModal(id) { document.getElementById(id).classList.add('active'); }
+    function fecharModal(id) { document.getElementById(id).classList.remove('active'); }
 
-        function mostrarToast(container, mensagem) {
-            const toast = document.createElement('div');
-            toast.className = 'toast-message';
-            toast.innerText = mensagem;
-            container.appendChild(toast);
+    function abrirModalEditar(id, nome, questoesIds) {
+        document.getElementById('nomeEditar').value = nome;
+        document.getElementById('formEditar').action = `/avaliacao/editar/${id}/`;
 
+        const filtroEditar = document.getElementById('filtroTipoEditar');
+        if (filtroEditar) filtroEditar.value = 'all';
+
+        document.querySelectorAll('#questoesEditar .question-option').forEach(el => {
+            el.style.display = '';
+            const qId = parseInt(el.getAttribute('data-id'));
+            const cb = el.querySelector('input[type="checkbox"]');
+            if (questoesIds.includes(qId)) {
+                el.classList.add('selected');
+                cb.checked = true;
+            } else {
+                el.classList.remove('selected');
+                cb.checked = false;
+            }
+        });
+
+        abrirModal('modalEditar');
+    }
+
+    function abrirModalDeletar(id, nome) {
+        document.getElementById('nomeFormularioDeletar').textContent = nome;
+        document.getElementById('formDeletar').action = `/avaliacao/deletar/${id}/`;
+        abrirModal('modalDeletar');
+    }
+
+    function submitForm(formId) {
+        const form = document.getElementById(formId);
+        const nome = form.querySelector('input[name="nome"]').value.trim();
+        const selecionadas = form.querySelectorAll('input[name="questoes"]:checked');
+
+        if (!nome) { alert('{% translate "Por favor, informe o nome do formulário." %}'); return; }
+        if (selecionadas.length === 0) { alert('{% translate "Selecione pelo menos uma pergunta." %}'); return; }
+
+        form.submit();
+    }
+
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+        overlay.addEventListener('click', function(e) {
+            if (e.target === this) fecharModal(this.id);
+        });
+    });
+
+    function filterForms() {
+        const filter = document.getElementById('searchInput').value.toLowerCase();
+        document.querySelectorAll('.metric-card').forEach(card => {
+            card.style.display = card.getAttribute('data-text').includes(filter) ? '' : 'none';
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const toasts = document.querySelectorAll('.toast-message');
+        toasts.forEach(toast => {
             setTimeout(() => {
                 toast.style.opacity = '0';
                 toast.style.transform = 'translateX(50px)';
                 setTimeout(() => toast.remove(), 500); 
-            }, 4000);
-        }
-        
-        function toggleQuestao(el) {
-            el.classList.toggle('selected');
-            const cb = el.querySelector('input[type="checkbox"]');
-            cb.checked = !cb.checked;
-        }
-
-        function filtrarQuestoesModal(selectId, containerId) {
-            const filtro = document.getElementById(selectId).value;
-            const container = document.getElementById(containerId);
-            if (!container) return;
-
-            container.querySelectorAll('.question-option').forEach(opt => {
-                const hasAi = opt.getAttribute('data-has-ai') === 'true';
-                const hasHuman = opt.getAttribute('data-has-human') === 'true';
-                let show = true;
-
-                if (filtro === 'ia') {
-                    show = hasAi && !hasHuman;
-                } else if (filtro === 'humana') {
-                    show = hasHuman && !hasAi;
-                } else if (filtro === 'ambas') {
-                    show = hasAi && hasHuman;
-                }
-
-                opt.style.display = show ? '' : 'none';
-            });
-        }
-
-        function abrirModal(id) { document.getElementById(id).classList.add('active'); }
-        function fecharModal(id) { document.getElementById(id).classList.remove('active'); }
-
-        function abrirModalEditar(id, nome, questoesIds) {
-            document.getElementById('nomeEditar').value = nome;
-            document.getElementById('formEditar').action = `/avaliacao/editar/${id}/`;
-
-            const filtroEditar = document.getElementById('filtroTipoEditar');
-            if (filtroEditar) filtroEditar.value = 'all';
-
-            document.querySelectorAll('#questoesEditar .question-option').forEach(el => {
-                el.style.display = '';
-                const qId = parseInt(el.getAttribute('data-id'));
-                const cb = el.querySelector('input[type="checkbox"]');
-                if (questoesIds.includes(qId)) {
-                    el.classList.add('selected');
-                    cb.checked = true;
-                } else {
-                    el.classList.remove('selected');
-                    cb.checked = false;
-                }
-            });
-
-            abrirModal('modalEditar');
-        }
-
-        function abrirModalDeletar(id, nome) {
-            document.getElementById('nomeFormularioDeletar').textContent = nome;
-            document.getElementById('formDeletar').action = `/avaliacao/deletar/${id}/`;
-            abrirModal('modalDeletar');
-        }
-
-        function submitForm(formId) {
-            const form = document.getElementById(formId);
-            const nome = form.querySelector('input[name="nome"]').value.trim();
-            const selecionadas = form.querySelectorAll('input[name="questoes"]:checked');
-
-            if (!nome) { alert('{% translate "Por favor, informe o nome do formulário." %}'); return; }
-            if (selecionadas.length === 0) { alert('{% translate "Selecione pelo menos uma pergunta." %}'); return; }
-
-            form.submit();
-        }
-
-        document.querySelectorAll('.modal-overlay').forEach(overlay => {
-            overlay.addEventListener('click', function(e) {
-                if (e.target === this) fecharModal(this.id);
-            });
+            }, 6000);
         });
-
-        function filterForms() {
-            const filter = document.getElementById('searchInput').value.toLowerCase();
-            document.querySelectorAll('.metric-card').forEach(card => {
-                card.style.display = card.getAttribute('data-text').includes(filter) ? '' : 'none';
-            });
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            const toasts = document.querySelectorAll('.toast-message');
-            toasts.forEach(toast => {
-                setTimeout(() => {
-                    toast.style.opacity = '0';
-                    toast.style.transform = 'translateX(50px)';
-                    setTimeout(() => toast.remove(), 500); 
-                }, 6000);
-            });
-        });
-    </script>
-</body>
-</html>
+    });
+</script>
+{% endblock %}

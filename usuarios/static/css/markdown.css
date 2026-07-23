@@ -1,0 +1,18 @@
+.markdown-body { color: rgba(212, 245, 233, 0.9); font-size: 14px; line-height: 1.7; }
+.markdown-body p { margin-bottom: 1em; }
+.markdown-body p:last-child { margin-bottom: 0; }
+.markdown-body strong { color: var(--accent-bright); font-weight: 700; }
+.markdown-body h1, .markdown-body h2, .markdown-body h3 { color: var(--text-strong); margin: 1.2em 0 0.6em; font-weight: 700; }
+.markdown-body ul, .markdown-body ol { margin-left: 1.5em; margin-bottom: 1em; }
+.markdown-body li { margin-bottom: 0.4em; }
+.markdown-body a { color: #38bdf8; text-decoration: none; }
+.markdown-body a:hover { text-decoration: underline; }
+.markdown-body code {
+  font-family: var(--mono); font-size: 13px;
+  background: rgba(0, 0, 0, 0.5); padding: 3px 6px; border-radius: 6px; color: #7dd3fc;
+}
+.markdown-body pre {
+  background: #03080e; padding: 16px; border-radius: 12px; overflow-x: auto;
+  margin: 1em 0; border: 1px solid rgba(255,255,255,0.08);
+}
+.markdown-body pre code { background: transparent; padding: 0; color: #e2e8f0; }

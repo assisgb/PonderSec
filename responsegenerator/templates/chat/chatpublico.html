@@ -1,40 +1,15 @@
+{% extends "base.html" %}
 {% load static i18n %}
-<!DOCTYPE html>
-<html lang="{{ LANGUAGE_CODE }}">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{% trans "PonderSEC | Chat Público" %}</title>
 
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&display=swap" rel="stylesheet">
-<!-- Biblioteca para converter Markdown em HTML -->
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+{% block title %}{% trans "PonderSEC | Chat Público" %}{% endblock %}
 
+{% block extra_css %}
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-
-:root {
-  --bg: #02060b;
-  --surface: rgba(5, 12, 22, 0.96);
-  --border: rgba(0, 220, 130, 0.18);
-  --border-strong: rgba(0, 220, 130, 0.42);
-  --accent: #00dc82;
-  --accent-bright: #00ff9f;
-  --danger: #ef4444;
-  --text: #d4f5e9;
-  --text-strong: #f0fff9;
-  --muted: #7a968c;
-  --mono: "IBM Plex Mono", monospace;
-  --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
-}
-
 body {
   height: 100vh;
   display: flex;
   flex-direction: column;
   background: radial-gradient(circle at top, #06111a 0, #02060b 46%, #000 100%);
-  color: var(--text);
-  font-family: var(--sans);
   overflow: hidden;
 }
 
@@ -155,7 +130,6 @@ button { transition: transform 0.2s ease, box-shadow 0.2s ease; cursor: pointer;
   gap: 16px;
   width: 100%;
 }
-/* Se houver só 1 IA, a largura é restrita para ficar alinhada com a pergunta */
 .ai-responses-grid.single-response { max-width: 860px; margin: 0 auto; }
 
 .message-ai {
@@ -297,10 +271,11 @@ textarea::placeholder { color: rgba(122, 150, 140, 0.6); }
   .input-area-wrapper { padding: 10px 14px 20px; }
 }
 </style>
-</head>
-<body id="chatPublica">
-    {% include "partials/language_switcher.html" %}
+{% endblock %}
 
+{% block background_effects %}{% endblock %}
+
+{% block body %}
 <header class="header">
   <div class="header-left">
     <div class="logo" aria-hidden="true"><img src="{% static 'pondersec_logo.jpg' %}" alt=""></div>
@@ -372,239 +347,38 @@ textarea::placeholder { color: rgba(122, 150, 140, 0.6); }
     <div class="footer-hint">{% trans "As respostas são geradas automaticamente por IAs e podem conter imprecisões." %}</div>
   </div>
 </div>
+{% endblock %}
 
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
-// Dropdown Menu
-document.addEventListener("DOMContentLoaded", () => {
-  const userMenuBtn = document.getElementById("userMenuBtn");
-  const userDropdown = document.getElementById("userDropdown");
-  if (userMenuBtn && userDropdown) {
-    userMenuBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      userDropdown.classList.toggle("show");
-      userMenuBtn.classList.toggle("active");
-    });
-    document.addEventListener("click", (e) => {
-      if (!userDropdown.contains(e.target) && !userMenuBtn.contains(e.target)) {
-        userDropdown.classList.remove("show");
-        userMenuBtn.classList.remove("active");
-      }
-    });
+function togglePonderTheme() {
+  document.body.classList.toggle('light-theme');
+  const glyph = document.querySelector('.theme-icon-glyph');
+  if (glyph) glyph.textContent = document.body.classList.contains('light-theme') ? '☾' : '☀';
+}
+
+window.PONDERSEC_CHAT = {
+  apiUrl: "{% url 'usuario_final_chat_api' %}",
+  text: {
+    sistema: "{% trans 'Sistema' %}",
+    erro: "{% trans 'Erro' %}",
+    nenhum_modelo: "{% trans 'Nenhum modelo retornou resposta.' %}",
+    sem_conteudo: "{% trans 'Sem conteúdo.' %}",
+    concluido: "{% trans 'Concluído' %}",
+    erro_consulta: "{% trans 'Erro ao consultar os modelos.' %}",
+    tabela_avaliacao: "{% trans 'Tabela de avaliação cruzada' %}",
+    notas: "{% trans 'notas' %}",
+    llm_respondente: "{% trans 'LLM respondente' %}",
+    llm_avaliadora: "{% trans 'LLM avaliadora' %}",
+    metrica: "{% trans 'Métrica' %}",
+    col_llm_respondente: "{% trans 'LLM que respondeu' %}",
+    col_llm_avaliadora: "{% trans 'LLM avaliadora' %}",
+    col_metrica: "{% trans 'Métrica' %}",
+    col_nota: "{% trans 'Nota' %}",
+    col_justificativa: "{% trans 'Justificativa' %}"
   }
-});
-
-// Segurança CSRF
-function getCSRFToken() {
-  const name = "csrftoken";
-  const cookies = document.cookie ? document.cookie.split(";") : [];
-  for (let cookie of cookies) {
-    cookie = cookie.trim();
-    if (cookie.startsWith(name + "=")) return decodeURIComponent(cookie.substring(name.length + 1));
-  }
-  return "";
-}
-
-function escapeHtml(value) {
-  return String(value ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
-function renderCrossEvaluationTable(rows) {
-  if (!Array.isArray(rows) || rows.length === 0) return "";
-
-  const body = rows.map(row => {
-    const nota = Number(row.nota);
-    const max = Number(row.max || 5);
-    const notaTxt = Number.isFinite(nota) ? `${nota}/${max}` : `-/${max}`;
-    return `
-      <tr>
-        <td class="cross-eval-model">${escapeHtml(row.modelo_respondente || "{% trans 'LLM respondente' %}")}</td>
-        <td class="cross-eval-judge">${escapeHtml(row.modelo_avaliador || "{% trans 'LLM avaliadora' %}")}</td>
-        <td>${escapeHtml(row.metrica || "{% trans 'Métrica' %}")}</td>
-        <td class="cross-eval-score">${notaTxt}</td>
-        <td class="cross-eval-note">${escapeHtml(row.justificativa || "-")}</td>
-      </tr>
-    `;
-  }).join("");
-
-  return `
-    <section class="cross-eval-panel">
-      <div class="cross-eval-title">
-        <strong>{% trans "Tabela de avaliação cruzada" %}</strong>
-        <span>${rows.length} {% trans "notas" %}</span>
-      </div>
-      <div class="cross-eval-table-wrap">
-        <table class="cross-eval-table">
-          <thead>
-            <tr>
-              <th>{% trans "LLM que respondeu" %}</th>
-              <th>{% trans "LLM avaliadora" %}</th>
-              <th>{% trans "Métrica" %}</th>
-              <th>{% trans "Nota" %}</th>
-              <th>{% trans "Justificativa" %}</th>
-            </tr>
-          </thead>
-          <tbody>${body}</tbody>
-        </table>
-      </div>
-    </section>
-  `;
-}
-
-// Auto-Ajuste da Caixa de Texto
-const textarea = document.getElementById('questionInput');
-const sendBtn = document.getElementById('sendBtn');
-
-textarea.addEventListener('input', function() {
-  this.style.height = '44px';
-  this.style.height = Math.max(44, this.scrollHeight) + 'px';
-  sendBtn.disabled = this.value.trim() === '';
-});
-
-textarea.addEventListener("keydown", function(event) {
-  if (event.key === 'Enter' && !event.shiftKey) {
-    event.preventDefault();
-    if (!sendBtn.disabled) sendPublicQuestion();
-  }
-});
-
-const chatHistory = document.getElementById("chatHistory");
-const heroSection = document.getElementById("heroSection");
-let isFirstMessage = true;
-
-function scrollToBottom() {
-  chatHistory.scrollTo({ top: chatHistory.scrollHeight, behavior: 'smooth' });
-}
-
-function addUserMessage(text) {
-  if (isFirstMessage) { heroSection.style.display = "none"; isFirstMessage = false; }
-  
-  const div = document.createElement('div');
-  div.className = 'message-wrapper user-group';
-  div.innerHTML = `<div class="message-user">${escapeHtml(text).replace(/\n/g, '<br>')}</div>`;
-  chatHistory.appendChild(div);
-  scrollToBottom();
-}
-
-function addLoadingBubble() {
-  const id = 'load-' + Date.now();
-  const div = document.createElement('div');
-  div.className = 'message-wrapper ai-group';
-  div.id = id;
-  
-  // Usamos um grid de 1 coluna para a bolha de loading ficar alinhada
-  div.innerHTML = `
-    <div class="ai-responses-grid single-response">
-        <div class="message-ai" style="padding: 16px 24px;">
-          <div class="message-ai-header" style="border-bottom: none; margin-bottom: 0; padding-bottom: 0;">
-            <div class="ai-icon">
-               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-            </div>
-            <span class="ai-name">PonderSEC</span>
-            <div class="typing-indicator" style="margin-left: auto;"><span></span><span></span><span></span></div>
-          </div>
-        </div>
-    </div>
-  `;
-  chatHistory.appendChild(div);
-  scrollToBottom();
-  return id;
-}
-
-function removeBubble(id) {
-  const el = document.getElementById(id);
-  if(el) el.remove();
-}
-
-function addAIBubblesGroup(respostas, tabelaAvaliacaoCruzada = []) {
-  const div = document.createElement('div');
-  div.className = 'message-wrapper ai-group';
-  
-  const gridClass = respostas.length === 1 ? "ai-responses-grid single-response" : "ai-responses-grid";
-  let html = `<div class="${gridClass}">`;
-
-  if(respostas.length === 0) {
-     html += `
-       <div class="message-ai">
-         <div class="message-ai-header">
-           <div class="ai-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg></div>
-           <span class="ai-name">{% trans 'Sistema' %}</span>
-           <span class="ai-status error">{% trans 'Erro' %}</span>
-         </div>
-         <div class="markdown-body">{% trans 'Nenhum modelo retornou resposta.' %}</div>
-       </div>
-     `;
-  } else {
-     respostas.forEach(r => {
-        const modelName = escapeHtml(r.modelo || r.model || r.nome || "LLM");
-        const rawMarkdown = r.resposta || r.content || r.texto;
-        const ok = r.ok !== false;
-        
-        // Conversão de Markdown via Marked.js
-        const htmlContent = marked.parse(rawMarkdown || "{% trans 'Sem conteúdo.' %}");
-        const statusHtml = ok ? '{% trans "Concluído" %}' : '{% trans "Erro" %}';
-        const statusClass = ok ? '' : 'error';
-
-        html += `
-          <div class="message-ai">
-            <div class="message-ai-header">
-              <div class="ai-icon">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2 2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><path d="M12 8v3"/><path d="M6.5 11a5.5 5.5 0 0 0 11 0"/><rect x="3" y="11" width="4" height="7" rx="1"/><rect x="17" y="11" width="4" height="7" rx="1"/><path d="M7 18h10"/><path d="M9 21h6"/></svg>
-              </div>
-              <span class="ai-name">${modelName}</span>
-              <span class="ai-status ${statusClass}">${statusHtml}</span>
-            </div>
-            <div class="markdown-body">${htmlContent}</div>
-          </div>
-        `;
-     });
-  }
-  
-  html += '</div>';
-  html += renderCrossEvaluationTable(tabelaAvaliacaoCruzada);
-  div.innerHTML = html;
-  chatHistory.appendChild(div);
-}
-
-async function sendPublicQuestion() {
-  const pergunta = textarea.value.trim();
-  if (!pergunta) return;
-
-  textarea.value = '';
-  textarea.style.height = '44px';
-  sendBtn.disabled = true;
-
-  addUserMessage(pergunta);
-  const loadingId = addLoadingBubble();
-
-  try {
-    const response = await fetch("{% url 'usuario_final_chat_api' %}", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-CSRFToken": getCSRFToken() },
-      body: JSON.stringify({ pergunta })
-    });
-
-    const data = await response.json();
-    removeBubble(loadingId);
-
-    if (!response.ok || data.status === "erro") {
-      throw new Error(data.mensagem || '{% trans "Erro ao consultar os modelos." %}');
-    }
-
-    const respostas = data.respostas || data.responses || [];
-    addAIBubblesGroup(respostas, data.tabela_avaliacao_cruzada || []);
-    scrollToBottom();
-
-  } catch (error) {
-    removeBubble(loadingId);
-    addAIBubblesGroup([{ modelo: "Sistema", resposta: `{% trans "Erro:" %} ${error.message}`, ok: false }]);
-    scrollToBottom();
-  }
-}
+};
 </script>
-</body>
-</html>
+<script src="{% static 'js/chat.js' %}"></script>
+{% endblock %}

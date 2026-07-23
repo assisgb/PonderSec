@@ -1,264 +1,115 @@
+{% extends "base.html" %}
 {% load static i18n %}
-<!DOCTYPE html>
-<html lang="{{ LANGUAGE_CODE|default:'pt-br' }}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% translate "PonderSEC — LLMs Públicas" %}</title>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        :root {
-            /* Paleta Admin (Roxa/Violeta) */
-            --bg: #0b0510;
-            --surface: rgba(20, 9, 29, 0.72);
-            --surface-strong: rgba(20, 9, 29, 0.95);
-            --surface-soft: rgba(187, 134, 252, 0.08);
-            --border: rgba(187, 134, 252, 0.2);
-            --border-strong: rgba(187, 134, 252, 0.4);
-            --accent: #bb86fc;
-            --accent-bright: #d9b8ff;
-            --text: #e5fef6;
-            --text-strong: #ffffff;
-            --muted: #8b7d9b;
-            --mono: "IBM Plex Mono", monospace;
-            --sans: "Space Grotesk", system-ui, -apple-system, sans-serif;
-        }
+{% block title %}{% translate "PonderSEC — LLMs Públicas" %}{% endblock %}
 
-        body {
-            min-height: 100vh; padding: 20px; overflow-x: hidden;
-            background: radial-gradient(circle at top, #0b0510 0, #06020b 45%, #000000 100%);
-            color: var(--text); font-family: var(--sans);
-        }
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin.css' %}">
+<style>
+    :root {
+        --bg: #0b0510;
+        --surface: rgba(20, 9, 29, 0.72);
+        --surface-strong: rgba(20, 9, 29, 0.95);
+        --surface-soft: rgba(187, 134, 252, 0.08);
+        --border: rgba(187, 134, 252, 0.2);
+        --border-strong: rgba(187, 134, 252, 0.4);
+        --accent: #bb86fc;
+        --accent-bright: #d9b8ff;
+        --text: #e5fef6;
+        --text-strong: #ffffff;
+        --muted: #8b7d9b;
+        --mono: "IBM Plex Mono", monospace;
+        --sans: "Space Grotesk", system-ui, -apple-system, sans-serif;
+    }
+    body { min-height: 100vh; padding: 20px; overflow-x: hidden; }
+    .main-card {
+        border: 1px solid var(--border); border-radius: 18px;
+        background: radial-gradient(circle at top, #14091d 0, #07030c 55%, #020509 100%);
+        box-shadow: 0 10px 38px rgba(0, 0, 0, 0.4); padding: 34px 28px 44px;
+    }
+    .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 24px; flex-wrap: wrap;}
+    .search-bar { position: relative; flex: 1; max-width: 400px; }
+    .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--accent); pointer-events: none; display: flex; }
+    .search-input {
+        width: 100%; height: 44px; padding: 0 14px 0 44px; border-radius: 10px; font-size: 13px;
+        color: var(--text); outline: none; border: 1px solid rgba(187, 134, 252, 0.16);
+        background: rgba(0, 0, 0, 0.42); transition: border-color 0.16s ease, background 0.16s ease;
+    }
+    .search-input::placeholder { color: var(--muted); }
+    .search-input:focus { border-color: var(--accent); background: rgba(0, 0, 0, 0.6); box-shadow: 0 0 10px rgba(187, 134, 252, 0.15); }
+    .llm-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; }
+    .llm-card {
+        display: flex; align-items: center; justify-content: space-between; gap: 16px;
+        padding: 22px 24px;
+        background: linear-gradient(135deg, rgba(20,9,29,0.9) 0%, rgba(7,3,12,0.95) 100%);
+        border: 1px solid rgba(187, 134, 252, 0.14); border-radius: 16px; transition: all 0.25s ease;
+    }
+    .llm-card:hover { border-color: rgba(187, 134, 252, 0.34); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 15px rgba(187, 134, 252, 0.08); }
+    .llm-card.inactive { opacity: 0.6; filter: grayscale(40%); }
+    .llm-card.inactive:hover { opacity: 0.8; filter: grayscale(0%); }
+    .llm-icon {
+        width: 48px; height: 48px; flex-shrink: 0;
+        background: rgba(187, 134, 252, 0.08); border: 1px solid rgba(187, 134, 252, 0.2);
+        border-radius: 12px; display: flex; align-items: center; justify-content: center;
+        color: var(--accent-bright); transition: all 0.25s ease;
+    }
+    .llm-card:hover .llm-icon { background: rgba(187, 134, 252, 0.15); border-color: var(--accent); }
+    .llm-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+    .llm-name { color: var(--text-strong); font-size: 16px; font-weight: 700; }
+    .llm-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .badge { font-family: var(--mono); font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; padding: 4px 10px; border-radius: 20px; }
+    .badge-provider { background: rgba(0,207,255,0.08); border: 1px solid rgba(0,207,255,0.25); color: #00cfff; }
+    .badge-state-on { background: rgba(0,255,160,0.08); border: 1px solid rgba(0,255,160,0.25); color: #00ff9f; }
+    .badge-state-off { background: rgba(107,123,141,0.1); border: 1px solid rgba(107,123,141,0.3); color: #8b7d9b; }
+    .api-key { font-family: var(--mono); color: var(--muted); font-size: 11px; margin-left: 4px; }
+    .llm-actions { display: flex; gap: 8px; flex-shrink: 0; }
+    .btn-icon {
+        width: 38px; height: 38px; border-radius: 9px; border: 1px solid;
+        cursor: pointer; display: flex; align-items: center; justify-content: center;
+        transition: all 0.2s ease; background: rgba(0, 0, 0, 0.2);
+        border-color: rgba(187, 134, 252, 0.2); color: var(--accent);
+    }
+    .btn-icon:hover { background: rgba(187, 134, 252, 0.12); border-color: var(--accent); color: var(--accent-bright); }
+    .btn-icon.danger { border-color: rgba(255, 80, 54, 0.25); color: #ff8a78; }
+    .btn-icon.danger:hover { background: rgba(255, 80, 54, 0.12); border-color: rgba(255, 80, 54, 0.5); color: #ffb5ab; }
+    .password-container { position: relative; display: flex; align-items: center; }
+    .password-container .field-input { padding-right: 45px; }
+    .btn-toggle-password {
+        position: absolute; right: 12px; background: transparent; border: none;
+        cursor: pointer; color: var(--muted); transition: all 0.2s ease; display: flex;
+        align-items: center; justify-content: center; padding: 5px;
+    }
+    .btn-toggle-password:hover { color: var(--accent-bright); transform: scale(1.1); }
+    .modal-title-wrap { display: flex; flex-direction: column; gap: 4px; }
+    .modal-product { color: var(--accent); font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+    #toast-container { position: fixed; top: 28px; right: 28px; z-index: 9999; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
+    .toast {
+        padding: 15px 18px; border-radius: 12px; font-size: 13px; font-weight: 700; line-height: 1.45;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .toast.success { background: rgba(0, 255, 160, 0.12); border: 1px solid rgba(0, 255, 160, 0.42); color: #00ff9f; }
+    .toast.error { background: rgba(255, 80, 54, 0.15); border: 1px solid rgba(255, 80, 54, 0.5); color: #ff8a78; }
+    @keyframes slideIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
+    @media (max-width: 760px) {
+        body { padding: 12px; }
+        .hdr { align-items: flex-start; flex-direction: column; padding: 18px; }
+        .header-actions { width: 100%; flex-wrap: wrap;}
+        .header-actions .btn { flex: 1; justify-content: center; }
+        .main-card { padding: 20px; }
+        .llm-card { flex-direction: column; align-items: flex-start; }
+        .llm-actions { width: 100%; justify-content: flex-end; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.05); }
+    }
+</style>
+{% endblock %}
 
-        .background-grid {
-            position: fixed; inset: 0; z-index: 0; pointer-events: none;
-            background-image:
-                linear-gradient(90deg, rgba(187, 134, 252, 0.05) 1px, transparent 1px),
-                linear-gradient(180deg, rgba(187, 134, 252, 0.05) 1px, transparent 1px);
-            background-size: 40px 40px; opacity: 0.4;
-        }
+{% block background_effects %}
+<div class="background-grid"></div>
+<div class="glow-orb"></div>
+{% endblock %}
 
-        /* --- ESTRUTURA GERAL --- */
-        .app-shell {
-            position: relative; z-index: 1; display: flex; align-items: flex-start;
-            gap: 20px; width: min(1200px, 100%); margin: 0 auto; justify-content: center;
-        }
-
-        .wrap { width: 100%; min-width: 0; flex: 1; padding-bottom: 60px; }
-
-        /* --- HEADER --- */
-        .hdr {
-            display: flex; align-items: center; justify-content: space-between; gap: 18px;
-            margin-bottom: 24px; padding: 22px 28px;
-            border: 1px solid var(--border); border-radius: 18px;
-            background: radial-gradient(circle at top, #14091d 0, #07030c 55%, #020509 100%);
-            box-shadow: 0 10px 34px rgba(0, 0, 0, 0.4); flex-wrap: wrap;
-        }
-        .hdr-left { display: flex; align-items: center; gap: 18px; min-width: 0; }
-        .logo-box { width: 54px; height: 54px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; border: 1px solid rgba(187, 134, 252, 0.34); border-radius: 14px; background: rgba(187, 134, 252, 0.06); box-shadow: inset 0 0 24px rgba(187, 134, 252, 0.05), 0 0 18px rgba(187, 134, 252, 0.1); }
-        .logo-box img { width: 100%; height: 100%; object-fit: cover; }
-        .hdr-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-        
-        .badge-admin {
-            display: inline-flex; align-items: center; gap: 6px; align-self: flex-start;
-            padding: 3px 9px; background: rgba(187, 134, 252, 0.12); border: 1px solid rgba(187, 134, 252, 0.35);
-            border-radius: 999px; font-family: var(--mono); font-size: 9px; font-weight: 700; color: var(--accent);
-            text-transform: uppercase; letter-spacing: 0.15em;
-        }
-        .badge-admin::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px var(--accent); }
-        
-        .hdr-title { color: var(--accent-bright); font-size: 22px; font-weight: 800; line-height: 1.18; }
-        .hdr-sub { color: var(--muted); font-size: 13px; line-height: 1.4; }
-
-        .header-actions { display: flex; align-items: center; gap: 12px; }
-
-        /* --- BOTOES --- */
-        .btn {
-            display: inline-flex; align-items: center; justify-content: center; gap: 9px;
-            min-height: 42px; padding: 11px 18px; border-radius: 10px; cursor: pointer;
-            text-decoration: none; white-space: nowrap; font-family: var(--sans);
-            font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
-            transition: all 0.2s ease;
-        }
-        .btn:hover { transform: translateY(-1px); }
-        
-        .btn-primary {
-            background: linear-gradient(135deg, #bb86fc 0%, #9264e6 100%);
-            border: none; color: #0c0518; box-shadow: 0 0 20px rgba(187, 134, 252, 0.15);
-        }
-        .btn-primary:hover { box-shadow: 0 8px 24px rgba(187, 134, 252, 0.35); }
-        
-        .btn-ghost { border: 1px solid rgba(187, 134, 252, 0.2); background: rgba(187, 134, 252, 0.05); color: var(--accent); }
-        .btn-ghost:hover { border-color: rgba(187, 134, 252, 0.4); background: rgba(187, 134, 252, 0.12); color: var(--accent-bright); }
-        
-        .btn-danger { border: 1px solid rgba(255, 80, 54, 0.3); background: rgba(255, 80, 54, 0.08); color: #ff8a78; }
-        .btn-danger:hover { border-color: rgba(255, 80, 54, 0.5); background: rgba(255, 80, 54, 0.15); color: #ffb5ab; }
-
-        /* --- CONTEÚDO PRINCIPAL --- */
-        .main-card {
-            border: 1px solid var(--border); border-radius: 18px;
-            background: radial-gradient(circle at top, #14091d 0, #07030c 55%, #020509 100%);
-            box-shadow: 0 10px 38px rgba(0, 0, 0, 0.4); padding: 34px 28px 44px;
-        }
-
-        .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 24px; flex-wrap: wrap;}
-        .search-bar { position: relative; flex: 1; max-width: 400px; }
-        .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--accent); pointer-events: none; display: flex; }
-        .search-input {
-            width: 100%; height: 44px; padding: 0 14px 0 44px; border-radius: 10px; font-size: 13px;
-            color: var(--text); outline: none; border: 1px solid rgba(187, 134, 252, 0.16);
-            background: rgba(0, 0, 0, 0.42); transition: border-color 0.16s ease, background 0.16s ease;
-        }
-        .search-input::placeholder { color: var(--muted); }
-        .search-input:focus { border-color: var(--accent); background: rgba(0, 0, 0, 0.6); box-shadow: 0 0 10px rgba(187, 134, 252, 0.15); }
-
-        .section-kicker { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; color: var(--accent); font-family: var(--mono); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; }
-        .section-kicker::after { content: ""; flex: 1; height: 1px; background: linear-gradient(to right, rgba(187, 134, 252, 0.24), transparent); }
-
-        /* --- CARDS DE LLM --- */
-        .llm-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; }
-
-        .llm-card {
-            display: flex; align-items: center; justify-content: space-between; gap: 16px;
-            padding: 22px 24px;
-            background: linear-gradient(135deg, rgba(20,9,29,0.9) 0%, rgba(7,3,12,0.95) 100%);
-            border: 1px solid rgba(187, 134, 252, 0.14); border-radius: 16px; transition: all 0.25s ease;
-        }
-        .llm-card:hover { border-color: rgba(187, 134, 252, 0.34); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 15px rgba(187, 134, 252, 0.08); }
-        .llm-card.inactive { opacity: 0.6; filter: grayscale(40%); }
-        .llm-card.inactive:hover { opacity: 0.8; filter: grayscale(0%); }
-
-        .llm-icon {
-            width: 48px; height: 48px; flex-shrink: 0;
-            background: rgba(187, 134, 252, 0.08); border: 1px solid rgba(187, 134, 252, 0.2);
-            border-radius: 12px; display: flex; align-items: center; justify-content: center;
-            color: var(--accent-bright); transition: all 0.25s ease;
-        }
-        .llm-card:hover .llm-icon { background: rgba(187, 134, 252, 0.15); border-color: var(--accent); }
-
-        .llm-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
-        .llm-name { color: var(--text-strong); font-size: 16px; font-weight: 700; }
-        .llm-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-
-        .badge {
-            font-family: var(--mono); font-size: 9px; font-weight: 700; text-transform: uppercase;
-            letter-spacing: 0.08em; padding: 4px 10px; border-radius: 20px;
-        }
-        .badge-provider { background: rgba(0,207,255,0.08); border: 1px solid rgba(0,207,255,0.25); color: #00cfff; }
-        .badge-state-on { background: rgba(0,255,160,0.08); border: 1px solid rgba(0,255,160,0.25); color: #00ff9f; }
-        .badge-state-off { background: rgba(107,123,141,0.1); border: 1px solid rgba(107,123,141,0.3); color: #8b7d9b; }
-        
-        .api-key { font-family: var(--mono); color: var(--muted); font-size: 11px; margin-left: 4px; }
-
-        .llm-actions { display: flex; gap: 8px; flex-shrink: 0; }
-        .btn-icon {
-            width: 38px; height: 38px; border-radius: 9px; border: 1px solid;
-            cursor: pointer; display: flex; align-items: center; justify-content: center;
-            transition: all 0.2s ease; background: rgba(0, 0, 0, 0.2);
-            border-color: rgba(187, 134, 252, 0.2); color: var(--accent);
-        }
-        .btn-icon:hover { background: rgba(187, 134, 252, 0.12); border-color: var(--accent); color: var(--accent-bright); }
-        .btn-icon.danger { border-color: rgba(255, 80, 54, 0.25); color: #ff8a78; }
-        .btn-icon.danger:hover { background: rgba(255, 80, 54, 0.12); border-color: rgba(255, 80, 54, 0.5); color: #ffb5ab; }
-
-        .empty-state {
-            grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center;
-            justify-content: center; min-height: 200px; padding: 34px 18px;
-            border: 1px dashed rgba(187, 134, 252, 0.25); border-radius: 16px;
-            background: rgba(0, 0, 0, 0.2); text-align: center; color: var(--muted);
-        }
-        .empty-state svg { margin-bottom: 12px; opacity: 0.6; color: var(--muted); }
-        .empty-state p { font-size: 14px; line-height: 1.5; }
-        .empty-state strong { color: var(--accent-bright); font-weight: normal; }
-
-        /* --- MODAIS --- */
-        .modal-overlay {
-            position: fixed; inset: 0; z-index: 9000; display: none; align-items: center;
-            justify-content: center; padding: 20px; background: rgba(2, 4, 9, 0.85); backdrop-filter: blur(6px);
-        }
-        .modal-overlay.active { display: flex; }
-
-        .modal {
-            width: min(100%, 540px); max-height: 90vh; overflow-y: auto; padding: 30px;
-            border: 1px solid rgba(187, 134, 252, 0.3); border-radius: 18px;
-            background: radial-gradient(circle at top, #14091d 0, #07030c 60%, #020509 100%);
-            box-shadow: 0 22px 80px rgba(0, 0, 0, 0.9), 0 0 32px rgba(187, 134, 252, 0.12);
-        }
-
-        .modal-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 22px; padding-bottom: 18px; border-bottom: 1px solid rgba(187, 134, 252, 0.15); }
-        .modal-title-wrap { display: flex; flex-direction: column; gap: 4px; }
-        .modal-product { color: var(--accent); font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
-        .modal-title { color: var(--accent-bright); font-size: 21px; font-weight: 800; }
-
-        .modal-close {
-            display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; flex-shrink: 0;
-            border: 1px solid rgba(255, 80, 54, 0.3); border-radius: 9px; background: rgba(255, 80, 54, 0.08);
-            color: #ff8a78; cursor: pointer; transition: all 0.2s ease;
-        }
-        .modal-close:hover { border-color: rgba(255, 80, 54, 0.6); background: rgba(255, 80, 54, 0.15); color: #ffb5ab; }
-
-        .field-group { margin-bottom: 16px; }
-        .field-label { display: block; margin-bottom: 8px; color: #d9b8ff; font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
-
-        .field-input, .field-select {
-            width: 100%; height: 44px; padding: 0 14px; border-radius: 10px; font-size: 14px; font-family: var(--sans);
-            color: var(--text); outline: none; border: 1px solid rgba(187, 134, 252, 0.25);
-            background: rgba(0, 0, 0, 0.4); transition: border-color 0.2s ease, background 0.2s ease;
-        }
-        .field-input:focus, .field-select:focus { border-color: var(--accent); background: rgba(0, 0, 0, 0.6); box-shadow: 0 0 10px rgba(187, 134, 252, 0.15); }
-        .field-input::placeholder { color: rgba(139, 125, 155, 0.6); }
-        .field-select {
-            cursor: pointer; appearance: none;
-            background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
-            background-position: calc(100% - 18px) 18px, calc(100% - 13px) 18px;
-            background-size: 5px 5px; background-repeat: no-repeat; padding-right: 32px;
-        }
-        .field-select option { background: #07030c; color: var(--text); }
-
-        .password-container { position: relative; display: flex; align-items: center; }
-        .password-container .field-input { padding-right: 45px; }
-        .btn-toggle-password {
-            position: absolute; right: 12px; background: transparent; border: none;
-            cursor: pointer; color: var(--muted); transition: all 0.2s ease; display: flex;
-            align-items: center; justify-content: center; padding: 5px;
-        }
-        .btn-toggle-password:hover { color: var(--accent-bright); transform: scale(1.1); }
-
-        .modal-footer { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; margin-top: 26px; padding-top: 20px; border-top: 1px solid rgba(187, 134, 252, 0.15); }
-
-        /* --- TOASTS --- */
-        #toast-container { position: fixed; top: 28px; right: 28px; z-index: 9999; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
-        .toast {
-            padding: 15px 18px; border-radius: 12px; font-size: 13px; font-weight: 700; line-height: 1.45;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-            animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-        .toast.success { background: rgba(0, 255, 160, 0.12); border: 1px solid rgba(0, 255, 160, 0.42); color: #00ff9f; }
-        .toast.error { background: rgba(255, 80, 54, 0.15); border: 1px solid rgba(255, 80, 54, 0.5); color: #ff8a78; }
-
-        @keyframes slideIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
-
-        /* Responsividade */
-        @media (max-width: 760px) { 
-            body { padding: 12px; } 
-            .hdr { align-items: flex-start; flex-direction: column; padding: 18px; } 
-            .header-actions { width: 100%; flex-wrap: wrap;}
-            .header-actions .btn { flex: 1; justify-content: center; }
-            .main-card { padding: 20px; } 
-            .llm-card { flex-direction: column; align-items: flex-start; }
-            .llm-actions { width: 100%; justify-content: flex-end; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.05); }
-        }
-    </style>
-</head>
-<body>
+{% block body %}
     {% include "partials/public_chat_button.html" %}
-    {% include "partials/language_switcher.html" %}
-
-    <div class="background-grid"></div>
-
     <div class="app-shell">
         <div class="wrap">
             <header class="hdr">
@@ -386,7 +237,6 @@
         </div>
     </div>
 
-    <!-- MODAL: Adicionar -->
     <div class="modal-overlay" id="modalAdd">
         <div class="modal">
             <div class="modal-header">
@@ -441,7 +291,6 @@
         </div>
     </div>
 
-    <!-- MODAL: Editar -->
     <div class="modal-overlay" id="modalEdit">
         <div class="modal">
             <div class="modal-header">
@@ -495,205 +344,204 @@
             </form>
         </div>
     </div>
+{% endblock %}
 
-    <script>
-        const URL_EDITAR = (id) => `/admin-pondersec/llms-publicas/${id}/editar/`;
-        const URL_DELETAR = (id) => `/admin-pondersec/llms-publicas/${id}/deletar/`;
-        const URL_TOGGLE = (id) => `/admin-pondersec/llms-publicas/${id}/toggle/`;
+{% block extra_js %}
+<script>
+    const URL_EDITAR = (id) => `/admin-pondersec/llms-publicas/${id}/editar/`;
+    const URL_DELETAR = (id) => `/admin-pondersec/llms-publicas/${id}/deletar/`;
+    const URL_TOGGLE = (id) => `/admin-pondersec/llms-publicas/${id}/toggle/`;
 
-        const modelosPorProvedor = {
-            "OpenAI": [
-                { value: "gpt-4o-mini", label: "GPT-4o Mini" },
-                { value: "gpt-4o", label: "GPT-4o" }
-            ],
-            "Anthropic": [
-                { value: "claude-3-5-sonnet-20240620", label: "Claude 3.5 Sonnet" },
-                { value: "claude-3-haiku-20240307", label: "Claude 3 Haiku" }
-            ],
-            "Groq": [
-                { value: "llama-3.3-70b-versatile", label: "Llama 3.3 70B (Versatile)" },
-                { value: "mixtral-8x7b-32768", label: "Mixtral 8x7B" }
-            ],
-            "Gemini": [
-                { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash" },
-                { value: "gemini-1.5-pro", label: "Gemini 1.5 Pro" }
-            ],
-            "DeepSeek": [
-                { value: "deepseek-v4-pro", label: "DeepSeek V4 Pro" },
-                { value: "deepseek-v4-flash", label: "DeepSeek V4 Flash" },
-                { value: "deepseek-v3", label: "DeepSeek V3" },
-                { value: "deepseek-reasoner", label: "DeepSeek Reasoner" }
-            ],
-            "Local": [
-                { value: "llama3", label: "Ollama (Llama 3)" }
-            ]
-        };
+    const modelosPorProvedor = {
+        "OpenAI": [
+            { value: "gpt-4o-mini", label: "GPT-4o Mini" },
+            { value: "gpt-4o", label: "GPT-4o" }
+        ],
+        "Anthropic": [
+            { value: "claude-3-5-sonnet-20240620", label: "Claude 3.5 Sonnet" },
+            { value: "claude-3-haiku-20240307", label: "Claude 3 Haiku" }
+        ],
+        "Groq": [
+            { value: "llama-3.3-70b-versatile", label: "Llama 3.3 70B (Versatile)" },
+            { value: "mixtral-8x7b-32768", label: "Mixtral 8x7B" }
+        ],
+        "Gemini": [
+            { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash" },
+            { value: "gemini-1.5-pro", label: "Gemini 1.5 Pro" }
+        ],
+        "DeepSeek": [
+            { value: "deepseek-v4-pro", label: "DeepSeek V4 Pro" },
+            { value: "deepseek-v4-flash", label: "DeepSeek V4 Flash" },
+            { value: "deepseek-v3", label: "DeepSeek V3" },
+            { value: "deepseek-reasoner", label: "DeepSeek Reasoner" }
+        ],
+        "Local": [
+            { value: "llama3", label: "Ollama (Llama 3)" }
+        ]
+    };
 
-        const eyeOpenSVG = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
-        const eyeClosedSVG = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`;
+    const eyeOpenSVG = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
+    const eyeClosedSVG = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`;
 
-        function togglePassword(inputId, btnElement) {
-            const input = document.getElementById(inputId);
-            if (input.type === "password") {
-                input.type = "text";
-                btnElement.innerHTML = eyeOpenSVG;
-                btnElement.style.color = "var(--accent-bright)";
-            } else {
-                input.type = "password";
-                btnElement.innerHTML = eyeClosedSVG;
-                btnElement.style.color = "var(--muted)";
-            }
+    function togglePassword(inputId, btnElement) {
+        const input = document.getElementById(inputId);
+        if (input.type === "password") {
+            input.type = "text";
+            btnElement.innerHTML = eyeOpenSVG;
+            btnElement.style.color = "var(--accent-bright)";
+        } else {
+            input.type = "password";
+            btnElement.innerHTML = eyeClosedSVG;
+            btnElement.style.color = "var(--muted)";
         }
+    }
 
-        function atualizarModelos(providerSelectId, modelSelectId) {
-            const provedorSelecionado = document.getElementById(providerSelectId).value;
-            const modelSelect = document.getElementById(modelSelectId);
-            modelSelect.innerHTML = "";
-            
-            if (provedorSelecionado && modelosPorProvedor[provedorSelecionado]) {
-                modelosPorProvedor[provedorSelecionado].forEach(modelo => {
-                    const option = document.createElement("option");
-                    option.value = modelo.value;
-                    option.textContent = modelo.label;
-                    modelSelect.appendChild(option);
-                });
-            } else {
+    function atualizarModelos(providerSelectId, modelSelectId) {
+        const provedorSelecionado = document.getElementById(providerSelectId).value;
+        const modelSelect = document.getElementById(modelSelectId);
+        modelSelect.innerHTML = "";
+        
+        if (provedorSelecionado && modelosPorProvedor[provedorSelecionado]) {
+            modelosPorProvedor[provedorSelecionado].forEach(modelo => {
                 const option = document.createElement("option");
-                option.value = "";
-                option.textContent = "{% translate 'Selecione um provedor primeiro' %}";
+                option.value = modelo.value;
+                option.textContent = modelo.label;
                 modelSelect.appendChild(option);
-            }
-        }
-
-        function descobrirProvedorPorModelo(modeloValor) {
-            for (const [provedor, modelos] of Object.entries(modelosPorProvedor)) {
-                if (modelos.some(m => m.value === modeloValor)) return provedor;
-            }
-            return "";
-        }
-
-        function csrfToken() {
-            const el = document.querySelector('[name=csrfmiddlewaretoken]');
-            return el ? el.value : '';
-        }
-
-        function toast(msg, type = 'success') {
-            let container = document.getElementById('toast-container');
-            if (!container) {
-                container = document.createElement('div');
-                container.id = 'toast-container';
-                document.body.appendChild(container);
-            }
-            const t = document.createElement('div');
-            t.className = 'toast ' + type;
-            t.textContent = msg;
-            container.appendChild(t);
-            setTimeout(() => t.remove(), 3500);
-        }
-
-        function abrirModal(id) { document.getElementById(id).classList.add('active'); }
-        function fecharModal(id) { document.getElementById(id).classList.remove('active'); }
-
-        function abrirModalAdd() {
-            document.getElementById('model').innerHTML = '<option value="">{% translate "Selecione um provedor primeiro" %}</option>';
-            document.getElementById('provider').value = '';
-            document.getElementById('apiKey').value = '';
-            abrirModal('modalAdd');
-        }
-
-        // Fechar modais clicando fora
-        document.querySelectorAll('.modal-overlay').forEach(overlay => {
-            overlay.addEventListener('click', function(e) {
-                if (e.target === this) this.classList.remove("active");
             });
-        });
+        } else {
+            const option = document.createElement("option");
+            option.value = "";
+            option.textContent = "{% translate 'Selecione um provedor primeiro' %}";
+            modelSelect.appendChild(option);
+        }
+    }
 
-        function filterLLMs() {
-            const q = document.getElementById('searchInput').value.toLowerCase();
-            document.querySelectorAll('.llm-card').forEach(c => {
-                c.style.display = c.dataset.search.includes(q) ? '' : 'none';
+    function descobrirProvedorPorModelo(modeloValor) {
+        for (const [provedor, modelos] of Object.entries(modelosPorProvedor)) {
+            if (modelos.some(m => m.value === modeloValor)) return provedor;
+        }
+        return "";
+    }
+
+    function csrfToken() {
+        const el = document.querySelector('[name=csrfmiddlewaretoken]');
+        return el ? el.value : '';
+    }
+
+    function toast(msg, type = 'success') {
+        let container = document.getElementById('toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'toast-container';
+            document.body.appendChild(container);
+        }
+        const t = document.createElement('div');
+        t.className = 'toast ' + type;
+        t.textContent = msg;
+        container.appendChild(t);
+        setTimeout(() => t.remove(), 3500);
+    }
+
+    function abrirModal(id) { document.getElementById(id).classList.add('active'); }
+    function fecharModal(id) { document.getElementById(id).classList.remove('active'); }
+
+    function abrirModalAdd() {
+        document.getElementById('model').innerHTML = '<option value="">{% translate "Selecione um provedor primeiro" %}</option>';
+        document.getElementById('provider').value = '';
+        document.getElementById('apiKey').value = '';
+        abrirModal('modalAdd');
+    }
+
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+        overlay.addEventListener('click', function(e) {
+            if (e.target === this) this.classList.remove("active");
+        });
+    });
+
+    function filterLLMs() {
+        const q = document.getElementById('searchInput').value.toLowerCase();
+        document.querySelectorAll('.llm-card').forEach(c => {
+            c.style.display = c.dataset.search.includes(q) ? '' : 'none';
+        });
+    }
+
+    function abrirEditar(id, nome, descricao, apiKey) {
+        document.getElementById('editId').value = id;
+        document.getElementById('editApiKey').value = apiKey;
+        
+        let provedor = descricao;
+        if (!provedor || !modelosPorProvedor[provedor]) {
+            provedor = descobrirProvedorPorModelo(nome);
+        }
+        
+        const providerSelect = document.getElementById('editProvider');
+        providerSelect.value = provedor;
+        
+        atualizarModelos('editProvider', 'editNome');
+        
+        const modelSelect = document.getElementById('editNome');
+        modelSelect.value = nome;
+
+        abrirModal('modalEdit');
+    }
+
+    async function salvarEdicao(ev) {
+        ev.preventDefault();
+        const id = document.getElementById('editId').value;
+        const payload = {
+            nome: document.getElementById('editNome').value.trim(),
+            descricao: document.getElementById('editProvider').value.trim(),
+            api_key: document.getElementById('editApiKey').value.trim(),
+        };
+        try {
+            const resp = await fetch(URL_EDITAR(id), {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken(), 'X-Requested-With': 'XMLHttpRequest' },
+                body: JSON.stringify(payload),
             });
+            const data = await resp.json();
+            if (!resp.ok || data.status !== 'ok') throw new Error(data.mensagem || '{% translate "Falha ao salvar." %}');
+            fecharModal('modalEdit');
+            toast('{% translate "LLM atualizada." %}');
+            setTimeout(() => location.reload(), 600);
+        } catch (e) {
+            toast(e.message, 'error');
         }
+    }
 
-        function abrirEditar(id, nome, descricao, apiKey) {
-            document.getElementById('editId').value = id;
-            document.getElementById('editApiKey').value = apiKey;
-            
-            let provedor = descricao;
-            if (!provedor || !modelosPorProvedor[provedor]) {
-                provedor = descobrirProvedorPorModelo(nome);
-            }
-            
-            const providerSelect = document.getElementById('editProvider');
-            providerSelect.value = provedor;
-            
-            atualizarModelos('editProvider', 'editNome');
-            
-            const modelSelect = document.getElementById('editNome');
-            modelSelect.value = nome;
-
-            abrirModal('modalEdit');
+    async function deletarLLM(id, nome) {
+        if (!confirm(`{% translate "Remover a LLM" %} "${nome}"?`)) return;
+        try {
+            const resp = await fetch(URL_DELETAR(id), {
+                method: 'DELETE',
+                headers: { 'X-CSRFToken': csrfToken(), 'X-Requested-With': 'XMLHttpRequest' },
+            });
+            const data = await resp.json();
+            if (!resp.ok || data.status !== 'ok') throw new Error(data.mensagem || '{% translate "Falha ao remover." %}');
+            toast('{% translate "LLM removida." %}');
+            setTimeout(() => location.reload(), 600);
+        } catch (e) {
+            toast(e.message, 'error');
         }
+    }
 
-        async function salvarEdicao(ev) {
-            ev.preventDefault();
-            const id = document.getElementById('editId').value;
-            const payload = {
-                nome: document.getElementById('editNome').value.trim(),
-                descricao: document.getElementById('editProvider').value.trim(),
-                api_key: document.getElementById('editApiKey').value.trim(),
-            };
-            try {
-                const resp = await fetch(URL_EDITAR(id), {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken(), 'X-Requested-With': 'XMLHttpRequest' },
-                    body: JSON.stringify(payload),
-                });
-                const data = await resp.json();
-                if (!resp.ok || data.status !== 'ok') throw new Error(data.mensagem || '{% translate "Falha ao salvar." %}');
-                fecharModal('modalEdit');
-                toast('{% translate "LLM atualizada." %}');
-                setTimeout(() => location.reload(), 600);
-            } catch (e) {
-                toast(e.message, 'error');
-            }
+    async function toggleLLM(id) {
+        try {
+            const resp = await fetch(URL_TOGGLE(id), {
+                method: 'POST',
+                headers: { 'X-CSRFToken': csrfToken(), 'X-Requested-With': 'XMLHttpRequest' },
+            });
+            const data = await resp.json();
+            if (!resp.ok || data.status !== 'ok') throw new Error(data.mensagem || '{% translate "Falha ao alternar." %}');
+            toast(data.ativo ? '{% translate "LLM ativada." %}' : '{% translate "LLM desativada." %}');
+            setTimeout(() => location.reload(), 500);
+        } catch (e) {
+            toast(e.message, 'error');
         }
+    }
 
-        async function deletarLLM(id, nome) {
-            if (!confirm(`{% translate "Remover a LLM" %} "${nome}"?`)) return;
-            try {
-                const resp = await fetch(URL_DELETAR(id), {
-                    method: 'DELETE',
-                    headers: { 'X-CSRFToken': csrfToken(), 'X-Requested-With': 'XMLHttpRequest' },
-                });
-                const data = await resp.json();
-                if (!resp.ok || data.status !== 'ok') throw new Error(data.mensagem || '{% translate "Falha ao remover." %}');
-                toast('{% translate "LLM removida." %}');
-                setTimeout(() => location.reload(), 600);
-            } catch (e) {
-                toast(e.message, 'error');
-            }
-        }
-
-        async function toggleLLM(id) {
-            try {
-                const resp = await fetch(URL_TOGGLE(id), {
-                    method: 'POST',
-                    headers: { 'X-CSRFToken': csrfToken(), 'X-Requested-With': 'XMLHttpRequest' },
-                });
-                const data = await resp.json();
-                if (!resp.ok || data.status !== 'ok') throw new Error(data.mensagem || '{% translate "Falha ao alternar." %}');
-                toast(data.ativo ? '{% translate "LLM ativada." %}' : '{% translate "LLM desativada." %}');
-                setTimeout(() => location.reload(), 500);
-            } catch (e) {
-                toast(e.message, 'error');
-            }
-        }
-
-        // Auto-dismiss server toasts
-        document.querySelectorAll('#toast-container .toast').forEach(t => {
-            setTimeout(() => t.remove(), 3500);
-        });
-    </script>
-</body>
-</html>
+    document.querySelectorAll('#toast-container .toast').forEach(t => {
+        setTimeout(() => t.remove(), 3500);
+    });
+</script>
+{% endblock %}
