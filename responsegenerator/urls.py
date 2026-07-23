@@ -68,6 +68,7 @@ urlpatterns = [
     ),
     path('avaliacao/dashboard-comparativo/', views.dashboard_comparativo_avaliacoes, name='dashboard_comparativo_avaliacoes'),
     path('menu_avaliacao/', views.menu_avaliacao, name='menu_avaliacao'),
+    path('avaliacao/exportar/', views.avaliacao_exportar_avaliacoes, name='avaliacao_exportar_avaliacoes'),
     path('juizes/comparador/', views.juizes_comparador, name='juizes_comparador'),
     path('juizes/avaliar/', views.juizes_executar_avaliacao, name='juizes_executar_avaliacao'),
     path('juizes/resetar/', views.juizes_resetar_avaliacoes, name='juizes_resetar_avaliacoes'),

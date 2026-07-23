@@ -3309,6 +3309,75 @@ def juizes_resetar_avaliacoes(request):
 
 
 # ═══════════════════════════════════════════════════════════════════
+@login_required
+def avaliacao_exportar_avaliacoes(request):
+    import csv
+    from django.db import connection
+
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            WITH avaliadores AS (
+                SELECT DISTINCT ON (av.email) av.email, av.nome, av.profissao
+                FROM responsegenerator_avaliador av
+                JOIN responsegenerator_formulario f ON f.id = av.formulario_id
+                WHERE f.usuario_id = %s AND av.finalizado_em IS NOT NULL
+            ),
+            forms AS (
+                SELECT f.id, f.nome
+                FROM responsegenerator_formulario f
+                WHERE f.usuario_id = %s
+                  AND EXISTS (
+                      SELECT 1 FROM responsegenerator_avaliador a
+                      WHERE a.formulario_id = f.id AND a.finalizado_em IS NOT NULL
+                  )
+            ),
+            matrix AS (
+                SELECT
+                    a.email, a.nome AS avaliador, a.profissao,
+                    f.id AS fid, f.nome AS formulario,
+                    q.conteudo AS pergunta,
+                    r.id AS resposta_id,
+                    l.nome AS ia
+                FROM avaliadores a
+                CROSS JOIN forms f
+                JOIN responsegenerator_formulario_questoes fq ON fq.formulario_id = f.id
+                JOIN responsegenerator_questao q ON q.id = fq.questao_id
+                JOIN responsegenerator_resposta r ON r.questao_id = q.id
+                JOIN responsegenerator_llm l ON l.id = r.llm_id
+            )
+            SELECT
+                m.formulario,
+                m.pergunta,
+                m.avaliador,
+                m.email,
+                m.profissao,
+                m.ia,
+                MAX(CASE WHEN mt.nome = 'Completude'   THEN af.avaliacao_quanti END),
+                MAX(CASE WHEN mt.nome = 'Acurácia'     THEN af.avaliacao_quanti END),
+                MAX(CASE WHEN mt.nome = 'Diretividade' THEN af.avaliacao_quanti END),
+                MAX(CASE WHEN mt.nome = 'Clareza'      THEN af.avaliacao_quanti END)
+            FROM matrix m
+            LEFT JOIN responsegenerator_avaliador av
+                ON av.email = m.email AND av.formulario_id = m.fid
+            LEFT JOIN responsegenerator_avaliacaoformulario af
+                ON af.avaliador_id = av.id AND af.resposta_id = m.resposta_id
+            LEFT JOIN responsegenerator_metrica mt ON mt.id = af.metrica_id
+            GROUP BY m.formulario, m.pergunta, m.avaliador, m.email, m.profissao, m.ia
+            ORDER BY m.formulario, m.pergunta, m.avaliador, m.ia
+        """, [request.user.id, request.user.id])
+        rows = cursor.fetchall()
+
+    response = HttpResponse(content_type="text/csv; charset=utf-8-sig")
+    response["Content-Disposition"] = 'attachment; filename="avaliacoes_pondersec.csv"'
+    writer = csv.writer(response, delimiter=";")
+    writer.writerow([
+        "formulario", "pergunta", "avaliador", "email_avaliador",
+        "profissao_avaliador", "ia", "completude", "acuracia", "diretividade", "clareza",
+    ])
+    writer.writerows(rows)
+    return response
+
+
 # PAINEL /admin-pondersec/  —  auth separada via tabela AdminPonderSec
 # ═══════════════════════════════════════════════════════════════════
 
