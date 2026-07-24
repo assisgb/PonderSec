@@ -936,6 +936,19 @@ class LLMConfigurationTests(TestCase):
         self.assertContains(response, "••••1234")
         self.assertNotContains(response, "old-secret-key-1234")
 
+    def test_setup_page_lists_current_gemini_models(self):
+        response = self.client.get(reverse("setup_llm"))
+
+        self.assertEqual(response.status_code, 200)
+        for model in (
+            "gemini-3.6-flash",
+            "gemini-3.5-flash",
+            "gemini-3.5-flash-lite",
+            "gemini-3.1-flash-lite",
+            "gemini-3.1-pro-preview",
+        ):
+            self.assertContains(response, model)
+
     def test_edit_cannot_modify_another_users_llm(self):
         other = User.objects.create_user(username="other-owner", password="senha-segura")
         foreign_llm = LLM.objects.create(
@@ -1006,6 +1019,19 @@ class AdminPublicMetricTests(TestCase):
         for name in JUDGE_METRIC_NAMES:
             self.assertContains(metric_response, name)
         self.assertNotContains(metric_response, "Adicionar Métrica")
+
+    def test_public_llm_page_lists_current_gemini_models(self):
+        response = self.client.get(reverse("admin_pondersec_llms_publicas"))
+
+        self.assertEqual(response.status_code, 200)
+        for model in (
+            "gemini-3.6-flash",
+            "gemini-3.5-flash",
+            "gemini-3.5-flash-lite",
+            "gemini-3.1-flash-lite",
+            "gemini-3.1-pro-preview",
+        ):
+            self.assertContains(response, model)
 
 
 class PublicFormEvaluationTests(TestCase):
