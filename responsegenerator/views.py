@@ -1639,8 +1639,15 @@ def _parse_judgeai_result(raw_text, metricas):
     if not isinstance(parsed, dict) or not isinstance(parsed.get("notas"), list):
         raise ValueError("A avaliação não contém o array 'notas' esperado.")
 
-    expected = {judge_metric_key(metrica.nome): metrica for metrica in metricas}
-    if None in expected or not set(expected).issubset(set(JUDGE_METRIC_KEYS)) or len(metricas) < 1:
+    expected = {}
+    for metrica in metricas:
+        key = judge_metric_key(metrica.nome)
+        if key is None or key in expected:
+            raise ValueError("A avaliação deve usar métricas oficiais e não duplicadas do JudgeAI.")
+        expected[key] = metrica
+
+    expected_keys = tuple(key for key in JUDGE_METRIC_KEYS if key in expected)
+    if not expected_keys:
         raise ValueError("A avaliação deve usar métricas oficiais do JudgeAI.")
 
     parsed_by_key = {}
@@ -1648,7 +1655,7 @@ def _parse_judgeai_result(raw_text, metricas):
         if not isinstance(item, dict):
             raise ValueError("Cada nota do JudgeAI deve ser um objeto JSON.")
         key = judge_metric_key(item.get("metrica"))
-        if key is None:
+        if key is None or key not in expected:
             raise ValueError(f"Métrica inesperada na resposta do JudgeAI: {item.get('metrica') or '(vazia)' }.")
         if key in parsed_by_key:
             raise ValueError(f"A métrica {expected[key].nome} foi retornada mais de uma vez.")
@@ -1670,13 +1677,13 @@ def _parse_judgeai_result(raw_text, metricas):
 
     missing = [
         expected[key].nome
-        for key in JUDGE_METRIC_KEYS
+        for key in expected_keys
         if key not in parsed_by_key
     ]
     if missing:
         raise ValueError(f"A avaliação não retornou todas as métricas: {', '.join(missing)}.")
-    if len(parsed_by_key) != 4:
-        raise ValueError("A avaliação deve retornar exatamente quatro notas.")
+    if len(parsed_by_key) != len(expected_keys):
+        raise ValueError("A avaliação deve retornar exatamente uma nota para cada métrica solicitada.")
 
     resultado = [
         {
@@ -1685,11 +1692,11 @@ def _parse_judgeai_result(raw_text, metricas):
             "max": 5,
             "justificativa": parsed_by_key[key]["justificativa"],
         }
-        for key in JUDGE_METRIC_KEYS
+        for key in expected_keys
     ]
     justificativa = parsed.get("justificativa")
     if not isinstance(justificativa, str) or not justificativa.strip():
-        justificativa = "Avaliação concluída com justificativas específicas para as quatro métricas."
+        justificativa = "Avaliação concluída com justificativas específicas para as métricas solicitadas."
     return resultado, justificativa.strip()
 
 
@@ -1761,12 +1768,12 @@ def _public_judge_prompt(pergunta_publica, resposta_publica, juiz, metricas):
         "O usuário final é leigo em cibersegurança. Avalie se a resposta de outro modelo é correta, clara, útil e segura para esse público.\n\n"
 
         "REGRAS DE AVALIAÇÃO:\n"
-        "1. Avalie EXATAMENTE estas quatro métricas, na escala inteira de 1 a 5: Completude, Acurácia, Diretividade e Clareza.\n"
-        "2. Não avalie nenhuma métrica além das quatro listadas.\n"
+        "1. Avalie EXATAMENTE as métricas listadas abaixo, na escala inteira de 1 a 5.\n"
+        "2. Não avalie nenhuma métrica além das listadas.\n"
         "3. Use a descrição de cada métrica para não misturar critérios nem justificativas.\n"
         "4. Antes de atribuir cada nota, releia a descrição da métrica e verifique se a resposta atende ou não ao que ela descreve.\n"
         "5. Evite viés de complacência: não dê notas altas por padrão. Se a resposta não atender ao critério descrito na métrica, a nota deve ser baixa.\n"
-        "6. Se a resposta for vazia, uma recusa ou completamente fora do escopo, atribua nota 1 nas quatro métricas.\n"
+        "6. Se a resposta for vazia, uma recusa ou completamente fora do escopo, atribua nota 1 a cada métrica listada.\n"
         "7. Você está avaliando a resposta de OUTRO modelo. Nunca avalie uma resposta produzida por você mesmo.\n\n"
 
         "FORMATO DAS JUSTIFICATIVAS:\n"
@@ -1784,7 +1791,7 @@ def _public_judge_prompt(pergunta_publica, resposta_publica, juiz, metricas):
         '  "justificativa": "síntese geral em uma frase completa"\n'
         "}\n"
         "- O campo 'nota' deve ser um número inteiro entre 1 e 5.\n"
-        "- Retorne as quatro métricas, uma única vez cada, na ordem apresentada.\n\n"
+        "- Retorne cada métrica listada uma única vez, na ordem apresentada.\n\n"
 
         f"Juiz: {juiz.nome}\n\n"
         f"Métricas (nome, escala e DESCRIÇÃO — avalie conforme o descrito):\n{metricas_txt}\n\n"
@@ -1797,8 +1804,14 @@ def _public_judge_prompt(pergunta_publica, resposta_publica, juiz, metricas):
 def _salvar_avaliacoes_publicas(resposta_publica, juiz, metricas, notas, justificativa):
     metricas_por_chave = {judge_metric_key(metrica.nome): metrica for metrica in metricas}
     notas_por_chave = {judge_metric_key(item.get("metrica")): item for item in notas}
-    if set(metricas_por_chave) != set(JUDGE_METRIC_KEYS) or set(notas_por_chave) != set(JUDGE_METRIC_KEYS):
-        raise ValueError("O JudgeAI só pode salvar as quatro métricas oficiais.")
+    metric_keys = tuple(key for key in JUDGE_METRIC_KEYS if key in metricas_por_chave)
+    if (
+        None in metricas_por_chave
+        or len(metricas_por_chave) != len(metricas)
+        or not metric_keys
+        or set(notas_por_chave) != set(metric_keys)
+    ):
+        raise ValueError("O JudgeAI só pode salvar as métricas públicas oficiais e ativas.")
 
     with transaction.atomic():
         AvaliacaoPublicaLLM.objects.filter(
@@ -1808,7 +1821,7 @@ def _salvar_avaliacoes_publicas(resposta_publica, juiz, metricas, notas, justifi
         ).delete()
 
         novas_avaliacoes = []
-        for key in JUDGE_METRIC_KEYS:
+        for key in metric_keys:
             metrica = metricas_por_chave[key]
             item = notas_por_chave[key]
             nota = item["nota"]

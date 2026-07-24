@@ -113,6 +113,44 @@ class PublicChatCrossEvaluationTests(TestCase):
         self.assertEqual(answer_calls[0].args[0].id, self.llm_a.id)
 
     @mock.patch("responsegenerator.views._judgeai_call_configured_llm")
+    def test_public_chat_evaluates_only_active_metrics(self, mocked_call):
+        self.metrics[0].ativa = False
+        self.metrics[0].save(update_fields=["ativa"])
+        active_payload = json.loads(judge_payload())
+        active_payload["notas"] = [
+            item
+            for item in active_payload["notas"]
+            if item["metrica"] != "Completude"
+        ]
+        active_payload = json.dumps(active_payload, ensure_ascii=False)
+        mocked_call.side_effect = lambda llm, prompt: (
+            active_payload
+            if "atuando como juiz no chat público" in prompt
+            else f"Resposta pública de {llm.nome}"
+        )
+
+        response = self.client.post(
+            reverse("usuario_final_chat_api"),
+            data=json.dumps({"pergunta": "Como evitar phishing?", "modelo_id": self.llm_a.id}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["avaliacao_cruzada"]["status"], "ok")
+        self.assertEqual(payload["avaliacao_cruzada"]["notas_total"], 3)
+        self.assertEqual(AvaliacaoPublicaLLM.objects.count(), 3)
+        self.assertFalse(
+            AvaliacaoPublicaLLM.objects.filter(metrica__nome="Completude").exists()
+        )
+        judge_prompt = next(
+            call.args[1]
+            for call in mocked_call.call_args_list
+            if "atuando como juiz no chat público" in call.args[1]
+        )
+        self.assertNotIn("- Completude (1 a 5):", judge_prompt)
+
+    @mock.patch("responsegenerator.views._judgeai_call_configured_llm")
     def test_same_model_configuration_cannot_judge_its_own_answer(self, mocked_call):
         duplicate = LLMPublica.objects.create(
             nome=self.llm_a.nome, descricao="OpenAI", api_key="another-key", ativo=True,
@@ -364,6 +402,29 @@ class JudgeAIParserAndResearchTests(TestCase):
         for payload in cases:
             with self.subTest(payload=payload), self.assertRaises(ValueError):
                 _parse_judgeai_result(json.dumps(payload, ensure_ascii=False), self.metrics)
+
+    def test_parser_supports_active_metric_subset_without_key_error(self):
+        active_metrics = [
+            metric for metric in self.metrics
+            if metric.nome != "Completude"
+        ]
+        payload = json.loads(judge_payload())
+        payload["notas"] = [
+            item for item in payload["notas"]
+            if item["metrica"] != "Completude"
+        ]
+
+        scores, _ = _parse_judgeai_result(
+            json.dumps(payload, ensure_ascii=False),
+            active_metrics,
+        )
+
+        self.assertEqual(
+            [item["metrica"] for item in scores],
+            ["Acurácia", "Diretividade", "Clareza"],
+        )
+        with self.assertRaisesRegex(ValueError, "Métrica inesperada"):
+            _parse_judgeai_result(judge_payload(), active_metrics)
 
     @mock.patch("responsegenerator.views._judgeai_call_configured_llm", return_value=judge_payload())
     def test_research_judgeai_never_self_evaluates_and_saves_four_metrics(self, mocked_call):
