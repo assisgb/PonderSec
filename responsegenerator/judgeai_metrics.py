@@ -153,8 +153,8 @@ def _repair_judge_metrics(usuario):
     return result
 
 
-def ensure_judge_metrics(usuario):
-    """Garante as métricas oficiais sem bloquear o banco no caminho normal."""
+def ensure_judge_metrics(usuario, *, include_inactive=False):
+    """Garante as métricas oficiais e, no chat público, filtra as inativas."""
     from responsegenerator.models import Metrica
 
     existing = list(Metrica.objects.filter(usuario=usuario).order_by("id"))
@@ -175,7 +175,7 @@ def ensure_judge_metrics(usuario):
             else:
                 all_metrics = _repair_judge_metrics(usuario)
 
-    if usuario is None:
+    if usuario is None and not include_inactive:
         active = [m for m in all_metrics if m.ativa]
         return active if active else all_metrics
 

@@ -1081,6 +1081,33 @@ class AdminPublicMetricTests(TestCase):
             self.assertContains(metric_response, name)
         self.assertNotContains(metric_response, "Adicionar Métrica")
 
+    def test_inactive_public_metric_remains_visible_and_can_be_reactivated(self):
+        metric = ensure_judge_metrics(None)[0]
+
+        disable_response = self.client.post(
+            reverse("admin_pondersec_metrica_publica_toggle", args=[metric.id])
+        )
+        self.assertEqual(disable_response.status_code, 200)
+        metric.refresh_from_db()
+        self.assertFalse(metric.ativa)
+        self.assertNotIn(metric.nome, [item.nome for item in ensure_judge_metrics(None)])
+
+        metric_response = self.client.get(reverse("admin_pondersec_metricas_publicas"))
+        self.assertEqual(metric_response.status_code, 200)
+        self.assertContains(metric_response, metric.nome)
+        self.assertContains(metric_response, "Inativa")
+        self.assertEqual(
+            [item.nome for item in ensure_judge_metrics(None, include_inactive=True)],
+            list(JUDGE_METRIC_NAMES),
+        )
+
+        enable_response = self.client.post(
+            reverse("admin_pondersec_metrica_publica_toggle", args=[metric.id])
+        )
+        self.assertEqual(enable_response.status_code, 200)
+        metric.refresh_from_db()
+        self.assertTrue(metric.ativa)
+
     def test_public_llm_page_lists_current_gemini_models(self):
         response = self.client.get(reverse("admin_pondersec_llms_publicas"))
 

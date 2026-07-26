@@ -3498,7 +3498,9 @@ def admin_pondersec_metricas_publicas(request):
         )
         return redirect("admin_pondersec_metricas_publicas")
 
-    metricas = ensure_judge_metrics(None)
+    # O painel precisa exibir também as inativas para que o administrador
+    # consiga reativá-las. O chat público continua recebendo apenas as ativas.
+    metricas = ensure_judge_metrics(None, include_inactive=True)
     return render(request, "admin_pondersec/metricas_publicas.html", {
         "admin": request.admin_pondersec,
         "metricas": metricas,
