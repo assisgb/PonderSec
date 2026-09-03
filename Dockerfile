@@ -1,7 +1,7 @@
 FROM python:3.11-slim
 
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
 RUN apt-get update && apt-get install -y \
     gcc \
@@ -18,10 +18,10 @@ RUN pip install --upgrade pip
 COPY requirements.txt .
 
 # Instala as dependências do projeto
-RUN pip install --no-cache-dir -r requirements.txt  
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copia todo o código do projeto para o contêiner
-COPY . .            
+COPY . .
 # Expõe a porta que o Django usará
 EXPOSE 8000
 

@@ -10,7 +10,7 @@ from django.core.exceptions import ValidationError
 from django.core import signing
 from django.core.signing import BadSignature, SignatureExpired
 from django.core.validators import validate_email
-from django.db import close_old_connections, transaction
+from django.db import IntegrityError, close_old_connections, transaction
 from datetime import timedelta
 import hashlib
 import logging
@@ -44,10 +44,7 @@ from django.db.models.functions import Lower
 from concurrent.futures import as_completed
 from responsegenerator.executors import get_llm_executor
 from responsegenerator.judgeai_metrics import (
-    JUDGE_METRIC_KEYS,
-    JUDGE_METRIC_NAMES,
     ensure_judge_metrics,
-    judge_metric_key,
     normalize_metric_name,
 )
 from responsegenerator.llm_client import (
@@ -60,6 +57,7 @@ from responsegenerator.llm_client import (
 logger = logging.getLogger(__name__)
 PUBLIC_EVALUATION_TOKEN_SALT = "responsegenerator.public-evaluation"
 PUBLIC_EVALUATION_CLAIM_TTL = timedelta(minutes=4)
+SUPPORTED_LLM_PROVIDERS = frozenset({"OpenAI", "Groq", "DeepSeek", "Gemini"})
 
 
 def _public_api_rate_limit(request, scope, setting_name="PUBLIC_CHAT_RATE_LIMIT"):
@@ -956,8 +954,9 @@ def limpar_questoes(request):
  
 @login_required
 def historico(request):
-    historico = Historico.objects.filter(usuario=request.user).order_by('-data')
-    return render(request, 'historico.html', {'historico': historico})
+    # O histórico foi incorporado à página de questões; preserve a URL antiga
+    # sem tentar renderizar o template removido.
+    return redirect(f"{reverse('questoes')}#historico")
 
 @login_required
 def questoes(request):
@@ -1354,6 +1353,14 @@ def setup_llm(request):
             django_messages.error(request, _("Provedor, modelo e chave da API são obrigatórios."))
             return redirect('setup_llm')
 
+        if provedor not in SUPPORTED_LLM_PROVIDERS:
+            django_messages.error(request, _("Provedor de IA não suportado."))
+            return redirect('setup_llm')
+
+        if len(nome) > LLM._meta.get_field("nome").max_length:
+            django_messages.error(request, _("O nome do modelo excede o tamanho permitido."))
+            return redirect('setup_llm')
+
         if len(api_key) > LLM._meta.get_field("api_key").max_length:
             django_messages.error(request, _("A chave da API excede o tamanho permitido."))
             return redirect('setup_llm')
@@ -1390,21 +1397,75 @@ def setup_llm(request):
 
 @login_required
 def setup_configurar_llm(request):
-    return render(request, 'setup/setup-configurar-llm.html')
+    # Compatibilidade com links antigos: a configuração agora acontece na lista.
+    return redirect('setup_llm')
+
+
+def _normalizar_dados_metrica(dados, *, permitir_tipo=True):
+    nome = (dados.get("nome") or "").strip()
+    descricao = (dados.get("descricao") or "").strip()
+    criterio_texto = (dados.get("criterio_texto") or "").strip()
+    tipo = (dados.get("tipo") or "quantitativa").strip().lower()
+    if not permitir_tipo:
+        tipo = "quantitativa"
+    if tipo not in {choice[0] for choice in Metrica.TIPO_CHOICES}:
+        raise ValidationError(_("Tipo de métrica inválido."))
+    if not nome:
+        raise ValidationError(_("O nome da métrica é obrigatório."))
+    if len(nome) > Metrica._meta.get_field("nome").max_length:
+        raise ValidationError(_("O nome da métrica excede o tamanho permitido."))
+
+    try:
+        pontuacao_maxima = int(dados.get("pontuacao_maxima") or 5)
+    except (TypeError, ValueError) as exc:
+        raise ValidationError(_("A pontuação máxima deve ser um número inteiro.")) from exc
+    pontuacao_maxima = max(2, min(pontuacao_maxima, 5))
+
+    label_opcao_1 = (dados.get("opcao_1") or "").strip() or None
+    label_opcao_2 = (dados.get("opcao_2") or "").strip() or None
+    if tipo != "quantitativa" or pontuacao_maxima != 2:
+        label_opcao_1 = None
+        label_opcao_2 = None
+
+    return {
+        "nome": nome,
+        "descricao": descricao,
+        "tipo": tipo,
+        "pontuacao_maxima": pontuacao_maxima,
+        "criterio_texto": criterio_texto,
+        "label_opcao_1": label_opcao_1,
+        "label_opcao_2": label_opcao_2,
+    }
+
+
+def _nome_metrica_duplicado(usuario, nome, *, excluir_id=None):
+    queryset = Metrica.objects.filter(usuario=usuario, nome__iexact=nome)
+    if excluir_id is not None:
+        queryset = queryset.exclude(id=excluir_id)
+    return queryset.exists()
+
 
 @login_required
 def setup_avaliacao(request):
-    metricas = ensure_judge_metrics(request.user)
+    metricas = ensure_judge_metrics(request.user, include_inactive=True)
     return render(request, 'setup/setup-avaliacao.html', {'metricas': metricas})
 
 @login_required
 def setup_adicionar_metrica(request):
     if request.method == 'POST':
-        ensure_judge_metrics(request.user)
-        django_messages.error(
-            request,
-            _("As métricas do JudgeAI são fixas: Completude, Acurácia, Diretividade e Clareza (1 a 5)."),
-        )
+        try:
+            valores = _normalizar_dados_metrica(request.POST)
+            if _nome_metrica_duplicado(request.user, valores["nome"]):
+                raise ValidationError(_("Já existe uma métrica com esse nome."))
+            Metrica.objects.create(usuario=request.user, ativa=True, **valores)
+        except ValidationError as exc:
+            django_messages.error(request, exc.messages[0])
+        except IntegrityError:
+            django_messages.error(request, _("Já existe uma métrica com esse nome."))
+        else:
+            django_messages.success(request, _("Métrica '%(nome)s' adicionada com sucesso!") % {
+                "nome": valores["nome"],
+            })
 
     return redirect('setup_avaliacao')
 
@@ -1412,18 +1473,72 @@ def setup_adicionar_metrica(request):
 @login_required
 def setup_configurar_metrica(request):
     if request.method == 'POST':
-        ensure_judge_metrics(request.user)
-        django_messages.error(request, _("As métricas e a escala do JudgeAI são fixas."))
+        metrica = get_object_or_404(
+            Metrica,
+            id=request.POST.get("metrica_id"),
+            usuario=request.user,
+        )
+        try:
+            valores = _normalizar_dados_metrica(request.POST)
+            if _nome_metrica_duplicado(
+                request.user,
+                valores["nome"],
+                excluir_id=metrica.id,
+            ):
+                raise ValidationError(_("Já existe uma métrica com esse nome."))
+            for campo, valor in valores.items():
+                setattr(metrica, campo, valor)
+            metrica.save(update_fields=list(valores))
+        except ValidationError as exc:
+            django_messages.error(request, exc.messages[0])
+        except IntegrityError:
+            django_messages.error(request, _("Já existe uma métrica com esse nome."))
+        else:
+            django_messages.success(request, _("Configurações da métrica atualizadas!"))
     return redirect('setup_avaliacao')
 
 @login_required
 @require_http_methods(["DELETE"])
 def setup_deletar_metrica(request, id):
-    ensure_judge_metrics(request.user)
+    metrica = get_object_or_404(Metrica, id=id, usuario=request.user, ativa=True)
+    outras_ativas = Metrica.objects.filter(
+        usuario=request.user,
+        ativa=True,
+    ).exclude(id=id).exists()
+    if not outras_ativas:
+        return JsonResponse({
+            "status": "error",
+            "message": _("Ao menos uma métrica deve permanecer ativa."),
+        }, status=409)
+    metrica.ativa = False
+    metrica.save(update_fields=["ativa"])
     return JsonResponse({
-        "status": "error",
-        "message": _("As quatro métricas oficiais do JudgeAI não podem ser removidas."),
-    }, status=409)
+        "status": "success",
+        "message": _("Métrica removida da configuração ativa."),
+    })
+
+
+@login_required
+@require_http_methods(["POST"])
+def setup_alternar_metrica(request, id):
+    metrica = get_object_or_404(Metrica, id=id, usuario=request.user)
+    if metrica.ativa:
+        outras_ativas = Metrica.objects.filter(
+            usuario=request.user,
+            ativa=True,
+        ).exclude(id=id).exists()
+        if not outras_ativas:
+            return JsonResponse({
+                "status": "error",
+                "message": _("Ao menos uma métrica deve permanecer ativa."),
+            }, status=409)
+    metrica.ativa = not metrica.ativa
+    metrica.save(update_fields=["ativa"])
+    return JsonResponse({
+        "status": "success",
+        "ativa": metrica.ativa,
+        "message": _("Métrica ativada.") if metrica.ativa else _("Métrica desativada."),
+    })
 
 @login_required
 @require_http_methods(["DELETE"])
@@ -1453,6 +1568,18 @@ def edit_llm_api(request, id):
             "message": _("Provedor e modelo são obrigatórios."),
         }, status=400)
 
+    if provedor not in SUPPORTED_LLM_PROVIDERS:
+        return JsonResponse({
+            "status": "error",
+            "message": _("Provedor de IA não suportado."),
+        }, status=400)
+
+    if len(nome) > LLM._meta.get_field("nome").max_length:
+        return JsonResponse({
+            "status": "error",
+            "message": _("O nome do modelo excede o tamanho permitido."),
+        }, status=400)
+
     if len(api_key) > LLM._meta.get_field("api_key").max_length:
         return JsonResponse({
             "status": "error",
@@ -1465,6 +1592,20 @@ def edit_llm_api(request, id):
             "status": "error",
             "message": _("Configuração de LLM não encontrada."),
         }, status=404)
+
+    configuracao_mudou = llm.nome != nome or (llm.descricao or "") != provedor
+    possui_historico = (
+        Resposta.objects.filter(llm=llm).exists()
+        or llm.avaliacoes_como_juiz.exists()
+    )
+    if configuracao_mudou and possui_historico:
+        return JsonResponse({
+            "status": "error",
+            "message": _(
+                "Esta LLM já possui histórico. Desative-a e adicione o novo modelo "
+                "como outra configuração; a chave atual ainda pode ser substituída aqui."
+            ),
+        }, status=409)
 
     previous_fingerprint = _api_key_fingerprint(llm.api_key)
     try:
@@ -1563,7 +1704,11 @@ def _text_preview(text, limit=320):
     return text if len(text) <= limit else f"{text[:limit].rstrip()}..."
 
 def _metric_max(metrica):
-    return 5
+    try:
+        maximo = int(metrica.pontuacao_maxima or 5)
+    except (TypeError, ValueError):
+        maximo = 5
+    return max(2, min(maximo, 5))
 
 
 def _judgeai_stream_configured_llm(llm, prompt):
@@ -1575,7 +1720,8 @@ def _judgeai_call_configured_llm(llm, prompt):
 
 def _judgeai_prompt(questao, resposta, juiz, metricas):
     metricas_txt = "\n".join(
-        f"- {m.nome} (1 a 5): {m.descricao or m.criterio_texto}"
+        f"- {m.nome} (1 a {_metric_max(m)}): "
+        f"{m.descricao or m.criterio_texto or 'Avalie este critério.'}"
         for m in metricas
     )
     return (
@@ -1584,8 +1730,8 @@ def _judgeai_prompt(questao, resposta, juiz, metricas):
         "a uma pergunta técnica de cibersegurança.\n\n"
 
         "REGRAS DE AVALIAÇÃO:\n"
-        "1. Avalie EXATAMENTE estas quatro métricas, na escala inteira de 1 a 5: Completude, Acurácia, Diretividade e Clareza.\n"
-        "2. Não avalie nenhuma métrica além das quatro listadas.\n"
+        "1. Avalie EXATAMENTE cada métrica listada abaixo, usando a escala inteira indicada para ela.\n"
+        "2. Não avalie nenhuma métrica além das listadas.\n"
         "3. Antes de decidir a nota, releia a descrição da métrica e depois releia a resposta em busca de evidências concretas "
         "(trechos, afirmações, exemplos, comandos, códigos) que sustentem ou contradigam o critério descrito.\n"
         "4. Evite viés de verbosidade: uma resposta mais longa não é automaticamente melhor. Avalie se a resposta "
@@ -1593,7 +1739,7 @@ def _judgeai_prompt(questao, resposta, juiz, metricas):
         "5. Evite viés de complacência: não dê notas altas por padrão. Se a resposta não atender ao critério descrito "
         "na métrica, a nota deve refletir isso.\n"
         "6. Se a resposta avaliada for vazia, sem sentido, uma recusa sem justificativa técnica ou completamente fora "
-        "do escopo da pergunta, atribua nota 1 nas quatro métricas e explique isso na justificativa.\n"
+        "do escopo da pergunta, atribua nota 1 em cada métrica e explique isso na justificativa.\n"
         "7. Você está avaliando a resposta de OUTRO modelo. Nunca avalie uma resposta produzida por você mesmo.\n\n"
 
         "FORMATO DAS JUSTIFICATIVAS:\n"
@@ -1612,9 +1758,9 @@ def _judgeai_prompt(questao, resposta, juiz, metricas):
         "  ],\n"
         '  "justificativa": "síntese geral em uma frase completa, mencionando o principal ponto forte e a principal fraqueza da resposta avaliada"\n'
         "}\n"
-        "- O campo 'nota' deve ser um número inteiro entre 1 e 5.\n"
+        "- O campo 'nota' deve ser um número inteiro dentro da escala indicada para a métrica.\n"
         "- A ordem das métricas no array 'notas' deve seguir a ordem em que foram apresentadas.\n"
-        "- Retorne as quatro métricas uma única vez; não omita, duplique ou inclua outra métrica.\n"
+        "- Retorne cada métrica uma única vez; não omita, duplique ou inclua outra métrica.\n"
         "- Não adicione campos extras ao JSON.\n\n"
 
         f"Juiz: {juiz.nome}\n\n"
@@ -1640,32 +1786,38 @@ def _parse_judgeai_result(raw_text, metricas):
         raise ValueError("A avaliação não contém o array 'notas' esperado.")
 
     expected = {}
+    expected_keys = []
     for metrica in metricas:
-        key = judge_metric_key(metrica.nome)
-        if key is None or key in expected:
-            raise ValueError("A avaliação deve usar métricas oficiais e não duplicadas do JudgeAI.")
+        key = normalize_metric_name(metrica.nome)
+        if not key or key in expected:
+            raise ValueError("A avaliação deve usar métricas nomeadas e não duplicadas.")
         expected[key] = metrica
+        expected_keys.append(key)
 
-    expected_keys = tuple(key for key in JUDGE_METRIC_KEYS if key in expected)
     if not expected_keys:
-        raise ValueError("A avaliação deve usar métricas oficiais do JudgeAI.")
+        raise ValueError("A avaliação deve conter ao menos uma métrica.")
 
     parsed_by_key = {}
     for item in parsed["notas"]:
         if not isinstance(item, dict):
             raise ValueError("Cada nota do JudgeAI deve ser um objeto JSON.")
-        key = judge_metric_key(item.get("metrica"))
-        if key is None or key not in expected:
+        key = normalize_metric_name(item.get("metrica"))
+        if not key or key not in expected:
             raise ValueError(f"Métrica inesperada na resposta do JudgeAI: {item.get('metrica') or '(vazia)' }.")
         if key in parsed_by_key:
             raise ValueError(f"A métrica {expected[key].nome} foi retornada mais de uma vez.")
 
         nota = item.get("nota")
+        maximo = _metric_max(expected[key])
         if isinstance(nota, bool) or not isinstance(nota, (int, float)) or int(nota) != nota:
-            raise ValueError(f"A nota de {expected[key].nome} deve ser um número inteiro entre 1 e 5.")
+            raise ValueError(
+                f"A nota de {expected[key].nome} deve ser um número inteiro entre 1 e {maximo}."
+            )
         nota = int(nota)
-        if nota < 1 or nota > 5:
-            raise ValueError(f"A nota de {expected[key].nome} está fora da escala de 1 a 5.")
+        if nota < 1 or nota > maximo:
+            raise ValueError(
+                f"A nota de {expected[key].nome} está fora da escala de 1 a {maximo}."
+            )
 
         justificativa_metrica = item.get("justificativa")
         if not isinstance(justificativa_metrica, str) or not justificativa_metrica.strip():
@@ -1689,7 +1841,7 @@ def _parse_judgeai_result(raw_text, metricas):
         {
             "metrica": expected[key].nome,
             "nota": parsed_by_key[key]["nota"],
-            "max": 5,
+            "max": _metric_max(expected[key]),
             "justificativa": parsed_by_key[key]["justificativa"],
         }
         for key in expected_keys
@@ -1718,10 +1870,16 @@ def _formatar_justificativa_avaliacao(texto, nota=None, maximo=5):
 
 
 def _salvar_avaliacoes_juiz(usuario, resposta, juiz, metricas, notas, justificativa):
-    metricas_por_chave = {judge_metric_key(metrica.nome): metrica for metrica in metricas}
-    notas_por_chave = {judge_metric_key(item.get("metrica")): item for item in notas}
-    if set(metricas_por_chave) != set(JUDGE_METRIC_KEYS) or set(notas_por_chave) != set(JUDGE_METRIC_KEYS):
-        raise ValueError("O JudgeAI só pode salvar as quatro métricas oficiais.")
+    metricas_por_chave = {normalize_metric_name(metrica.nome): metrica for metrica in metricas}
+    notas_por_chave = {normalize_metric_name(item.get("metrica")): item for item in notas}
+    metric_keys = [normalize_metric_name(metrica.nome) for metrica in metricas]
+    if (
+        not metric_keys
+        or any(not key for key in metric_keys)
+        or len(set(metric_keys)) != len(metric_keys)
+        or set(notas_por_chave) != set(metric_keys)
+    ):
+        raise ValueError("O JudgeAI deve salvar exatamente uma nota para cada métrica ativa.")
 
     with transaction.atomic():
         AvaliacaoJuiz.objects.filter(
@@ -1732,7 +1890,7 @@ def _salvar_avaliacoes_juiz(usuario, resposta, juiz, metricas, notas, justificat
         ).delete()
 
         novas_avaliacoes = []
-        for key in JUDGE_METRIC_KEYS:
+        for key in metric_keys:
             metrica = metricas_por_chave[key]
             item = notas_por_chave[key]
             nota = item["nota"]
@@ -1743,7 +1901,7 @@ def _salvar_avaliacoes_juiz(usuario, resposta, juiz, metricas, notas, justificat
                 metrica=metrica,
                 avaliacao_quanti=nota,
                 avaliacao_quali=_formatar_justificativa_avaliacao(
-                    item["justificativa"], nota, 5,
+                    item["justificativa"], nota, _metric_max(metrica),
                 ),
                 justificativa_geral=justificativa,
                 erro=False,
@@ -1759,7 +1917,8 @@ def _metricas_publicas_ativas():
 
 def _public_judge_prompt(pergunta_publica, resposta_publica, juiz, metricas):
     metricas_txt = "\n".join(
-        f"- {m.nome} (1 a 5): {m.descricao or m.criterio_texto}"
+        f"- {m.nome} (1 a {_metric_max(m)}): "
+        f"{m.descricao or m.criterio_texto or 'Avalie este critério.'}"
         for m in metricas
     )
     respondente = resposta_publica.llm.nome if resposta_publica.llm else "LLM removida"
@@ -1768,7 +1927,7 @@ def _public_judge_prompt(pergunta_publica, resposta_publica, juiz, metricas):
         "O usuário final é leigo em cibersegurança. Avalie se a resposta de outro modelo é correta, clara, útil e segura para esse público.\n\n"
 
         "REGRAS DE AVALIAÇÃO:\n"
-        "1. Avalie EXATAMENTE as métricas listadas abaixo, na escala inteira de 1 a 5.\n"
+        "1. Avalie EXATAMENTE as métricas listadas abaixo, na escala inteira indicada para cada uma.\n"
         "2. Não avalie nenhuma métrica além das listadas.\n"
         "3. Use a descrição de cada métrica para não misturar critérios nem justificativas.\n"
         "4. Antes de atribuir cada nota, releia a descrição da métrica e verifique se a resposta atende ou não ao que ela descreve.\n"
@@ -1790,7 +1949,7 @@ def _public_judge_prompt(pergunta_publica, resposta_publica, juiz, metricas):
         "  ],\n"
         '  "justificativa": "síntese geral em uma frase completa"\n'
         "}\n"
-        "- O campo 'nota' deve ser um número inteiro entre 1 e 5.\n"
+        "- O campo 'nota' deve ser um número inteiro dentro da escala indicada para a métrica.\n"
         "- Retorne cada métrica listada uma única vez, na ordem apresentada.\n\n"
 
         f"Juiz: {juiz.nome}\n\n"
@@ -1802,16 +1961,16 @@ def _public_judge_prompt(pergunta_publica, resposta_publica, juiz, metricas):
 
 
 def _salvar_avaliacoes_publicas(resposta_publica, juiz, metricas, notas, justificativa):
-    metricas_por_chave = {judge_metric_key(metrica.nome): metrica for metrica in metricas}
-    notas_por_chave = {judge_metric_key(item.get("metrica")): item for item in notas}
-    metric_keys = tuple(key for key in JUDGE_METRIC_KEYS if key in metricas_por_chave)
+    metricas_por_chave = {normalize_metric_name(metrica.nome): metrica for metrica in metricas}
+    notas_por_chave = {normalize_metric_name(item.get("metrica")): item for item in notas}
+    metric_keys = [normalize_metric_name(metrica.nome) for metrica in metricas]
     if (
-        None in metricas_por_chave
-        or len(metricas_por_chave) != len(metricas)
-        or not metric_keys
+        not metric_keys
+        or any(not key for key in metric_keys)
+        or len(set(metric_keys)) != len(metric_keys)
         or set(notas_por_chave) != set(metric_keys)
     ):
-        raise ValueError("O JudgeAI só pode salvar as métricas públicas oficiais e ativas.")
+        raise ValueError("O JudgeAI deve salvar exatamente uma nota para cada métrica pública ativa.")
 
     with transaction.atomic():
         AvaliacaoPublicaLLM.objects.filter(
@@ -1831,7 +1990,7 @@ def _salvar_avaliacoes_publicas(resposta_publica, juiz, metricas, notas, justifi
                 metrica=metrica,
                 avaliacao_quanti=nota,
                 avaliacao_quali=_formatar_justificativa_avaliacao(
-                    item["justificativa"], nota, 5,
+                    item["justificativa"], nota, _metric_max(metrica),
                 ),
                 justificativa_geral=justificativa,
                 erro=False,
@@ -1891,7 +2050,12 @@ def _executar_avaliacao_cruzada_publica(pergunta_publica, respostas_publicas, ju
                 resposta_publica.id,
                 juiz.id,
             )
-            resultados.append({"erro": True, "mensagem": str(exc), "notas": []})
+            resultados.append({
+                "erro": True,
+                "modelo": juiz.nome,
+                "mensagem": str(exc),
+                "notas": [],
+            })
 
     notas_total = sum(
         len([nota for nota in item.get("notas", []) if nota.get("nota") is not None])
@@ -1899,6 +2063,11 @@ def _executar_avaliacao_cruzada_publica(pergunta_publica, respostas_publicas, ju
         if not item.get("erro")
     )
     erros = sum(1 for item in resultados if item.get("erro"))
+    falhas = [
+        {"modelo": item.get("modelo") or "LLM avaliadora", "mensagem": item.get("mensagem") or "Falha desconhecida."}
+        for item in resultados
+        if item.get("erro")
+    ]
 
     status = "ok"
     if erros and notas_total:
@@ -1913,9 +2082,11 @@ def _executar_avaliacao_cruzada_publica(pergunta_publica, respostas_publicas, ju
         "total": len(resultados),
         "notas_total": notas_total,
         "erros": erros,
+        "falhas": falhas,
         "limitado": limitou,
         "mensagem": (
-            "A resposta foi gerada, mas uma ou mais avaliações automáticas falharam."
+            "A resposta foi gerada, mas a avaliação automática falhou em: "
+            + "; ".join(f"{item['modelo']} — {item['mensagem']}" for item in falhas)
             if erros else "Avaliação cruzada concluída."
         ),
     }
@@ -1982,13 +2153,12 @@ def _tabela_avaliacoes_publicas(resposta_ids, limite=None):
         .select_related("juiz", "resposta__llm", "metrica")
         .order_by("resposta_id", "juiz__nome")
     )
-    metric_order = {name: index for index, name in enumerate(JUDGE_METRIC_NAMES)}
     avaliacoes = sorted(
         qs,
         key=lambda item: (
             item.resposta_id,
             item.juiz.nome if item.juiz else "",
-            metric_order.get(item.metrica.nome if item.metrica else "", 99),
+            item.metrica_id or 0,
         ),
     )
     if limite:
@@ -2045,8 +2215,8 @@ def _resultados_juizes_persistidos(usuario, metricas):
         .order_by("resposta__questao_id", "resposta_id", "juiz_id", "metrica_id")
     )
     metric_order = {
-        judge_metric_key(nome): index
-        for index, nome in enumerate(JUDGE_METRIC_NAMES)
+        normalize_metric_name(metrica.nome): index
+        for index, metrica in enumerate(metricas)
     }
     resultados_por_par = {}
 
@@ -2088,7 +2258,7 @@ def _resultados_juizes_persistidos(usuario, metricas):
     resultados = list(resultados_por_par.values())
     for resultado in resultados:
         resultado["notas"].sort(
-            key=lambda item: metric_order.get(judge_metric_key(item["metrica"]), 99)
+            key=lambda item: metric_order.get(normalize_metric_name(item["metrica"]), 99)
         )
     resultados.sort(key=lambda item: (
         item["questao_id"],
@@ -2354,9 +2524,12 @@ def avaliacao(request):
 
 @login_required
 def avaliacao_respostas(request, formulario_id, questao_id):
-    # BLINDADO
     formulario = get_object_or_404(Formulario, id=formulario_id, usuario=request.user)
-    questao = get_object_or_404(Questao, id=questao_id, usuario=request.user)
+    questao = get_object_or_404(
+        formulario.questoes,
+        id=questao_id,
+        usuario=request.user,
+    )
     
     respostas = Resposta.objects.filter(questao=questao)
     metricas = ensure_judge_metrics(request.user)
@@ -2366,24 +2539,63 @@ def avaliacao_respostas(request, formulario_id, questao_id):
             data = json.loads(request.body)
         except json.JSONDecodeError:
             return JsonResponse({'status': 'erro', 'mensagem': _('JSON inválido.')}, status=400)
-        metrica_ids = {metrica.id for metrica in metricas}
+        if not isinstance(data, list):
+            return JsonResponse({
+                'status': 'erro',
+                'mensagem': _('A avaliação deve ser uma lista de notas.'),
+            }, status=400)
+
+        metricas_por_id = {metrica.id: metrica for metrica in metricas}
         resposta_ids = set(respostas.values_list("id", flat=True))
+        avaliacoes_validadas = []
+        pares_recebidos = set()
         for item in data:
-            if item.get('metrica_id') not in metrica_ids or item.get('resposta_id') not in resposta_ids:
+            if not isinstance(item, dict):
+                return JsonResponse({
+                    'status': 'erro',
+                    'mensagem': _('Cada nota deve ser um objeto.'),
+                }, status=400)
+            metrica = metricas_por_id.get(item.get('metrica_id'))
+            resposta_id = item.get('resposta_id')
+            if not metrica or resposta_id not in resposta_ids:
                 return JsonResponse({'status': 'erro', 'mensagem': _('Avaliação contém uma resposta ou métrica inválida.')}, status=400)
+            par = (resposta_id, metrica.id)
+            if par in pares_recebidos:
+                return JsonResponse({
+                    'status': 'erro',
+                    'mensagem': _('A mesma resposta e métrica foram enviadas mais de uma vez.'),
+                }, status=400)
+            pares_recebidos.add(par)
             try:
                 nota = int(item.get('quanti'))
             except (TypeError, ValueError):
-                return JsonResponse({'status': 'erro', 'mensagem': _('A nota deve ser um inteiro entre 1 e 5.')}, status=400)
-            if nota < 1 or nota > 5:
-                return JsonResponse({'status': 'erro', 'mensagem': _('A nota deve estar entre 1 e 5.')}, status=400)
-            Avaliacao.objects.create(
-                usuario=request.user,
-                resposta_id=item['resposta_id'],
-                metrica_id=item['metrica_id'],
-                avaliacao_quanti=nota,
-                avaliacao_quali=item.get('quali'),
-            )
+                return JsonResponse({
+                    'status': 'erro',
+                    'mensagem': _('A nota deve ser um número inteiro.'),
+                }, status=400)
+            maximo = _metric_max(metrica)
+            if nota < 1 or nota > maximo:
+                return JsonResponse({
+                    'status': 'erro',
+                    'mensagem': _(
+                        'A nota de %(metrica)s deve estar entre 1 e %(maximo)s.'
+                    ) % {'metrica': metrica.nome, 'maximo': maximo},
+                }, status=400)
+            avaliacoes_validadas.append({
+                'resposta_id': resposta_id,
+                'metrica_id': metrica.id,
+                'avaliacao_quanti': nota,
+                'avaliacao_quali': (item.get('quali') or '').strip(),
+            })
+
+        with transaction.atomic():
+            for valores in avaliacoes_validadas:
+                Avaliacao.objects.filter(
+                    usuario=request.user,
+                    resposta_id=valores['resposta_id'],
+                    metrica_id=valores['metrica_id'],
+                ).delete()
+                Avaliacao.objects.create(usuario=request.user, **valores)
         return JsonResponse({'status': 'ok'})
 
     return render(request, 'avaliacao/avaliacao_respostas.html', {
@@ -2979,7 +3191,11 @@ def dashboard_avaliacoes(
 
     metricas_obj = ensure_judge_metrics(request.user)
     metricas = [
-        {"id": metrica.id, "nome": metrica.nome, "pontuacao_maxima": 5}
+        {
+            "id": metrica.id,
+            "nome": metrica.nome,
+            "pontuacao_maxima": _metric_max(metrica),
+        }
         for metrica in metricas_obj
     ]
     metrica_ids = [metrica["id"] for metrica in metricas]
@@ -3459,11 +3675,11 @@ def admin_pondersec_logout(request):
 
 @admin_required
 def admin_pondersec_home(request):
-    metricas_publicas = ensure_judge_metrics(None)
+    metricas_publicas = ensure_judge_metrics(None, include_inactive=True)
     total_llms = LLMPublica.objects.count()
     llms_ativas = LLMPublica.objects.filter(ativo=True).count()
     total_metricas_publicas = len(metricas_publicas)
-    metricas_publicas_ativas = len(metricas_publicas)
+    metricas_publicas_ativas = sum(1 for metrica in metricas_publicas if metrica.ativa)
     total_perguntas_publicas = PerguntaPublica.objects.count()
     total_avaliacoes_publicas = AvaliacaoPublicaLLM.objects.filter(
         erro=False,
@@ -3480,22 +3696,20 @@ def admin_pondersec_home(request):
     })
 
 
-def _normalizar_pontuacao_publica(valor):
-    try:
-        pontos = int(valor)
-    except (TypeError, ValueError):
-        pontos = 5
-    return max(2, min(pontos, 5))
-
-
 @admin_required
 def admin_pondersec_metricas_publicas(request):
     if request.method == "POST":
-        ensure_judge_metrics(None)
-        django_messages.error(
-            request,
-            "As métricas públicas são fixas: Completude, Acurácia, Diretividade e Clareza (1 a 5).",
-        )
+        try:
+            valores = _normalizar_dados_metrica(request.POST, permitir_tipo=False)
+            if _nome_metrica_duplicado(None, valores["nome"]):
+                raise ValidationError("Já existe uma métrica pública com esse nome.")
+            Metrica.objects.create(usuario=None, ativa=True, **valores)
+        except ValidationError as exc:
+            django_messages.error(request, exc.messages[0])
+        except IntegrityError:
+            django_messages.error(request, "Já existe uma métrica pública com esse nome.")
+        else:
+            django_messages.success(request, f"Métrica pública '{valores['nome']}' criada.")
         return redirect("admin_pondersec_metricas_publicas")
 
     # O painel precisa exibir também as inativas para que o administrador
@@ -3510,28 +3724,47 @@ def admin_pondersec_metricas_publicas(request):
 @admin_required
 @require_http_methods(["PUT"])
 def admin_pondersec_metrica_publica_editar(request, id):
-    ensure_judge_metrics(None)
-    return JsonResponse({
-        "status": "erro",
-        "mensagem": "As quatro métricas oficiais e a escala de 1 a 5 são fixas.",
-    }, status=409)
+    try:
+        dados = json.loads(request.body or "{}")
+    except json.JSONDecodeError:
+        return JsonResponse({"status": "erro", "mensagem": "JSON inválido."}, status=400)
+
+    metrica = get_object_or_404(Metrica, id=id, usuario__isnull=True)
+    try:
+        valores = _normalizar_dados_metrica(dados, permitir_tipo=False)
+        if _nome_metrica_duplicado(None, valores["nome"], excluir_id=metrica.id):
+            raise ValidationError("Já existe uma métrica pública com esse nome.")
+        for campo, valor in valores.items():
+            setattr(metrica, campo, valor)
+        metrica.save(update_fields=list(valores))
+    except ValidationError as exc:
+        return JsonResponse({"status": "erro", "mensagem": exc.messages[0]}, status=400)
+    except IntegrityError:
+        return JsonResponse({
+            "status": "erro",
+            "mensagem": "Já existe uma métrica pública com esse nome.",
+        }, status=409)
+    return JsonResponse({"status": "ok", "mensagem": "Métrica atualizada."})
 
 
 @admin_required
 @require_http_methods(["DELETE"])
 def admin_pondersec_metrica_publica_deletar(request, id):
-    ensure_judge_metrics(None)
-    return JsonResponse({
-        "status": "erro",
-        "mensagem": "As quatro métricas oficiais não podem ser removidas.",
-    }, status=409)
+    metrica = get_object_or_404(Metrica, id=id, usuario__isnull=True, ativa=True)
+    outras_ativas = Metrica.objects.filter(usuario=None, ativa=True).exclude(id=id).exists()
+    if not outras_ativas:
+        return JsonResponse({
+            "status": "erro",
+            "mensagem": "Ao menos uma métrica pública deve permanecer ativa.",
+        }, status=409)
+    metrica.ativa = False
+    metrica.save(update_fields=["ativa"])
+    return JsonResponse({"status": "ok", "mensagem": "Métrica desativada."})
 
 
 @admin_required
 @require_http_methods(["POST"])
 def admin_pondersec_metrica_publica_toggle(request, id):
-    from responsegenerator.models import Metrica
-    ensure_judge_metrics(None)
     try:
         metrica = Metrica.objects.get(id=id, usuario=None)
     except Metrica.DoesNotExist:
@@ -3551,7 +3784,11 @@ def admin_pondersec_metrica_publica_toggle(request, id):
 @admin_required
 def admin_pondersec_avaliacoes_publicas(request):
     metricas = [
-        {"id": metrica.id, "nome": metrica.nome, "pontuacao_maxima": 5}
+        {
+            "id": metrica.id,
+            "nome": metrica.nome,
+            "pontuacao_maxima": _metric_max(metrica),
+        }
         for metrica in ensure_judge_metrics(None)
     ]
     llms = list(
@@ -3660,8 +3897,20 @@ def admin_pondersec_llms_publicas(request):
         provedor = (request.POST.get("provider") or "").strip()
         api_key = (request.POST.get("apiKey") or "").strip()
 
-        if not nome or not api_key:
-            django_messages.error(request, "Nome do modelo e API key são obrigatórios.")
+        if not nome or not provedor or not api_key:
+            django_messages.error(request, "Provedor, nome do modelo e API key são obrigatórios.")
+            return redirect("admin_pondersec_llms_publicas")
+
+        if provedor not in SUPPORTED_LLM_PROVIDERS:
+            django_messages.error(request, "Provedor de IA não suportado.")
+            return redirect("admin_pondersec_llms_publicas")
+
+        if len(nome) > LLMPublica._meta.get_field("nome").max_length:
+            django_messages.error(request, "O nome do modelo excede o tamanho permitido.")
+            return redirect("admin_pondersec_llms_publicas")
+
+        if len(api_key) > LLMPublica._meta.get_field("api_key").max_length:
+            django_messages.error(request, "A chave da API excede o tamanho permitido.")
             return redirect("admin_pondersec_llms_publicas")
 
         LLMPublica.objects.create(
@@ -3683,10 +3932,15 @@ def admin_pondersec_llms_publicas(request):
 @admin_required
 @require_http_methods(["DELETE"])
 def admin_pondersec_llm_publica_deletar(request, id):
-    deleted, _ = LLMPublica.objects.filter(id=id).delete()
-    if not deleted:
+    llm = LLMPublica.objects.filter(id=id).first()
+    if not llm:
         return JsonResponse({"status": "erro", "mensagem": "LLM não encontrada."}, status=404)
-    return JsonResponse({"status": "ok", "mensagem": "LLM removida."})
+    llm.ativo = False
+    llm.save(update_fields=["ativo"])
+    return JsonResponse({
+        "status": "ok",
+        "mensagem": "LLM desativada; o histórico foi preservado.",
+    })
 
 
 @admin_required
@@ -3710,13 +3964,45 @@ def admin_pondersec_llm_publica_editar(request, id):
     if not nome:
         return JsonResponse({"status": "erro", "mensagem": "Nome do modelo é obrigatório."}, status=400)
 
+    if len(nome) > LLMPublica._meta.get_field("nome").max_length:
+        return JsonResponse({
+            "status": "erro",
+            "mensagem": "O nome do modelo excede o tamanho permitido.",
+        }, status=400)
+
+    if len(api_key) > LLMPublica._meta.get_field("api_key").max_length:
+        return JsonResponse({
+            "status": "erro",
+            "mensagem": "A chave da API excede o tamanho permitido.",
+        }, status=400)
+
+    nova_descricao = descricao.strip() if isinstance(descricao, str) else (llm.descricao or "")
+    if nova_descricao not in SUPPORTED_LLM_PROVIDERS:
+        return JsonResponse({
+            "status": "erro",
+            "mensagem": "Provedor de IA não suportado.",
+        }, status=400)
+    configuracao_mudou = llm.nome != nome or (llm.descricao or "") != nova_descricao
+    possui_historico = (
+        llm.respostas_publicas.exists()
+        or llm.avaliacoes_publicas_como_juiz.exists()
+    )
+    if configuracao_mudou and possui_historico:
+        return JsonResponse({
+            "status": "erro",
+            "mensagem": (
+                "Esta LLM já possui histórico. Desative-a e adicione o novo modelo "
+                "como outra configuração; a API key pode ser renovada nesta edição."
+            ),
+        }, status=409)
+
     llm.nome = nome
     fields = ["nome"]
     if api_key:
         llm.api_key = api_key
         fields.append("api_key")
     if descricao is not None:
-        llm.descricao = descricao.strip()
+        llm.descricao = nova_descricao
         fields.append("descricao")
     if isinstance(ativo, bool):
         llm.ativo = ativo

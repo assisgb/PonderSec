@@ -367,9 +367,17 @@ def _mapped_error(exc, provider):
             _("O provedor demorou além do tempo limite para responder. Tente novamente."),
             code="timeout",
         )
-    if status == 404 or status_text == "404" or "model not found" in lowered or "not_found" in lowered:
+    if (
+        status == 404
+        or status_text == "404"
+        or "model not found" in lowered
+        or "not_found" in lowered
+        or "model_decommissioned" in lowered
+        or "model has been decommissioned" in lowered
+        or "model is no longer supported" in lowered
+    ):
         return LLMServiceError(
-            _("O modelo configurado não foi encontrado ou não está disponível para esta chave."),
+            _("O modelo configurado foi encerrado, não foi encontrado ou não está disponível para esta chave."),
             code="model_not_found",
         )
     return LLMServiceError(

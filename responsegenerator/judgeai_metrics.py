@@ -1,7 +1,5 @@
 import unicodedata
 
-from django.db import IntegrityError, transaction
-
 
 JUDGE_METRICS = (
     {
@@ -38,20 +36,13 @@ JUDGE_METRICS = (
     },
 )
 
-JUDGE_METRIC_KEYS = tuple(item["key"] for item in JUDGE_METRICS)
 JUDGE_METRIC_NAMES = tuple(item["name"] for item in JUDGE_METRICS)
-LEGACY_JUDGE_METRIC_KEYS = {"fidelidade", "relevancia"}
 
 
 def normalize_metric_name(value):
     normalized = unicodedata.normalize("NFKD", str(value or "").strip().casefold())
     without_accents = "".join(char for char in normalized if not unicodedata.combining(char))
     return "".join(char for char in without_accents if char.isalnum())
-
-
-def judge_metric_key(value):
-    normalized = normalize_metric_name(value)
-    return normalized if normalized in JUDGE_METRIC_KEYS else None
 
 
 def _metric_defaults(definition):
@@ -67,116 +58,21 @@ def _metric_defaults(definition):
     }
 
 
-def _metric_structural_fields(definition):
-    """Campos fixos da métrica — exclui `ativa`, que é configurável pelo admin."""
-    defaults = _metric_defaults(definition)
-    defaults.pop("ativa")
-    return defaults
-
-
-def _ready_metrics(existing):
-    """Retorna a ordem oficial quando o banco já está consistente."""
-    by_key = {}
-    for metric in existing:
-        key = judge_metric_key(metric.nome)
-        normalized = normalize_metric_name(metric.nome)
-        if key:
-            if key in by_key:
-                return None
-            by_key[key] = metric
-        elif normalized in LEGACY_JUDGE_METRIC_KEYS or metric.ativa:
-            return None
-
-    if set(by_key) != set(JUDGE_METRIC_KEYS):
-        return None
-
-    definitions = {item["key"]: item for item in JUDGE_METRICS}
-    for key, metric in by_key.items():
-        structural = _metric_structural_fields(definitions[key])
-        if any(getattr(metric, field) != value for field, value in structural.items()):
-            return None
-
-    return [by_key[key] for key in JUDGE_METRIC_KEYS]
-
-
-@transaction.atomic
-def _repair_judge_metrics(usuario):
-    from responsegenerator.models import Metrica
-
-    existing = list(Metrica.objects.select_for_update().filter(usuario=usuario).order_by("id"))
-    ready = _ready_metrics(existing)
-    if ready is not None:
-        return ready
-
-    by_key = {}
-    for metric in existing:
-        key = judge_metric_key(metric.nome)
-        if key and key not in by_key:
-            by_key[key] = metric
-
-    result = []
-    for definition in JUDGE_METRICS:
-        metric = by_key.get(definition["key"])
-        defaults = _metric_defaults(definition)
-        if metric is None:
-            metric = Metrica.objects.create(usuario=usuario, **defaults)
-        else:
-            structural = _metric_structural_fields(definition)
-            changed = []
-            for field, value in structural.items():
-                if getattr(metric, field) != value:
-                    setattr(metric, field, value)
-                    changed.append(field)
-            if changed:
-                metric.save(update_fields=changed)
-        result.append(metric)
-
-    # Métricas antigas não podem voltar a participar de nenhuma avaliação.
-    legacy_ids = [
-        metric.id
-        for metric in existing
-        if normalize_metric_name(metric.nome) in LEGACY_JUDGE_METRIC_KEYS
-    ]
-    if legacy_ids:
-        Metrica.objects.filter(id__in=legacy_ids).delete()
-
-    noncanonical_ids = [
-        metric.id
-        for metric in existing
-        if judge_metric_key(metric.nome) is None
-        and normalize_metric_name(metric.nome) not in LEGACY_JUDGE_METRIC_KEYS
-        and metric.ativa
-    ]
-    if noncanonical_ids:
-        Metrica.objects.filter(id__in=noncanonical_ids).update(ativa=False)
-
-    return result
-
-
 def ensure_judge_metrics(usuario, *, include_inactive=False):
-    """Garante as métricas oficiais e, no chat público, filtra as inativas."""
+    """Cria os padrões no primeiro uso sem sobrescrever métricas configuradas."""
     from responsegenerator.models import Metrica
 
-    existing = list(Metrica.objects.filter(usuario=usuario).order_by("id"))
-    ready = _ready_metrics(existing)
-    if ready is not None:
-        all_metrics = ready
-    else:
-        try:
-            all_metrics = _repair_judge_metrics(usuario)
-        except IntegrityError:
-            # Outro worker pode ter criado as mesmas métricas entre o SELECT e o
-            # INSERT. A constraint resolve a corrida; esta nova leitura aproveita o
-            # conjunto que acabou de ser confirmado.
-            existing = list(Metrica.objects.filter(usuario=usuario).order_by("id"))
-            ready = _ready_metrics(existing)
-            if ready is not None:
-                all_metrics = ready
-            else:
-                all_metrics = _repair_judge_metrics(usuario)
+    queryset = Metrica.objects.filter(usuario=usuario)
+    if not queryset.exists():
+        # Um único INSERT em lote evita deixar só parte dos padrões caso dois
+        # workers inicializem o mesmo conjunto simultaneamente. As constraints
+        # de unicidade resolvem a eventual corrida sem alterar registros atuais.
+        Metrica.objects.bulk_create(
+            [Metrica(usuario=usuario, **_metric_defaults(item)) for item in JUDGE_METRICS],
+            ignore_conflicts=True,
+        )
 
-    if usuario is None and not include_inactive:
-        active = [m for m in all_metrics if m.ativa]
-        return active if active else all_metrics
-
-    return all_metrics
+    queryset = Metrica.objects.filter(usuario=usuario).order_by("id")
+    if not include_inactive:
+        queryset = queryset.filter(ativa=True)
+    return list(queryset)

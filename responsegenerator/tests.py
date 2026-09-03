@@ -22,6 +22,7 @@ from responsegenerator.llm_client import (
 )
 from responsegenerator.models import (
     AdminPonderSec,
+    Avaliacao,
     AvaliacaoFormulario,
     AvaliacaoJuiz,
     AvaliacaoPublicaLLM,
@@ -186,6 +187,30 @@ class PublicChatCrossEvaluationTests(TestCase):
         failed = RespostaPublica.objects.get()
         self.assertFalse(failed.ok)
         self.assertIn("cota", failed.conteudo_resposta.lower())
+
+    @mock.patch("responsegenerator.views._judgeai_call_configured_llm")
+    def test_public_chat_identifies_the_judge_that_failed(self, mocked_call):
+        def provider_result(_llm, prompt):
+            if "atuando como juiz no chat público" in prompt:
+                raise LLMServiceError(
+                    "O modelo configurado foi encerrado.",
+                    code="model_not_found",
+                )
+            return "Resposta gerada normalmente."
+
+        mocked_call.side_effect = provider_result
+        response = self.client.post(
+            reverse("usuario_final_chat_api"),
+            data=json.dumps({"pergunta": "Como evitar phishing?", "modelo_id": self.llm_a.id}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        evaluation = response.json()["avaliacao_cruzada"]
+        self.assertEqual(evaluation["status"], "erro")
+        self.assertEqual(evaluation["falhas"][0]["modelo"], self.llm_b.nome)
+        self.assertIn(self.llm_b.nome, evaluation["mensagem"])
+        self.assertIn("encerrado", evaluation["mensagem"])
 
     @mock.patch("responsegenerator.views._judgeai_stream_configured_llm")
     def test_public_chat_stream_emits_visible_error_event(self, mocked_stream):
@@ -426,6 +451,34 @@ class JudgeAIParserAndResearchTests(TestCase):
         with self.assertRaisesRegex(ValueError, "Métrica inesperada"):
             _parse_judgeai_result(judge_payload(), active_metrics)
 
+    def test_parser_supports_a_custom_metric_and_its_configured_scale(self):
+        custom = Metrica.objects.create(
+            usuario=self.user,
+            nome="Utilidade prática",
+            descricao="Verifica se a orientação pode ser aplicada.",
+            tipo="quantitativa",
+            pontuacao_maxima=3,
+        )
+        payload = {
+            "notas": [{
+                "metrica": "Utilidade pratica",
+                "nota": 3,
+                "justificativa": "A resposta contém uma ação concreta e aplicável.",
+            }],
+            "justificativa": "A orientação é aplicável.",
+        }
+
+        scores, _ = _parse_judgeai_result(
+            json.dumps(payload, ensure_ascii=False),
+            [custom],
+        )
+        self.assertEqual(scores[0]["metrica"], "Utilidade prática")
+        self.assertEqual(scores[0]["max"], 3)
+
+        payload["notas"][0]["nota"] = 4
+        with self.assertRaisesRegex(ValueError, "fora da escala"):
+            _parse_judgeai_result(json.dumps(payload, ensure_ascii=False), [custom])
+
     @mock.patch("responsegenerator.views._judgeai_call_configured_llm", return_value=judge_payload())
     def test_research_judgeai_never_self_evaluates_and_saves_four_metrics(self, mocked_call):
         llm_a = LLM.objects.create(usuario=self.user, nome="model-a", descricao="Groq", api_key="a")
@@ -593,7 +646,7 @@ class ResearchBatchGenerationTests(TestCase):
         self.client.force_login(self.user)
         self.groq = LLM.objects.create(
             usuario=self.user,
-            nome="llama-3.3-70b-versatile",
+            nome="openai/gpt-oss-120b",
             descricao="Groq",
             api_key="groq-key",
         )
@@ -883,7 +936,7 @@ class ProviderClientTests(TestCase):
     @mock.patch("responsegenerator.llm_client.Groq")
     def test_groq_client_flow_and_timeout(self, mocked_groq):
         llm = LLM.objects.create(
-            usuario=self.user, nome="llama-3.3-70b-versatile", descricao="Groq", api_key="groq-key",
+            usuario=self.user, nome="openai/gpt-oss-120b", descricao="Groq", api_key="groq-key",
         )
         client = mocked_groq.return_value
         client.chat.completions.create.return_value = SimpleNamespace(
@@ -895,6 +948,24 @@ class ProviderClientTests(TestCase):
         self.assertEqual(result, "Resposta Groq")
         mocked_groq.assert_called_once_with(api_key="groq-key", timeout=45.0, max_retries=0)
         client.chat.completions.create.assert_called_once()
+
+    @mock.patch("responsegenerator.llm_client.Groq")
+    def test_groq_decommissioned_model_has_specific_error(self, mocked_groq):
+        llm = LLM.objects.create(
+            usuario=self.user,
+            nome="modelo-antigo",
+            descricao="Groq",
+            api_key="groq-key",
+        )
+        mocked_groq.return_value.chat.completions.create.side_effect = RuntimeError(
+            "model_decommissioned: the model has been decommissioned"
+        )
+
+        with self.assertRaises(LLMServiceError) as raised:
+            call_configured_llm(llm, "Pergunta")
+
+        self.assertEqual(raised.exception.code, "model_not_found")
+        self.assertIn("encerrado", str(raised.exception).lower())
 
     @mock.patch("responsegenerator.llm_client.openai")
     def test_deepseek_uses_official_api_endpoint(self, mocked_openai):
@@ -954,7 +1025,7 @@ class LLMConfigurationTests(TestCase):
             response = self.client.put(
                 reverse("edit_llm_api", args=[self.llm.id]),
                 data=json.dumps({
-                    "nome": "llama-3.3-70b-versatile",
+                    "nome": "openai/gpt-oss-120b",
                     "descricao": "Groq",
                     "api_key": new_key,
                 }),
@@ -969,7 +1040,7 @@ class LLMConfigurationTests(TestCase):
         self.assertNotIn(new_key, response.content.decode())
         self.llm.refresh_from_db()
         self.assertEqual(self.llm.api_key, new_key)
-        self.assertEqual(self.llm.nome, "llama-3.3-70b-versatile")
+        self.assertEqual(self.llm.nome, "openai/gpt-oss-120b")
         self.assertEqual(self.llm.descricao, "Groq")
         self.assertIn("key_updated=True", " ".join(captured.output))
 
@@ -1036,14 +1107,196 @@ class LLMConfigurationTests(TestCase):
     def test_new_configuration_persists_api_key(self):
         response = self.client.post(reverse("setup_llm"), data={
             "provider": "Groq",
-            "model": "llama-3.1-8b-instant",
+            "model": "openai/gpt-oss-20b",
             "apiKey": "new-configuration-key",
         })
 
         self.assertRedirects(response, reverse("setup_llm"))
-        created = LLM.objects.get(nome="llama-3.1-8b-instant")
+        created = LLM.objects.get(nome="openai/gpt-oss-20b")
         self.assertEqual(created.api_key, "new-configuration-key")
         self.assertEqual(created.usuario, self.user)
+
+    def test_setup_page_lists_current_groq_models_and_not_retired_models(self):
+        response = self.client.get(reverse("setup_llm"))
+
+        self.assertEqual(response.status_code, 200)
+        for model in ("openai/gpt-oss-120b", "openai/gpt-oss-20b", "qwen/qwen3.6-27b"):
+            self.assertContains(response, model)
+        self.assertNotContains(response, "llama-3.3-70b-versatile")
+        self.assertNotContains(response, "llama-3.1-8b-instant")
+
+    def test_model_change_with_history_is_blocked_but_key_rotation_is_allowed(self):
+        question = Questao.objects.create(usuario=self.user, conteudo="Pergunta")
+        Resposta.objects.create(questao=question, llm=self.llm, conteudo_resposta="Resposta")
+
+        blocked = self.client.put(
+            reverse("edit_llm_api", args=[self.llm.id]),
+            data=json.dumps({
+                "nome": "openai/gpt-oss-120b",
+                "descricao": "Groq",
+                "api_key": "replacement-key",
+            }),
+            content_type="application/json",
+        )
+        self.assertEqual(blocked.status_code, 409)
+
+        rotated = self.client.put(
+            reverse("edit_llm_api", args=[self.llm.id]),
+            data=json.dumps({
+                "nome": self.llm.nome,
+                "descricao": self.llm.descricao,
+                "api_key": "replacement-key",
+            }),
+            content_type="application/json",
+        )
+        self.assertEqual(rotated.status_code, 200)
+        self.llm.refresh_from_db()
+        self.assertEqual(self.llm.api_key, "replacement-key")
+
+
+class ResearchMetricConfigurationTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="metric-owner", password="senha-segura")
+        self.client.force_login(self.user)
+        self.metrics = ensure_judge_metrics(self.user)
+
+    def test_page_exposes_add_and_edit_controls(self):
+        response = self.client.get(reverse("setup_avaliacao"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Adicionar Métrica")
+        self.assertContains(response, "abrirModalEditar")
+
+    def test_researcher_can_create_and_edit_custom_metric(self):
+        create_response = self.client.post(reverse("setup_adicionar_metrica"), data={
+            "nome": "Utilidade prática",
+            "descricao": "Descrição inicial",
+            "tipo": "quantitativa",
+            "pontuacao_maxima": "3",
+            "criterio_texto": "Critério inicial",
+        })
+        self.assertRedirects(create_response, reverse("setup_avaliacao"))
+        metric = Metrica.objects.get(usuario=self.user, nome="Utilidade prática")
+        self.assertEqual(metric.pontuacao_maxima, 3)
+
+        edit_response = self.client.post(reverse("setup_configurar_metrica"), data={
+            "metrica_id": metric.id,
+            "nome": "Aplicabilidade",
+            "descricao": "Descrição atualizada",
+            "tipo": "quantitativa",
+            "pontuacao_maxima": "2",
+            "criterio_texto": "Critério atualizado",
+            "opcao_1": "Não",
+            "opcao_2": "Sim",
+        })
+        self.assertRedirects(edit_response, reverse("setup_avaliacao"))
+        metric.refresh_from_db()
+        self.assertEqual(metric.nome, "Aplicabilidade")
+        self.assertEqual(metric.descricao, "Descrição atualizada")
+        self.assertEqual(metric.pontuacao_maxima, 2)
+        self.assertEqual(metric.label_opcao_1, "Não")
+        self.assertEqual(metric.label_opcao_2, "Sim")
+        self.assertIn(metric, ensure_judge_metrics(self.user))
+
+        dashboard = self.client.get(reverse("dashboard_avaliacoes"))
+        dashboard_data = json.loads(dashboard.context["dashboard_json"])
+        configured = {
+            item["nome"]: item["pontuacao_maxima"]
+            for item in dashboard_data["metricas"]
+        }
+        self.assertEqual(configured["Aplicabilidade"], 2)
+
+    def test_researcher_cannot_edit_another_users_metric(self):
+        other = User.objects.create_user(username="metric-other", password="senha-segura")
+        foreign_metric = ensure_judge_metrics(other)[0]
+
+        response = self.client.post(reverse("setup_configurar_metrica"), data={
+            "metrica_id": foreign_metric.id,
+            "nome": "Alterada",
+            "descricao": "Tentativa",
+            "tipo": "quantitativa",
+            "pontuacao_maxima": "5",
+        })
+
+        self.assertEqual(response.status_code, 404)
+        foreign_metric.refresh_from_db()
+        self.assertNotEqual(foreign_metric.nome, "Alterada")
+
+    def test_delete_is_logical_and_the_last_active_metric_is_protected(self):
+        metric = self.metrics[0]
+        response = self.client.delete(reverse("setup_deletar_metrica", args=[metric.id]))
+        self.assertEqual(response.status_code, 200)
+        metric.refresh_from_db()
+        self.assertFalse(metric.ativa)
+        page = self.client.get(reverse("setup_avaliacao"))
+        self.assertContains(page, metric.nome)
+        self.assertContains(page, "Inativa")
+
+        reactivated = self.client.post(
+            reverse("setup_alternar_metrica", args=[metric.id])
+        )
+        self.assertEqual(reactivated.status_code, 200)
+        metric.refresh_from_db()
+        self.assertTrue(metric.ativa)
+
+        Metrica.objects.filter(usuario=self.user).update(ativa=False)
+        last = Metrica.objects.create(
+            usuario=self.user,
+            nome="Última",
+            descricao="Última métrica",
+            tipo="quantitativa",
+            pontuacao_maxima=5,
+            ativa=True,
+        )
+        blocked = self.client.delete(reverse("setup_deletar_metrica", args=[last.id]))
+        self.assertEqual(blocked.status_code, 409)
+        last.refresh_from_db()
+        self.assertTrue(last.ativa)
+
+    def test_manual_evaluation_page_exists_and_respects_the_metric_scale(self):
+        custom = Metrica.objects.create(
+            usuario=self.user,
+            nome="Decisão binária",
+            descricao="Escala de duas opções",
+            tipo="quantitativa",
+            pontuacao_maxima=2,
+        )
+        question = Questao.objects.create(usuario=self.user, conteudo="Pergunta manual")
+        answer = Resposta.objects.create(questao=question, conteudo_resposta="Resposta manual")
+        form = Formulario.objects.create(usuario=self.user, nome="Formulário manual")
+        form.questoes.add(question)
+        url = reverse("avaliacao_respostas", args=[form.id, question.id])
+
+        page = self.client.get(url)
+        self.assertEqual(page.status_code, 200)
+        self.assertContains(page, "Avaliação manual")
+        self.assertContains(page, 'max="2"')
+
+        invalid = self.client.post(
+            url,
+            data=json.dumps([{
+                "resposta_id": answer.id,
+                "metrica_id": custom.id,
+                "quanti": 3,
+                "quali": "Fora da escala",
+            }]),
+            content_type="application/json",
+        )
+        self.assertEqual(invalid.status_code, 400)
+        self.assertFalse(Avaliacao.objects.exists())
+
+        valid = self.client.post(
+            url,
+            data=json.dumps([{
+                "resposta_id": answer.id,
+                "metrica_id": custom.id,
+                "quanti": 2,
+                "quali": "Dentro da escala",
+            }]),
+            content_type="application/json",
+        )
+        self.assertEqual(valid.status_code, 200)
+        self.assertEqual(Avaliacao.objects.get().avaliacao_quanti, 2)
 
 
 class AdminPublicMetricTests(TestCase):
@@ -1055,31 +1308,57 @@ class AdminPublicMetricTests(TestCase):
         session[ADMIN_SESSION_KEY] = self.admin.id
         session.save()
 
-    def test_public_metrics_are_fixed_and_cannot_be_created_or_deleted(self):
+    def test_admin_can_create_edit_and_logically_delete_a_public_metric(self):
         response = self.client.post(
             reverse("admin_pondersec_metricas_publicas"),
-            data={"nome": "Fidelidade", "pontuacao_maxima": "9"},
+            data={
+                "nome": "Utilidade prática",
+                "descricao": "Descrição inicial",
+                "criterio_texto": "Critério inicial",
+                "pontuacao_maxima": "9",
+            },
         )
-        self.assertEqual(response.status_code, 302)
-        self.assertFalse(Metrica.objects.filter(usuario__isnull=True, nome="Fidelidade").exists())
-        metrics = ensure_judge_metrics(None)
-        self.assertEqual([item.nome for item in metrics], list(JUDGE_METRIC_NAMES))
-        self.assertTrue(all(item.pontuacao_maxima == 5 and item.ativa for item in metrics))
+        self.assertRedirects(response, reverse("admin_pondersec_metricas_publicas"))
+        metric = Metrica.objects.get(usuario__isnull=True, nome="Utilidade prática")
+        self.assertEqual(metric.pontuacao_maxima, 5)
+
+        edit_response = self.client.put(
+            reverse("admin_pondersec_metrica_publica_editar", args=[metric.id]),
+            data=json.dumps({
+                "nome": "Aplicabilidade",
+                "descricao": "Descrição atualizada",
+                "criterio_texto": "Critério atualizado",
+                "pontuacao_maxima": "3",
+            }),
+            content_type="application/json",
+        )
+        self.assertEqual(edit_response.status_code, 200)
+        metric.refresh_from_db()
+        self.assertEqual(metric.nome, "Aplicabilidade")
+        self.assertEqual(metric.pontuacao_maxima, 3)
+
+        evaluation_response = self.client.get(reverse("admin_pondersec_avaliacoes_publicas"))
+        configured = {
+            item["nome"]: item["max"]
+            for item in evaluation_response.context["por_metrica"]
+        }
+        self.assertEqual(configured["Aplicabilidade"], 3)
 
         delete_response = self.client.delete(
-            reverse("admin_pondersec_metrica_publica_deletar", args=[metrics[0].id])
+            reverse("admin_pondersec_metrica_publica_deletar", args=[metric.id])
         )
-        self.assertEqual(delete_response.status_code, 409)
-        self.assertTrue(Metrica.objects.filter(pk=metrics[0].id).exists())
+        self.assertEqual(delete_response.status_code, 200)
+        metric.refresh_from_db()
+        self.assertFalse(metric.ativa)
 
-    def test_public_metric_and_evaluation_pages_render_only_four_metrics(self):
+    def test_public_metric_page_renders_defaults_and_add_control(self):
         metric_response = self.client.get(reverse("admin_pondersec_metricas_publicas"))
         evaluation_response = self.client.get(reverse("admin_pondersec_avaliacoes_publicas"))
         self.assertEqual(metric_response.status_code, 200)
         self.assertEqual(evaluation_response.status_code, 200)
         for name in JUDGE_METRIC_NAMES:
             self.assertContains(metric_response, name)
-        self.assertNotContains(metric_response, "Adicionar Métrica")
+        self.assertContains(metric_response, "Adicionar Métrica")
 
     def test_inactive_public_metric_remains_visible_and_can_be_reactivated(self):
         metric = ensure_judge_metrics(None)[0]
@@ -1120,6 +1399,69 @@ class AdminPublicMetricTests(TestCase):
             "gemini-3.1-pro-preview",
         ):
             self.assertContains(response, model)
+
+    def test_public_llm_page_lists_current_groq_models(self):
+        response = self.client.get(reverse("admin_pondersec_llms_publicas"))
+
+        self.assertEqual(response.status_code, 200)
+        for model in ("openai/gpt-oss-120b", "openai/gpt-oss-20b", "qwen/qwen3.6-27b"):
+            self.assertContains(response, model)
+        self.assertNotContains(response, "llama-3.3-70b-versatile")
+        self.assertNotContains(response, "llama-3.1-8b-instant")
+
+    def test_public_llm_deletion_deactivates_and_preserves_history(self):
+        llm = LLMPublica.objects.create(
+            nome="openai/gpt-oss-120b", descricao="Groq", api_key="gsk_secret_1234",
+        )
+        question = PerguntaPublica.objects.create(conteudo="Pergunta")
+        answer = RespostaPublica.objects.create(
+            pergunta=question, llm=llm, conteudo_resposta="Resposta",
+        )
+
+        response = self.client.delete(
+            reverse("admin_pondersec_llm_publica_deletar", args=[llm.id])
+        )
+
+        self.assertEqual(response.status_code, 200)
+        llm.refresh_from_db()
+        answer.refresh_from_db()
+        self.assertFalse(llm.ativo)
+        self.assertEqual(answer.llm_id, llm.id)
+
+        page = self.client.get(reverse("admin_pondersec_llms_publicas"))
+        self.assertContains(page, "••••1234")
+        self.assertNotContains(page, "gsk_secret_1234")
+
+    def test_public_llm_with_history_allows_key_rotation_but_not_model_rename(self):
+        llm = LLMPublica.objects.create(
+            nome="gemini-3.5-flash", descricao="Gemini", api_key="old-key",
+        )
+        question = PerguntaPublica.objects.create(conteudo="Pergunta")
+        RespostaPublica.objects.create(pergunta=question, llm=llm, conteudo_resposta="Resposta")
+
+        blocked = self.client.put(
+            reverse("admin_pondersec_llm_publica_editar", args=[llm.id]),
+            data=json.dumps({
+                "nome": "openai/gpt-oss-120b",
+                "descricao": "Groq",
+                "api_key": "gsk_new",
+            }),
+            content_type="application/json",
+        )
+        self.assertEqual(blocked.status_code, 409)
+
+        rotated = self.client.put(
+            reverse("admin_pondersec_llm_publica_editar", args=[llm.id]),
+            data=json.dumps({
+                "nome": llm.nome,
+                "descricao": llm.descricao,
+                "api_key": "new-key",
+            }),
+            content_type="application/json",
+        )
+        self.assertEqual(rotated.status_code, 200)
+        llm.refresh_from_db()
+        self.assertEqual(llm.api_key, "new-key")
 
 
 class PublicFormEvaluationTests(TestCase):

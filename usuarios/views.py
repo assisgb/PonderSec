@@ -257,7 +257,9 @@ def verificar_codigo(request):
         _clear_pending_registration(request)
         return redirect("login")
 
-    return render(request, "verificar_codigo.html")
+    # A etapa de verificação passou a fazer parte da própria tela de cadastro.
+    # Mantenha esta rota antiga apenas como redirecionamento compatível.
+    return redirect(_verification_url())
 
 
 def reenviar_codigo(request):

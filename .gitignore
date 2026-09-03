@@ -9,6 +9,8 @@ __pycache__/
 *.pyd
 *.key
 *.crt
+certificados/
+backups/
 CLAUDE.md
 .planning/
 docs/

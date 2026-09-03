@@ -64,7 +64,14 @@ O sistema iniciará automaticamente os serviços definidos no `docker-compose.ym
 
 # ✅ Validação e testes
 
-O JudgeAI usa exclusivamente **Completude, Acurácia, Diretividade e Clareza**, com notas inteiras de **1 a 5**.
+O JudgeAI cria **Completude, Acurácia, Diretividade e Clareza** como métricas
+padrão. Pesquisadores e administradores podem adicionar e editar métricas; cada
+uma usa uma escala inteira configurável de **1 a 2**, **1 a 3**, **1 a 4** ou
+**1 a 5**.
+
+Para Groq, gere a chave em <https://console.groq.com/keys> e selecione um modelo
+atual do catálogo da interface, como `openai/gpt-oss-120b`,
+`openai/gpt-oss-20b` ou `qwen/qwen3.6-27b`. Nunca grave a chave no repositório.
 
 Depois de atualizar o código, aplique as migrações e execute os testes:
 
@@ -79,6 +86,10 @@ configurados no `.env`:
 ```dotenv
 DJANGO_DEBUG=False
 DJANGO_SECRET_KEY=gere-uma-chave-longa-e-unica
+DJANGO_ALLOWED_HOSTS=pondersec.icomp.ufam.edu.br,localhost,127.0.0.1
+SECURE_HSTS_SECONDS=3600
+SECURE_HSTS_INCLUDE_SUBDOMAINS=false
+SECURE_HSTS_PRELOAD=false
 LLM_REQUEST_TIMEOUT_SECONDS=45
 LLM_STREAM_TIMEOUT_SECONDS=60
 LLM_MODELS_MAX_WORKERS=4

@@ -1,0 +1,95 @@
+{% load i18n %}
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE|default:'pt-br' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% translate "PonderSEC — Avaliação manual" %}</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; min-height: 100vh; padding: 24px; background: #02080d; color: #d8f9ef; font: 15px system-ui, sans-serif; }
+        main { width: min(1100px, 100%); margin: auto; }
+        a { color: #00e5a0; }
+        h1 { margin-bottom: 8px; }
+        .muted { color: #8ca9a1; }
+        .answer { margin: 24px 0; padding: 22px; border: 1px solid #16443a; border-radius: 14px; background: #07121a; }
+        .answer-text { white-space: pre-wrap; line-height: 1.6; }
+        .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; margin-top: 18px; }
+        .metric { padding: 14px; border: 1px solid #17372f; border-radius: 10px; background: #050d13; }
+        label { display: block; margin: 8px 0 5px; font-weight: 700; }
+        input, textarea { width: 100%; border: 1px solid #24594d; border-radius: 8px; background: #02080d; color: #d8f9ef; padding: 10px; }
+        textarea { min-height: 76px; resize: vertical; }
+        button { border: 1px solid #00c98d; border-radius: 9px; background: #00c98d; color: #001b13; padding: 12px 18px; font-weight: 800; cursor: pointer; }
+        #feedback { min-height: 24px; margin: 14px 0; }
+        .error { color: #ff8878; }
+        @media (max-width: 600px) { body { padding: 14px; } .answer { padding: 16px; } }
+    </style>
+</head>
+<body>
+<main>
+    <a href="{% url 'avaliacao' %}">← {% translate "Voltar às avaliações" %}</a>
+    <h1>{% translate "Avaliação manual" %}</h1>
+    <p class="muted">{{ formulario.nome }} · {{ questao.conteudo }}</p>
+
+    <form id="evaluation-form">
+        {% csrf_token %}
+        {% for resposta in respostas %}
+            <section class="answer" data-response-id="{{ resposta.id }}">
+                <h2>{% if resposta.llm %}{{ resposta.llm.nome }}{% else %}{% translate "Resposta humana" %}{% endif %}</h2>
+                <div class="answer-text">{{ resposta.conteudo_resposta }}</div>
+                <div class="metrics">
+                    {% for metrica in metricas %}
+                        <div class="metric" data-metric-id="{{ metrica.id }}">
+                            <strong>{{ metrica.nome }}</strong>
+                            <p class="muted">{{ metrica.descricao }}</p>
+                            <label>{% translate "Nota" %} (1–{{ metrica.pontuacao_maxima|default:5 }})</label>
+                            <input class="score" type="number" min="1" max="{{ metrica.pontuacao_maxima|default:5 }}" required>
+                            <label>{% translate "Justificativa" %}</label>
+                            <textarea class="comment"></textarea>
+                        </div>
+                    {% endfor %}
+                </div>
+            </section>
+        {% empty %}
+            <p class="muted">{% translate "Não há respostas para avaliar nesta pergunta." %}</p>
+        {% endfor %}
+        {% if respostas %}<button type="submit">{% translate "Salvar avaliação" %}</button>{% endif %}
+        <div id="feedback" role="status" aria-live="polite"></div>
+    </form>
+</main>
+<script>
+    document.getElementById('evaluation-form').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const feedback = document.getElementById('feedback');
+        const payload = [];
+        document.querySelectorAll('.answer').forEach(answer => {
+            answer.querySelectorAll('.metric').forEach(metric => {
+                payload.push({
+                    resposta_id: Number(answer.dataset.responseId),
+                    metrica_id: Number(metric.dataset.metricId),
+                    quanti: metric.querySelector('.score').value,
+                    quali: metric.querySelector('.comment').value,
+                });
+            });
+        });
+        try {
+            const response = await fetch(location.href, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.mensagem || '{% translate "Falha ao salvar." %}');
+            feedback.className = '';
+            feedback.textContent = '{% translate "Avaliação salva." %}';
+        } catch (error) {
+            feedback.className = 'error';
+            feedback.textContent = error.message;
+        }
+    });
+</script>
+</body>
+</html>

@@ -154,6 +154,8 @@ body::before {
   border-color: rgba(0,255,160,0.34); transform: translateY(-2px);
   background: linear-gradient(135deg, rgba(12,24,33,0.94) 0%, rgba(5,10,17,0.98) 100%);
 }
+.metric-card.inactive { opacity: 0.66; }
+.metric-card.inactive:hover { opacity: 0.9; }
 
 .metric-info { display: flex; align-items: center; gap: 16px; flex: 1; min-width: 0; position: relative; z-index: 2;}
 
@@ -176,6 +178,7 @@ body::before {
 }
 .badge-quanti { background: rgba(0,255,160,0.055); border: 1px solid rgba(0,255,160,0.16); color: #7df6c2; }
 .badge-quali  { background: rgba(187,134,252,0.08); border: 1px solid rgba(187,134,252,0.25); color: #c4b5fd; }
+.badge-inactive { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.24); color: #fca5a5; }
 
 .metric-score {
   font-family: var(--mono); font-size: 9px; font-weight: 600; text-transform: uppercase;
@@ -354,14 +357,19 @@ body::before {
                             <input type="text" class="field-input" id="searchInput"
                                 placeholder="{% translate 'Buscar métrica...' %}" style="padding-left: 42px;" onkeyup="filterMetrics()">
                         </div>
-                        <span class="badge-tipo badge-quanti">{% translate "Métricas oficiais · escala 1–5" %}</span>
+                        <button class="btn btn-primary" type="button" onclick="abrirModal()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                                <path d="M12 5v14M5 12h14"/>
+                            </svg>
+                            {% translate "Adicionar Métrica" %}
+                        </button>
                     </div>
 
                     <div class="section-kicker">{% translate "Métricas Cadastradas" %}</div>
 
                     <div class="metrics-list" id="metricsList">
                         {% for metrica in metricas %}
-                        <div class="metric-card" data-name="{{ metrica.nome|lower }}" data-id="{{ metrica.id }}">
+                        <div class="metric-card {% if not metrica.ativa %}inactive{% endif %}" data-name="{{ metrica.nome|lower }}" data-id="{{ metrica.id }}">
                             <div class="metric-info">
                                 <div class="metric-icon-box" style="color: {% if metrica.tipo == 'quantitativa' %}#00ff9f{% else %}#bb86fc{% endif %}">
                                     {% if metrica.tipo == 'quantitativa' %}
@@ -382,14 +390,37 @@ body::before {
                                             {% if metrica.tipo == 'quantitativa' %}{% translate "Quantitativa" %}{% else %}{% translate "Qualitativa" %}{% endif %}
                                         </span>
                                         {% if metrica.tipo == 'quantitativa' %}
-                                        <span class="metric-score">{% translate "escala 1–5" %}</span>
+                                        <span class="metric-score">{% translate "máx." %} {{ metrica.pontuacao_maxima|default:5 }}</span>
+                                        {% endif %}
+                                        {% if not metrica.ativa %}
+                                        <span class="badge-tipo badge-inactive">{% translate "Inativa" %}</span>
                                         {% endif %}
                                     </div>
                                     <div class="metric-description">{{ metrica.descricao }}</div>
                                 </div>
                             </div>
                             <div class="metric-actions">
-                                <span class="metric-score">{% translate "obrigatória" %}</span>
+                                <button class="btn-icon btn-edit" type="button" title="{% translate 'Editar' %}"
+                                    onclick="abrirModalEditar(
+                                        {{ metrica.id }},
+                                        '{{ metrica.nome|escapejs }}',
+                                        '{{ metrica.descricao|escapejs }}',
+                                        '{{ metrica.tipo }}',
+                                        '{{ metrica.pontuacao_maxima|default:5 }}',
+                                        '{{ metrica.criterio_texto|default:""|escapejs }}',
+                                        '{{ metrica.label_opcao_1|default:""|escapejs }}',
+                                        '{{ metrica.label_opcao_2|default:""|escapejs }}'
+                                    )">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                    </svg>
+                                </button>
+                                <button class="btn-icon {% if metrica.ativa %}btn-delete{% else %}btn-edit{% endif %}" type="button"
+                                    title="{% if metrica.ativa %}{% translate 'Desativar' %}{% else %}{% translate 'Ativar' %}{% endif %}"
+                                    onclick="alternar_metrica({{ metrica.id }})">
+                                    {% if metrica.ativa %}Ⅱ{% else %}▶{% endif %}
+                                </button>
                             </div>
                         </div>
                         {% empty %}
@@ -467,7 +498,7 @@ body::before {
                     <div class="field-group">
                         <label class="field-label">{% translate "Pontuação Máxima" %}</label>
                         <input type="number" name="pontuacao_maxima" id="fPontuacaoMax"
-                            class="field-input" placeholder="{% translate 'Ex: 5' %}" value="5" min="1">
+                            class="field-input" placeholder="{% translate 'Ex: 5' %}" value="5" min="2" max="5">
                     </div>
                     <div id="labelsBinarios" style="display: none; gap: 12px; margin-top: 16px; flex-wrap: wrap;">
                         <div style="flex: 1; min-width: 150px;">
@@ -515,6 +546,8 @@ body::before {
             document.getElementById('fDescricao').value   = '';
             document.getElementById('fCriterio').value    = '';
             document.getElementById('fPontuacaoMax').value = '5';
+            document.getElementById('fOpcao1').value = '';
+            document.getElementById('fOpcao2').value = '';
             document.getElementById('tipoQuanti').checked = true;
             document.getElementById('labelsBinarios').style.display = 'none';
             toggleQuantiFields();
@@ -522,7 +555,7 @@ body::before {
             overlay.classList.add('active');
         }
 
-        function abrirModalEditar(id, nome, descricao, tipo, ponMax, criterio) {
+        function abrirModalEditar(id, nome, descricao, tipo, ponMax, criterio, opcao1, opcao2) {
             modoEditar = true;
             document.getElementById('modalTitulo').textContent    = '{% translate "Editar Métrica" %}';
             document.getElementById('btnSalvarLabel').textContent = '{% translate "Salvar Alterações" %}';
@@ -533,6 +566,8 @@ body::before {
             document.getElementById('fDescricao').value    = descricao;
             document.getElementById('fCriterio').value     = criterio;
             document.getElementById('fPontuacaoMax').value = ponMax;
+            document.getElementById('fOpcao1').value        = opcao1;
+            document.getElementById('fOpcao2').value        = opcao2;
 
             if (tipo === 'quantitativa') {
                 document.getElementById('tipoQuanti').checked = true;
@@ -566,24 +601,20 @@ body::before {
             });
         }
 
-        function deletar_metrica(metrica_id) {
-            if (confirm("{% translate 'Tem certeza que deseja remover esta métrica?' %}")) {
-                fetch(`/setup-deletar-metrica/${metrica_id}/`, {
-                    method: "DELETE",
+        async function alternar_metrica(metrica_id) {
+            try {
+                const response = await fetch(`/setup-alternar-metrica/${metrica_id}/`, {
+                    method: "POST",
                     headers: { "X-CSRFToken": document.cookie.match(/csrftoken=([^;]+)/)?.[1] || "" }
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.status === "success") {
-                        const card = document.querySelector(`[data-id="${metrica_id}"]`);
-                        if (card) {
-                            card.style.transition = 'opacity 0.25s, transform 0.25s';
-                            card.style.opacity = '0';
-                            card.style.transform = 'scale(0.95)';
-                            setTimeout(() => card.remove(), 260);
-                        }
-                    }
                 });
+                const data = await response.json();
+                if (!response.ok) {
+                    alert(data.message || "{% translate 'Não foi possível alterar a métrica.' %}");
+                    return;
+                }
+                location.reload();
+            } catch (error) {
+                alert("{% translate 'Erro de rede ao alterar a métrica.' %}");
             }
         }
 

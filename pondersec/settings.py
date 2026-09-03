@@ -15,7 +15,6 @@ from pathlib import Path
 import mimetypes
 from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ImproperlyConfigured
-import ssl
 
 try:
     from dotenv import load_dotenv
@@ -43,7 +42,14 @@ if not SECRET_KEY:
         raise ImproperlyConfigured('DJANGO_SECRET_KEY é obrigatória quando DJANGO_DEBUG=False.')
     SECRET_KEY = 'django-insecure-local-development-only-change-me'
 
-ALLOWED_HOSTS = ['10.208.200.20','localhost','pondersec.icomp.ufam.edu.br', '*']
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.environ.get(
+        'DJANGO_ALLOWED_HOSTS',
+        'localhost,127.0.0.1,10.208.200.20,pondersec.icomp.ufam.edu.br',
+    ).split(',')
+    if host.strip()
+]
 
 
 # Application definition
@@ -100,8 +106,6 @@ EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True').lower() in ('1', 'true',
 EMAIL_HOST_USER = os.environ.get('HOST_API_EMAIL') or os.environ.get('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.environ.get('SENHA_API_EMAIL') or os.environ.get('EMAIL_HOST_PASSWORD')
 
-# Diz para o backend de email do Django não validar estritamente o hostname
-EMAIL_SSL_CONTEXT = ssl._create_unverified_context()
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'PonderSec <naoresp00@gmail.com>')
 
 ROOT_URLCONF = 'pondersec.urls'
@@ -316,5 +320,18 @@ if not DEBUG:
 
     # Proteção extra contra navegadores tentando "adivinhar" o tipo do arquivo
     SECURE_CONTENT_TYPE_NOSNIFF = True
+
+    # Comece com um período curto e aumente somente depois de confirmar que o
+    # domínio permanece exclusivamente em HTTPS. Subdomínios e preload ficam
+    # desativados por padrão para não criar uma política difícil de reverter.
+    SECURE_HSTS_SECONDS = max(0, int(os.environ.get('SECURE_HSTS_SECONDS', '3600')))
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = os.environ.get(
+        'SECURE_HSTS_INCLUDE_SUBDOMAINS',
+        'False',
+    ).lower() in ('1', 'true', 'yes', 'on')
+    SECURE_HSTS_PRELOAD = os.environ.get(
+        'SECURE_HSTS_PRELOAD',
+        'False',
+    ).lower() in ('1', 'true', 'yes', 'on')
 
 mimetypes.add_type("text/css", ".css", True)

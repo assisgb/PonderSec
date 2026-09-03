@@ -92,12 +92,18 @@ Em `/admin-pondersec/llms-publicas/`:
 
 1. Clique em **Adicionar LLM**.
 2. Preencha:
-   - **Nome do modelo** — ex: `gpt-4o-mini`, `gemini-2.5-flash`, `llama-3.1-70b-versatile`. É o que vai pro `model` do SDK do provedor.
+   - **Nome do modelo** — ex: `gpt-4o-mini`, `gemini-3.5-flash` ou `openai/gpt-oss-120b` no Groq. É o valor enviado como `model` ao SDK do provedor.
    - **Provedor** — OpenAI / Gemini / Groq / DeepSeek. Determina qual SDK é usado pra fazer a chamada (o dispatcher faz match por substring desta string com `nome` + `descricao`).
    - **API Key** — a chave que será usada. Esta chave **vai cobrar a sua conta** sempre que alguém usar o chat público; trate-a com a mesma seriedade de uma chave de produção.
-3. Salvar. A LLM já fica ativa e disponível pro chat público.
+3. Salvar. A LLM já fica ativa e disponível pro chat público. Chaves Groq são
+   geradas em <https://console.groq.com/keys> e normalmente começam com `gsk_`.
+   Nunca coloque uma chave real no código ou no Git.
 
-Cada visitante anônimo dispara **todas** as LLMs ativas em paralelo (até 3 simultâneas via `ThreadPoolExecutor`). Para desativar uma LLM sem deletar, clique no toggle do card.
+O visitante escolhe uma LLM ativa para gerar a resposta. As demais configurações
+de modelo elegíveis atuam como avaliadoras na avaliação cruzada, respeitando os
+limites de concorrência. Para retirar uma configuração do chat sem perder o
+histórico, desative-a no card. Se um modelo já tiver histórico, crie outra
+configuração para o substituto em vez de renomeá-lo.
 
 ---
 
